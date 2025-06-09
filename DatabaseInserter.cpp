@@ -101,6 +101,7 @@ void DatabaseInserter::create_database() {
 
 
 // Inserts the parsed data stream.
+// --- MODIFIED: REMOVED a top-level try-catch block and transaction management ---
 void DatabaseInserter::insert_data_stream(const std::vector<ParsedRecord>& records) {
     sqlite3_stmt *stmt = nullptr;
     
@@ -151,100 +152,88 @@ void DatabaseInserter::insert_data_stream(const std::vector<ParsedRecord>& recor
 
 
     // --- Main processing loop ---
-    try {
-        begin_transaction();
+    // NO LONGER HAS ITS OWN try/catch or begin/commit. The caller is responsible.
+    for (const auto& rec : records) {
+        if (rec.type == "date") {
+            flush_item_batch(current_child_id); // Flush previous items before context changes
+            current_parent_id = -1;
+            current_child_id = -1;
+            
+            // Upsert YearMonth
+            sqlite3_prepare_v2(db_, upsert_year_month_sql, -1, &stmt, nullptr);
+            sqlite3_bind_text(stmt, 1, rec.content.c_str(), -1, SQLITE_STATIC);
+            sqlite3_step(stmt);
+            sqlite3_finalize(stmt);
 
-        for (const auto& rec : records) {
-            if (rec.type == "date") {
-                flush_item_batch(current_child_id); // Flush previous items before context changes
-                current_parent_id = -1;
-                current_child_id = -1;
-                
-                // Upsert YearMonth
-                sqlite3_prepare_v2(db_, upsert_year_month_sql, -1, &stmt, nullptr);
-                sqlite3_bind_text(stmt, 1, rec.content.c_str(), -1, SQLITE_STATIC);
-                sqlite3_step(stmt);
-                sqlite3_finalize(stmt);
+            // Get ID
+            sqlite3_prepare_v2(db_, select_year_month_id_sql, -1, &stmt, nullptr);
+            sqlite3_bind_text(stmt, 1, rec.content.c_str(), -1, SQLITE_STATIC);
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                current_year_month_id = sqlite3_column_int64(stmt, 0);
+            }
+            sqlite3_finalize(stmt);
 
-                // Get ID
-                sqlite3_prepare_v2(db_, select_year_month_id_sql, -1, &stmt, nullptr);
-                sqlite3_bind_text(stmt, 1, rec.content.c_str(), -1, SQLITE_STATIC);
-                if (sqlite3_step(stmt) == SQLITE_ROW) {
-                    current_year_month_id = sqlite3_column_int64(stmt, 0);
-                }
-                sqlite3_finalize(stmt);
+        } else if (rec.type == "remark") {
+            if (current_year_month_id == -1) throw std::runtime_error("Hierarchical error: REMARK found without a DATE context at line " + std::to_string(rec.lineNumber));
+            const char* update_remark_sql = "UPDATE YearMonth SET remark = ? WHERE id = ?;";
+            sqlite3_prepare_v2(db_, update_remark_sql, -1, &stmt, nullptr);
+            sqlite3_bind_text(stmt, 1, rec.content.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_bind_int64(stmt, 2, current_year_month_id);
+            sqlite3_step(stmt);
+            sqlite3_finalize(stmt);
+            
+        } else if (rec.type == "parent") {
+            flush_item_batch(current_child_id);
+            current_child_id = -1;
+            if (current_year_month_id == -1) throw std::runtime_error("Hierarchical error: PARENT found without a DATE context at line " + std::to_string(rec.lineNumber));
+            
+            // Upsert Parent
+            sqlite3_prepare_v2(db_, upsert_parent_sql, -1, &stmt, nullptr);
+            sqlite3_bind_int64(stmt, 1, current_year_month_id);
+            sqlite3_bind_int(stmt, 2, rec.order);
+            sqlite3_bind_text(stmt, 3, rec.content.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_step(stmt);
+            sqlite3_finalize(stmt);
 
-            } else if (rec.type == "remark") {
-                if (current_year_month_id == -1) throw std::runtime_error("Hierarchical error: REMARK found without a DATE context at line " + std::to_string(rec.lineNumber));
-                const char* update_remark_sql = "UPDATE YearMonth SET remark = ? WHERE id = ?;";
-                sqlite3_prepare_v2(db_, update_remark_sql, -1, &stmt, nullptr);
-                sqlite3_bind_text(stmt, 1, rec.content.c_str(), -1, SQLITE_TRANSIENT);
-                sqlite3_bind_int64(stmt, 2, current_year_month_id);
-                sqlite3_step(stmt);
-                sqlite3_finalize(stmt);
-                
-            } else if (rec.type == "parent") {
+            // Get ID
+            sqlite3_prepare_v2(db_, select_parent_id_sql, -1, &stmt, nullptr);
+            sqlite3_bind_int64(stmt, 1, current_year_month_id);
+            sqlite3_bind_text(stmt, 2, rec.content.c_str(), -1, SQLITE_STATIC);
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                current_parent_id = sqlite3_column_int64(stmt, 0);
+            }
+            sqlite3_finalize(stmt);
+            
+        } else if (rec.type == "child") {
+            flush_item_batch(current_child_id);
+            if (current_parent_id == -1) throw std::runtime_error("Hierarchical error: CHILD found without a PARENT context at line " + std::to_string(rec.lineNumber));
+
+            // Upsert Child
+            sqlite3_prepare_v2(db_, upsert_child_sql, -1, &stmt, nullptr);
+            sqlite3_bind_int64(stmt, 1, current_parent_id);
+            sqlite3_bind_int(stmt, 2, rec.order);
+            sqlite3_bind_text(stmt, 3, rec.content.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_step(stmt);
+            sqlite3_finalize(stmt);
+            
+            // Get ID
+            sqlite3_prepare_v2(db_, select_child_id_sql, -1, &stmt, nullptr);
+            sqlite3_bind_int64(stmt, 1, current_parent_id);
+            sqlite3_bind_text(stmt, 2, rec.content.c_str(), -1, SQLITE_STATIC);
+             if (sqlite3_step(stmt) == SQLITE_ROW) {
+                current_child_id = sqlite3_column_int64(stmt, 0);
+            }
+            sqlite3_finalize(stmt);
+
+        } else if (rec.type == "item") {
+            if (current_child_id == -1) throw std::runtime_error("Hierarchical error: ITEM found without a CHILD context at line " + std::to_string(rec.lineNumber));
+            item_batch.push_back(rec);
+            if (item_batch.size() >= BATCH_SIZE) {
                 flush_item_batch(current_child_id);
-                current_child_id = -1;
-                if (current_year_month_id == -1) throw std::runtime_error("Hierarchical error: PARENT found without a DATE context at line " + std::to_string(rec.lineNumber));
-                
-                // Upsert Parent
-                sqlite3_prepare_v2(db_, upsert_parent_sql, -1, &stmt, nullptr);
-                sqlite3_bind_int64(stmt, 1, current_year_month_id);
-                sqlite3_bind_int(stmt, 2, rec.order);
-                sqlite3_bind_text(stmt, 3, rec.content.c_str(), -1, SQLITE_TRANSIENT);
-                sqlite3_step(stmt);
-                sqlite3_finalize(stmt);
-
-                // Get ID
-                sqlite3_prepare_v2(db_, select_parent_id_sql, -1, &stmt, nullptr);
-                sqlite3_bind_int64(stmt, 1, current_year_month_id);
-                sqlite3_bind_text(stmt, 2, rec.content.c_str(), -1, SQLITE_STATIC);
-                if (sqlite3_step(stmt) == SQLITE_ROW) {
-                    current_parent_id = sqlite3_column_int64(stmt, 0);
-                }
-                sqlite3_finalize(stmt);
-                
-            } else if (rec.type == "child") {
-                flush_item_batch(current_child_id);
-                if (current_parent_id == -1) throw std::runtime_error("Hierarchical error: CHILD found without a PARENT context at line " + std::to_string(rec.lineNumber));
-
-                // Upsert Child
-                sqlite3_prepare_v2(db_, upsert_child_sql, -1, &stmt, nullptr);
-                sqlite3_bind_int64(stmt, 1, current_parent_id);
-                sqlite3_bind_int(stmt, 2, rec.order);
-                sqlite3_bind_text(stmt, 3, rec.content.c_str(), -1, SQLITE_TRANSIENT);
-                sqlite3_step(stmt);
-                sqlite3_finalize(stmt);
-                
-                // Get ID
-                sqlite3_prepare_v2(db_, select_child_id_sql, -1, &stmt, nullptr);
-                sqlite3_bind_int64(stmt, 1, current_parent_id);
-                sqlite3_bind_text(stmt, 2, rec.content.c_str(), -1, SQLITE_STATIC);
-                 if (sqlite3_step(stmt) == SQLITE_ROW) {
-                    current_child_id = sqlite3_column_int64(stmt, 0);
-                }
-                sqlite3_finalize(stmt);
-
-            } else if (rec.type == "item") {
-                if (current_child_id == -1) throw std::runtime_error("Hierarchical error: ITEM found without a CHILD context at line " + std::to_string(rec.lineNumber));
-                item_batch.push_back(rec);
-                if (item_batch.size() >= BATCH_SIZE) {
-                    flush_item_batch(current_child_id);
-                }
             }
         }
-
-        // Flush any remaining items in the batch
-        flush_item_batch(current_child_id);
-
-        commit_transaction();
-        std::cout << "Successfully inserted data stream into the database." << std::endl;
-
-    } catch (const std::runtime_error& e) {
-        std::cerr << "Data insertion failed, rolling back transaction. Reason: " << e.what() << std::endl;
-        flush_item_batch(current_child_id); // clear batch
-        rollback_transaction();
-        throw; // Re-throw
     }
+
+    // Flush any remaining items in the batch
+    flush_item_batch(current_child_id);
 }

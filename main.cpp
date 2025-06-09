@@ -1,231 +1,236 @@
-import datetime
-import os
-import sys
-import time
-from io import StringIO
+#include <iostream>
+#include <string>
+#include <vector>
+#include <limits>
+#include <stdexcept>
+#include <filesystem> // For C++17 file system operations
+#include <chrono>     // For high-precision timing
+#include <iomanip>    // For std::setprecision
+#include <algorithm>  // For std::all_of
+#include <cctype>     // For ::isdigit
 
-RED = "\033[31m"
-GREEN = "\033[32m"
-YELLOW = "\033[33m"
-RESET = "\033[0m"
-from query_db import query_1, query_2, query_3, query_4
 
-# Import independent modules for parsing and database operations
-from text_parser import parse_bill_file
-from database_inserter import db_connection, insert_data_stream, create_database as create_db_schema
+// Add the Windows header for console functions.
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
-def handle_import():
-    """
-    Orchestrates the import process with high-precision timing for parsing and database insertion.
-    This version suppresses detailed parser logs and only prints the final count and timing details.
-    """
-    path = input("请输入要导入的txt文件或文件夹路径(输入0返回):").strip()
-    if path == '0':
-        return
+#include "Bill_Parser.h"
+#include "DatabaseInserter.h"
+#include "BillReporter.h"
 
-    if not os.path.exists(path):
-        print(f"{RED}错误: 路径 '{path}' 不存在.{RESET}")
-        return
+// C++17 filesystem alias
+namespace fs = std::filesystem;
 
-    files_to_process = []
-    if os.path.isfile(path) and path.lower().endswith('.txt'):
-        files_to_process.append(path)
-    elif os.path.isdir(path):
-        for root, _, files_in_dir in os.walk(path):
-            for file_content in files_in_dir:
-                if file_content.lower().endswith('.txt'):
-                    files_to_process.append(os.path.join(root, file_content))
-    else:
-        print(f"{RED}错误: 无效的路径或文件类型.请输入单个 .txt 文件或包含 .txt 文件的文件夹路径.{RESET}")
-        return
+// Function to display the menu to the user
+void show_menu() {
+    std::cout << "\n===== Bill Management System =====\n";
+    std::cout << "0. Import data from .txt file(s)\n";
+    std::cout << "1. Annual consumption summary\n";
+    std::cout << "2. Detailed monthly bill\n";
+    std::cout << "3. Export monthly bill (machine-readable)\n";
+    std::cout << "4. Annual category statistics\n";
+    std::cout << "5. Exit\n";
+    std::cout << "==================================\n";
+    std::cout << "Enter your choice: ";
+}
 
-    if not files_to_process:
-        print(f"{YELLOW}警告: 在 '{path}' 中没有找到 .txt 文件.{RESET}")
-        return
+// Function to clear input buffer in case of invalid input
+void clear_cin() {
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+}
 
-    try:
-        create_db_schema()
-    except Exception as e:
-        print(f"{RED}错误：数据库初始化失败，导入操作已中止。错误详情: {e}{RESET}")
-        return
+/**
+ * @brief Handles the import process by prompting for a path and reports detailed statistics.
+ * --- MODIFIED: Now uses a single transaction for all files to ensure atomicity. ---
+ * @param db_file The path to the SQLite database file.
+ */
+void handle_import_process(const std::string& db_file) {
+    std::string user_path_str;
+    std::cout << "Enter the path to a .txt file or a directory: ";
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::getline(std::cin, user_path_str);
 
-    processed_count = 0
-    total_files_to_process = len(files_to_process)
-    
-    # --- 计时变量初始化 ---
-    total_parse_time = 0.0
-    total_db_time = 0.0
-    # 记录整体操作的开始时间
-    total_operation_start_time = time.perf_counter()
+    fs::path user_path(user_path_str);
+    std::vector<fs::path> files_to_process;
 
-    try:
-        with db_connection() as conn:  # 为所有文件启动一个事务
-            for file_path_item in files_to_process:
-                try:
-                    # --- 计时：文本解析 ---
-                    parse_start_time = time.perf_counter()
-                    
-                    # 抑制解析器的打印输出
-                    original_stdout = sys.stdout
-                    original_stderr = sys.stderr
-                    sys.stdout = StringIO()
-                    sys.stderr = StringIO()
-                    try:
-                        data_stream = parse_bill_file(file_path_item)
-                    finally:
-                        sys.stdout = original_stdout
-                        sys.stderr = original_stderr
-                        
-                    parse_end_time = time.perf_counter()
-                    total_parse_time += (parse_end_time - parse_start_time)
+    try {
+        if (!fs::exists(user_path)) {
+            std::cerr << "Error: Path does not exist: " << user_path.string() << std::endl;
+            return;
+        }
 
-                    # --- 计时：数据库插入 ---
-                    db_start_time = time.perf_counter()
-                    insert_data_stream(conn, data_stream)
-                    db_end_time = time.perf_counter()
-                    total_db_time += (db_end_time - db_start_time)
-                    
-                    processed_count += 1
-                except (ValueError, Exception):
-                    # 重新抛出异常以触发外部事务回滚
-                    raise
+        if (fs::is_regular_file(user_path)) {
+            if (user_path.extension() == ".txt") files_to_process.push_back(user_path);
+            else std::cerr << "Error: The provided file is not a .txt file." << std::endl;
+        } else if (fs::is_directory(user_path)) {
+            for (const auto& entry : fs::recursive_directory_iterator(user_path)) {
+                if (entry.is_regular_file() && entry.path().extension() == ".txt") {
+                    files_to_process.push_back(entry.path());
+                }
+            }
+        } else {
+            std::cerr << "Error: The provided path is not a regular file or directory." << std::endl;
+            return;
+        }
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "Filesystem error: " << e.what() << std::endl;
+        return;
+    }
+
+    if (files_to_process.empty()) {
+        std::cout << "No .txt files found to process." << std::endl;
+        return;
+    }
+
+    int successful_files = 0;
+    int failed_files = 0;
+    auto total_parsing_duration = std::chrono::nanoseconds(0);
+    auto total_insertion_duration = std::chrono::nanoseconds(0);
+
+    // Create inserter and parser outside the main try block for broader scope
+    DatabaseInserter inserter(db_file);
+    Bill_Parser parser;
+    bool transaction_active = false;
+
+    try {
+        inserter.create_database();
         
-        # 此代码块仅在所有文件都成功处理后运行
-        total_operation_end_time = time.perf_counter()
-        total_duration = total_operation_end_time - total_operation_start_time
+        inserter.begin_transaction(); // <<< Start transaction before processing any files
+        transaction_active = true;
 
-        print(f"\n{GREEN}===== 导入完成 ====={RESET}")
-        print(f"成功导入文件数: {processed_count}")
-        print(f"失败导入文件数: 0")
-        print("--------------------")
-        print("⏱️  计时统计:")
-        print(f"  - 总耗时: {total_duration:.4f} 秒")
-        print(f"  - 文本解析总耗时: {total_parse_time:.4f} 秒")
-        print(f"  - 数据库插入总耗时: {total_db_time:.4f} 秒")
+        for (const auto& file_path : files_to_process) {
+            std::cout << "Processing file: " << file_path.string() << std::endl;
+            parser.reset();
+
+            auto parse_start = std::chrono::high_resolution_clock::now();
+            parser.parseFile(file_path.string());
+            auto parse_end = std::chrono::high_resolution_clock::now();
+            total_parsing_duration += (parse_end - parse_start);
+
+            const auto& records = parser.getRecords();
+            if (records.empty()) {
+                std::cout << "  -> No valid records found. Skipped." << std::endl;
+                // This is not a failure, just an empty file.
+                // Depending on requirements, you might want to count this differently.
+                // For "all or nothing," we let it pass.
+                continue; 
+            }
+            
+            auto insert_start = std::chrono::high_resolution_clock::now();
+            inserter.insert_data_stream(records); // This no longer manages transactions
+            auto insert_end = std::chrono::high_resolution_clock::now();
+            total_insertion_duration += (insert_end - insert_start);
+
+            successful_files++;
+        }
+
+        std::cout << "\nAll files processed successfully. Committing changes to the database..." << std::endl;
+        inserter.commit_transaction(); // <<< Commit transaction ONLY if all files succeed
+        transaction_active = false;
+
+        failed_files = files_to_process.size() - successful_files;
+
+        // --- Final Success Report ---
+        std::cout << "\n----------------------------------------\n";
+        std::cout << "Import process finished successfully.\n\n";
+        std::cout << "Successfully processed files: " << successful_files << std::endl;
+        if(failed_files > 0) std::cout << "Skipped empty/invalid files: " << failed_files << std::endl;
+        std::cout << "----------------------------------------\n";
+        auto parsing_ms = std::chrono::duration_cast<std::chrono::milliseconds>(total_parsing_duration).count();
+        double parsing_s = parsing_ms / 1000.0;
+        std::cout << "Total text parsing time:        "
+                  << parsing_ms << " ms (" << std::fixed << std::setprecision(3) << parsing_s << " s)\n";
+        auto insertion_ms = std::chrono::duration_cast<std::chrono::milliseconds>(total_insertion_duration).count();
+        double insertion_s = insertion_ms / 1000.0;
+        std::cout << "Total database insertion time:  "
+                  << insertion_ms << " ms (" << std::fixed << std::setprecision(3) << insertion_s << " s)\n";
+        std::cout << "----------------------------------------\n";
+
+    } catch (const std::runtime_error& e) {
+        // This block executes if ANY file fails during parsing or insertion
+        if (transaction_active) {
+            std::cerr << "\nAn error occurred. Rolling back all changes..." << std::endl;
+            inserter.rollback_transaction();
+        }
         
-    except Exception as e:
-        # 如果发生异常导致事务回滚，此代码块将运行
-        total_operation_end_time = time.perf_counter()
-        total_duration = total_operation_end_time - total_operation_start_time
-        
-        print(f"\n{RED}===== 导入失败 ====={RESET}")
-        print(f"成功导入文件数: 0")
-        print(f"失败导入文件数: {total_files_to_process}")
-        print(f"操作因错误中止。错误详情: {e}")
-        print("--------------------")
-        print("⏱️  计时统计:")
-        print(f"操作中止前总耗时: {total_duration:.4f} 秒")
+        // --- Final Failure Report ---
+        std::cerr << "\n----------------------------------------\n";
+        std::cerr << "Import process FAILED. No data was saved to the database.\n\n";
+        std::cerr << "Error detail: " << e.what() << std::endl;
+        std::cerr << "----------------------------------------\n";
+    }
+}
 
 
-def main_app_loop():
-    while True:
-        print("\n========== 账单数据库选项 ==========\n")
-        print("0. 从txt文件导入数据")
-        print("1. 年消费查询")
-        print("2. 月消费详情")
-        print("3. 导出月账单")
-        print("4. 年度分类统计")
-        print("5. 退出")
-        choice = input("请选择操作:").strip()
+int main() {
+    // Set console output to UTF-8 on Windows to correctly display Chinese characters and prevent hanging.
+    #ifdef _WIN32
+        SetConsoleOutputCP(CP_UTF8);
+    #endif
 
-        if choice == '0':
-            handle_import() # Call the local handle_import function
-        elif choice == '1':
-            current_system_year = datetime.datetime.now().year
-            year_to_query = str(current_system_year)
+    const std::string db_file = "bills.db";
+    int choice = -1;
 
-            while True:
-                year_input_str = input(f"请输入年份(默认为 {current_system_year}, 直接回车使用默认): ").strip()
-                if not year_input_str:
-                    print(f"使用默认年份: {year_to_query}")
-                    break
-                if year_input_str.isdigit() and len(year_input_str) == 4:
-                    year_to_query = year_input_str
-                    break
-                else:
-                    print(f"{RED}输入错误, 请输入四位数字年份.{RESET}")
-            query_1(year_to_query)
+    // The main loop continues until the user chooses to exit (5)
+    while (choice != 5) {
+        show_menu();
+        std::cin >> choice;
 
-        elif choice == '2':
-            now = datetime.datetime.now()
-            default_year = now.year
-            default_month = now.month
-            default_date_str = f"{default_year}{default_month:02d}"
-            year_to_query = default_year
-            month_to_query = default_month
+        if (std::cin.fail() || choice < 0 || choice > 5) {
+            std::cout << "Invalid input. Please enter a number between 0 and 5.\n";
+            clear_cin();
+            choice = -1; 
+            continue;
+        }
 
-            while True:
-                date_input_str = input(f"请输入年月(默认为 {default_date_str}, 直接回车使用默认): ").strip()
-                if not date_input_str:
-                    print(f"使用默认年月: {year_to_query}-{month_to_query:02d}")
-                    break
-                if len(date_input_str) == 6 and date_input_str.isdigit():
-                    year_val = int(date_input_str[:4])
-                    month_val = int(date_input_str[4:])
-                    if 1 <= month_val <= 12:
-                        year_to_query = year_val
-                        month_to_query = month_val
-                        break
-                    else:
-                        print(f"{RED}输入的月份无效 (必须介于 01 到 12 之间).{RESET}")
-                else:
-                    print(f"{RED}输入格式错误, 请输入6位数字, 例如 202503.{RESET}")
-            query_2(year_to_query, month_to_query)
+        try {
+            if (choice == 0) {
+                handle_import_process(db_file);
+            } else if (choice > 0 && choice < 5) {
+                BillReporter reporter(db_file);
+                std::string year, category;
 
-        elif choice == '3':
-            now = datetime.datetime.now()
-            default_year = now.year
-            default_month = now.month
-            default_date_str = f"{default_year}{default_month:02d}"
-            year_to_export = default_year
-            month_to_export = default_month
+                switch (choice) {
+                    case 1: // Annual summary
+                        std::cout << "Enter year (e.g., 2025): ";
+                        std::cin >> year;
+                        reporter.query_1(year);
+                        break;
+                    case 2: // Detailed monthly bill
+                    case 3: // Export monthly bill
+                    { 
+                        std::string year_month_str;
+                        std::cout << "Enter year and month as a 6-digit number (e.g., 202501): ";
+                        std::cin >> year_month_str;
 
-            while True:
-                date_input_str = input(f"请输入年月 (例如 202305, 默认为 {default_date_str}, 直接回车使用默认): ").strip()
-                if not date_input_str:
-                    print(f"使用默认年月: {year_to_export}-{month_to_export:02d}")
-                    break
-                if len(date_input_str) == 6 and date_input_str.isdigit():
-                    year_val = int(date_input_str[:4])
-                    month_val = int(date_input_str[4:])
-                    if 1 <= month_val <= 12:
-                        year_to_export = year_val
-                        month_to_export = month_val
-                        break
-                    else:
-                        print(f"{RED}输入的月份无效 (必须介于 01 到 12 之间).{RESET}")
-                else:
-                    print(f"{RED}输入格式错误, 请输入6位数字, 例如 202503.{RESET}")
-            query_3(year_to_export, month_to_export)
+                        if (year_month_str.length() != 6 || !std::all_of(year_month_str.begin(), year_month_str.end(), ::isdigit)) {
+                            std::cerr << "Error: Invalid format. Please enter exactly 6 digits." << std::endl;
+                        } else {
+                            std::string input_year = year_month_str.substr(0, 4);
+                            std::string input_month = year_month_str.substr(4, 2);
+                            if (choice == 2) reporter.query_2(input_year, input_month);
+                            else reporter.query_3(input_year, input_month);
+                        }
+                        break;
+                    }
+                    case 4: // Annual category statistics
+                        std::cout << "Enter year (e.g., 2025): ";
+                        std::cin >> year;
+                        std::cout << "Enter parent category name (e.g., MEAL吃饭): ";
+                        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                        std::getline(std::cin, category);
+                        reporter.query_4(year, category);
+                        break;
+                }
+            } else if (choice == 5) {
+                std::cout << "Exiting program. Goodbye!\n";
+            }
+        } catch (const std::runtime_error& e) {
+            std::cerr << "\nAn error occurred: " << e.what() << std::endl;
+        }
+    }
 
-        elif choice == '4':
-            current_system_year = datetime.datetime.now().year
-            year_to_query_stats = str(current_system_year)
-
-            while True:
-                year_input_str = input(f"请输入年份 (默认为 {current_system_year}, 直接回车使用默认): ").strip()
-                if not year_input_str:
-                    print(f"使用默认年份: {year_to_query_stats}")
-                    break
-                if year_input_str.isdigit() and len(year_input_str) == 4:
-                    year_to_query_stats = year_input_str
-                    break
-                else:
-                    print(f"{RED}年份输入错误, 请输入四位数字年份.{RESET}")
-            
-            parent_title_str = ""
-            while not parent_title_str:
-                parent_title_str = input("请输入父标题 (例如 RENT房租水电): ").strip()
-                if not parent_title_str:
-                    print(f"{RED}父标题不能为空.{RESET}")
-            
-            query_4(year_to_query_stats, parent_title_str)
-            
-        elif choice == '5':
-            print("程序结束运行")
-            break
-        else:
-            print(f"{RED}无效输入,请输入选项中的数字(0-5).{RESET}")
-
-if __name__ == "__main__":
-    main_app_loop()
+    return 0;
+}
