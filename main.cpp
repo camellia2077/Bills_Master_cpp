@@ -21,7 +21,12 @@
 
 // C++17 filesystem alias
 namespace fs = std::filesystem;
-
+struct Colors {
+    const std::string red = "\033[31m";
+    const std::string green = "\033[32m";
+    const std::string yellow = "\033[33m";
+    const std::string reset = "\033[0m";
+};
 // Function to display the menu to the user
 void show_menu() {
     std::cout << "\n===== Bill Management System =====\n";
@@ -54,6 +59,7 @@ void handle_import_process(const std::string& db_file) {
 
     fs::path user_path(user_path_str);
     std::vector<fs::path> files_to_process;
+    Colors colors;
 
     try {
         if (!fs::exists(user_path)) {
@@ -104,22 +110,30 @@ void handle_import_process(const std::string& db_file) {
             std::cout << "Processing file: " << file_path.string() << std::endl;
             parser.reset();
 
+            // --- CHANGE: A local vector to store records for the current file ---
+            std::vector<ParsedRecord> current_file_records;
+
             auto parse_start = std::chrono::high_resolution_clock::now();
-            parser.parseFile(file_path.string());
+            
+            // --- CHANGE: Call parseFile with a lambda to populate the local vector ---
+            parser.parseFile(file_path.string(), 
+                [&current_file_records](const ParsedRecord& record) {
+                    current_file_records.push_back(record);
+                }
+            );
+
             auto parse_end = std::chrono::high_resolution_clock::now();
             total_parsing_duration += (parse_end - parse_start);
 
-            const auto& records = parser.getRecords();
-            if (records.empty()) {
+            // --- CHANGE: Check the local vector instead of parser.getRecords() ---
+            if (current_file_records.empty()) {
                 std::cout << "  -> No valid records found. Skipped." << std::endl;
-                // This is not a failure, just an empty file.
-                // Depending on requirements, you might want to count this differently.
-                // For "all or nothing," we let it pass.
                 continue; 
             }
             
             auto insert_start = std::chrono::high_resolution_clock::now();
-            inserter.insert_data_stream(records); // This no longer manages transactions
+            // --- CHANGE: Insert from the local vector ---
+            inserter.insert_data_stream(current_file_records);
             auto insert_end = std::chrono::high_resolution_clock::now();
             total_insertion_duration += (insert_end - insert_start);
 
@@ -135,18 +149,46 @@ void handle_import_process(const std::string& db_file) {
         // --- Final Success Report ---
         std::cout << "\n----------------------------------------\n";
         std::cout << "Import process finished successfully.\n\n";
-        std::cout << "Successfully processed files: " << successful_files << std::endl;
+        std::cout << colors.green << "Successfully " << colors.reset <<  "processed files: " << successful_files << std::endl;
         if(failed_files > 0) std::cout << "Skipped empty/invalid files: " << failed_files << std::endl;
         std::cout << "----------------------------------------\n";
-        auto parsing_ms = std::chrono::duration_cast<std::chrono::milliseconds>(total_parsing_duration).count();
-        double parsing_s = parsing_ms / 1000.0;
-        std::cout << "Total text parsing time:        "
-                  << parsing_ms << " ms (" << std::fixed << std::setprecision(3) << parsing_s << " s)\n";
-        auto insertion_ms = std::chrono::duration_cast<std::chrono::milliseconds>(total_insertion_duration).count();
-        double insertion_s = insertion_ms / 1000.0;
-        std::cout << "Total database insertion time:  "
-                  << insertion_ms << " ms (" << std::fixed << std::setprecision(3) << insertion_s << " s)\n";
+        
+        // --- MODIFIED TIMING STATISTICS BLOCK ---
+        std::cout << "Timing Statistics:\n\n";
+
+        // Calculate total duration
+        auto total_duration = total_parsing_duration + total_insertion_duration;
+
+        // Calculate seconds and milliseconds as doubles for high precision
+        double total_s = std::chrono::duration<double>(total_duration).count();
+        double total_ms = std::chrono::duration<double, std::milli>(total_duration).count();
+
+        double parsing_s = std::chrono::duration<double>(total_parsing_duration).count();
+        double parsing_ms = std::chrono::duration<double, std::milli>(total_parsing_duration).count();
+
+        double insertion_s = std::chrono::duration<double>(total_insertion_duration).count();
+        double insertion_ms = std::chrono::duration<double, std::milli>(total_insertion_duration).count();
+
+        // Set output formatting
+        std::cout << std::fixed;
+
+        // Print Total time
+        std::cout << "Total time: "
+                  << std::setprecision(4) << total_s << " seconds ("
+                  << std::setprecision(2) << total_ms << " ms)\n";
+
+        // Print Parsing time
+        std::cout << "Total text parsing time: "
+                  << std::setprecision(4) << parsing_s << " seconds ("
+                  << std::setprecision(2) << parsing_ms << " ms)\n";
+
+        // Print Insertion time
+        std::cout << "Total database insertion time: "
+                  << std::setprecision(4) << insertion_s << " seconds ("
+                  << std::setprecision(2) << insertion_ms << " ms)\n";
+        
         std::cout << "----------------------------------------\n";
+
 
     } catch (const std::runtime_error& e) {
         // This block executes if ANY file fails during parsing or insertion
@@ -163,7 +205,46 @@ void handle_import_process(const std::string& db_file) {
     }
 }
 
+void handle_reporting_menu(int choice, const std::string& db_file) {
+    BillReporter reporter(db_file);
+    std::string year, category;
 
+    switch (choice) {
+        case 1: // Annual summary
+            std::cout << "Enter year (e.g., 2025): ";
+            std::cin >> year;
+            reporter.query_1(year);
+            break;
+        case 2: // Detailed monthly bill
+        case 3: // Export monthly bill
+        { 
+            std::string year_month_str;
+            std::cout << "Enter year and month as a 6-digit number (e.g., 202501): ";
+            std::cin >> year_month_str;
+
+            if (year_month_str.length() != 6 || !std::all_of(year_month_str.begin(), year_month_str.end(), ::isdigit)) {
+                std::cerr << "Error: Invalid format. Please enter exactly 6 digits." << std::endl;
+            } else {
+                std::string input_year = year_month_str.substr(0, 4);
+                std::string input_month = year_month_str.substr(4, 2);
+                if (choice == 2) {
+                    reporter.query_2(input_year, input_month);
+                } else {
+                    reporter.query_3(input_year, input_month);
+                }
+            }
+            break;
+        }
+        case 4: // Annual category statistics
+            std::cout << "Enter year (e.g., 2025): ";
+            std::cin >> year;
+            std::cout << "Enter parent category name (e.g., MEAL吃饭): ";
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::getline(std::cin, category);
+            reporter.query_4(year, category);
+            break;
+    }
+}
 int main() {
     // Set console output to UTF-8 on Windows to correctly display Chinese characters and prevent hanging.
     #ifdef _WIN32
@@ -189,43 +270,9 @@ int main() {
             if (choice == 0) {
                 handle_import_process(db_file);
             } else if (choice > 0 && choice < 5) {
-                BillReporter reporter(db_file);
-                std::string year, category;
-
-                switch (choice) {
-                    case 1: // Annual summary
-                        std::cout << "Enter year (e.g., 2025): ";
-                        std::cin >> year;
-                        reporter.query_1(year);
-                        break;
-                    case 2: // Detailed monthly bill
-                    case 3: // Export monthly bill
-                    { 
-                        std::string year_month_str;
-                        std::cout << "Enter year and month as a 6-digit number (e.g., 202501): ";
-                        std::cin >> year_month_str;
-
-                        if (year_month_str.length() != 6 || !std::all_of(year_month_str.begin(), year_month_str.end(), ::isdigit)) {
-                            std::cerr << "Error: Invalid format. Please enter exactly 6 digits." << std::endl;
-                        } else {
-                            std::string input_year = year_month_str.substr(0, 4);
-                            std::string input_month = year_month_str.substr(4, 2);
-                            if (choice == 2) reporter.query_2(input_year, input_month);
-                            else reporter.query_3(input_year, input_month);
-                        }
-                        break;
-                    }
-                    case 4: // Annual category statistics
-                        std::cout << "Enter year (e.g., 2025): ";
-                        std::cin >> year;
-                        std::cout << "Enter parent category name (e.g., MEAL吃饭): ";
-                        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                        std::getline(std::cin, category);
-                        reporter.query_4(year, category);
-                        break;
-                }
+                handle_reporting_menu(choice, db_file);
             } else if (choice == 5) {
-                std::cout << "Exiting program. Goodbye!\n";
+                std::cout << "Exiting program. Wish you a happy day!\n";
             }
         } catch (const std::runtime_error& e) {
             std::cerr << "\nAn error occurred: " << e.what() << std::endl;
