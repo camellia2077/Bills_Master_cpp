@@ -4,7 +4,8 @@
 #include <cctype>
 #include <fstream>
 #include <stdexcept>
-#include "json.hpp" // 引入 nlohmann/json 库
+//#include "json.hpp" // 如果要使用json.hpp文件，则可以用这个
+#include <nlohmann/json.hpp> // 确保你在编译环境中安装
 
 // 使用 nlohmann::json 命名空间
 using json = nlohmann::json;
