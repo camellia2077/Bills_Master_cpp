@@ -13,10 +13,10 @@
 #include <windows.h>
 #endif
 
-#include "LineValidator.h"
+#include "Line_Validator.h"
 #include "Bill_Parser.h"
-#include "DatabaseInserter.h"
-#include "BillReporter.h"
+#include "Database_Inserter.h"
+#include "Bill_Reporter.h"
 
 namespace fs = std::filesystem;
 struct Colors {
@@ -25,6 +25,38 @@ struct Colors {
     const std::string yellow = "\033[33m";
     const std::string reset = "\033[0m";
 };
+
+/*
+ * NOTE: This decorator class is added to separately time the validation logic.
+ * It works by inheriting from the base Line_Validator and wrapping its function calls
+ * with a timer.
+ */
+class TimingLineValidator : public LineValidator {
+    private:
+        mutable std::chrono::nanoseconds m_duration{0};
+    
+    public:
+        // 新增构造函数，将配置文件路径传递给基类
+        explicit TimingLineValidator(const std::string& config_path)
+            : LineValidator(config_path) {}
+    
+        ValidationResult validate(const std::string& line) const override {
+            auto start = std::chrono::high_resolution_clock::now();
+            ValidationResult result = LineValidator::validate(line);
+            auto end = std::chrono::high_resolution_clock::now();
+            m_duration += (end - start);
+            return result;
+        }
+    
+        std::chrono::nanoseconds get_duration() const {
+            return m_duration;
+        }
+    
+        void reset_duration() {
+            m_duration = std::chrono::nanoseconds(0);
+        }
+    };
+
 
 void show_menu() {
     std::cout << "\n===== Bill Management System =====\n";
@@ -85,17 +117,16 @@ void handle_import_process(const std::string& db_file) {
     int successful_files = 0;
     int failed_files = 0;
     auto total_parsing_duration = std::chrono::nanoseconds(0);
+    auto total_validation_duration = std::chrono::nanoseconds(0);
     auto total_insertion_duration = std::chrono::nanoseconds(0);
 
     DatabaseInserter inserter(db_file);
     
-    // ==========================================================
-    // == 依赖注入发生在这里 ==
-    // 1. 创建 LineValidator 实例
-    LineValidator validator;
+
+    // 1. 创建 TimingLineValidator 实例, 传入合法性检验的配置文件路径
+    TimingLineValidator validator("Validator_Config.json");
     // 2. 将 validator 注入到 Bill_Parser 的构造函数中
     Bill_Parser parser(validator);
-    // ==========================================================
 
     bool transaction_active = false;
 
@@ -107,6 +138,7 @@ void handle_import_process(const std::string& db_file) {
 
         for (const auto& file_path : files_to_process) {
             parser.reset();
+            validator.reset_duration(); // Reset timer for each new file
 
             std::vector<ParsedRecord> current_file_records;
             auto parse_start = std::chrono::high_resolution_clock::now();
@@ -118,7 +150,10 @@ void handle_import_process(const std::string& db_file) {
             );
 
             auto parse_end = std::chrono::high_resolution_clock::now();
-            total_parsing_duration += (parse_end - parse_start);
+            auto validation_duration = validator.get_duration();
+            total_validation_duration += validation_duration;
+            total_parsing_duration += (parse_end - parse_start) - validation_duration;
+
 
             if (current_file_records.empty()) {
                 std::cout << "  -> No valid records found. Skipped." << std::endl;
@@ -147,11 +182,13 @@ void handle_import_process(const std::string& db_file) {
         
         std::cout << "Timing Statistics:\n\n";
 
-        auto total_duration = total_parsing_duration + total_insertion_duration;
+        auto total_duration = total_parsing_duration + total_validation_duration + total_insertion_duration;
         double total_s = std::chrono::duration<double>(total_duration).count();
         double total_ms = std::chrono::duration<double, std::milli>(total_duration).count();
         double parsing_s = std::chrono::duration<double>(total_parsing_duration).count();
         double parsing_ms = std::chrono::duration<double, std::milli>(total_parsing_duration).count();
+        double validation_s = std::chrono::duration<double>(total_validation_duration).count();
+        double validation_ms = std::chrono::duration<double, std::milli>(total_validation_duration).count();
         double insertion_s = std::chrono::duration<double>(total_insertion_duration).count();
         double insertion_ms = std::chrono::duration<double, std::milli>(total_insertion_duration).count();
 
@@ -162,6 +199,9 @@ void handle_import_process(const std::string& db_file) {
         std::cout << "Total text parsing time: "
                   << std::setprecision(4) << parsing_s << " seconds ("
                   << std::setprecision(2) << parsing_ms << " ms)\n";
+        std::cout << "Total validation time: "
+                  << std::setprecision(4) << validation_s << " seconds ("
+                  << std::setprecision(2) << validation_ms << " ms)\n";
         std::cout << "Total database insertion time: "
                   << std::setprecision(4) << insertion_s << " seconds ("
                   << std::setprecision(2) << insertion_ms << " ms)\n";

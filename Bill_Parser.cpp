@@ -3,7 +3,6 @@
 #include <iostream>
 #include <stdexcept>
 
-// 构造函数：通过成员初始化列表设置对 validator 的引用
 Bill_Parser::Bill_Parser(const LineValidator& validator)
     : validator_(validator) {
     reset();
@@ -16,6 +15,8 @@ void Bill_Parser::reset() {
     itemCounter_ = 0;
     currentParentOrder_ = 0;
     currentChildOrder_ = 0;
+    currentParentName_ = ""; // 重置时清空
+    currentFilename_ = ""; // 在 reset 时也清空文件名
 }
 
 void Bill_Parser::parseFile(const std::string& filename, std::function<void(const ParsedRecord&)> callback) {
@@ -25,6 +26,7 @@ void Bill_Parser::parseFile(const std::string& filename, std::function<void(cons
     }
 
     reset();
+    currentFilename_ = filename; // 在解析文件前，记录下文件名
 
     std::string line;
     while (std::getline(file, line)) {
@@ -32,7 +34,6 @@ void Bill_Parser::parseFile(const std::string& filename, std::function<void(cons
     }
 }
 
-// parseLine 方法完全不变，它只是通过 validator_ 引用来调用 validate 函数
 void Bill_Parser::parseLine(const std::string& line, std::function<void(const ParsedRecord&)> callback) {
     lineNumber_++;
     
@@ -43,6 +44,9 @@ void Bill_Parser::parseLine(const std::string& line, std::function<void(const Pa
     }
 
     if (result.type == "date") {
+        //...
+        currentParentName_ = ""; // 新的日期块开始，重置父类别上下文
+        //...（其余代码不变）
         parentCounter_ = 0;
         childCounter_ = 0;
         itemCounter_ = 0;
@@ -56,6 +60,7 @@ void Bill_Parser::parseLine(const std::string& line, std::function<void(const Pa
         callback(rec);
     } 
     else if (result.type == "remark") {
+        // ...（代码不变）
         ParsedRecord rec;
         rec.type = "remark";
         rec.lineNumber = lineNumber_;
@@ -63,6 +68,7 @@ void Bill_Parser::parseLine(const std::string& line, std::function<void(const Pa
         callback(rec);
     } 
     else if (result.type == "item") {
+        // ...（代码不变）
         if (currentParentOrder_ > 0 && currentChildOrder_ > 0) {
             itemCounter_++;
             ParsedRecord rec;
@@ -79,6 +85,14 @@ void Bill_Parser::parseLine(const std::string& line, std::function<void(const Pa
         }
     } 
     else if (result.type == "child") {
+        const std::string& child_name = result.matches[0];
+        if (!validator_.is_valid_child_for_parent(currentParentName_, child_name)) {
+            throw std::runtime_error("Validation Error in file '" + currentFilename_ + 
+                                     "' on line " + std::to_string(lineNumber_) +
+                                     ": Child category '" + child_name +
+                                     "' is not a valid child for parent category '" + currentParentName_ + "'.");
+        }
+
         if (currentParentOrder_ > 0) {
             childCounter_++;
             itemCounter_ = 0;
@@ -88,7 +102,7 @@ void Bill_Parser::parseLine(const std::string& line, std::function<void(const Pa
             rec.lineNumber = lineNumber_;
             rec.order = childCounter_;
             rec.parentOrder = currentParentOrder_;
-            rec.content = result.matches[0];
+            rec.content = child_name;
             callback(rec);
         } else {
             std::cerr << "Warning: Child category on line " << lineNumber_ << " is not under a valid parent category. Skipping." << std::endl;
@@ -100,11 +114,12 @@ void Bill_Parser::parseLine(const std::string& line, std::function<void(const Pa
         itemCounter_ = 0;
         currentParentOrder_ = parentCounter_;
         currentChildOrder_ = 0;
+        currentParentName_ = result.matches[0]; // 存储当前父项目名称
         ParsedRecord rec;
         rec.type = "parent";
         rec.lineNumber = lineNumber_;
         rec.order = parentCounter_;
-        rec.content = result.matches[0];
+        rec.content = currentParentName_;
         callback(rec);
     } 
     else if (result.type == "unrecognized") {
