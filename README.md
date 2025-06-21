@@ -1,6 +1,10 @@
 # 依赖项 (Dependencies)
 
-本程序使用 [nlohmann/json](https://github.com/nlohmann/json) 库来处理 JSON 数据。
+本项目依赖于以下优秀的开源库：
+
+* **[nlohmann/json](https://github.com/nlohmann/json)**
+    * **用途**: 用于项目中所有 JSON 格式数据的解析和序列化（例如加载 `Validator_Config.json` 配置文件）。
+    * **许可证**: MIT License
 
 # 1 Bills_Master_cpp
 ## 1.1 structure
