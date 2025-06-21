@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 #include <stdexcept>
-#include "sqlite3.h"
+#include <sqlite3.h>
 
 // Forward-declare the main data structures to keep the header clean.
 // These structures will hold the queried and sorted data.
