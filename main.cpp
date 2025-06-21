@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <cctype>
+#include <sstream>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -122,10 +123,7 @@ void handle_import_process(const std::string& db_file) {
 
     DatabaseInserter inserter(db_file);
     
-
-    // 1. 创建 TimingLineValidator 实例, 传入合法性检验的配置文件路径
     TimingLineValidator validator("Validator_Config.json");
-    // 2. 将 validator 注入到 Bill_Parser 的构造函数中
     Bill_Parser parser(validator);
 
     bool transaction_active = false;
@@ -138,7 +136,7 @@ void handle_import_process(const std::string& db_file) {
 
         for (const auto& file_path : files_to_process) {
             parser.reset();
-            validator.reset_duration(); // Reset timer for each new file
+            validator.reset_duration(); 
 
             std::vector<ParsedRecord> current_file_records;
             auto parse_start = std::chrono::high_resolution_clock::now();
@@ -213,9 +211,51 @@ void handle_import_process(const std::string& db_file) {
             inserter.rollback_transaction();
         }
         
+        Colors colors;
+        std::string what_str = e.what();
+
         std::cerr << "\n----------------------------------------\n";
         std::cerr << "Import process FAILED. No data was saved to the database.\n\n";
-        std::cerr << "Error detail: " << e.what() << std::endl;
+
+        // --- 用于将单行错误消息拆分为多行以提高可读性的解析逻辑 ---
+
+        // 定义分隔符以查找错误消息的不同部分
+        const std::string line_delimiter = " on line ";
+        const std::string reason_delimiter = " is not a valid child for "; // 这是特定的，可能需要更通用的
+
+        // 查找分隔符的位置
+        size_t line_pos = what_str.find(line_delimiter);
+        size_t reason_pos = what_str.find(reason_delimiter);
+
+        // 检查字符串是否为我们可以解析的验证错误
+        if (what_str.find("Validation Error in file") != std::string::npos &&
+            line_pos != std::string::npos &&
+            reason_pos != std::string::npos)
+        {
+            // 提取消息的三个部分
+            std::string part1_file = what_str.substr(0, line_pos);
+            std::string part2_line_info = what_str.substr(line_pos, reason_pos - line_pos);
+            std::string part3_reason = what_str.substr(reason_pos);
+
+            // 用于从字符串两端修剪空格的辅助lambda
+            auto trim = [](std::string& s) {
+                s.erase(0, s.find_first_not_of(" \t\n\r"));
+                s.erase(s.find_last_not_of(" \t\n\r") + 1);
+            };
+
+            trim(part1_file);
+            trim(part2_line_info);
+            trim(part3_reason);
+
+            // 打印格式化的多行错误消息
+            std::cerr  << colors.red << "Error detail: " << colors.reset << part1_file << "\n\n";
+            std::cerr << part2_line_info << std::endl;
+            std::cerr << "Error type: "  << part3_reason << std::endl;
+        } else {
+            // 对任何其他运行时错误的回退方案
+            std::cerr << "Error detail: " <<  what_str  << std::endl;
+        }
+        
         std::cerr << "----------------------------------------\n";
     }
 }

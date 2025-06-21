@@ -1,3 +1,7 @@
+# 依赖项 (Dependencies)
+
+本程序使用 [nlohmann/json](https://github.com/nlohmann/json) 库来处理 JSON 数据。
+
 # 1 Bills_Master_cpp
 ## 1.1 structure
 ```
