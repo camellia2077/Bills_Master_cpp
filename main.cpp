@@ -77,7 +77,7 @@ void print_all_errors_for_file(const std::string& file_path, const std::vector<s
 
 void handle_validation_only_process() {
     TimingLineValidator validator("Validator_Config.json");
-    Bill_Parser parser(validator);
+    // Bill_Parser parser(validator); // This line is not needed as it's created inside the loop
     Colors colors;
 
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -119,6 +119,10 @@ void handle_validation_only_process() {
 
         bool all_files_in_batch_valid = true;
         std::cout << "\nStarting validation...\n";
+        
+        // We create the parser here, once per validation batch
+        Bill_Parser parser(validator);
+
         for (const auto& file_path : files_to_process) {
             // 新逻辑：调用parseFile并检查返回的错误列表
             std::vector<std::string> errors = parser.parseFile(file_path.string(), [](const ParsedRecord& record){
