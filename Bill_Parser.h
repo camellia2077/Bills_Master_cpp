@@ -1,31 +1,46 @@
+// Bill_Parser.h
 #ifndef BILL_PARSER_H
 #define BILL_PARSER_H
 
 #include <string>
 #include <vector>
 #include <functional>
-#include "Parsed_Record.h"
 #include "Line_Validator.h"
+
+// ParsedRecord 结构体定义，用于存储一条完整的账单记录
+struct ParsedRecord {
+    std::string date;
+    std::string parent_category;
+    std::string child_category;
+    std::string item_description;
+    double amount;
+};
 
 class Bill_Parser {
 public:
-    explicit Bill_Parser(const LineValidator& validator);
-    void parseFile(const std::string& filename, std::function<void(const ParsedRecord&)> callback);
+    explicit Bill_Parser(LineValidator& validator);
+
+    /**
+     * @brief 解析一个账单文件，收集所有记录和错误。
+     * @param file_path 要解析的文件的路径。
+     * @param handler 一个函数，用于处理解析出的有效记录。
+     * @return 一个字符串向量，包含文件中发现的所有校验错误。如果为空，则文件有效。
+     */
+    std::vector<std::string> parseFile(const std::string& file_path,
+                                       std::function<void(const ParsedRecord&)> handler);
+
+    /**
+     * @brief 重置解析器的内部状态。
+     */
     void reset();
 
 private:
-    void parseLine(const std::string& line, std::function<void(const ParsedRecord&)> callback);
-
-    const LineValidator& validator_;
-    int lineNumber_;
-    int parentCounter_;
-    int childCounter_;
-    int itemCounter_;
-
-    int currentParentOrder_;
-    int currentChildOrder_;
-    std::string currentParentName_; // 新追踪当前父项目名称
-    std::string currentFilename_; // 存储当前文件名
+    LineValidator& m_validator;
+    // 用于维持解析状态的状态机变量
+    std::string m_current_date;
+    std::string m_current_parent;
+    std::string m_current_child; // Track the current child category
+    int m_line_number;
 };
 
 #endif // BILL_PARSER_H

@@ -1,24 +1,23 @@
+// Line_Validator.cpp
 #include "Line_Validator.h"
 #include <regex>
 #include <algorithm>
 #include <cctype>
 #include <fstream>
 #include <stdexcept>
-//#include "json.hpp" // 如果要使用json.hpp文件，则可以用这个
-#include <nlohmann/json.hpp> // 确保你在编译环境中安装
+#include <nlohmann/json.hpp>
 
-// 使用 nlohmann::json 命名空间
 using json = nlohmann::json;
 
 namespace {
     const std::regex dateRegex(R"(^DATE:(\d{6})$)");
     const std::regex remarkRegex(R"(^REMARK:(.*)$)");
-    const std::regex parentRegex(R"(^([A-Z].*)$)");
+    // 父项目正则表达式保持不变，因为它能正确捕获"大写字母+汉字"或"仅大写字母"的格式
+    const std::regex parentRegex(R"(^([A-Z].*)$)"); 
     const std::regex childRegex(R"(^([a-z_]+)$)");
     const std::regex itemRegex(R"(^(\d+(?:\.\d+)?)\s*(.*)$)");
 }
 
-// 构造函数，调用 load_config
 LineValidator::LineValidator(const std::string& config_path) {
     load_config(config_path);
 }
@@ -36,16 +35,19 @@ void LineValidator::load_config(const std::string& config_path) {
     }
 }
 
+// 新增的父类别校验函数
+bool LineValidator::is_valid_parent(const std::string& parent) const {
+    return m_category_rules.count(parent) > 0;
+}
+
 bool LineValidator::is_valid_child_for_parent(const std::string& parent, const std::string& child) const {
     auto it = m_category_rules.find(parent);
     if (it == m_category_rules.end()) {
-        // 如果父类别本身在配置中未定义，则任何子类别都无效
         return false;
     }
     const auto& valid_children = it->second;
     return std::find(valid_children.begin(), valid_children.end(), child) != valid_children.end();
 }
-
 
 std::string LineValidator::trim(const std::string& s) const {
     auto start = s.begin();
@@ -80,13 +82,24 @@ ValidationResult LineValidator::validate(const std::string& line) const {
     } else if (std::regex_match(trimmedLine, matches, childRegex)) {
         result.type = "child";
     } else if (std::regex_match(trimmedLine, matches, parentRegex)) {
-        result.type = "parent";
+        // **********************MODIFIED BLOCK START**********************
+        // 捕获到可能是父项的行后，立即进行校验
+        const std::string& parent_candidate = matches[1].str();
+        if (is_valid_parent(parent_candidate)) {
+            // 如果父项在JSON配置中存在，则标记为有效的"parent"类型
+            result.type = "parent";
+        } else {
+            // 如果不存在，则标记为新的错误类型"invalid_parent"
+            result.type = "invalid_parent";
+        }
+        // **********************MODIFIED BLOCK END**********************
     } else {
         result.type = "unrecognized";
         result.matches.push_back(trimmedLine);
         return result;
     }
     
+    // 将正则表达式捕获到的内容存入matches向量
     for (size_t i = 1; i < matches.size(); ++i) {
         result.matches.push_back(matches[i].str());
     }

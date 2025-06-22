@@ -1,12 +1,12 @@
+// Database_Inserter.h
 #ifndef DATABASE_INSERTER_H
 #define DATABASE_INSERTER_H
 
-// --- 添加以下缺失的头文件 ---
 #include <string>
 #include <vector>
 #include <stdexcept>
-#include <sqlite3.h>     
-#include "Bill_Parser.h"   // 用于 ParsedRecord 结构体
+#include <sqlite3.h>
+#include "Bill_Parser.h" // Ensures ParsedRecord is available
 
 /**
  * @class DatabaseInserter
@@ -37,19 +37,18 @@ public:
      */
     void insert_data_stream(const std::vector<ParsedRecord>& records);
 
-    // 事务控制函数需要是 public 的，以便 main 函数调用
+    // Transaction control functions
     void begin_transaction();
     void commit_transaction();
     void rollback_transaction();
 
 private:
-    sqlite3* db_ = nullptr; // SQLite 数据库句柄
+    sqlite3* db_ = nullptr;
     std::string db_path_;
 
-    // 私有辅助方法
     void execute_sql(const std::string& sql);
 
-    // 禁止拷贝和赋值，确保数据库连接的唯一性
+    // Disable copying and assignment to ensure a single database connection.
     DatabaseInserter(const DatabaseInserter&) = delete;
     DatabaseInserter& operator=(const DatabaseInserter&) = delete;
 };
