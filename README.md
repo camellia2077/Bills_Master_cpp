@@ -6,7 +6,7 @@
     * **用途**: 用于项目中所有 JSON 格式数据的解析和序列化（例如加载 `Validator_Config.json` 配置文件）。
     * **许可证**: MIT License
 
-# 1 Bills_Master_cpp
+# 1 Bills_Master
 ## 1.1 structure
 ```
 /
@@ -30,4 +30,27 @@
     ├── BillReporter.h          # 声明用于生成所有报告的 BillReporter 类，并定义报告所需的数据结构。
     └── BillReporter.cpp        # 实现具体的 SQL 查询和逻辑，以格式化并显示各种分析报告。
 ```
+
+# 2 graph
+## Configuration
+
+The script reads its configuration from a `generate_report.json` file. If this file is not found or is invalid, default settings will be used.
+
+### generate_report.json` Example:
+
+```
+{
+  "font_sizes": {
+    "title": 20,
+    "axis_label": 14,
+    "tick_label": 12,
+    "bar_label": 10
+  }
+}
+```
+font_sizes: An object containing font size settings for different chart components:
+title: Font size for the main chart title.
+axis_label: Font size for the X and Y axis labels.
+tick_label: Font size for the axis tick labels.
+bar_label: Font size for the labels displayed on each bar (amount and percentage).
 
