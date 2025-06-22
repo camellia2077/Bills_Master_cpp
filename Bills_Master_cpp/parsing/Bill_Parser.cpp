@@ -13,6 +13,7 @@ void Bill_Parser::reset() {
     m_current_parent.clear();
     m_current_child.clear();
     m_line_number = 0;
+    m_state = ParserState::EXPECTING_DATE; // 初始状态：期望找到一个DATE行
 }
 
 std::vector<std::string> Bill_Parser::parseFile(
@@ -22,7 +23,6 @@ std::vector<std::string> Bill_Parser::parseFile(
     std::vector<std::string> errors;
     std::ifstream file(file_path);
     if (!file.is_open()) {
-        // 对于文件无法打开这种严重错误，我们仍然抛出异常
         throw std::runtime_error("Could not open file: " + file_path);
     }
 
@@ -33,60 +33,88 @@ std::vector<std::string> Bill_Parser::parseFile(
         m_line_number++;
         ValidationResult vr = m_validator.validate(line);
 
-        if (vr.type == "empty" || vr.type == "remark") {
+        if (vr.type == "empty") { // 空行在任何状态下都直接跳过
             continue;
         }
 
-        if (vr.type == "date") {
-            m_current_date = vr.matches[0];
-            m_current_parent.clear(); // 新日期重置父类别
-            m_current_child.clear();  // 新日期重置子类别
-        } else if (vr.type == "parent") {
-            if (m_current_date.empty()) {
-                errors.push_back("Line " + std::to_string(m_line_number) + ": Parent category '" + vr.matches[0] + "' found before any DATE line.");
-                continue; // 继续寻找下一个错误
-            }
-            m_current_parent = vr.matches[0];
-            m_current_child.clear(); // 新父类别重置子类别
-        } else if (vr.type == "child") {
-            if (m_current_parent.empty()) {
-                errors.push_back("Line " + std::to_string(m_line_number) + ": Child category '" + vr.matches[0] + "' found without a parent category.");
-                continue;
-            }
-            if (m_validator.is_valid_child_for_parent(m_current_parent, vr.matches[0])) {
-                m_current_child = vr.matches[0]; // 关系有效，设置当前子类别
-            } else {
-                errors.push_back("Line " + std::to_string(m_line_number) + ": Child category '" + vr.matches[0] + "' is not a valid child for parent '" + m_current_parent + "'.");
-                m_current_child.clear(); // 关系无效，清空
-            }
-        } else if (vr.type == "item") {
-            bool has_error = false;
-            if (m_current_date.empty()) {
-                errors.push_back("Line " + std::to_string(m_line_number) + ": Item '" + line + "' found without a DATE context.");
-                has_error = true;
-            }
-            if (m_current_parent.empty()) {
-                errors.push_back("Line " + std::to_string(m_line_number) + ": Item '" + line + "' found without a PARENT context.");
-                has_error = true;
-            }
-            if (m_current_child.empty()) {
-                errors.push_back("Line " + std::to_string(m_line_number) + ": Item '" + line + "' found without a valid CHILD context.");
-                has_error = true;
-            }
-            if(has_error) continue; // 如果有上下文错误，则不处理该条目
+        switch (m_state) {
+            case ParserState::EXPECTING_DATE:
+                if (vr.type == "date") {
+                    m_current_date = vr.matches[0];
+                    m_current_parent.clear();
+                    m_current_child.clear();
+                    m_state = ParserState::EXPECTING_REMARK; // 找到DATE，下一个必须是REMARK
+                } else {
+                    errors.push_back("Line " + std::to_string(m_line_number) + ": Expected a DATE line to start a new section, but found '" + line + "'.");
+                }
+                break;
 
-            // 如果上下文都有效，则创建记录
-            ParsedRecord record;
-            record.date = m_current_date;
-            record.parent_category = m_current_parent;
-            record.child_category = m_current_child;
-            record.amount = std::stod(vr.matches[0]);
-            record.item_description = vr.matches[1];
-            handler(record); // 将有效记录传递给处理函数
+            case ParserState::EXPECTING_REMARK:
+                if (vr.type == "remark") {
+                    m_state = ParserState::PROCESSING_CONTENT; // 找到REMARK，接下来可以处理内容了
+                    break; // 找到remark后，跳出switch，处理下一行
+                } else {
+                    // 记录错误：REMARK行缺失
+                    errors.push_back("Line " + std::to_string(m_line_number) + ": Expected a REMARK line after a DATE line, but found '" + line + "'.");
+                    // 假设REMARK只是被遗漏了，将状态推进到处理内容
+                    m_state = ParserState::PROCESSING_CONTENT;
+                }
 
-        } else if (vr.type == "unrecognized") {
-            errors.push_back("Line " + std::to_string(m_line_number) + ": Unrecognized line format: '" + vr.matches[0] + "'.");
+
+
+            case ParserState::PROCESSING_CONTENT:
+                if (vr.type == "date") { // 遇到新的DATE，开始新的循环
+                    m_current_date = vr.matches[0];
+                    m_current_parent.clear();
+                    m_current_child.clear();
+                    m_state = ParserState::EXPECTING_REMARK; // 同样，新DATE后需要一个REMARK
+                } else if (vr.type == "remark") {
+                    errors.push_back("Line " + std::to_string(m_line_number) + ": Unexpected REMARK line. A REMARK line must immediately follow a DATE line.");
+                } else if (vr.type == "parent") {
+                    m_current_parent = vr.matches[0];
+                    m_current_child.clear();
+                } else if (vr.type == "invalid_parent") {
+                    errors.push_back("Line " + std::to_string(m_line_number) + ": Invalid parent category '" + vr.matches[0] + "'.");
+                    m_current_parent.clear();
+                    m_current_child.clear();
+                } else if (vr.type == "child") {
+                    if (m_current_parent.empty()) {
+                        errors.push_back("Line " + std::to_string(m_line_number) + ": Child category '" + vr.matches[0] + "' found without a parent category.");
+                    } else if (m_validator.is_valid_child_for_parent(m_current_parent, vr.matches[0])) {
+                        m_current_child = vr.matches[0];
+                    } else {
+                        errors.push_back("Line " + std::to_string(m_line_number) + ": Child category '" + vr.matches[0] + "' is not a valid child for parent '" + m_current_parent + "'.");
+                        m_current_child.clear();
+                    }
+                } else if (vr.type == "item") {
+                    bool has_error = false;
+                    if (m_current_parent.empty()) {
+                        errors.push_back("Line " + std::to_string(m_line_number) + ": Item '" + line + "' found without a PARENT context.");
+                        has_error = true;
+                    }
+                    if (m_current_child.empty()) {
+                        errors.push_back("Line " + std::to_string(m_line_number) + ": Item '" + line + "' found without a valid CHILD context.");
+                        has_error = true;
+                    }
+                    if(has_error) continue;
+
+                    ParsedRecord record;
+                    record.date = m_current_date;
+                    record.parent_category = m_current_parent;
+                    record.child_category = m_current_child;
+                    record.amount = std::stod(vr.matches[0]);
+                    record.item_description = vr.matches[1];
+                    handler(record);
+                } else if (vr.type == "unrecognized") {
+                    errors.push_back("Line " + std::to_string(m_line_number) + ": Unrecognized line format: '" + vr.matches[0] + "'.");
+                }
+                break;
         }
+    }
+
+    // 在文件末尾进行最终状态检查
+    if (m_state == ParserState::EXPECTING_REMARK) {
+        errors.push_back("Error: File ended unexpectedly. A REMARK line was expected after the last DATE line.");
     }
 
     return errors;
