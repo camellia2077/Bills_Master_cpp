@@ -6,15 +6,8 @@
 #include <vector>
 #include <functional>
 #include "Line_Validator.h"
+#include "ParsedRecord.h"
 
-// ParsedRecord 结构体定义，用于存储一条完整的账单记录
-struct ParsedRecord {
-    std::string date;
-    std::string parent_category;
-    std::string child_category;
-    std::string item_description;
-    double amount;
-};
 
 class Bill_Parser {
 public:
