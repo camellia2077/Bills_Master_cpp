@@ -49,8 +49,12 @@ The script reads its configuration from a `generate_report.json` file. If this f
 }
 ```
 font_sizes: An object containing font size settings for different chart components:
-title: Font size for the main chart title.
-axis_label: Font size for the X and Y axis labels.
-tick_label: Font size for the axis tick labels.
-bar_label: Font size for the labels displayed on each bar (amount and percentage).
+
+title: Font size for the main chart title.主图表标题的字体大小。
+
+axis_label: Font size for the X and Y axis labels.X 轴和 Y 轴标签的字体大小。
+
+tick_label: Font size for the axis tick labels.坐标轴刻度标签的字体大小。
+
+bar_label: Font size for the labels displayed on each bar (amount and percentage).显示在每个条形上的标签（金额和百分比）的字体大小。
 
