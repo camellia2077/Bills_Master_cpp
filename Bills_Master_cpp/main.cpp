@@ -20,6 +20,7 @@
 #include "Database_Inserter.h"
 #include "Bill_Reporter.h"
 
+
 namespace fs = std::filesystem;
 struct Colors {
     const std::string red = "\033[31m";
@@ -77,12 +78,12 @@ void print_all_errors_for_file(const std::string& file_path, const std::vector<s
 
 void handle_validation_only_process() {
     TimingLineValidator validator("Validator_Config.json");
-    // Bill_Parser parser(validator); // This line is not needed as it's created inside the loop
     Colors colors;
 
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     while (true) {
+        validator.reset_duration();
         std::string user_path_str;
         std::cout << "\nEnter the path to a .txt file or directory to validate (or 'q' to return to menu): ";
         std::getline(std::cin, user_path_str);
@@ -120,11 +121,11 @@ void handle_validation_only_process() {
         bool all_files_in_batch_valid = true;
         std::cout << "\nStarting validation...\n";
         
-        // We create the parser here, once per validation batch
+        auto validation_start_time = std::chrono::high_resolution_clock::now();
+        
         Bill_Parser parser(validator);
 
         for (const auto& file_path : files_to_process) {
-            // 新逻辑：调用parseFile并检查返回的错误列表
             std::vector<std::string> errors = parser.parseFile(file_path.string(), [](const ParsedRecord& record){
                 // 在仅验证模式下，我们不需要处理有效记录
             });
@@ -136,6 +137,9 @@ void handle_validation_only_process() {
                 all_files_in_batch_valid = false;
             }
         }
+        
+        auto validation_end_time = std::chrono::high_resolution_clock::now();
+        auto total_duration = validation_end_time - validation_start_time;
 
         if (all_files_in_batch_valid) {
              std::cout << "\n----------------------------------------\n";
@@ -144,6 +148,27 @@ void handle_validation_only_process() {
         } else {
             std::cout << "\nValidation finished. Some files contained errors.\n";
         }
+
+        auto pure_validation_duration = validator.get_duration();
+        auto overhead_duration = total_duration - pure_validation_duration;
+        if (overhead_duration.count() < 0) {
+            overhead_duration = std::chrono::nanoseconds(0);
+        }
+
+        double total_sec = std::chrono::duration<double>(total_duration).count();
+        double total_ms = std::chrono::duration<double, std::milli>(total_duration).count();
+        double pure_val_sec = std::chrono::duration<double>(pure_validation_duration).count();
+        double pure_val_ms = std::chrono::duration<double, std::milli>(pure_validation_duration).count();
+        double overhead_sec = std::chrono::duration<double>(overhead_duration).count();
+        double overhead_ms = std::chrono::duration<double, std::milli>(overhead_duration).count();
+
+        std::cout << std::fixed << std::setprecision(4);
+        std::cout << "\n--------------------------------------\n";
+        std::cout << "Validation Timing Statistics:\n\n";
+        std::cout << "Total time: " << total_sec << " seconds (" << total_ms << " ms)\n";
+        std::cout << "  - Pure line validation: " << pure_val_sec << " seconds (" << pure_val_ms << " ms)\n";
+        std::cout << "  - File I/O & parsing overhead: " << overhead_sec << " seconds (" << overhead_ms << " ms)\n";
+        std::cout << "--------------------------------------\n";
     }
 }
 
@@ -171,6 +196,10 @@ void handle_import_process(const std::string& db_file) {
 
     if (files_to_process.empty()) { std::cout << "No .txt files found to process." << std::endl; return; }
 
+    auto total_start_time = std::chrono::high_resolution_clock::now();
+    std::chrono::nanoseconds parsing_duration{0};
+    std::chrono::nanoseconds db_insertion_duration{0};
+
     DatabaseInserter inserter(db_file);
     TimingLineValidator validator("Validator_Config.json");
     Bill_Parser parser(validator);
@@ -184,41 +213,56 @@ void handle_import_process(const std::string& db_file) {
         for (const auto& file_path : files_to_process) {
             std::vector<ParsedRecord> current_file_records;
             
-            // 新逻辑：调用新的解析器
-            std::vector<std::string> errors = parser.parseFile(file_path.string(), 
+            auto parsing_start = std::chrono::high_resolution_clock::now();
+            std::vector<std::string> errors = parser.parseFile(file_path.string(),
                 [&current_file_records](const ParsedRecord& record) {
                     current_file_records.push_back(record);
                 }
             );
+            auto parsing_end = std::chrono::high_resolution_clock::now();
+            parsing_duration += (parsing_end - parsing_start);
 
-            // 对于导入操作，我们仍然坚持“一旦有错，整个文件作废”的原则
             if (!errors.empty()) {
-                // 构造一个包含所有错误的详细信息并抛出异常，以回滚事务
-                std::stringstream error_stream;
-                error_stream << "Validation failed in file " << file_path.string() << " with " << errors.size() << " errors. Details:\n";
-                for(const auto& err : errors) {
-                    error_stream << "  - " << err << "\n";
-                }
-                throw std::runtime_error(error_stream.str());
+                std::cout << colors.yellow << "Warning: " << colors.reset << "File " << file_path.string()
+                          << " contains " << errors.size() << " errors. Only valid lines will be imported." << std::endl;
             }
 
             if (current_file_records.empty()) {
-                std::cout << "File " << file_path.string() << " has no records to import. Skipped." << std::endl;
+                std::cout << "File " << file_path.string() << " has no valid records to import. Skipped." << std::endl;
                 continue; 
             }
             
+            auto db_start = std::chrono::high_resolution_clock::now();
             inserter.insert_data_stream(current_file_records);
+            auto db_end = std::chrono::high_resolution_clock::now();
+            db_insertion_duration += (db_end - db_start);
         }
 
-        std::cout << "\nAll valid files processed successfully. Committing changes to the database..." << std::endl;
+        std::cout << "\nAll processable files attempted. Committing changes to the database..." << std::endl;
         inserter.commit_transaction();
         transaction_active = false;
         
-        // ... (此处可以添加成功导入的统计信息) ...
+        auto total_end_time = std::chrono::high_resolution_clock::now();
+        auto total_duration = total_end_time - total_start_time;
+
+        double total_sec = std::chrono::duration<double>(total_duration).count();
+        double total_ms = std::chrono::duration<double, std::milli>(total_duration).count();
+        double parsing_sec = std::chrono::duration<double>(parsing_duration).count();
+        double parsing_ms = std::chrono::duration<double, std::milli>(parsing_duration).count();
+        double db_sec = std::chrono::duration<double>(db_insertion_duration).count();
+        double db_ms = std::chrono::duration<double, std::milli>(db_insertion_duration).count();
+
+        std::cout << std::fixed << std::setprecision(4);
+        std::cout << "\n--------------------------------------\n";
+        std::cout << "Timing Statistics:\n\n";
+        std::cout << "Total time: " << total_sec << " seconds (" << total_ms << " ms)\n";
+        std::cout << "  - Parsing files: " << parsing_sec << " seconds (" << parsing_ms << " ms)\n";
+        std::cout << "  - Database insertion: " << db_sec << " seconds (" << db_ms << " ms)\n";
+        std::cout << "--------------------------------------\n";
 
     } catch (const std::runtime_error& e) {
         if (transaction_active) {
-            std::cerr << "\nAn error occurred. Rolling back all changes..." << std::endl;
+            std::cerr << "\nA critical error occurred. Rolling back all changes..." << std::endl;
             inserter.rollback_transaction();
         }
         std::cerr << "\nImport process FAILED. No data was saved to the database.\nError details: " << e.what() << std::endl;
