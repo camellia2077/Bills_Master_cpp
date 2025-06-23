@@ -1,25 +1,25 @@
-#include "Bill_Reporter.h"
+#include "Bill_Queries.h"
 #include <iostream>
 #include <iomanip>
 #include <numeric>
 #include <vector>
 
 // Constructor: Opens the database connection.
-BillReporter::BillReporter(const std::string& database_path) : db(nullptr), db_path(database_path) {
+BillQueries::BillQueries(const std::string& database_path) : db(nullptr), db_path(database_path) {
     if (sqlite3_open(db_path.c_str(), &db)) {
         throw std::runtime_error("Can't open database: " + std::string(sqlite3_errmsg(db)));
     }
 }
 
 // Destructor: Closes the database connection.
-BillReporter::~BillReporter() {
+BillQueries::~BillQueries() {
     if (db) {
         sqlite3_close(db);
     }
 }
 
 // Core Data Retrieval Function
-SortedData BillReporter::get_sorted_data(const std::string& year_month) {
+SortedData BillQueries::get_sorted_data(const std::string& year_month) {
     // This SQL query uses Common Table Expressions (CTEs) to first calculate the total
     // for each parent and child category. It then joins everything to fetch all
     // required data in one go, pre-sorted by the database itself.
@@ -104,7 +104,7 @@ SortedData BillReporter::get_sorted_data(const std::string& year_month) {
 
 
 // Query 1: Annual Summary
-void BillReporter::query_1(const std::string& year) {
+void BillQueries::query_1(const std::string& year) {
     const char* sql = R"(
         SELECT
             substr(ym.value, 5, 2) as month, -- FIXED: Changed year_month to value
@@ -151,7 +151,7 @@ void BillReporter::query_1(const std::string& year) {
 
 
 // Query 2: Detailed Monthly Bill
-void BillReporter::query_2(const std::string& year, const std::string& month) {
+void BillQueries::query_2(const std::string& year, const std::string& month) {
     std::string year_month = year + month;
     SortedData data = get_sorted_data(year_month);
 
@@ -184,7 +184,7 @@ void BillReporter::query_2(const std::string& year, const std::string& month) {
 
 
 // Query 3: Machine-Readable Export
-void BillReporter::query_3(const std::string& year, const std::string& month) {
+void BillQueries::query_3(const std::string& year, const std::string& month) {
     std::string year_month = year + month;
     SortedData data = get_sorted_data(year_month);
 
@@ -211,7 +211,7 @@ void BillReporter::query_3(const std::string& year, const std::string& month) {
 
 
 // Query 4: Annual Category Total
-void BillReporter::query_4(const std::string& year, const std::string& parent_category) {
+void BillQueries::query_4(const std::string& year, const std::string& parent_category) {
     const char* sql = R"(
         SELECT SUM(i.amount)
         FROM Item i
@@ -240,6 +240,5 @@ void BillReporter::query_4(const std::string& year, const std::string& parent_ca
     } else {
         std::cout << "无数据" << std::endl;
     }
-    
     sqlite3_finalize(stmt);
 }
