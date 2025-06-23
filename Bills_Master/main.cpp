@@ -16,9 +16,9 @@
 #endif
 
 #include "Line_Validator.h"
-#include "Bill_Parser.h" // 包含新的解析器头文件
+#include "Bill_Parser.h" 
 #include "Database_Inserter.h"
-#include "Bill_Reporter.h"
+#include "Bill_Queries.h"
 
 
 namespace fs = std::filesystem;
@@ -271,12 +271,12 @@ void handle_import_process(const std::string& db_file) {
 }
 
 void handle_reporting_menu(int choice, const std::string& db_file) {
-    BillReporter reporter(db_file);
+    BillQueries queries(db_file);
     std::string year, category;
     switch (choice) {
         case 2:
             std::cout << "Enter year (e.g., 2025): "; std::cin >> year;
-            reporter.query_1(year);
+            queries.query_1(year);
             break;
         case 3:
         case 4: {
@@ -286,8 +286,8 @@ void handle_reporting_menu(int choice, const std::string& db_file) {
             if (year_month_str.length() != 6 || !std::all_of(year_month_str.begin(), year_month_str.end(), ::isdigit)) {
                 std::cerr << "Error: Invalid format. Please enter exactly 6 digits." << std::endl;
             } else {
-                if (choice == 3) reporter.query_2(year_month_str.substr(0, 4), year_month_str.substr(4, 2));
-                else reporter.query_3(year_month_str.substr(0, 4), year_month_str.substr(4, 2));
+                if (choice == 3) queries.query_2(year_month_str.substr(0, 4), year_month_str.substr(4, 2));
+                else queries.query_3(year_month_str.substr(0, 4), year_month_str.substr(4, 2));
             }
             break;
         }
@@ -296,7 +296,7 @@ void handle_reporting_menu(int choice, const std::string& db_file) {
             std::cout << "Enter parent category name (e.g., MEAL吃饭): ";
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             std::getline(std::cin, category);
-            reporter.query_4(year, category);
+            queries.query_4(year, category);
             break;
     }
 }

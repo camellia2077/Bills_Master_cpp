@@ -1,5 +1,5 @@
-#ifndef BILL_REPORTER_H
-#define BILL_REPORTER_H
+#ifndef BILL_Queries_H
+#define BILL_Queries_H
 
 #include <string>
 #include <vector>
@@ -17,26 +17,26 @@ struct ParentData;
 using SortedData = std::vector<ParentData>;
 
 /**
- * @class BillReporter
+ * @class BillQueries
  * @brief Reads expense records from a SQLite database and generates analytical reports.
  */
-class BillReporter {
+class BillQueries {
 public:
     /**
-     * @brief Constructs a BillReporter object.
+     * @brief Constructs a BillQueries object.
      * @param database_path The file path to the SQLite database.
      * @throws std::runtime_error if the database cannot be opened.
      */
-    BillReporter(const std::string& database_path);
+    BillQueries(const std::string& database_path);
 
     /**
      * @brief Destructor that closes the database connection.
      */
-    ~BillReporter();
+    ~BillQueries();
 
-    // BillReporter is non-copyable to prevent issues with the database handle.
-    BillReporter(const BillReporter&) = delete;
-    BillReporter& operator=(const BillReporter&) = delete;
+    // BillQueries is non-copyable to prevent issues with the database handle.
+    BillQueries(const BillQueries&) = delete;
+    BillQueries& operator=(const BillQueries&) = delete;
 
     /**
      * @brief Query 1: Generates an annual consumption summary.
@@ -101,4 +101,4 @@ struct ParentData {
     std::vector<ChildData> children; // Sub-categories within this parent
 };
 
-#endif // BILL_REPORTER_H
+#endif // BILL_Queries_H

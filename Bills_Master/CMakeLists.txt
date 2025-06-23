@@ -4,22 +4,22 @@ cmake_minimum_required(VERSION 3.10)
 # 项目名称
 project(BillManager LANGUAGES CXX)
 
-# 设置C++标准为 C++17
-set(CMAKE_CXX_STANDARD 17)
+# 设置C++标准为 C++20
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # --- 自动查找所有源文件 ---
 file(GLOB MAIN_SRC "main.cpp") 
-file(GLOB PARSING_SOURCES "parsing/*.cpp") 
 file(GLOB DATABASE_SOURCES "database/*.cpp") 
-file(GLOB REPORTING_SOURCES "reporting/*.cpp") 
+file(GLOB PARSING_SOURCES "parsing/*.cpp") 
+file(GLOB QUERIES_SOURCES "queries/*.cpp") 
 
 # --- 添加可执行文件目标 ---
 add_executable(bill_manager
     ${MAIN_SRC}
-    ${PARSING_SOURCES}
     ${DATABASE_SOURCES}
-    ${REPORTING_SOURCES}
+    ${PARSING_SOURCES}
+    ${QUERIES_SOURCES}
 ) 
 
 # --- 添加所有模块目录到头文件搜索路径 ---
@@ -27,7 +27,7 @@ target_include_directories(bill_manager PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/common"
     "${CMAKE_CURRENT_SOURCE_DIR}/database"
     "${CMAKE_CURRENT_SOURCE_DIR}/parsing"
-    "${CMAKE_CURRENT_SOURCE_DIR}/reporting"
+    "${CMAKE_CURRENT_SOURCE_DIR}/queries"
 ) 
 
 # --- 添加高级编译和链接优化选项 ---
