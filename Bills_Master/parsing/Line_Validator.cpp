@@ -29,7 +29,7 @@ void LineValidator::load_config(const std::string& config_path) {
     }
     try {
         json data = json::parse(f);
-        m_category_rules = data.get<std::map<std::string, std::vector<std::string>>>();
+        m_category_rules = data.get<std::map<std::string, std::unordered_set<std::string>>>();
     } catch (json::parse_error& e) {
         throw std::runtime_error("JSON parse error in " + config_path + ": " + e.what());
     }
@@ -45,8 +45,8 @@ bool LineValidator::is_valid_child_for_parent(const std::string& parent, const s
     if (it == m_category_rules.end()) {
         return false;
     }
-    const auto& valid_children = it->second;
-    return std::find(valid_children.begin(), valid_children.end(), child) != valid_children.end();
+    // 使用 unordered_set::count，其时间复杂度为 O(1)
+    return it->second.count(child) > 0;
 }
 
 std::string LineValidator::trim(const std::string& s) const {
