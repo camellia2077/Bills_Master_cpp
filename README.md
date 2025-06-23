@@ -30,11 +30,12 @@
 ├── build.sh                    # 一个用于自动化清理和构建流程的 Shell 脚本。
 ├── main.cpp                    # 程序主入口，处理用户菜单交互并协调各个模块。
 │
+├── common/                     # 包含在不同模块间共享的数据结构。
+│   └── ParsedRecord.h          # 定义了用于在解析器和数据库模块间传递数据的核心结构体。
+│
 ├── database/                   # 管理所有与 SQLite 数据库的交互。
 │   ├── DatabaseInserter.h      # 声明负责创建数据库结构和插入数据的 DatabaseInserter 类。
 │   └── DatabaseInserter.cpp    # 使用事务和预备语句实现高性能的数据插入逻辑。
-├── common/                     # 包含在不同模块间共享的数据结构。
-│   └── ParsedRecord.h          # 定义了用于在解析器和数据库模块间传递数据的核心结构体。
 │
 ├── parsing/                    # 处理输入文本文件的格式验证和逻辑解析。
 │   ├── LineValidator.h         # 声明用于验证单行文本格式的 LineValidator 类。
@@ -42,9 +43,9 @@
 │   ├── Bill_Parser.h           # 声明用于解析文件整体逻辑结构的 Bill_Parser 类。
 │   └── Bill_Parser.cpp         # 实现文件解析逻辑，并调用 LineValidator 进行格式检查。
 │
-└── reporting/                  # 包含所有查询数据库和生成用户报告的逻辑。
-    ├── BillReporter.h          # 声明用于生成所有报告的 BillReporter 类，并定义报告所需的数据结构。
-    └── BillReporter.cpp        # 实现具体的 SQL 查询和逻辑，以格式化并显示各种分析报告。
+└── queriesg/                  # 包含所有查询数据库和生成用户报告的逻辑。
+    ├── Bill_Queries.h          # 声明用于生成所有报告的 BillQueries 类，并定义报告所需的数据结构。
+    └── Bill_Queries.cpp        # 实现具体的 SQL 查询和逻辑，以格式化并显示各种分析报告。
 ```
 
 # 2 graph
