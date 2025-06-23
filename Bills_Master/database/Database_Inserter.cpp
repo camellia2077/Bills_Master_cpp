@@ -107,18 +107,15 @@ void DatabaseInserter::insert_data_stream(const std::vector<ParsedRecord>& recor
     }
 
     // 1. Prepare all SQL statements once
-    sqlite3_stmt *upsert_ym_stmt = nullptr, *select_ym_id_stmt = nullptr;
-    sqlite3_stmt *upsert_parent_stmt = nullptr, *select_parent_id_stmt = nullptr;
-    sqlite3_stmt *upsert_child_stmt = nullptr, *select_child_id_stmt = nullptr;
+    sqlite3_stmt *get_or_create_ym_stmt = nullptr;
+    sqlite3_stmt *get_or_create_parent_stmt = nullptr;
+    sqlite3_stmt *get_or_create_child_stmt = nullptr;
     sqlite3_stmt *insert_item_stmt = nullptr;
 
-    const char* upsert_year_month_sql = "INSERT INTO YearMonth(value) VALUES (?) ON CONFLICT(value) DO NOTHING;";
-    const char* select_year_month_id_sql = "SELECT id FROM YearMonth WHERE value = ?;";
-    const char* upsert_parent_sql = "INSERT INTO Parent(year_month_id, order_, title) VALUES (?, ?, ?) ON CONFLICT(year_month_id, title) DO NOTHING;";
-    const char* select_parent_id_sql = "SELECT id FROM Parent WHERE year_month_id = ? AND title = ?;";
-    const char* upsert_child_sql = "INSERT INTO Child(parent_id, order_, title) VALUES (?, ?, ?) ON CONFLICT(parent_id, title) DO NOTHING;";
-    const char* select_child_id_sql = "SELECT id FROM Child WHERE parent_id = ? AND title = ?;";
-    const char* insert_item_sql = "INSERT INTO Item(child_id, order_, amount, description) VALUES (?, ?, ?, ?);";
+    const char* get_or_create_year_month_sql = "INSERT INTO YearMonth(value) VALUES (?) ON CONFLICT(value) DO UPDATE SET value=excluded.value RETURNING id;";
+    const char* get_or_create_parent_sql = "INSERT INTO Parent(year_month_id, order_, title) VALUES (?, ?, ?) ON CONFLICT(year_month_id, title) DO UPDATE SET title=excluded.title RETURNING id;";
+    const char* get_or_create_child_sql = "INSERT INTO Child(parent_id, order_, title) VALUES (?, ?, ?) ON CONFLICT(parent_id, title) DO UPDATE SET title=excluded.title RETURNING id;";
+    const char* insert_item_sql = "INSERT INTO Item(child_id, order_, amount, description) VALUES (?, ?, ?, ?);"; 
 
     #define PREPARE_STMT(db, sql, stmt_ptr) \
         if (sqlite3_prepare_v2(db, sql, -1, &stmt_ptr, nullptr) != SQLITE_OK) { \
@@ -128,12 +125,9 @@ void DatabaseInserter::insert_data_stream(const std::vector<ParsedRecord>& recor
     #define FINALIZE_STMT(stmt_ptr) if (stmt_ptr) sqlite3_finalize(stmt_ptr)
 
     try {
-        PREPARE_STMT(db_, upsert_year_month_sql, upsert_ym_stmt);
-        PREPARE_STMT(db_, select_year_month_id_sql, select_ym_id_stmt);
-        PREPARE_STMT(db_, upsert_parent_sql, upsert_parent_stmt);
-        PREPARE_STMT(db_, select_parent_id_sql, select_parent_id_stmt);
-        PREPARE_STMT(db_, upsert_child_sql, upsert_child_stmt);
-        PREPARE_STMT(db_, select_child_id_sql, select_child_id_stmt);
+        PREPARE_STMT(db_, get_or_create_year_month_sql, get_or_create_ym_stmt);
+        PREPARE_STMT(db_, get_or_create_parent_sql, get_or_create_parent_stmt);
+        PREPARE_STMT(db_, get_or_create_child_sql, get_or_create_child_stmt);
         PREPARE_STMT(db_, insert_item_sql, insert_item_stmt);
 
         // State tracking to minimize DB lookups
@@ -150,15 +144,14 @@ void DatabaseInserter::insert_data_stream(const std::vector<ParsedRecord>& recor
         for (const auto& rec : records) {
             // --- Step 1: Get/Create YearMonth ID ---
             if (rec.date != last_date) {
-                sqlite3_bind_text(upsert_ym_stmt, 1, rec.date.c_str(), -1, SQLITE_STATIC);
-                if (sqlite3_step(upsert_ym_stmt) != SQLITE_DONE) throw std::runtime_error("Failed to upsert YearMonth");
-                sqlite3_reset(upsert_ym_stmt);
-
-                sqlite3_bind_text(select_ym_id_stmt, 1, rec.date.c_str(), -1, SQLITE_STATIC);
-                if (sqlite3_step(select_ym_id_stmt) == SQLITE_ROW) {
-                    current_year_month_id = sqlite3_column_int64(select_ym_id_stmt, 0);
-                } else throw std::runtime_error("Failed to select YearMonth ID for " + rec.date);
-                sqlite3_reset(select_ym_id_stmt);
+                sqlite3_bind_text(get_or_create_ym_stmt, 1, rec.date.c_str(), -1, SQLITE_STATIC);
+                // sqlite3_step now returns SQLITE_ROW because of the RETURNING clause
+                if (sqlite3_step(get_or_create_ym_stmt) == SQLITE_ROW) {
+                    current_year_month_id = sqlite3_column_int64(get_or_create_ym_stmt, 0);
+                } else {
+                    throw std::runtime_error("Failed to get/create YearMonth ID for " + rec.date);
+                }
+                sqlite3_reset(get_or_create_ym_stmt);
                 
                 last_date = rec.date;
                 last_parent_cat = "";
@@ -168,18 +161,16 @@ void DatabaseInserter::insert_data_stream(const std::vector<ParsedRecord>& recor
             // --- Step 2: Get/Create Parent ID ---
             if (rec.parent_category != last_parent_cat) {
                 parent_order++;
-                sqlite3_bind_int64(upsert_parent_stmt, 1, current_year_month_id);
-                sqlite3_bind_int(upsert_parent_stmt, 2, parent_order);
-                sqlite3_bind_text(upsert_parent_stmt, 3, rec.parent_category.c_str(), -1, SQLITE_TRANSIENT);
-                if (sqlite3_step(upsert_parent_stmt) != SQLITE_DONE) throw std::runtime_error("Failed to upsert Parent");
-                sqlite3_reset(upsert_parent_stmt);
-
-                sqlite3_bind_int64(select_parent_id_stmt, 1, current_year_month_id);
-                sqlite3_bind_text(select_parent_id_stmt, 2, rec.parent_category.c_str(), -1, SQLITE_STATIC);
-                if (sqlite3_step(select_parent_id_stmt) == SQLITE_ROW) {
-                    current_parent_id = sqlite3_column_int64(select_parent_id_stmt, 0);
-                } else throw std::runtime_error("Failed to select Parent ID for " + rec.parent_category);
-                sqlite3_reset(select_parent_id_stmt);
+                sqlite3_bind_int64(get_or_create_parent_stmt, 1, current_year_month_id);
+                sqlite3_bind_int(get_or_create_parent_stmt, 2, parent_order);
+                sqlite3_bind_text(get_or_create_parent_stmt, 3, rec.parent_category.c_str(), -1, SQLITE_TRANSIENT);
+                
+                if (sqlite3_step(get_or_create_parent_stmt) == SQLITE_ROW) {
+                    current_parent_id = sqlite3_column_int64(get_or_create_parent_stmt, 0);
+                } else {
+                    throw std::runtime_error("Failed to get/create Parent ID for " + rec.parent_category);
+                }
+                sqlite3_reset(get_or_create_parent_stmt);
 
                 last_parent_cat = rec.parent_category;
                 last_child_cat = "";
@@ -189,18 +180,16 @@ void DatabaseInserter::insert_data_stream(const std::vector<ParsedRecord>& recor
             // --- Step 3: Get/Create Child ID ---
             if (rec.child_category != last_child_cat) {
                 child_order++;
-                sqlite3_bind_int64(upsert_child_stmt, 1, current_parent_id);
-                sqlite3_bind_int(upsert_child_stmt, 2, child_order);
-                sqlite3_bind_text(upsert_child_stmt, 3, rec.child_category.c_str(), -1, SQLITE_TRANSIENT);
-                if (sqlite3_step(upsert_child_stmt) != SQLITE_DONE) throw std::runtime_error("Failed to upsert Child");
-                sqlite3_reset(upsert_child_stmt);
-
-                sqlite3_bind_int64(select_child_id_stmt, 1, current_parent_id);
-                sqlite3_bind_text(select_child_id_stmt, 2, rec.child_category.c_str(), -1, SQLITE_STATIC);
-                if (sqlite3_step(select_child_id_stmt) == SQLITE_ROW) {
-                    current_child_id = sqlite3_column_int64(select_child_id_stmt, 0);
-                } else throw std::runtime_error("Failed to select Child ID for " + rec.child_category);
-                sqlite3_reset(select_child_id_stmt);
+                sqlite3_bind_int64(get_or_create_child_stmt, 1, current_parent_id);
+                sqlite3_bind_int(get_or_create_child_stmt, 2, child_order);
+                sqlite3_bind_text(get_or_create_child_stmt, 3, rec.child_category.c_str(), -1, SQLITE_TRANSIENT);
+                
+                if (sqlite3_step(get_or_create_child_stmt) == SQLITE_ROW) {
+                    current_child_id = sqlite3_column_int64(get_or_create_child_stmt, 0);
+                } else {
+                    throw std::runtime_error("Failed to get/create Child ID for " + rec.child_category);
+                }
+                sqlite3_reset(get_or_create_child_stmt);
                 
                 last_child_cat = rec.child_category;
                 item_order = 0;
@@ -218,16 +207,16 @@ void DatabaseInserter::insert_data_stream(const std::vector<ParsedRecord>& recor
 
     } catch (...) {
         // In case of any exception, finalize all statements before re-throwing
-        FINALIZE_STMT(upsert_ym_stmt); FINALIZE_STMT(select_ym_id_stmt);
-        FINALIZE_STMT(upsert_parent_stmt); FINALIZE_STMT(select_parent_id_stmt);
-        FINALIZE_STMT(upsert_child_stmt); FINALIZE_STMT(select_child_id_stmt);
+        FINALIZE_STMT(get_or_create_ym_stmt);
+        FINALIZE_STMT(get_or_create_parent_stmt);
+        FINALIZE_STMT(get_or_create_child_stmt);
         FINALIZE_STMT(insert_item_stmt);
         throw;
     }
 
     // Finalize all statements on successful completion
-    FINALIZE_STMT(upsert_ym_stmt); FINALIZE_STMT(select_ym_id_stmt);
-    FINALIZE_STMT(upsert_parent_stmt); FINALIZE_STMT(select_parent_id_stmt);
-    FINALIZE_STMT(upsert_child_stmt); FINALIZE_STMT(select_child_id_stmt);
+    FINALIZE_STMT(get_or_create_ym_stmt);
+    FINALIZE_STMT(get_or_create_parent_stmt);
+    FINALIZE_STMT(get_or_create_child_stmt);
     FINALIZE_STMT(insert_item_stmt);
 }
