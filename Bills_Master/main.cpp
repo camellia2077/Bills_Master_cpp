@@ -241,6 +241,7 @@ void handle_import_process(const std::string& db_file) {
         std::cout << "\nAll processable files attempted. Committing changes to the database..." << std::endl;
         inserter.commit_transaction();
         transaction_active = false;
+        std::cout << colors.green << "Successfully inserted data into the database." << colors.reset << std::endl;
         
         auto total_end_time = std::chrono::high_resolution_clock::now();
         auto total_duration = total_end_time - total_start_time;
