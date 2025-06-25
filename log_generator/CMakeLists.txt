@@ -1,36 +1,43 @@
-# CMakeLists.txt
+# CMakeLists.txt 
 
-# 最小CMake版本要求
-cmake_minimum_required(VERSION 3.10)
+# 最小CMake版本要求 
+cmake_minimum_required(VERSION 3.10) 
 
-# 定义项目名称
-project(BillGenerator CXX)
+# 定义项目名称 
+project(BillGenerator CXX) 
 
-# 设置C++标准为C++17，因为你使用了<filesystem>
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+# 设置C++标准为C++17，因为你使用了<filesystem> 
+set(CMAKE_CXX_STANDARD 17) 
+set(CMAKE_CXX_STANDARD_REQUIRED ON) 
+set(CMAKE_CXX_EXTENSIONS OFF) 
 
-# 查找 nlohmann/json 库
-# 使用 CONFIG 模式查找，这是查找通过包管理器安装的库的推荐方式
-# nlohmann_json 的 CMake 配置通常允许直接找到它
-find_package(nlohmann_json CONFIG REQUIRED)
+# --- Release Build Optimizations (GCC/Clang) ---
+# The following flags are applied only for Release builds
+# (e.g., when running `cmake .. -DCMAKE_BUILD_TYPE=Release`)
+# and only for GCC and Clang compilers.
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # -O3: The highest level of optimization. Note: This is a capital 'O', not a zero.
+    # -march=native: Optimizes the code for the specific CPU architecture of the machine you are compiling on.
+    # -flto: Enables Link-Time Optimization, allowing for optimizations across different source files.
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native -flto")
 
-# 添加可执行文件
-# generator.cpp 是你的源文件
-add_executable(generator generator.cpp)
+    # -s: Strips the executable of symbol information, significantly reducing its file size.
+    # This is a linker flag.
+    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -s")
 
-# 将 nlohmann_json 库链接到你的可执行文件
-# nlohmann_json::nlohmann_json 是 nlohmann/json 提供的目标名称
-target_link_libraries(generator PRIVATE nlohmann_json::nlohmann_json)
+    message(STATUS "Enabled GCC/Clang specific release optimizations: -O3, -march=native, -flto, -s")
+endif()
 
-# 如果你的 generator.cpp 中仍然使用 #include "json.hpp"
-# 并且你希望编译器能找到它，你可能需要手动添加其父目录到include路径
-# 但如果你已经改为 #include <nlohmann/json/json.hpp> 或者 #include <nlohmann/json.hpp>
-# 并且 find_package 已经设置好了，则不需要以下行。
-# 例如，如果json.hpp在 /mingw64/include/nlohmann/json/json.hpp
-# 那么 find_package 通常会添加 /mingw64/include 到头文件搜索路径
-# 并且你需要在代码中使用 #include <nlohmann/json/json.hpp>
-# 如果 find_package 无法正确设置，或者你需要更精确的控制，可以取消注释以下行：
-# target_include_directories(generator PRIVATE ${CMAKE_SOURCE_DIR}) # 如果json.hpp在项目根目录
-# target_include_directories(generator PRIVATE /mingw64/include) # 假设json.hpp在 /mingw64/include/nlohmann/json/json.hpp
+
+# 查找 nlohmann/json 库 
+# 使用 CONFIG 模式查找，这是查找通过包管理器安装的库的推荐方式 
+# nlohmann_json 的 CMake 配置通常允许直接找到它 
+find_package(nlohmann_json CONFIG REQUIRED) 
+
+# 添加可执行文件 
+# generator.cpp 是你的源文件 
+add_executable(generator generator.cpp) 
+
+# 将 nlohmann_json 库链接到你的可执行文件 
+# nlohmann_json::nlohmann_json 是 nlohmann/json 提供的目标名称 
+target_link_libraries(generator PRIVATE nlohmann_json::nlohmann_json) 

@@ -33,11 +33,11 @@ fi
 # 进入构建目录
 cd "$BUILD_DIR" || { echo "Error: Could not change to build directory."; exit 1; }
 
-# 运行 CMake 配置项目
+# 运行 CMake 配置项目，并指定为 Release 构建类型
 # .. 表示 CMakeLists.txt 在上一级目录 (即项目根目录)
-echo "Running CMake to configure project..."
-# 显式指定生成器为 Ninja
-cmake -G "Ninja" ..
+echo "Running CMake to configure project for a RELEASE build..."
+# 显式指定生成器为 Ninja 并设置为 Release 模式
+cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release ..
 if [ $? -ne 0 ]; then
     echo "Error: CMake configuration failed. Exiting."
     exit 1
