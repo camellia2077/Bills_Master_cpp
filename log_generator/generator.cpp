@@ -130,9 +130,74 @@ void generate_bill_file(int year, int month, const std::filesystem::path& dir_pa
 }
 
 
+// --- 帮助和版本信息函数 ---
+
+/**
+ * @brief 显示程序的版本号和最后更新时间。
+ */
+void show_version(const std::string& version, const std::string& last_update) {
+    std::cout << "generator version " << version << std::endl;
+    std::cout << "Last updated: " << last_update << std::endl;
+}
+
+/**
+ * @brief 显示程序的用法帮助信息。
+ * @param app_name 程序的可执行文件名 (argv[0])。
+ */
+void show_help(const char* app_name) {
+    // 使用 std::cerr 来输出帮助信息，这是一种常见的做法
+    std::cerr << "Usage: " << app_name << " [options] [year_duration]\n\n"
+              << "A pseudo-random bill file generator based on a JSON configuration.\n\n"
+              << "Options:\n"
+              << "  [year_duration]    (Optional) The number of years to generate bills for.\n"
+              << "                     Must be a positive integer. Defaults to 100.\n"
+              << "  -h, --help         Show this help message and exit.\n"
+              << "  --version          Show version information and exit.\n\n"
+              << "Example:\n"
+              << "  " << app_name << " 50         # Generates bills for 50 years.\n"
+              << "  " << app_name << " --help     # Shows this message.\n";
+}
+
+
 // --- 主函数 ---
 
 int main(int argc, char* argv[]) {
+    // 版本和更新信息
+    const std::string APP_VERSION = "1.1.0";
+    const std::string LAST_UPDATE = "2025-06-24";
+
+    int year_duration = 100; // Default duration
+
+    // 步骤0: 处理命令行参数 (--help, --version)
+    if (argc > 1) {
+        std::string arg1 = argv[1];
+        if (arg1 == "-h" || arg1 == "--help") {
+            show_help(argv[0]);
+            return 0;
+        }
+        if (arg1 == "--version") {
+            show_version(APP_VERSION, LAST_UPDATE);
+            return 0;
+        }
+
+        // 如果不是帮助或版本标志，则尝试将其解析为年份
+        try {
+            year_duration = std::stoi(arg1);
+            if (year_duration <= 0) {
+                std::cerr << "Warning: Year duration must be a positive integer. Using default 100 years." << std::endl;
+                year_duration = 100;
+            }
+        } catch (const std::invalid_argument& e) {
+            std::cerr << "Warning: Invalid argument '" << arg1 << "'. It is not a valid flag or number. Using default 100 years." << std::endl;
+            // Optionally, show help and exit here if the argument is invalid
+            // show_help(argv[0]);
+            // return 1;
+        } catch (const std::out_of_range& e) {
+            std::cerr << "Warning: Year duration out of range. Using default 100 years. Error: " << e.what() << std::endl;
+        }
+    }
+
+
     // 步骤1: 读取并解析 `config.json` 配置文件
     const std::string config_filename = "config.json";
     std::ifstream config_file(config_filename);
@@ -151,22 +216,7 @@ int main(int argc, char* argv[]) {
     }
     config_file.close();
 
-    // Determine the number of years to generate
     int start_year = 1900;
-    int year_duration = 100; // Default duration
-    if (argc > 1) {
-        try {
-            year_duration = std::stoi(argv[1]);
-            if (year_duration <= 0) {
-                std::cerr << "Warning: Year duration must be a positive integer. Using default 100 years." << std::endl;
-                year_duration = 100;
-            }
-        } catch (const std::invalid_argument& e) {
-            std::cerr << "Warning: Invalid year duration provided. Using default 100 years. Error: " << e.what() << std::endl;
-        } catch (const std::out_of_range& e) {
-            std::cerr << "Warning: Year duration out of range. Using default 100 years. Error: " << e.what() << std::endl;
-        }
-    }
     int end_year = start_year + year_duration - 1;
 
 
@@ -184,7 +234,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::cout << "Configuration loaded successfully, starting to generate bill files..." << std::endl;
+    std::cout << "Configuration loaded successfully, starting to generate bill files for " << year_duration << " year(s)..." << std::endl;
 
     // Start high-resolution timer
     auto start_time = std::chrono::high_resolution_clock::now();
