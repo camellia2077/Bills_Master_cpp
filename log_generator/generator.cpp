@@ -8,7 +8,7 @@
 #include <algorithm> // For std::shuffle
 #include <filesystem> // C++17
 #include <chrono>     // For high-resolution timing
-#include "json.hpp"   // nlohmann/json
+#include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 
