@@ -15,6 +15,8 @@ BillModifier::BillModifier(const nlohmann::json& config_json) {
         m_config.flags.enable_autorenewal = flags.value("enable_autorenewal", false);
         m_config.flags.enable_cleanup = flags.value("enable_cleanup", false);
         m_config.flags.enable_sorting = flags.value("enable_sorting", false);
+        // 新增：解析保留元数据的标志
+        m_config.flags.preserve_metadata_lines = flags.value("preserve_metadata_lines", false);
     }
 
     // 解析 formatting_rules
@@ -94,7 +96,7 @@ void BillModifier::_perform_initial_modifications(std::vector<std::string>& line
                 if (!found) {
                     std::stringstream ss;
                     ss << std::fixed << std::setprecision(2) << item_to_add.amount
-                       << item_to_add.description << "(auto-renewal)";
+                       << " " << item_to_add.description << "(auto-renewal)";
                     lines.insert(content_end_it, ss.str());
                     
                     // 更新范围以包含新添加的行
@@ -139,8 +141,9 @@ void BillModifier::_sum_up_line(std::string& line) {
 // --- 阶段 2: 结构化修改实现 ---
 
 std::string BillModifier::_process_structured_modifications(const std::vector<std::string>& lines) {
-    // 1. 解析成层级结构
-    std::vector<ParentItem> bill_structure = _parse_into_structure(lines);
+    // 1. 解析成层级结构，同时分离出元数据行
+    std::vector<std::string> metadata_lines;
+    std::vector<ParentItem> bill_structure = _parse_into_structure(lines, metadata_lines);
 
     // 2. 排序
     if (m_config.flags.enable_sorting) {
@@ -152,18 +155,24 @@ std::string BillModifier::_process_structured_modifications(const std::vector<st
         _cleanup_bill_structure(bill_structure);
     }
 
-    // 4. 重建为带格式的字符串
-    return _reconstruct_content_with_formatting(bill_structure);
+    // 4. 重建为带格式的字符串，并重新加入元数据行
+    return _reconstruct_content_with_formatting(bill_structure, metadata_lines);
 }
 
 
-std::vector<ParentItem> BillModifier::_parse_into_structure(const std::vector<std::string>& lines) const {
+std::vector<ParentItem> BillModifier::_parse_into_structure(const std::vector<std::string>& lines, std::vector<std::string>& metadata_lines) const {
     std::vector<ParentItem> structure;
     ParentItem* current_parent = nullptr;
     SubItem* current_sub_item = nullptr;
 
     std::vector<std::string> temp_lines;
     for(const auto& line : lines) {
+        // 如果启用保留，则检查是否是元数据行
+        if (m_config.flags.preserve_metadata_lines && _is_metadata_line(line)) {
+            metadata_lines.push_back(line);
+            continue; // 跳过，不进行结构化解析
+        }
+        
         std::string temp = line;
         if(!_trim(temp).empty()){
             temp_lines.push_back(temp);
@@ -242,10 +251,20 @@ void BillModifier::_cleanup_bill_structure(std::vector<ParentItem>& bill_structu
 }
 
 
-std::string BillModifier::_reconstruct_content_with_formatting(const std::vector<ParentItem>& bill_structure) const {
+std::string BillModifier::_reconstruct_content_with_formatting(const std::vector<ParentItem>& bill_structure, const std::vector<std::string>& metadata_lines) const {
     std::stringstream ss;
-    bool first_parent = true;
+    
+    // 在文件开头添加被保留的元数据行
+    for (const auto& meta_line : metadata_lines) {
+        ss << meta_line << "\n";
+    }
+    
+    // 如果添加了元数据并且有主要内容，则添加一个空行分隔
+    if (!metadata_lines.empty() && !bill_structure.empty()) {
+        ss << "\n";
+    }
 
+    bool first_parent = true;
     for (const auto& parent : bill_structure) {
         if (!first_parent) {
             for(int i = 0; i < m_config.formatting.lines_after_parent_section; ++i) ss << "\n";
@@ -273,6 +292,10 @@ std::string BillModifier::_reconstruct_content_with_formatting(const std::vector
 
 
 // --- 辅助函数实现 ---
+
+bool BillModifier::_is_metadata_line(const std::string& line) {
+    return line.rfind("DATE:", 0) == 0 || line.rfind("REMARK:", 0) == 0;
+}
 
 double BillModifier::_get_numeric_value_from_content(const std::string& content_line) {
     try {
