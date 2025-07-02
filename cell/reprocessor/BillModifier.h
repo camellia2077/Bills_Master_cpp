@@ -13,8 +13,7 @@ struct Config {
         bool enable_autorenewal = false;
         bool enable_cleanup = false;
         bool enable_sorting = false;
-        
-        bool preserve_metadata_lines = false; // 新增标志
+        bool preserve_metadata_lines = false;
     } flags;
 
     struct FormattingRules {
@@ -27,21 +26,20 @@ struct Config {
         double amount;
         std::string description;
     };
-    // map 的键是子类别名称（例如 "web_service"）
     std::map<std::string, std::vector<AutoRenewalItem>> auto_renewal_rules;
+
+    // 新增：用于存储元数据行前缀的列表
+    std::vector<std::string> metadata_prefixes;
 };
 
 // 用于表示账单的层级结构
-// 内容项，例如 "65.50 某些费用"
 using ContentItem = std::string;
 
-// 子项结构，例如 "web_service" 及其下的所有账单条目
 struct SubItem {
     std::string title;
     std::vector<ContentItem> contents;
 };
 
-// 父项结构，例如 "父类别A" 及其下的所有子类别
 struct ParentItem {
     std::string title;
     std::vector<SubItem> sub_items;
@@ -92,7 +90,8 @@ private:
     std::string _reconstruct_content_with_formatting(const std::vector<ParentItem>& bill_structure, const std::vector<std::string>& metadata_lines) const;
 
     // -- 辅助函数 --
-    static bool _is_metadata_line(const std::string& line);
+    // 修改：移除了 static，添加了 const
+    bool _is_metadata_line(const std::string& line) const;
     static double _get_numeric_value_from_content(const std::string& content_line);
     static bool _is_title(const std::string& line);
     static std::vector<std::string> _split_string_by_lines(const std::string& str);
