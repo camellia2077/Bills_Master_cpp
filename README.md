@@ -6,7 +6,23 @@
     * **用途**: 用于项目中所有 JSON 格式数据的解析和序列化（例如加载 `Validator_Config.json` 配置文件）。
     * **许可证**: MIT License
 
-# 1 Bills_Master_cpp
+* **[json (Python standard library)](https://docs.python.org/3/library/json.html)**
+    * **用途**: 用于加载 `generate_report.json` 配置文件，以及处理项目中涉及到的 JSON 格式数据。
+    * **许可证**: Python Software Foundation License (PSF)
+
+* **[sqlite3 (Python standard library)](https://docs.python.org/3/library/sqlite3.html)**
+    * **用途**: 用于连接到 `bills.db` SQLite 数据库，并执行 SQL 查询以获取账单数据。
+    * **许可证**: Python Software Foundation License (PSF)
+
+* **[SQLite C Library](https://www.sqlite.org/index.html)**
+    * **用途**: C++ 部分的代码直接使用 SQLite C API 进行数据库操作，包括打开/关闭数据库连接、执行 SQL 语句、准备和绑定参数等。
+    * **许可证**: Public Domain
+
+* **[Matplotlib](https://matplotlib.org/)**
+    * **用途**: 用于生成柱状图，可视化父级支出的汇总数据。
+    * **许可证**: Matplotlib License (BSD-style)
+
+# 1 Bills_Master
 ## 1.1 structure
 ```
 /
@@ -17,71 +33,45 @@
 ├── common/                     # 包含在不同模块间共享的数据结构。
 │   └── ParsedRecord.h          # 定义了用于在解析器和数据库模块间传递数据的核心结构体。
 │
+├── database/                   # 管理所有与 SQLite 数据库的交互。
+│   ├── DatabaseInserter.h      # 声明负责创建数据库结构和插入数据的 DatabaseInserter 类。
+│   └── DatabaseInserter.cpp    # 使用事务和预备语句实现高性能的数据插入逻辑。
+│
 ├── parsing/                    # 处理输入文本文件的格式验证和逻辑解析。
 │   ├── LineValidator.h         # 声明用于验证单行文本格式的 LineValidator 类。
 │   ├── LineValidator.cpp       # 使用正则表达式实现行验证的具体逻辑。
 │   ├── Bill_Parser.h           # 声明用于解析文件整体逻辑结构的 Bill_Parser 类。
 │   └── Bill_Parser.cpp         # 实现文件解析逻辑，并调用 LineValidator 进行格式检查。
 │
-├── database/                   # 管理所有与 SQLite 数据库的交互。
-│   ├── DatabaseInserter.h      # 声明负责创建数据库结构和插入数据的 DatabaseInserter 类。
-│   └── DatabaseInserter.cpp    # 使用事务和预备语句实现高性能的数据插入逻辑。
-│
-└── reporting/                  # 包含所有查询数据库和生成用户报告的逻辑。
-    ├── BillReporter.h          # 声明用于生成所有报告的 BillReporter 类，并定义报告所需的数据结构。
-    └── BillReporter.cpp        # 实现具体的 SQL 查询和逻辑，以格式化并显示各种分析报告。
+└── queriesg/                  # 包含所有查询数据库和生成用户报告的逻辑。
+    ├── Bill_Queries.h          # 声明用于生成所有报告的 BillQueries 类，并定义报告所需的数据结构。
+    └── Bill_Queries.cpp        # 实现具体的 SQL 查询和逻辑，以格式化并显示各种分析报告。
 ```
-# 2 程序结构
-## 2.1 main.cpp
+
+# 2 graph
+## Configuration
+
+The script reads its configuration from a `generate_report.json` file. If this file is not found or is invalid, default settings will be used.
+
+### generate_report.json` Example:
+
 ```
-C++ 账单管理系统 (main.cpp)
- │
- ├─ 核心依赖与数据结构
- │   ├─ ParsedRecord.h  (定义了在解析器和数据库插入器之间传递的数据结构)
- │   └─ sqlite3.h       (外部依赖：SQLite 数据库 C 语言接口)
- │
- ├─ 功能分支 1: 数据导入 (用户选择 0)
- │   │
- │   ├─ 1. 创建 LineValidator (LineValidator.h/.cpp)
- │   │   └─ 职责: 使用正则表达式验证单行文本的格式 (如 DATE, PARENT, item 等)。
- │   │
- │   ├─ 2. 创建 Bill_Parser (Bill_Parser.h/.cpp)
- │   │   │
- │   │   ├─ 依赖注入: (uses -->) LineValidator
- │   │   │   └─ Bill_Parser 在构造时接收一个 LineValidator 的引用，将验证逻辑委托给它。
- │   │   │
- │   │   └─ 工作流程:
- │   │       ├─ a. 读取 .txt 文件。
- │   │       ├─ b. 对每一行调用 LineValidator::validate()。
- │   │       └─ c. 将验证通过的行转换成一个 `ParsedRecord` 对象。
- │   │
- │   └─ 3. 创建 DatabaseInserter (DatabaseInserter.h/.cpp)
- │       │
- │       ├─ 数据流: (receives -->) std::vector<ParsedRecord>
- │       │   └─ 从 Bill_Parser 接收解析好的记录列表。
- │       │
- │       └─ 工作流程:
- │           ├─ a. 创建数据库表结构 (如果不存在)。
- │           ├─ b. 开始一个数据库事务。
- │           ├─ c. 使用高性能的预备语句 (Prepared Statements) 将 `ParsedRecord` 批量插入到 SQLite 数据库中。
- │           └─ d. 提交或回滚事务。
- │
- └─ 功能分支 2: 查询与报告 (用户选择 1-4)
-     │
-     └─ 创建 BillReporter (BillReporter.h/.cpp)
-         │
-         ├─ 依赖: (uses -->) SQLite 数据库 (bills.db)
-         │   └─ 直接连接并查询数据库以获取数据。
-         │
-         ├─ 内部数据结构:
-         │   ├─ ParentData
-         │   ├─ ChildData
-         │   └─ ItemData
-         │       └─ 用于将从数据库中查询到的扁平化数据重构成层级结构，便于报告。
-         │
-         └─ 工作流程:
-             ├─ a. 根据用户选择 (query_1, query_2, ...)，构造相应的 SQL 查询语句。
-             ├─ b. 执行 SQL 并获取结果。
-             ├─ c. 将查询结果填充到内部的层级数据结构中。
-             └─ d. 将格式化后的报告输出到控制台。
+{
+  "font_sizes": {
+    "title": 20,
+    "axis_label": 14,
+    "tick_label": 12,
+    "bar_label": 10
+  }
+}
 ```
+font_sizes: An object containing font size settings for different chart components:
+
+title: Font size for the main chart title.主图表标题的字体大小。
+
+axis_label: Font size for the X and Y axis labels.X 轴和 Y 轴标签的字体大小。
+
+tick_label: Font size for the axis tick labels.坐标轴刻度标签的字体大小。
+
+bar_label: Font size for the labels displayed on each bar (amount and percentage).显示在每个条形上的标签（金额和百分比）的字体大小。
+

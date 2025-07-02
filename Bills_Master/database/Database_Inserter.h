@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <sqlite3.h>
 #include "Bill_Parser.h" // Ensures ParsedRecord is available
+#include "ParsedRecord.h"
 
 /**
  * @class DatabaseInserter

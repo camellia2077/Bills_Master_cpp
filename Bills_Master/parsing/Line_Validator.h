@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_set>
 
 /**
  * @struct ValidationResult
@@ -39,7 +40,7 @@ public:
 private:
     void load_config(const std::string& config_path);
     std::string trim(const std::string& s) const;
-    std::map<std::string, std::vector<std::string>> m_category_rules;
+    std::map<std::string, std::unordered_set<std::string>> m_category_rules;
 };
 
 #endif // LINE_VALIDATOR_H

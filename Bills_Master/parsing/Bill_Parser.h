@@ -6,15 +6,8 @@
 #include <vector>
 #include <functional>
 #include "Line_Validator.h"
+#include "ParsedRecord.h"
 
-// ParsedRecord 结构体定义，用于存储一条完整的账单记录
-struct ParsedRecord {
-    std::string date;
-    std::string parent_category;
-    std::string child_category;
-    std::string item_description;
-    double amount;
-};
 
 class Bill_Parser {
 public:
@@ -35,12 +28,20 @@ public:
     void reset();
 
 private:
+    // 定义解析器的状态
+    enum class ParserState {
+        EXPECTING_DATE,         // 正在等待DATE行
+        EXPECTING_REMARK,       // 在DATE行之后，正在等待REMARK行
+        PROCESSING_CONTENT      // 在REMARK行之后，正在处理账单内容
+    };
+
     LineValidator& m_validator;
     // 用于维持解析状态的状态机变量
     std::string m_current_date;
     std::string m_current_parent;
-    std::string m_current_child; // Track the current child category
+    std::string m_current_child;
     int m_line_number;
+    ParserState m_state; // 使用状态机替代原有的布尔标志
 };
 
 #endif // BILL_PARSER_H
