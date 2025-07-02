@@ -15,7 +15,6 @@ BillModifier::BillModifier(const nlohmann::json& config_json) {
         m_config.flags.enable_autorenewal = flags.value("enable_autorenewal", false);
         m_config.flags.enable_cleanup = flags.value("enable_cleanup", false);
         m_config.flags.enable_sorting = flags.value("enable_sorting", false);
-        // 新增：解析保留元数据的标志
         m_config.flags.preserve_metadata_lines = flags.value("preserve_metadata_lines", false);
     }
 
@@ -41,15 +40,22 @@ BillModifier::BillModifier(const nlohmann::json& config_json) {
             }
         }
     }
+
+    // 新增：解析 metadata_prefixes
+    if (config_json.contains("metadata_prefixes") && config_json["metadata_prefixes"].is_array()) {
+        for (const auto& prefix_json : config_json["metadata_prefixes"]) {
+            if (prefix_json.is_string()) {
+                m_config.metadata_prefixes.push_back(prefix_json.get<std::string>());
+            }
+        }
+    }
 }
 
 std::string BillModifier::modify(const std::string& bill_content) {
     std::vector<std::string> lines = _split_string_by_lines(bill_content);
     
-    // 阶段 1: 初始修改 (求和, 自动续费)
     _perform_initial_modifications(lines);
     
-    // 阶段 2: 结构化修改 (排序, 清理, 格式化)
     return _process_structured_modifications(lines);
 }
 
@@ -64,25 +70,21 @@ void BillModifier::_perform_initial_modifications(std::vector<std::string>& line
     }
 
     if (m_config.flags.enable_autorenewal) {
-        // 遍历所有需要自动续费的类别
         for (const auto& pair : m_config.auto_renewal_rules) {
             const std::string& category_title = pair.first;
             const auto& items_to_add = pair.second;
 
-            // 在文件中找到该类别的标题行
             auto category_it = std::find(lines.begin(), lines.end(), category_title);
             if (category_it == lines.end()) {
-                continue; // 未找到该类别
+                continue;
             }
 
-            // 确定该类别内容的范围
             auto content_start_it = category_it + 1;
             auto content_end_it = content_start_it;
             while (content_end_it != lines.end() && !_is_title(*content_end_it) && !content_end_it->empty()) {
                 ++content_end_it;
             }
 
-            // 检查每个续费项是否已存在
             for (const auto& item_to_add : items_to_add) {
                 bool found = false;
                 for (auto it = content_start_it; it != content_end_it; ++it) {
@@ -92,14 +94,12 @@ void BillModifier::_perform_initial_modifications(std::vector<std::string>& line
                     }
                 }
 
-                // 如果不存在，则添加
                 if (!found) {
                     std::stringstream ss;
                     ss << std::fixed << std::setprecision(2) << item_to_add.amount
                        << " " << item_to_add.description << "(auto-renewal)";
                     lines.insert(content_end_it, ss.str());
                     
-                    // 更新范围以包含新添加的行
                      content_end_it = content_start_it;
                      while (content_end_it != lines.end() && !_is_title(*content_end_it) && !content_end_it->empty()) {
                          ++content_end_it;
@@ -112,8 +112,6 @@ void BillModifier::_perform_initial_modifications(std::vector<std::string>& line
 
 
 void BillModifier::_sum_up_line(std::string& line) {
-    // 正则表达式匹配以 "数字+数字..." 开头的行
-    // 例如: "25.5+30+10物业费"
     std::regex expr_regex(R"(^([\d\.\s]+\+[\d\.\s\+]+)(.*))");
     std::smatch match;
 
@@ -121,7 +119,6 @@ void BillModifier::_sum_up_line(std::string& line) {
         std::string expression = match[1].str();
         std::string description = match[2].str();
         
-        // 移除所有空格并替换+为分隔符
         expression.erase(std::remove(expression.begin(), expression.end(), ' '), expression.end());
         std::replace(expression.begin(), expression.end(), '+', ' ');
 
@@ -141,21 +138,17 @@ void BillModifier::_sum_up_line(std::string& line) {
 // --- 阶段 2: 结构化修改实现 ---
 
 std::string BillModifier::_process_structured_modifications(const std::vector<std::string>& lines) {
-    // 1. 解析成层级结构，同时分离出元数据行
     std::vector<std::string> metadata_lines;
     std::vector<ParentItem> bill_structure = _parse_into_structure(lines, metadata_lines);
 
-    // 2. 排序
     if (m_config.flags.enable_sorting) {
         _sort_bill_structure(bill_structure);
     }
 
-    // 3. 清理
     if (m_config.flags.enable_cleanup) {
         _cleanup_bill_structure(bill_structure);
     }
 
-    // 4. 重建为带格式的字符串，并重新加入元数据行
     return _reconstruct_content_with_formatting(bill_structure, metadata_lines);
 }
 
@@ -167,10 +160,9 @@ std::vector<ParentItem> BillModifier::_parse_into_structure(const std::vector<st
 
     std::vector<std::string> temp_lines;
     for(const auto& line : lines) {
-        // 如果启用保留，则检查是否是元数据行
         if (m_config.flags.preserve_metadata_lines && _is_metadata_line(line)) {
             metadata_lines.push_back(line);
-            continue; // 跳过，不进行结构化解析
+            continue;
         }
         
         std::string temp = line;
@@ -196,16 +188,16 @@ std::vector<ParentItem> BillModifier::_parse_into_structure(const std::vector<st
                 current_parent->title = line;
                 current_sub_item = nullptr;
             } else {
-                if (!current_parent) { // 如果没有父项，则创建一个
+                if (!current_parent) {
                     structure.emplace_back();
                     current_parent = &structure.back();
-                    current_parent->title = "Default Parent"; // 或其他默认名称
+                    current_parent->title = "Default Parent";
                 }
                 current_parent->sub_items.emplace_back();
                 current_sub_item = &current_parent->sub_items.back();
                 current_sub_item->title = line;
             }
-        } else { // 是内容行
+        } else {
             if (current_sub_item) {
                 current_sub_item->contents.push_back(line);
             }
@@ -222,16 +214,15 @@ void BillModifier::_sort_bill_structure(std::vector<ParentItem>& bill_structure)
                     double val_a = _get_numeric_value_from_content(a);
                     double val_b = _get_numeric_value_from_content(b);
                     if (val_a != val_b) {
-                        return val_a > val_b; // 按数字从大到小排序
+                        return val_a > val_b;
                     }
-                    return a < b; // 数字相同时按字符串升序排序
+                    return a < b;
                 });
         }
     }
 }
 
 void BillModifier::_cleanup_bill_structure(std::vector<ParentItem>& bill_structure) const {
-    // 移除没有内容的子类别
     for (auto& parent : bill_structure) {
         parent.sub_items.erase(
             std::remove_if(parent.sub_items.begin(), parent.sub_items.end(),
@@ -241,7 +232,6 @@ void BillModifier::_cleanup_bill_structure(std::vector<ParentItem>& bill_structu
             parent.sub_items.end());
     }
 
-    // 移除没有子类别的父类别
     bill_structure.erase(
         std::remove_if(bill_structure.begin(), bill_structure.end(),
             [](const ParentItem& parent) {
@@ -254,12 +244,10 @@ void BillModifier::_cleanup_bill_structure(std::vector<ParentItem>& bill_structu
 std::string BillModifier::_reconstruct_content_with_formatting(const std::vector<ParentItem>& bill_structure, const std::vector<std::string>& metadata_lines) const {
     std::stringstream ss;
     
-    // 在文件开头添加被保留的元数据行
     for (const auto& meta_line : metadata_lines) {
         ss << meta_line << "\n";
     }
     
-    // 如果添加了元数据并且有主要内容，则添加一个空行分隔
     if (!metadata_lines.empty() && !bill_structure.empty()) {
         ss << "\n";
     }
@@ -293,15 +281,22 @@ std::string BillModifier::_reconstruct_content_with_formatting(const std::vector
 
 // --- 辅助函数实现 ---
 
-bool BillModifier::_is_metadata_line(const std::string& line) {
-    return line.rfind("DATE:", 0) == 0 || line.rfind("REMARK:", 0) == 0;
+// 修改：重写函数以使用 m_config 中的前缀列表
+bool BillModifier::_is_metadata_line(const std::string& line) const {
+    // 遍历从 JSON 配置中读取的所有前缀
+    for (const auto& prefix : m_config.metadata_prefixes) {
+        // 检查行是否以其中任何一个前缀开头 (rfind a at pos 0)
+        if (line.rfind(prefix, 0) == 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 double BillModifier::_get_numeric_value_from_content(const std::string& content_line) {
     try {
         size_t pos;
         double val = std::stod(content_line, &pos);
-        // 如果行以非数字开头，stod 会返回0，pos为0
         if (pos == 0) return 0.0;
         return val;
     } catch (const std::invalid_argument&) {
@@ -311,13 +306,12 @@ double BillModifier::_get_numeric_value_from_content(const std::string& content_
 
 bool BillModifier::_is_title(const std::string& line) {
     if (line.empty()) return false;
-    // 如果行的第一个非空字符不是数字，则认为是标题
     for(char c : line){
         if(!isspace(c)){
             return !isdigit(c);
         }
     }
-    return false; // 仅包含空格的行不是标题
+    return false;
 }
 
 std::vector<std::string> BillModifier::_split_string_by_lines(const std::string& str) {

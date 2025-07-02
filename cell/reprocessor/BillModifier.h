@@ -13,6 +13,7 @@ struct Config {
         bool enable_autorenewal = false;
         bool enable_cleanup = false;
         bool enable_sorting = false;
+        
         bool preserve_metadata_lines = false; // 新增标志
     } flags;
 
