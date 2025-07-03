@@ -11,6 +11,8 @@
 #include "QueryDb.h" 
 #include "FileHandler.h"
 
+#include "version.h"
+
 namespace fs = std::filesystem;
 
 // For UTF-8 output on Windows
@@ -34,7 +36,8 @@ void print_menu() {
     std::cout << "4. Query Yearly Summary and Export\n";
     std::cout << "5. Query Monthly Details and Export\n";
     std::cout << "6. Auto-Process Full Workflow (File or Directory)\n";
-    std::cout << "7. Exit\n";
+    std::cout << "7. version\n";
+    std::cout << "8. Exit\n";
     std::cout << "=================================\n"; 
     std::cout << "Enter your choice: "; 
 }
@@ -195,7 +198,6 @@ int main() {
                     }
                     break;
                 }
-                // **MODIFIED**: Case 6 now uses the FileHandler to process batches of files.
                 case 6: {
                     std::cout << "--- Auto-Process Workflow Started ---\n";
                     std::cout << "Enter path to a source .txt file or a directory containing .txt files: ";
@@ -245,6 +247,10 @@ int main() {
                     break;
                 }
                 case 7:
+                    std::cout << "BillsMaster Version: " << AppInfo::VERSION << std::endl;
+                    std::cout << "Last Updated: " << AppInfo::LAST_UPDATED << std::endl;
+                    break;
+                case 8:
                     std::cout << "Exiting program. Goodbye!\n";
                     break;
                 default:

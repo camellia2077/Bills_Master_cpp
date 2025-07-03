@@ -48,6 +48,7 @@ target_include_directories(bill_matser_app PRIVATE
     "db_insert"
     "query"
     "FileHandler"
+    "common"
 )
 
 
