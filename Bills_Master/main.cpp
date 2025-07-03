@@ -1,7 +1,10 @@
 #include <iostream>
 #include <string>
 #include <limits>
+
+// 包含我们所有的功能模块接口
 #include "Reprocessor.h"
+#include "DataProcessor.h" 
 
 // For UTF-8 output on Windows
 #ifdef _WIN32
@@ -11,7 +14,6 @@
 // Sets up the console for proper UTF-8 character display.
 void setup_console() {
 #ifdef _WIN32
-    // This is the primary and most reliable way to enable UTF-8 in the Windows console.
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 #endif
@@ -21,7 +23,8 @@ void print_menu() {
     std::cout << "\n===== Bill Reprocessor Menu =====\n";
     std::cout << "1. Validate Bill File\n";
     std::cout << "2. Modify Bill File\n";
-    std::cout << "3. Exit\n";
+    std::cout << "3. Parse and Insert Bill to Database\n";
+    std::cout << "4. Exit\n";
     std::cout << "=================================\n";
     std::cout << "Enter your choice: ";
 }
@@ -30,14 +33,14 @@ int main() {
     setup_console();
 
     std::cout << "Welcome to the Bill Reprocessor! (UTF-8 enabled)\n";
-    std::cout << "Configuration will be loaded from the './config' directory.\n";
 
     try {
-        // Automatically use the './config' directory.
         Reprocessor reprocessor("./config");
+        // 创建 DataProcessor 实例
+        DataProcessor data_processor;
 
         int choice = 0;
-        while (choice != 3) {
+        while (choice != 4) {
             print_menu();
             std::cin >> choice;
 
@@ -49,11 +52,11 @@ int main() {
                 choice = 0; // Reset choice to continue loop
                 continue;
             }
-            
-            // Consume the rest of the line (the newline character)
+
+
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-            std::string bill_path;
+            std::string bill_path; 
 
             switch (choice) {
                 case 1: {
@@ -75,28 +78,35 @@ int main() {
                         break;
                     }
 
-                    // **MODIFIED**: Automatically generate the output path.
-                    std::string filename;
-                    // Find the last path separator ('/' or '\')
                     size_t last_slash_pos = bill_path.find_last_of("/\\");
-                    if (std::string::npos != last_slash_pos) {
-                        // If a separator is found, the filename is the substring after it.
-                        filename = bill_path.substr(last_slash_pos + 1);
-                    } else {
-                        // Otherwise, the whole path is the filename.
-                        filename = bill_path;
-                    }
-                    
+                    std::string filename = (std::string::npos != last_slash_pos) ? bill_path.substr(last_slash_pos + 1) : bill_path;
                     std::string output_path = "modified_" + filename;
 
                     reprocessor.modify_bill(bill_path, output_path);
                     break;
                 }
-                case 3:
+                case 3: {
+                    std::cout << "Enter path to bill file to parse: ";
+                    std::getline(std::cin, bill_path);
+
+                    
+                    const std::string db_path = "bills.db";// 不再询问数据库路径，而是固定使用 "bills.db"
+
+                    if (!bill_path.empty()) {
+                        std::cout << "Using database file: " << db_path << "\n";
+                        data_processor.process_and_insert(bill_path, db_path);
+                    } else {
+                        // 更新错误提示信息
+                        std::cout << "Bill file path cannot be empty.\n";
+                    }
+                    break;
+                }
+                // *** 修改结束 ***
+                case 4: // 退出选项
                     std::cout << "Exiting program. Goodbye!\n";
                     break;
                 default:
-                    std::cout << "Invalid choice. Please select 1, 2, or 3.\n";
+                    std::cout << "Invalid choice. Please select 1, 2, 3, or 4.\n";
                     break;
             }
         }
