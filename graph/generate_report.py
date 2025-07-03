@@ -2,9 +2,9 @@ import sqlite3
 import sys
 import os
 import json
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt # type: ignore
 
-# --- 实用工具函数 ---
+# --- 实用工具函数 (无变化) ---
 
 def load_config():
     """
@@ -35,16 +35,15 @@ class DatabaseManager:
     """
     一个专门用于处理数据库交互的类。
     """
+    # ==================== ↓↓↓ 这里是修改的部分 ↓↓↓ ====================
     _SQL_QUERY = """
-        SELECT p.title, SUM(i.amount) as total
-        FROM Item AS i
-        JOIN Child AS c ON i.child_id = c.id
-        JOIN Parent AS p ON c.parent_id = p.id
-        JOIN YearMonth AS ym ON p.year_month_id = ym.id
-        WHERE ym.value LIKE ?
-        GROUP BY p.title
+        SELECT parent_category, SUM(amount) as total
+        FROM transactions
+        WHERE bill_date LIKE ?
+        GROUP BY parent_category
         ORDER BY total DESC;
     """
+    # ==================== ↑↑↑ 这里是修改的部分 ↑↑↑ ====================
 
     def __init__(self, db_path: str):
         if not os.path.exists(db_path):
@@ -87,6 +86,8 @@ class DatabaseManager:
         except sqlite3.Error as e:
             print(f"数据库查询时发生错误: {e}")
             return []
+
+# --- ReportGenerator 类 和 main 函数  ---
 
 class ReportGenerator:
     """
