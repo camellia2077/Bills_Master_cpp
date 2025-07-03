@@ -9,8 +9,8 @@ public:
     // 注意：构造函数接收一个已存在的数据库连接句柄
     explicit YearlyQuery(sqlite3* db_connection);
 
-    // 显示指定年份的格式化摘要
-    void display(const std::string& year);
+    // **MODIFIED**: The method now returns the report as a string.
+    std::string generate_report(const std::string& year);
 
 private:
     sqlite3* m_db; // 不管理连接的生命周期，只使用它

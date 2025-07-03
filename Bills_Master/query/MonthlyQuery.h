@@ -26,7 +26,8 @@ class MonthlyQuery {
 public:
     explicit MonthlyQuery(sqlite3* db_connection);
 
-    void display(const std::string& month);
+    // **MODIFIED**: This method now returns the report as a string instead of printing it.
+    std::string generate_report(const std::string& month);
 
 private:
     sqlite3* m_db;
