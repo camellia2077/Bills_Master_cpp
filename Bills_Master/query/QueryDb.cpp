@@ -22,7 +22,8 @@ void QueryFacade::show_yearly_summary(const std::string& year) {
     query.display(year);
 }
 
-void QueryFacade::show_monthly_details(const std::string& month) {
+// **MODIFIED**: This method now gets the report from MonthlyQuery and returns it.
+std::string QueryFacade::get_monthly_details_report(const std::string& month) {
     MonthlyQuery query(m_db);
-    query.display(month);
+    return query.generate_report(month);
 }

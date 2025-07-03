@@ -2,11 +2,15 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
-#include <algorithm> // for std::sort
+#include <algorithm>
+#include <sstream> // **MODIFIED**: Used to build the string report
 
 MonthlyQuery::MonthlyQuery(sqlite3* db_connection) : m_db(db_connection) {}
 
-void MonthlyQuery::display(const std::string& month) {
+// **MODIFIED**: The method now builds and returns a string instead of printing to the console.
+std::string MonthlyQuery::generate_report(const std::string& month) {
+    std::stringstream ss; // Use a stringstream to build the report
+
     // 步骤 1 & 2: 从数据库获取数据并在内存中聚合 
     const char* sql = "SELECT parent_category, sub_category, amount, description, remark FROM transactions WHERE bill_date = ?;"; 
     
@@ -49,8 +53,8 @@ void MonthlyQuery::display(const std::string& month) {
     sqlite3_finalize(stmt); 
 
     if (aggregated_data.empty()) { 
-        std::cout << "\n未找到 " << month << " 月的任何数据。\n"; 
-        return; 
+        ss << "\n未找到 " << month << " 月的任何数据。\n"; 
+        return ss.str(); // Return the "not found" message
     }
 
     // 步骤 3: 排序 
@@ -72,46 +76,34 @@ void MonthlyQuery::display(const std::string& month) {
             return a.second.parent_total > b.second.parent_total; 
         });
 
-    // --- 步骤 4: 按最终格式打印 (此部分逻辑已重构) ---
-    std::cout << std::fixed << std::setprecision(2); 
-    std::cout << "\n# DATE:" << month << std::endl; 
-    std::cout << "# TOTAL:¥" << grand_total << std::endl; 
-    std::cout << "# REMARK:" << remark_text << std::endl; 
+    // --- 步骤 4: 按最终格式构建报告字符串 ---
+    ss << std::fixed << std::setprecision(2); 
+    ss << "\n# DATE:" << month << std::endl; 
+    ss << "# TOTAL:¥" << grand_total << std::endl; 
+    ss << "# REMARK:" << remark_text << std::endl; 
 
-    // 遍历排序后的父类别
     for (const auto& parent_pair : sorted_parents) { 
         const std::string& parent_name = parent_pair.first; 
         const ParentCategoryData& parent_data = parent_pair.second; 
         
-        // 打印父类别标题
-        std::cout << "\n# " << parent_name << std::endl; 
-        
-        // 计算父类别占总额的百分比
+        ss << "\n# " << parent_name << std::endl; 
         double parent_percentage = (grand_total > 0) ? (parent_data.parent_total / grand_total) * 100.0 : 0.0;
-        
-        // 打印父类别统计数据
-        std::cout << "总计：¥" << parent_data.parent_total << std::endl;
-        std::cout << "占比：" << parent_percentage << "%" << std::endl;
+        ss << "总计：¥" << parent_data.parent_total << std::endl;
+        ss << "占比：" << parent_percentage << "%" << std::endl;
 
-        // 遍历其下的子类别
         for (const auto& sub_pair : parent_data.sub_categories) { 
             const std::string& sub_name = sub_pair.first; 
             const SubCategoryData& sub_data = sub_pair.second; 
             
-            // 打印子类别标题
-            std::cout << "\n## " << sub_name << std::endl;
-            
-            // 计算子类别占父类别总额的百分比
+            ss << "\n## " << sub_name << std::endl;
             double sub_percentage = (parent_data.parent_total > 0) ? (sub_data.sub_total / parent_data.parent_total) * 100.0 : 0.0;
+            ss << "小计：¥" << sub_data.sub_total << "（占比：" << sub_percentage << "%）" << std::endl;
             
-            // 打印子类别统计数据
-            std::cout << "小计：¥" << sub_data.sub_total << "（占比：" << sub_percentage << "%）" << std::endl;
-            
-            // 遍历子类别下排好序的交易
             for (const auto& t : sub_data.transactions) { 
-                // 在交易金额前加上人民币符号
-                std::cout << "- ¥" << t.amount << " " << t.description << std::endl;
+                ss << "- ¥" << t.amount << " " << t.description << std::endl;
             }
         }
     }
+    
+    return ss.str(); // Return the completed report
 }

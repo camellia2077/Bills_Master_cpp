@@ -14,7 +14,9 @@ public:
     QueryFacade& operator=(const QueryFacade&) = delete;
 
     void show_yearly_summary(const std::string& year);
-    void show_monthly_details(const std::string& month);
+    
+    // **MODIFIED**: This method now returns the report string.
+    std::string get_monthly_details_report(const std::string& month);
 
 private:
     sqlite3* m_db;
