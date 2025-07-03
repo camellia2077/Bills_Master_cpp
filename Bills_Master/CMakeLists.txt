@@ -36,6 +36,7 @@ add_executable(
     query/QueryDb.cpp
     query/MonthlyQuery.cpp
     query/YearlyQuery.cpp
+    FileHandler/FileHandler.cpp
     
 ) 
 
@@ -46,6 +47,7 @@ target_include_directories(bill_matser_app PRIVATE
     "reprocessing"
     "db_insert"
     "query"
+    "FileHandler"
 )
 
 
