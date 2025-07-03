@@ -3,7 +3,8 @@
     "enable_summing": true,
     "enable_autorenewal": true,
     "enable_cleanup": true,
-    "enable_sorting": true
+    "enable_sorting": true,
+    "preserve_metadata_lines": true
   },
   "formatting_rules": {
     "lines_after_parent_section": 4,
@@ -17,5 +18,9 @@
         "description": "迅雷加速器"
       }
     ]
-  }
+  },
+  "metadata_prefixes": [
+    "DATE:",
+    "REMARK:"
+  ]
 }
