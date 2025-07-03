@@ -174,13 +174,25 @@ void BillValidator::_handle_sub_state(const std::string& line, int line_num, Sta
         return;
     }
 
+    // 检查子标题是否在配置中有效
     if (validation_map.count(current_parent) && validation_map.at(current_parent).count(line)) {
+        // 子标题有效，正常处理
         current_sub = line;
-        bill_structure[current_parent][current_sub] = 0; // 注册子标题，内容行为0
+        bill_structure[current_parent][current_sub] = 0; 
         current_state = State::EXPECT_CONTENT;
     } else {
+        // *** 修改逻辑从这里开始 ***
+        // 子标题无效，但我们仍然要处理它和它的内容，以防止错误级联
+
+        // 1. 报告这个错误
         errors.push_back("错误 (行 " + std::to_string(line_num) + "): 子标题 '" + line + "' 对于父级标题 '" + current_parent + "' 无效。");
-        // 保持 EXPECT_SUB 状态，等待一个有效的子标题
+        
+        // 2. 即使它无效，也将其设置为当前子标题，以便内容可以关联到它上面
+        current_sub = line;
+        bill_structure[current_parent][current_sub] = 0;
+
+        // 3. 切换到内容状态，准备处理后续的内容行
+        current_state = State::EXPECT_CONTENT;
     }
 }
 
@@ -208,7 +220,6 @@ void BillValidator::_handle_content_state(const std::string& line, int line_num,
 
     // 验证是否是内容行
     // Regex: 数字开头(可带小数), 后跟至少一个非数字非空格字符, 之后是任意数字/汉字/字母/_/-
-    // 注意: C++ std::regex 对 Unicode (如汉字) 的支持可能需要特定设置，但在主流编译器 (GCC, Clang) 上通常可以工作
     std::regex content_regex(R"(^\d+(?:\.\d+)?(?:[^\d\s].*)$)");
     if (std::regex_match(line, content_regex)) {
         bill_structure[current_parent][current_sub]++;
