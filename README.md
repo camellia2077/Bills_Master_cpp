@@ -30,13 +30,9 @@
 ├── build.sh                    # 一个用于自动化清理和构建流程的 Shell 脚本。
 ├── main.cpp                    # 程序主入口，处理用户菜单交互并协调各个模块。
 │
-├── reprocessing/                  
-│   ├── BillModifier.cpp
-│   ├── BillModifier.h
-│   ├── BillValidator.cpp       
-│   ├── BillValidator.h  
-│   ├── Reprocessor.cpp
-│   └── Reprocessor.cpp 
+├── config/
+│   ├── Modifier_Config.json
+│   └── Validator_Config.json
 │
 ├── db_insert/ 
 │   ├── DataProcessor.cpp
@@ -45,6 +41,20 @@
 │   ├── insert.h  
 │   ├── parser.cpp
 │   └── parser.cpp 
+│
+├── query/
+│   ├── query_agent.cpp
+│   └── query_agent.h
+│
+├── reprocessing/                  
+│   ├── BillModifier.cpp
+│   ├── BillModifier.h
+│   ├── BillValidator.cpp       
+│   ├── BillValidator.h  
+│   ├── Reprocessor.cpp
+│   └── Reprocessor.cpp 
+│
+
 ```
 
 # 2 graph

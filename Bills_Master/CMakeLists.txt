@@ -33,6 +33,7 @@ add_executable(
     db_insert/DataProcessor.cpp
     db_insert/insert.cpp
     db_insert/parser.cpp
+    query/query_agent.cpp
 ) 
 
 
@@ -41,6 +42,7 @@ add_executable(
 target_include_directories(bill_matser_app PRIVATE
     "reprocessing"
     "db_insert"
+    "query"
 )
 
 
