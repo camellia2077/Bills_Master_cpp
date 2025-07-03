@@ -35,6 +35,7 @@ set(SHARED_SOURCES
     query/MonthlyQuery.cpp
     query/YearlyQuery.cpp
     FileHandler/FileHandler.cpp
+    AppController/AppController.cpp
 )
 
 # 2. Create a static library from the shared source files.
@@ -48,6 +49,7 @@ target_include_directories(bill_master_lib PUBLIC
     "query"
     "FileHandler"
     "common"
+    "AppController"
 )
 
 target_link_libraries(bill_master_lib PUBLIC

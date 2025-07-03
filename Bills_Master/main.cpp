@@ -1,20 +1,9 @@
 #include <iostream>
 #include <string>
 #include <limits>
-#include <filesystem>
-#include <fstream> 
-#include <vector>
 
-// 包含我们所有的功能模块接口
-#include "Reprocessor.h"
-#include "DataProcessor.h" 
-#include "QueryDb.h" 
-#include "FileHandler.h"
-
-#include "version.h"
-#include "common_utils.h" // 颜色 
-
-namespace fs = std::filesystem;
+#include "AppController.h"
+#include "common_utils.h"
 
 // For UTF-8 output on Windows
 #ifdef _WIN32
@@ -37,7 +26,7 @@ void print_menu() {
     std::cout << "4. Query Yearly Summary and Export\n";
     std::cout << "5. Query Monthly Details and Export\n";
     std::cout << "6. Auto-Process Full Workflow (File or Directory)\n";
-    std::cout << "7. version\n";
+    std::cout << "7. Version\n";
     std::cout << "8. Exit\n";
     std::cout << "=================================\n"; 
     std::cout << "Enter your choice: "; 
@@ -45,262 +34,72 @@ void print_menu() {
 
 int main() {
     setup_console(); 
-
     std::cout << "Welcome to the Bill Reprocessor! (UTF-8 enabled)\n"; 
 
-    try {
-        Reprocessor reprocessor("./config"); 
-        DataProcessor data_processor; 
-        FileHandler file_handler;
+    AppController controller; // Create a single controller instance
 
-        int choice = 0;
-        while (choice != 8) { 
-            print_menu();
-            std::cin >> choice;
+    int choice = 0;
+    while (choice != 8) { 
+        print_menu();
+        std::cin >> choice;
 
-            if (std::cin.fail()) { 
-                std::cin.clear(); 
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
-                std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Invalid input. Please enter a number." << "\n"; 
-                choice = 0; 
-                continue; 
-            }
-
+        if (std::cin.fail()) { 
+            std::cin.clear(); 
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
+            std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Invalid input. Please enter a number." << "\n"; 
+            choice = 0; 
+            continue; 
+        }
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
 
-            std::string user_path; 
+        std::string input_str; 
 
+        try {
             switch (choice) {
-                case 1: { 
-                    std::cout << "Enter path to a .txt file or a directory for validation: ";
-                    std::getline(std::cin, user_path);
-                    if (user_path.empty()) {
-                        std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Path cannot be empty." << "\n";
-                        break;
-                    }
-
-                    try {
-                        std::vector<fs::path> files = file_handler.find_txt_files(user_path);
-                        for (const auto& file : files) {
-                            std::cout << "\n--- Validating: " << file.string() << " ---\n";
-                            reprocessor.validate_bill(file.string());
-                        }
-                    } catch (const std::runtime_error& e) {
-                        std::cerr << RED_COLOR << "Error: " << RESET_COLOR << e.what() << std::endl;
-                    }
+                case 1:
+                    std::cout << "Enter path for validation: ";
+                    std::getline(std::cin, input_str);
+                    if (!input_str.empty()) controller.handle_validation(input_str);
                     break; 
-                }
-                case 2: { 
-                    std::cout << "Enter path to a .txt file or a directory for modification: ";
-                    std::getline(std::cin, user_path);
-                    if (user_path.empty()) {
-                        std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Path cannot be empty." << "\n";
-                        break;
-                    }
-
-                    try {
-                        std::vector<fs::path> files = file_handler.find_txt_files(user_path);
-                        for (const auto& file : files) {
-                            std::string filename_stem = file.stem().string();
-                            fs::path modified_path;
-                            if (filename_stem.length() >= 4) {
-                                std::string year = filename_stem.substr(0, 4);
-                                fs::path target_dir = fs::path("txt_raw") / year;
-                                fs::create_directories(target_dir);
-                                modified_path = target_dir / file.filename();
-                            } else {
-                                std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Could not determine year from filename '" << file.filename().string() << "'. Saving in root txt_raw directory.\n";
-                                fs::path target_dir = fs::path("txt_raw");
-                                fs::create_directory(target_dir);
-                                modified_path = target_dir / file.filename();
-                            }
-                            
-                            std::cout << "\n--- Modifying: " << file.string() << " -> " << modified_path.string() << " ---\n";
-                            reprocessor.modify_bill(file.string(), modified_path.string());
-                        }
-                    } catch (const std::runtime_error& e) {
-                        std::cerr << RED_COLOR << "Error: " << RESET_COLOR << e.what() << std::endl;
-                    }
+                case 2:
+                    std::cout << "Enter path for modification: ";
+                    std::getline(std::cin, input_str);
+                    if (!input_str.empty()) controller.handle_modification(input_str);
                     break; 
-                }
-                case 3: { 
-                    std::cout << "Enter path to a .txt file or a directory to parse and insert: ";
-                    std::getline(std::cin, user_path);
-                    if (user_path.empty()) {
-                        std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Path cannot be empty." << "\n";
-                        break;
-                    }
-
-                    const std::string db_path = "bills.db";
-                    std::cout << "Using database file: " << db_path << "\n";
-
-                    try {
-                        std::vector<fs::path> files = file_handler.find_txt_files(user_path);
-                        for (const auto& file : files) {
-                            std::cout << "\n--- Processing for DB: " << file.string() << " ---\n";
-                            data_processor.process_and_insert(file.string(), db_path);
-                        }
-                    } catch (const std::runtime_error& e) {
-                        std::cerr << RED_COLOR << "Error: " << RESET_COLOR << e.what() << std::endl;
-                    }
+                case 3:
+                    std::cout << "Enter path to import to database: ";
+                    std::getline(std::cin, input_str);
+                    if (!input_str.empty()) controller.handle_import(input_str);
                     break; 
-                }
-                
-                case 4: {
-                    std::string year;
+                case 4:
                     std::cout << "Enter year to query (e.g., 2025): ";
-                    std::getline(std::cin, year);
-                    if (!year.empty()) {
-                        try {
-                            QueryFacade facade("bills.db");
-                            std::string report = facade.get_yearly_summary_report(year);
-                            std::cout << report;
-
-                            if (report.find("未找到") == std::string::npos) {
-                                try {
-                                    // MODIFIED: Path logic updated to save in a fixed "years" folder.
-                                    fs::path base_dir("markdown_bills");
-                                    fs::path target_dir = base_dir / "years";
-                                    fs::create_directories(target_dir);
-                                    fs::path output_path = target_dir / (year + ".md");
-                                    
-                                    std::ofstream output_file(output_path);
-                                    if (output_file) {
-                                        output_file << report;
-                                        output_file.close();
-                                        std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Report also saved to " << output_path.string() << "\n";
-                                    } else {
-                                        std::cerr << "\n" << RED_COLOR << "Error: " << RESET_COLOR << "Could not open file for writing: " << output_path.string() << std::endl;
-                                    }
-                                } catch (const fs::filesystem_error& e) {
-                                    std::cerr << "\n" << RED_COLOR << "Filesystem Error: " << RESET_COLOR << "while saving report: " << e.what() << std::endl;
-                                }
-                            }
-                        } catch (const std::runtime_error& e) {
-                            std::cerr << RED_COLOR << "Query Failed: " << RESET_COLOR << e.what() << std::endl;
-                        }
-                    } else {
-                        std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Year cannot be empty." << "\n";
-                    }
+                    std::getline(std::cin, input_str);
+                    if (!input_str.empty()) controller.handle_yearly_query(input_str);
                     break;
-                }
-                case 5: {
-                    std::string month;
+                case 5:
                     std::cout << "Enter month to query (e.g., 202506): ";
-                    std::getline(std::cin, month);
-                     if (!month.empty()) {
-                        try {
-                            QueryFacade facade("bills.db");
-                            std::string report = facade.get_monthly_details_report(month);
-                            std::cout << report;
-
-                            if (report.find("未找到") == std::string::npos) {
-                                fs::path output_path;
-                                if (month.length() >= 4) {
-                                    std::string year = month.substr(0, 4);
-                                    fs::path target_dir = fs::path("markdown_bills") / year;
-                                    fs::create_directories(target_dir);
-                                    output_path = target_dir / (month + ".md");
-                                } else {
-                                    fs::path target_dir = fs::path("markdown_bills");
-                                    fs::create_directory(target_dir);
-                                    output_path = target_dir / (month + ".md");
-                                }
-
-                                std::ofstream output_file(output_path);
-                                if (output_file) {
-                                    output_file << report;
-                                    output_file.close();
-                                    std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Report also saved to " << output_path.string() << "\n";
-                                } else {
-                                    std::cerr << "\n" << RED_COLOR << "Error: " << RESET_COLOR << "Could not open file for writing: " << output_path.string() << std::endl;
-                                }
-                            }
-                        } catch (const std::runtime_error& e) {
-                            std::cerr << RED_COLOR << "Query Failed: " << RESET_COLOR << e.what() << std::endl;
-                        }
-                    } else {
-                        std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Month cannot be empty." << "\n";
-                    }
+                    std::getline(std::cin, input_str);
+                     if (!input_str.empty()) controller.handle_monthly_query(input_str);
                     break;
-                }
-                case 6: {
-                    std::cout << "--- Auto-Process Workflow Started ---\n";
-                    std::cout << "Enter path to a source .txt file or a directory containing .txt files: ";
-                    std::getline(std::cin, user_path);
-                    if (user_path.empty()) {
-                        std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Path cannot be empty. Aborting." << "\n";
-                        break;
-                    }
-
-                    try {
-                        std::vector<fs::path> files = file_handler.find_txt_files(user_path);
-                        if (files.empty()) break;
-                        
-                        for (const auto& file_path : files) {
-                            std::cout << "\n========================================\n";
-                            std::cout << "Processing file: " << file_path.string() << "\n";
-                            std::cout << "========================================\n";
-                            
-                            std::cout << "\n[Step 1/3] Validating bill file...\n";
-                            if (!reprocessor.validate_bill(file_path.string())) {
-                                std::cerr << RED_COLOR << "Validation Failed" << RESET_COLOR << " for " << file_path.string() << ". Skipping this file." << "\n";
-                                continue;
-                            }
-                            std::cout << GREEN_COLOR << "Success: " << RESET_COLOR << "Validation complete." << "\n";
-                            
-                            std::string filename_stem = file_path.stem().string();
-                            fs::path modified_path;
-                            if (filename_stem.length() >= 4) {
-                                std::string year = filename_stem.substr(0, 4);
-                                fs::path target_dir = fs::path("txt_raw") / year;
-                                fs::create_directories(target_dir);
-                                modified_path = target_dir / file_path.filename();
-                            } else {
-                                std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Could not determine year from filename '" << file_path.filename().string() << "'. Saving in root txt_raw directory.\n";
-                                fs::path target_dir = fs::path("txt_raw");
-                                fs::create_directory(target_dir);
-                                modified_path = target_dir / file_path.filename();
-                            }
-                            
-                            std::cout << "\n[Step 2/3] Modifying bill file...\n";
-                            if (!reprocessor.modify_bill(file_path.string(), modified_path.string())) {
-                                std::cerr << RED_COLOR << "Modification Failed" << RESET_COLOR << " for " << file_path.string() << ". Skipping this file." << "\n";
-                                continue;
-                            }
-                            std::cout << GREEN_COLOR << "Success: " << RESET_COLOR << "Modification complete. Modified file saved to '" << modified_path.string() << "'.\n";
-                            
-                            std::cout << "\n[Step 3/3] Parsing and inserting into database...\n";
-                            const std::string db_path = "bills.db";
-                            if (data_processor.process_and_insert(modified_path.string(), db_path)) {
-                                std::cout << GREEN_COLOR << "Success: " << RESET_COLOR << "Database import complete for this file." << "\n";
-                            } else {
-                                std::cerr << RED_COLOR << "Database Import Failed" << RESET_COLOR << " for this file." << "\n";
-                            }
-                        }
-                        std::cout << "\n--- Auto-Process Workflow Finished for all processed files ---\n";
-
-                    } catch (const std::runtime_error& e) {
-                        std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "An error occurred during the workflow: " << e.what() << std::endl;
-                    }
+                case 6:
+                    std::cout << "Enter path for the full workflow: ";
+                    std::getline(std::cin, input_str);
+                    if (!input_str.empty()) controller.handle_full_workflow(input_str);
                     break;
-                }
                 case 7:
-                    std::cout << "BillsMaster Version: " << AppInfo::VERSION << std::endl;
-                    std::cout << "Last Updated: " << AppInfo::LAST_UPDATED << std::endl;
+                    controller.display_version();
                     break;
                 case 8:
                     std::cout << "Exiting program. Goodbye!\n";
-                    return 0; // Exit the loop and program
+                    break;
                 default:
                     std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Invalid choice. Please select a number from the menu." << "\n"; 
                     break;
             }
+        } catch (const std::exception& e) {
+            // This catch block handles exceptions from the controller
+            std::cerr << "\n" << RED_COLOR << "An unexpected error occurred: " << RESET_COLOR << e.what() << std::endl;
         }
-    } catch (const std::runtime_error& e) {
-        std::cerr << "\n" << RED_COLOR << "Critical Error: " << RESET_COLOR << e.what() << std::endl; 
-        return 1; 
     }
-
     return 0; 
 }
