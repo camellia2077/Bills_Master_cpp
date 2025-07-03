@@ -33,7 +33,10 @@ add_executable(
     db_insert/DataProcessor.cpp
     db_insert/insert.cpp
     db_insert/parser.cpp
-    query/query_agent.cpp
+    query/QueryDb.cpp
+    query/MonthlyQuery.cpp
+    query/YearlyQuery.cpp
+    
 ) 
 
 
