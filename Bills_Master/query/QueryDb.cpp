@@ -17,12 +17,13 @@ QueryFacade::~QueryFacade() {
     }
 }
 
-void QueryFacade::show_yearly_summary(const std::string& year) {
+// **MODIFIED**: This method now gets the report from YearlyQuery and returns it.
+std::string QueryFacade::get_yearly_summary_report(const std::string& year) {
     YearlyQuery query(m_db);
-    query.display(year);
+    return query.generate_report(year);
 }
 
-// **MODIFIED**: This method now gets the report from MonthlyQuery and returns it.
+// This method gets the report from MonthlyQuery and returns it.
 std::string QueryFacade::get_monthly_details_report(const std::string& month) {
     MonthlyQuery query(m_db);
     return query.generate_report(month);

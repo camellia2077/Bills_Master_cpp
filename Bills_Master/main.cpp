@@ -2,7 +2,7 @@
 #include <string>
 #include <limits>
 #include <filesystem>
-#include <fstream> // **MODIFIED**: Added for file output stream
+#include <fstream> 
 
 // 包含我们所有的功能模块接口
 #include "Reprocessor.h"
@@ -27,8 +27,9 @@ void print_menu() {
     std::cout << "1. Validate Bill File\n"; 
     std::cout << "2. Modify Bill File\n"; 
     std::cout << "3. Parse and Insert Bill to Database\n"; 
-    std::cout << "4. Query Yearly Summary and Export \n";
-    std::cout << "5. Query Monthly Details\n";
+    // **MODIFIED**: Menu text updated to reflect export functionality.
+    std::cout << "4. Query Yearly Summary and Export\n";
+    std::cout << "5. Query Monthly Details and Export\n";
     std::cout << "6. Auto-Process Full Workflow\n";
     std::cout << "7. Exit\n";
     std::cout << "=================================\n"; 
@@ -118,7 +119,37 @@ int main() {
                     if (!year.empty()) {
                         try {
                             QueryFacade facade("bills.db");
-                            facade.show_yearly_summary(year);
+                            std::string report = facade.get_yearly_summary_report(year);
+
+                            // Print the report to the console.
+                            std::cout << report;
+
+                            // Save the report to a file if data was found.
+                            if (report.find("未找到") == std::string::npos) {
+                                try {
+                                    // **MODIFIED**: Path logic corrected as per user feedback.
+                                    // Construct path: markdown_bills/year/
+                                    std::filesystem::path base_dir("markdown_bills");
+                                    std::filesystem::path target_dir = base_dir / "year";
+
+                                    // Create the directory markdown_bills/year/
+                                    std::filesystem::create_directories(target_dir);
+
+                                    // Construct full file path: markdown_bills/year/YYYY.md
+                                    std::filesystem::path output_path = target_dir / (year + ".md");
+                                    
+                                    std::ofstream output_file(output_path);
+                                    if (output_file) {
+                                        output_file << report;
+                                        output_file.close();
+                                        std::cout << "\n--- Report also saved to " << output_path.string() << " ---\n";
+                                    } else {
+                                        std::cerr << "\nError: Could not open file for writing: " << output_path.string() << std::endl;
+                                    }
+                                } catch (const std::filesystem::filesystem_error& e) {
+                                    std::cerr << "\nFilesystem error while saving report: " << e.what() << std::endl;
+                                }
+                            }
                         } catch (const std::runtime_error& e) {
                             std::cerr << "Query failed: " << e.what() << std::endl;
                         }
@@ -134,7 +165,6 @@ int main() {
                      if (!month.empty()) {
                         try {
                             QueryFacade facade("bills.db");
-                            // **MODIFIED**: Get the report string from the facade.
                             std::string report = facade.get_monthly_details_report(month);
 
                             // Print the report to the console.
