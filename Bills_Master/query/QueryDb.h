@@ -13,9 +13,10 @@ public:
     QueryFacade(const QueryFacade&) = delete;
     QueryFacade& operator=(const QueryFacade&) = delete;
 
-    void show_yearly_summary(const std::string& year);
-    
     // **MODIFIED**: This method now returns the report string.
+    std::string get_yearly_summary_report(const std::string& year);
+    
+    // This method already returns the report string.
     std::string get_monthly_details_report(const std::string& month);
 
 private:
