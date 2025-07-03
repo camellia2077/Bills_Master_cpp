@@ -43,8 +43,12 @@
 │   └── parser.cpp 
 │
 ├── query/
-│   ├── query_agent.cpp
-│   └── query_agent.h
+│   ├── MonthlyQuery.cpp
+│   ├── MonthlyQuery.h
+│   ├── QueryDb.cpp       
+│   ├── QueryDb.h 
+│   ├── YearlyQuery.cpp
+│   └── YearlyQuery.h
 │
 ├── reprocessing/                  
 │   ├── BillModifier.cpp
