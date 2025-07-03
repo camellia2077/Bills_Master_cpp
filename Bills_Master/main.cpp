@@ -26,8 +26,9 @@ void print_menu() {
     std::cout << "4. Query Yearly Summary and Export\n";
     std::cout << "5. Query Monthly Details and Export\n";
     std::cout << "6. Auto-Process Full Workflow (File or Directory)\n";
-    std::cout << "7. Version\n";
-    std::cout << "8. Exit\n";
+    std::cout << "7. Export All Reports from Database\n";
+    std::cout << "8. Version\n";
+    std::cout << "9. Exit\n";
     std::cout << "=================================\n"; 
     std::cout << "Enter your choice: "; 
 }
@@ -39,7 +40,7 @@ int main() {
     AppController controller; // Create a single controller instance
 
     int choice = 0;
-    while (choice != 8) { 
+    while (choice != 9) { 
         print_menu();
         std::cin >> choice;
 
@@ -86,10 +87,13 @@ int main() {
                     std::getline(std::cin, input_str);
                     if (!input_str.empty()) controller.handle_full_workflow(input_str);
                     break;
-                case 7:
+                case 7: 
+                    controller.handle_export_all();
+                    break;
+                case 8: 
                     controller.display_version();
                     break;
-                case 8:
+                case 9: 
                     std::cout << "Exiting program. Goodbye!\n";
                     break;
                 default:

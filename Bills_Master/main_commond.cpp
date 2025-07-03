@@ -23,6 +23,7 @@ void print_help(const char* program_name) {
     std::cout << "Usage: " << program_name << " <command> [arguments...]\n\n";
     std::cout << "Commands:\n";
     std::cout << "  process, -p <path>          Run the full workflow (validate, modify, import) on a file or directory.\n";
+    std::cout << "  export-all, -ea             Export all yearly and monthly reports from the database.\n"; // MODIFIED: New command
     std::cout << "  validate, -v <path>         Validate a .txt bill file or all .txt files in a directory.\n";
     std::cout << "  modify, -m <path>           Modify a .txt file or all .txt files in a directory.\n";
     std::cout << "  import, -i <path>           Parse and insert a .txt file or a directory of .txt files into the database.\n";
@@ -50,6 +51,9 @@ int main(int argc, char* argv[]) {
         } 
         else if (command == "--version" || command == "-V") {
             controller.display_version();
+        }
+        else if (command == "export-all" || command == "-ea") { 
+            controller.handle_export_all();
         }
         else if (command == "process" || command == "-p") {
             if (argc < 3) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path argument for 'process' command.\n"; return 1; }
