@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <limits>
+#include <filesystem> // **MODIFIED**: Added for directory creation
 
 // 包含我们所有的功能模块接口
 #include "Reprocessor.h"
@@ -27,7 +28,8 @@ void print_menu() {
     std::cout << "3. Parse and Insert Bill to Database\n"; 
     std::cout << "4. Query Yearly Summary\n";
     std::cout << "5. Query Monthly Details\n";
-    std::cout << "6. Exit\n";
+    std::cout << "6. Auto-Process Full Workflow\n"; // **MODIFIED**: New option added
+    std::cout << "7. Exit\n"; // **MODIFIED**: Exit option number changed
     std::cout << "=================================\n"; 
     std::cout << "Enter your choice: "; 
 }
@@ -42,7 +44,7 @@ int main() {
         DataProcessor data_processor; 
 
         int choice = 0;
-        while (choice != 6) { 
+        while (choice != 7) { // **MODIFIED**: Loop condition updated for new exit option
             print_menu();
             std::cin >> choice;
 
@@ -78,9 +80,17 @@ int main() {
                         break; 
                     }
 
+                    const std::string output_dir = "txt_raw";
+                    try {
+                        std::filesystem::create_directory(output_dir);
+                    } catch (const std::exception& e) {
+                        std::cerr << "Error: Could not create directory '" << output_dir << "'. " << e.what() << std::endl;
+                        break;
+                    }
+
                     size_t last_slash_pos = bill_path.find_last_of("/\\"); 
                     std::string filename = (std::string::npos != last_slash_pos) ? bill_path.substr(last_slash_pos + 1) : bill_path; 
-                    std::string output_path = "modified_" + filename; 
+                    std::string output_path = output_dir + "/" + filename; 
 
                     reprocessor.modify_bill(bill_path, output_path); 
                     break; 
@@ -100,7 +110,6 @@ int main() {
                     break; 
                 }
                 
-                // *** MODIFIED: 使用新的 QueryFacade ***
                 case 4: {
                     std::string year;
                     std::cout << "Enter year to query (e.g., 2025): ";
@@ -133,7 +142,55 @@ int main() {
                     }
                     break;
                 }
-                case 6: 
+                // **MODIFIED**: New case for the automated workflow
+                case 6: {
+                    std::cout << "--- Auto-Process Workflow Started ---\n";
+                    std::cout << "Enter path to the source bill file: ";
+                    std::getline(std::cin, bill_path);
+
+                    if (bill_path.empty()) {
+                        std::cout << "Source bill file path cannot be empty. Aborting.\n";
+                        break;
+                    }
+
+                    // --- Step 1: Validation ---
+                    std::cout << "\n[Step 1/3] Validating bill file...\n";
+                    if (!reprocessor.validate_bill(bill_path)) {
+                        std::cerr << "Validation failed. Aborting workflow.\n";
+                        break; // Exit if validation fails
+                    }
+                    std::cout << "Validation successful.\n";
+
+                    // --- Step 2: Modification ---
+                    std::cout << "\n[Step 2/3] Modifying bill file...\n";
+                    const std::string output_dir = "txt_raw";
+                    std::string output_path; 
+                    try {
+                        std::filesystem::create_directory(output_dir);
+                        size_t last_slash_pos = bill_path.find_last_of("/\\");
+                        std::string filename = (std::string::npos != last_slash_pos) ? bill_path.substr(last_slash_pos + 1) : bill_path;
+                        output_path = output_dir + "/" + filename;
+                    } catch (const std::exception& e) {
+                        std::cerr << "Error preparing for modification: " << e.what() << ". Aborting workflow.\n";
+                        break;
+                    }
+
+                    if (!reprocessor.modify_bill(bill_path, output_path)) {
+                        std::cerr << "Modification failed. Aborting workflow.\n";
+                        break; // Exit if modification fails
+                    }
+                    std::cout << "Modification successful. Modified file saved to '" << output_path << "'.\n";
+                    
+                    // --- Step 3: Database Insertion ---
+                    std::cout << "\n[Step 3/3] Parsing and inserting into database...\n";
+                    const std::string db_path = "bills.db";
+                    data_processor.process_and_insert(output_path, db_path);
+                    std::cout << "Database insertion process completed.\n";
+
+                    std::cout << "\n--- Auto-Process Workflow Finished ---\n";
+                    break;
+                }
+                case 7: // **MODIFIED**: Exit case number changed
                     std::cout << "Exiting program. Goodbye!\n";
                     break;
                 default:
