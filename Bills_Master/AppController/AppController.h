@@ -1,6 +1,7 @@
 #ifndef APP_CONTROLLER_H
 #define APP_CONTROLLER_H
 
+#include "ProcessStats.h" // Include the new stats helper
 #include <string>
 
 /**
@@ -42,19 +43,28 @@ public:
     /**
      * @brief Handles querying and exporting a yearly summary report.
      * @param year The 4-digit year to query.
+     * @param is_part_of_export_all Suppresses console output when true.
+     * @return True on success, false on failure.
      */
-    void handle_yearly_query(const std::string& year);
+    bool handle_yearly_query(const std::string& year, bool is_part_of_export_all = false);
 
     /**
      * @brief Handles querying and exporting a monthly details report.
      * @param month The 6-digit month to query (YYYYMM).
+     * @param is_part_of_export_all Suppresses console output when true.
+     * @return True on success, false on failure.
      */
-    void handle_monthly_query(const std::string& month);
+    bool handle_monthly_query(const std::string& month, bool is_part_of_export_all = false);
 
     /**
      * @brief Displays the application's version information.
      */
     void display_version();
+
+    /**
+     * @brief Handles exporting all yearly and monthly reports from the database.
+     */
+    void handle_export_all();
 };
 
 #endif // APP_CONTROLLER_H

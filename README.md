@@ -24,40 +24,49 @@
 
 # 1 Bills_Master
 ## 1.1 structure
-```
+```AppController
+/
 /
 ├── CMakeLists.txt              # 管理整个项目的构建过程，配置编译器和链接器选项。
 ├── build.sh                    # 一个用于自动化清理和构建流程的 Shell 脚本。
 ├── main.cpp                    # 程序主入口，处理用户菜单交互并协调各个模块。
 │
-├── config/
-│   ├── Modifier_Config.json
-│   └── Validator_Config.json
+├── AppController/              # 应用主控制器模块，负责核心业务流程的调度。
+│   ├── AppController.cpp       # 实现应用控制器的具体逻辑，调用其他模块完成任务。
+│   ├── AppController.h         # 定义应用控制器类，提供各项功能的高级接口。
+│   └── ProcessStats.h          # 定义一个用于统计成功和失败操作数量的辅助结构体。
 │
-├── db_insert/ 
-│   ├── DataProcessor.cpp
-│   ├── DataProcesso.h
-│   ├── insert.cpp       
-│   ├── insert.h  
-│   ├── parser.cpp
-│   └── parser.cpp 
+├── common/                     # 存放通用工具和全局定义。
+│   ├── common_utils.h          # 定义控制台输出文本时使用的颜色代码。
+│   └── version.h               # 定义程序的版本号和最后更新日期。
 │
-├── query/
-│   ├── MonthlyQuery.cpp
-│   ├── MonthlyQuery.h
-│   ├── QueryDb.cpp       
-│   ├── QueryDb.h 
-│   ├── YearlyQuery.cpp
-│   └── YearlyQuery.h
+├── config/                     # 存放应用的JSON配置文件。
+│   ├── Modifier_Config.json    # 为账单修改器提供规则，如自动续费、排序等。
+│   └── Validator_Config.json   # 为账单验证器提供规则，如合法的父标题和子标题。
 │
-├── reprocessing/                  
-│   ├── BillModifier.cpp
-│   ├── BillModifier.h
-│   ├── BillValidator.cpp       
-│   ├── BillValidator.h  
-│   ├── Reprocessor.cpp
-│   └── Reprocessor.cpp 
+├── db_insert/                  # 数据库插入模块，负责解析文件并存入数据库。
+│   ├── DataProcessor.cpp       # 实现 DataProcessor 类的逻辑，封装解析和插入的流程。
+│   ├── DataProcessor.h         # 定义 DataProcessor 类，为解析和插入过程提供一个简化的接口。
+│   ├── insert.cpp              # 实现数据库插入逻辑，管理SQLite事务和语句执行。
+│   ├── insert.h                # 定义 BillInserter 类，负责将解析后的数据写入数据库。
+│   ├── parser.cpp              # 实现文件解析逻辑，将账单文本转换为结构化数据。
+│   └── parser.h                # 定义 BillParser 类和数据结构（如 Transaction），用于解析账单文件。
 │
+├── query/                      # 数据库查询模块，负责从数据库中读取数据并生成报告。
+│   ├── MonthlyQuery.cpp        # 实现按月查询的逻辑，从数据库获取详细交易并格式化为报告。
+│   ├── MonthlyQuery.h          # 定义 MonthlyQuery 类，用于生成单月详细账单报告。
+│   ├── QueryDb.cpp             # 实现查询门面，管理只读数据库连接并分派查询任务。
+│   ├── QueryDb.h               # 定义 QueryFacade 类，作为所有数据库查询操作的统一入口。
+│   ├── YearlyQuery.cpp         # 实现按年查询的逻辑，聚合每月总计并生成年度摘要。
+│   └── YearlyQuery.h           # 定义 YearlyQuery 类，用于生成年度支出摘要报告。
+│
+└── reprocessing/               # 预处理模块，负责在入库前验证和修改账单文件。
+    ├── BillModifier.cpp        # 实现账单修改逻辑，如计算求和、添加自动续费项等。
+    ├── BillModifier.h          # 定义 BillModifier 类，根据配置规则修改账单内容。
+    ├── BillValidator.cpp       # 实现账单验证逻辑，使用状态机检查文件结构和内容的合法性。
+    ├── BillValidator.h         # 定义 BillValidator 类，根据配置规则验证账单文件的格式。
+    ├── Reprocessor.cpp         # 实现预处理门面，封装验证和修改操作。
+    └── Reprocessor.h           # 定义 Reprocessor 类，为验证和修改功能提供统一入口。
 
 ```
 
