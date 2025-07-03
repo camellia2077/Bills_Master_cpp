@@ -100,11 +100,21 @@ int main() {
 
                     try {
                         std::vector<fs::path> files = file_handler.find_txt_files(user_path);
-                        const std::string output_dir_str = "txt_raw";
-                        fs::create_directory(output_dir_str);
-
                         for (const auto& file : files) {
-                            fs::path modified_path = fs::path(output_dir_str) / file.filename();
+                            std::string filename_stem = file.stem().string();
+                            fs::path modified_path;
+                            if (filename_stem.length() >= 4) {
+                                std::string year = filename_stem.substr(0, 4);
+                                fs::path target_dir = fs::path("txt_raw") / year;
+                                fs::create_directories(target_dir);
+                                modified_path = target_dir / file.filename();
+                            } else {
+                                std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Could not determine year from filename '" << file.filename().string() << "'. Saving in root txt_raw directory.\n";
+                                fs::path target_dir = fs::path("txt_raw");
+                                fs::create_directory(target_dir);
+                                modified_path = target_dir / file.filename();
+                            }
+                            
                             std::cout << "\n--- Modifying: " << file.string() << " -> " << modified_path.string() << " ---\n";
                             reprocessor.modify_bill(file.string(), modified_path.string());
                         }
@@ -148,8 +158,9 @@ int main() {
 
                             if (report.find("未找到") == std::string::npos) {
                                 try {
+                                    // MODIFIED: Path logic updated to save in a fixed "years" folder.
                                     fs::path base_dir("markdown_bills");
-                                    fs::path target_dir = base_dir / "year";
+                                    fs::path target_dir = base_dir / "years";
                                     fs::create_directories(target_dir);
                                     fs::path output_path = target_dir / (year + ".md");
                                     
@@ -184,17 +195,25 @@ int main() {
                             std::cout << report;
 
                             if (report.find("未找到") == std::string::npos) {
-                                const std::string output_dir = "markdown_bills";
-                                fs::create_directory(output_dir);
-                                std::string filename = output_dir + "/" + month + ".md";
-                                
-                                std::ofstream output_file(filename);
+                                fs::path output_path;
+                                if (month.length() >= 4) {
+                                    std::string year = month.substr(0, 4);
+                                    fs::path target_dir = fs::path("markdown_bills") / year;
+                                    fs::create_directories(target_dir);
+                                    output_path = target_dir / (month + ".md");
+                                } else {
+                                    fs::path target_dir = fs::path("markdown_bills");
+                                    fs::create_directory(target_dir);
+                                    output_path = target_dir / (month + ".md");
+                                }
+
+                                std::ofstream output_file(output_path);
                                 if (output_file) {
                                     output_file << report;
                                     output_file.close();
-                                    std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Report also saved to " << filename << "\n";
+                                    std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Report also saved to " << output_path.string() << "\n";
                                 } else {
-                                    std::cerr << "\n" << RED_COLOR << "Error: " << RESET_COLOR << "Could not open file for writing: " << filename << std::endl;
+                                    std::cerr << "\n" << RED_COLOR << "Error: " << RESET_COLOR << "Could not open file for writing: " << output_path.string() << std::endl;
                                 }
                             }
                         } catch (const std::runtime_error& e) {
@@ -229,10 +248,20 @@ int main() {
                                 continue;
                             }
                             std::cout << GREEN_COLOR << "Success: " << RESET_COLOR << "Validation complete." << "\n";
-
-                            const std::string output_dir = "txt_raw";
-                            fs::create_directory(output_dir);
-                            fs::path modified_path = fs::path(output_dir) / file_path.filename();
+                            
+                            std::string filename_stem = file_path.stem().string();
+                            fs::path modified_path;
+                            if (filename_stem.length() >= 4) {
+                                std::string year = filename_stem.substr(0, 4);
+                                fs::path target_dir = fs::path("txt_raw") / year;
+                                fs::create_directories(target_dir);
+                                modified_path = target_dir / file_path.filename();
+                            } else {
+                                std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Could not determine year from filename '" << file_path.filename().string() << "'. Saving in root txt_raw directory.\n";
+                                fs::path target_dir = fs::path("txt_raw");
+                                fs::create_directory(target_dir);
+                                modified_path = target_dir / file_path.filename();
+                            }
                             
                             std::cout << "\n[Step 2/3] Modifying bill file...\n";
                             if (!reprocessor.modify_bill(file_path.string(), modified_path.string())) {
