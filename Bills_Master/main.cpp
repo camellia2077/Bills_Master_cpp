@@ -1,7 +1,8 @@
 #include <iostream>
 #include <string>
 #include <limits>
-#include <filesystem> // **MODIFIED**: Added for directory creation
+#include <filesystem>
+#include <fstream> // **MODIFIED**: Added for file output stream
 
 // 包含我们所有的功能模块接口
 #include "Reprocessor.h"
@@ -26,10 +27,10 @@ void print_menu() {
     std::cout << "1. Validate Bill File\n"; 
     std::cout << "2. Modify Bill File\n"; 
     std::cout << "3. Parse and Insert Bill to Database\n"; 
-    std::cout << "4. Query Yearly Summary\n";
+    std::cout << "4. Query Yearly Summary and Export \n";
     std::cout << "5. Query Monthly Details\n";
-    std::cout << "6. Auto-Process Full Workflow\n"; // **MODIFIED**: New option added
-    std::cout << "7. Exit\n"; // **MODIFIED**: Exit option number changed
+    std::cout << "6. Auto-Process Full Workflow\n";
+    std::cout << "7. Exit\n";
     std::cout << "=================================\n"; 
     std::cout << "Enter your choice: "; 
 }
@@ -44,7 +45,7 @@ int main() {
         DataProcessor data_processor; 
 
         int choice = 0;
-        while (choice != 7) { // **MODIFIED**: Loop condition updated for new exit option
+        while (choice != 7) {
             print_menu();
             std::cin >> choice;
 
@@ -133,7 +134,27 @@ int main() {
                      if (!month.empty()) {
                         try {
                             QueryFacade facade("bills.db");
-                            facade.show_monthly_details(month);
+                            // **MODIFIED**: Get the report string from the facade.
+                            std::string report = facade.get_monthly_details_report(month);
+
+                            // Print the report to the console.
+                            std::cout << report;
+
+                            // Save the report to a file, but only if data was found.
+                            if (report.find("未找到") == std::string::npos) {
+                                const std::string output_dir = "markdown_bills";
+                                std::filesystem::create_directory(output_dir);
+                                std::string filename = output_dir + "/" + month + ".md";
+                                
+                                std::ofstream output_file(filename);
+                                if (output_file) {
+                                    output_file << report;
+                                    output_file.close();
+                                    std::cout << "\n--- Report also saved to " << filename << " ---\n";
+                                } else {
+                                    std::cerr << "\nError: Could not open file for writing: " << filename << std::endl;
+                                }
+                            }
                         } catch (const std::runtime_error& e) {
                             std::cerr << "Query failed: " << e.what() << std::endl;
                         }
@@ -142,7 +163,6 @@ int main() {
                     }
                     break;
                 }
-                // **MODIFIED**: New case for the automated workflow
                 case 6: {
                     std::cout << "--- Auto-Process Workflow Started ---\n";
                     std::cout << "Enter path to the source bill file: ";
@@ -190,7 +210,7 @@ int main() {
                     std::cout << "\n--- Auto-Process Workflow Finished ---\n";
                     break;
                 }
-                case 7: // **MODIFIED**: Exit case number changed
+                case 7:
                     std::cout << "Exiting program. Goodbye!\n";
                     break;
                 default:
