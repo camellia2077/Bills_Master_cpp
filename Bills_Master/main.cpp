@@ -12,6 +12,7 @@
 #include "FileHandler.h"
 
 #include "version.h"
+#include "common_utils.h" // 颜色 
 
 namespace fs = std::filesystem;
 
@@ -50,17 +51,17 @@ int main() {
     try {
         Reprocessor reprocessor("./config"); 
         DataProcessor data_processor; 
-        FileHandler file_handler; // **MODIFIED**: Create an instance of the new module
+        FileHandler file_handler;
 
         int choice = 0;
-        while (choice != 7) {
+        while (choice != 8) { 
             print_menu();
             std::cin >> choice;
 
             if (std::cin.fail()) { 
                 std::cin.clear(); 
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
-                std::cout << "Invalid input. Please enter a number.\n"; 
+                std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Invalid input. Please enter a number." << "\n"; 
                 choice = 0; 
                 continue; 
             }
@@ -70,11 +71,13 @@ int main() {
             std::string user_path; 
 
             switch (choice) {
-                // **MODIFIED**: Case 1 now handles single files or directories.
                 case 1: { 
                     std::cout << "Enter path to a .txt file or a directory for validation: ";
                     std::getline(std::cin, user_path);
-                    if (user_path.empty()) break;
+                    if (user_path.empty()) {
+                        std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Path cannot be empty." << "\n";
+                        break;
+                    }
 
                     try {
                         std::vector<fs::path> files = file_handler.find_txt_files(user_path);
@@ -83,15 +86,17 @@ int main() {
                             reprocessor.validate_bill(file.string());
                         }
                     } catch (const std::runtime_error& e) {
-                        std::cerr << "Error: " << e.what() << std::endl;
+                        std::cerr << RED_COLOR << "Error: " << RESET_COLOR << e.what() << std::endl;
                     }
                     break; 
                 }
-                // **MODIFIED**: Case 2 now handles single files or directories.
                 case 2: { 
                     std::cout << "Enter path to a .txt file or a directory for modification: ";
                     std::getline(std::cin, user_path);
-                    if (user_path.empty()) break;
+                    if (user_path.empty()) {
+                        std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Path cannot be empty." << "\n";
+                        break;
+                    }
 
                     try {
                         std::vector<fs::path> files = file_handler.find_txt_files(user_path);
@@ -104,15 +109,17 @@ int main() {
                             reprocessor.modify_bill(file.string(), modified_path.string());
                         }
                     } catch (const std::runtime_error& e) {
-                        std::cerr << "Error: " << e.what() << std::endl;
+                        std::cerr << RED_COLOR << "Error: " << RESET_COLOR << e.what() << std::endl;
                     }
                     break; 
                 }
-                // **MODIFIED**: Case 3 now handles single files or directories.
                 case 3: { 
                     std::cout << "Enter path to a .txt file or a directory to parse and insert: ";
                     std::getline(std::cin, user_path);
-                    if (user_path.empty()) break;
+                    if (user_path.empty()) {
+                        std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Path cannot be empty." << "\n";
+                        break;
+                    }
 
                     const std::string db_path = "bills.db";
                     std::cout << "Using database file: " << db_path << "\n";
@@ -124,7 +131,7 @@ int main() {
                             data_processor.process_and_insert(file.string(), db_path);
                         }
                     } catch (const std::runtime_error& e) {
-                        std::cerr << "Error: " << e.what() << std::endl;
+                        std::cerr << RED_COLOR << "Error: " << RESET_COLOR << e.what() << std::endl;
                     }
                     break; 
                 }
@@ -150,19 +157,19 @@ int main() {
                                     if (output_file) {
                                         output_file << report;
                                         output_file.close();
-                                        std::cout << "\n--- Report also saved to " << output_path.string() << " ---\n";
+                                        std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Report also saved to " << output_path.string() << "\n";
                                     } else {
-                                        std::cerr << "\nError: Could not open file for writing: " << output_path.string() << std::endl;
+                                        std::cerr << "\n" << RED_COLOR << "Error: " << RESET_COLOR << "Could not open file for writing: " << output_path.string() << std::endl;
                                     }
                                 } catch (const fs::filesystem_error& e) {
-                                    std::cerr << "\nFilesystem error while saving report: " << e.what() << std::endl;
+                                    std::cerr << "\n" << RED_COLOR << "Filesystem Error: " << RESET_COLOR << "while saving report: " << e.what() << std::endl;
                                 }
                             }
                         } catch (const std::runtime_error& e) {
-                            std::cerr << "Query failed: " << e.what() << std::endl;
+                            std::cerr << RED_COLOR << "Query Failed: " << RESET_COLOR << e.what() << std::endl;
                         }
                     } else {
-                        std::cout << "Year cannot be empty.\n";
+                        std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Year cannot be empty." << "\n";
                     }
                     break;
                 }
@@ -185,16 +192,16 @@ int main() {
                                 if (output_file) {
                                     output_file << report;
                                     output_file.close();
-                                    std::cout << "\n--- Report also saved to " << filename << " ---\n";
+                                    std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Report also saved to " << filename << "\n";
                                 } else {
-                                    std::cerr << "\nError: Could not open file for writing: " << filename << std::endl;
+                                    std::cerr << "\n" << RED_COLOR << "Error: " << RESET_COLOR << "Could not open file for writing: " << filename << std::endl;
                                 }
                             }
                         } catch (const std::runtime_error& e) {
-                            std::cerr << "Query failed: " << e.what() << std::endl;
+                            std::cerr << RED_COLOR << "Query Failed: " << RESET_COLOR << e.what() << std::endl;
                         }
                     } else {
-                        std::cout << "Month cannot be empty.\n";
+                        std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Month cannot be empty." << "\n";
                     }
                     break;
                 }
@@ -203,7 +210,7 @@ int main() {
                     std::cout << "Enter path to a source .txt file or a directory containing .txt files: ";
                     std::getline(std::cin, user_path);
                     if (user_path.empty()) {
-                        std::cout << "Path cannot be empty. Aborting.\n";
+                        std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Path cannot be empty. Aborting." << "\n";
                         break;
                     }
 
@@ -218,10 +225,10 @@ int main() {
                             
                             std::cout << "\n[Step 1/3] Validating bill file...\n";
                             if (!reprocessor.validate_bill(file_path.string())) {
-                                std::cerr << "Validation failed for " << file_path.string() << ". Skipping this file.\n";
+                                std::cerr << RED_COLOR << "Validation Failed" << RESET_COLOR << " for " << file_path.string() << ". Skipping this file." << "\n";
                                 continue;
                             }
-                            std::cout << "Validation successful.\n";
+                            std::cout << GREEN_COLOR << "Success: " << RESET_COLOR << "Validation complete." << "\n";
 
                             const std::string output_dir = "txt_raw";
                             fs::create_directory(output_dir);
@@ -229,20 +236,23 @@ int main() {
                             
                             std::cout << "\n[Step 2/3] Modifying bill file...\n";
                             if (!reprocessor.modify_bill(file_path.string(), modified_path.string())) {
-                                std::cerr << "Modification failed for " << file_path.string() << ". Skipping this file.\n";
+                                std::cerr << RED_COLOR << "Modification Failed" << RESET_COLOR << " for " << file_path.string() << ". Skipping this file." << "\n";
                                 continue;
                             }
-                            std::cout << "Modification successful. Modified file saved to '" << modified_path.string() << "'.\n";
+                            std::cout << GREEN_COLOR << "Success: " << RESET_COLOR << "Modification complete. Modified file saved to '" << modified_path.string() << "'.\n";
                             
                             std::cout << "\n[Step 3/3] Parsing and inserting into database...\n";
                             const std::string db_path = "bills.db";
-                            data_processor.process_and_insert(modified_path.string(), db_path);
-                            std::cout << "Database insertion process completed for this file.\n";
+                            if (data_processor.process_and_insert(modified_path.string(), db_path)) {
+                                std::cout << GREEN_COLOR << "Success: " << RESET_COLOR << "Database import complete for this file." << "\n";
+                            } else {
+                                std::cerr << RED_COLOR << "Database Import Failed" << RESET_COLOR << " for this file." << "\n";
+                            }
                         }
                         std::cout << "\n--- Auto-Process Workflow Finished for all processed files ---\n";
 
                     } catch (const std::runtime_error& e) {
-                        std::cerr << "An error occurred during the workflow: " << e.what() << std::endl;
+                        std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "An error occurred during the workflow: " << e.what() << std::endl;
                     }
                     break;
                 }
@@ -252,14 +262,14 @@ int main() {
                     break;
                 case 8:
                     std::cout << "Exiting program. Goodbye!\n";
-                    break;
+                    return 0; // Exit the loop and program
                 default:
-                    std::cout << "Invalid choice. Please select a number from the menu.\n"; 
+                    std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Invalid choice. Please select a number from the menu." << "\n"; 
                     break;
             }
         }
     } catch (const std::runtime_error& e) {
-        std::cerr << "\nA critical error occurred: " << e.what() << std::endl; 
+        std::cerr << "\n" << RED_COLOR << "Critical Error: " << RESET_COLOR << e.what() << std::endl; 
         return 1; 
     }
 
