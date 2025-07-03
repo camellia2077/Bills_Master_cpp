@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # 定义项目名称和所用语言
-project(BillReprocessor VERSION "0.2.0" LANGUAGES CXX)
+project(BillReprocessor VERSION "0.2.1" LANGUAGES CXX)
 
 # 设置 C++ 标准为 C++17
 set(CMAKE_CXX_STANDARD 17) 

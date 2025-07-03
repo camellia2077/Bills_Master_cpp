@@ -176,12 +176,14 @@ void AppController::handle_monthly_query(const std::string& month) {
             fs::path output_path;
             if (month.length() >= 4) {
                 std::string year = month.substr(0, 4);
-                fs::path target_dir = fs::path("markdown_bills") / year;
+                // MODIFIED: Path logic updated to save in a fixed "months" folder, categorized by year.
+                fs::path target_dir = fs::path("markdown_bills") / "months" / year;
                 fs::create_directories(target_dir);
                 output_path = target_dir / (month + ".md");
             } else {
-                fs::path target_dir = fs::path("markdown_bills");
-                fs::create_directory(target_dir);
+                // Fallback for filenames that don't have a clear year
+                fs::path target_dir = fs::path("markdown_bills") / "months";
+                fs::create_directories(target_dir);
                 output_path = target_dir / (month + ".md");
             }
 
