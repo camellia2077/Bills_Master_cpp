@@ -12,7 +12,6 @@ BillModifier::BillModifier(const nlohmann::json& config_json) {
     if (config_json.contains("modification_flags")) {
         const auto& flags = config_json["modification_flags"];
         m_config.flags.enable_summing = flags.value("enable_summing", false);
-        m_config.flags.enable_autorenewal = flags.value("enable_autorenewal", false);
         m_config.flags.enable_cleanup = flags.value("enable_cleanup", false);
         m_config.flags.enable_sorting = flags.value("enable_sorting", false);
         m_config.flags.preserve_metadata_lines = flags.value("preserve_metadata_lines", false);
@@ -26,17 +25,22 @@ BillModifier::BillModifier(const nlohmann::json& config_json) {
         m_config.formatting.lines_between_sub_items = formatting.value("lines_between_sub_items", 1);
     }
 
-    // 解析 auto_renewal_rules
+    // 修改：解析新的 auto_renewal_rules 结构
     if (config_json.contains("auto_renewal_rules")) {
-        const auto& renewal_rules = config_json["auto_renewal_rules"];
-        for (auto it = renewal_rules.begin(); it != renewal_rules.end(); ++it) {
-            const std::string& category = it.key();
-            const nlohmann::json& items = it.value();
-            for (const auto& item_json : items) {
-                m_config.auto_renewal_rules[category].push_back({
-                    item_json.value("amount", 0.0),
-                    item_json.value("description", "")
-                });
+        const auto& renewal_config = config_json["auto_renewal_rules"];
+        m_config.auto_renewal.enabled = renewal_config.value("enabled", false);
+
+        if (m_config.auto_renewal.enabled && renewal_config.contains("rules")) {
+            const auto& renewal_rules = renewal_config["rules"];
+            for (auto it = renewal_rules.begin(); it != renewal_rules.end(); ++it) {
+                const std::string& category = it.key();
+                const nlohmann::json& items = it.value();
+                for (const auto& item_json : items) {
+                    m_config.auto_renewal.rules[category].push_back({
+                        item_json.value("amount", 0.0),
+                        item_json.value("description", "")
+                    });
+                }
             }
         }
     }
@@ -69,8 +73,9 @@ void BillModifier::_perform_initial_modifications(std::vector<std::string>& line
         }
     }
 
-    if (m_config.flags.enable_autorenewal) {
-        for (const auto& pair : m_config.auto_renewal_rules) {
+    // 修改：使用新的配置结构来控制自动续费
+    if (m_config.auto_renewal.enabled) {
+        for (const auto& pair : m_config.auto_renewal.rules) {
             const std::string& category_title = pair.first;
             const auto& items_to_add = pair.second;
 
