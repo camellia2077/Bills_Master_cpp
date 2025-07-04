@@ -10,7 +10,6 @@
 struct Config {
     struct ModificationFlags {
         bool enable_summing = false;
-        bool enable_autorenewal = false;
         bool enable_cleanup = false;
         bool enable_sorting = false;
         bool preserve_metadata_lines = false;
@@ -26,7 +25,13 @@ struct Config {
         double amount;
         std::string description;
     };
-    std::map<std::string, std::vector<AutoRenewalItem>> auto_renewal_rules;
+
+    // 新增：用于封装自动续费配置的结构体
+    struct AutoRenewalConfig {
+        bool enabled = false;
+        std::map<std::string, std::vector<AutoRenewalItem>> rules;
+    };
+    AutoRenewalConfig auto_renewal;
 
     // 新增：用于存储元数据行前缀的列表
     std::vector<std::string> metadata_prefixes;
@@ -82,15 +87,12 @@ private:
     // -- 解析 --
     std::vector<ParentItem> _parse_into_structure(const std::vector<std::string>& lines, std::vector<std::string>& metadata_lines) const;
 
-    // -- 修改 --
     void _sort_bill_structure(std::vector<ParentItem>& bill_structure) const;
     void _cleanup_bill_structure(std::vector<ParentItem>& bill_structure) const;
 
-    // -- 重建 --
     std::string _reconstruct_content_with_formatting(const std::vector<ParentItem>& bill_structure, const std::vector<std::string>& metadata_lines) const;
 
     // -- 辅助函数 --
-    // 修改：移除了 static，添加了 const
     bool _is_metadata_line(const std::string& line) const;
     static double _get_numeric_value_from_content(const std::string& content_line);
     static bool _is_title(const std::string& line);
