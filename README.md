@@ -23,9 +23,8 @@
     * **许可证**: Matplotlib License (BSD-style)
 
 # 1 Bills_Master
-## 1.1 structure
+## 1.1 目录结构
 ```AppController
-/
 /
 ├── CMakeLists.txt              # 管理整个项目的构建过程，配置编译器和链接器选项。
 ├── build.sh                    # 一个用于自动化清理和构建流程的 Shell 脚本。
@@ -67,7 +66,74 @@
     ├── BillValidator.h         # 定义 BillValidator 类，根据配置规则验证账单文件的格式。
     ├── Reprocessor.cpp         # 实现预处理门面，封装验证和修改操作。
     └── Reprocessor.h           # 定义 Reprocessor 类，为验证和修改功能提供统一入口。
+```
+## 1.2 架构图
+```mermaid
+graph TD
+    A["/ (项目根目录)"]
+    subgraph " "
+        direction LR
+        A --- B["CMakeLists.txt<br/>管理整个项目的构建过程"]
+        A --- C["build.sh<br/>自动化清理和构建流程的脚本"]
+        A --- D["main.cpp<br/>程序主入口，处理用户菜单交互"]
+    end
 
+    A --- E["AppController/"]
+    subgraph "AppController"
+        direction TB
+        E --- F["AppController.h<br/>定义应用控制器类，提供高级接口"]
+        F --- G["AppController.cpp<br/>实现应用控制器的具体逻辑"]
+        E --- H["ProcessStats.h<br/>定义统计成功和失败操作的结构体"]
+    end
+
+    A --- I["common/"]
+    subgraph "common"
+        direction TB
+        I --- J["common_utils.h<br/>定义控制台输出颜色代码"]
+        I --- K["version.h<br/>定义程序版本号和更新日期"]
+    end
+
+    A --- L["config/"]
+    subgraph "config"
+        direction TB
+        L --- M["Modifier_Config.json<br/>为账单修改器提供规则"]
+        L --- N["Validator_Config.json<br/>为账单验证器提供规则"]
+    end
+
+    A --- O["db_insert/"]
+    subgraph "db_insert"
+        direction TB
+        O --- P["parser.h<br/>定义 BillParser 类和数据结构"]
+        P --- Q["parser.cpp<br/>实现文件解析逻辑"]
+        O --- R["insert.h<br/>定义 BillInserter 类，负责写入数据库"]
+        R --- S["insert.cpp<br/>实现数据库插入逻辑"]
+        O --- T["DataProcessor.h<br/>定义 DataProcessor 类，简化接口"]
+        T --- U["DataProcessor.cpp<br/>封装解析和插入的流程"]
+    end
+
+    A --- V["query/"]
+    subgraph "query"
+        direction TB
+        V --- W["QueryDb.h<br/>定义 QueryFacade 作为查询统一入口"]
+        W --- X["QueryDb.cpp<br/>实现查询门面，管理只读连接"]
+        V --- Y["MonthlyQuery.h<br/>定义 MonthlyQuery 类，生成单月报告"]
+        Y --- Z["MonthlyQuery.cpp<br/>实现按月查询的逻辑"]
+        V --- AA["YearlyQuery.h<br/>定义 YearlyQuery 类，生成年度报告"]
+        AA --- AB["YearlyQuery.cpp<br/>实现按年查询的逻辑"]
+    end
+
+    A --- AC["reprocessing/"]
+    subgraph "reprocessing"
+        direction TB
+        AC --- AD["BillValidator.h<br/>定义 BillValidator 类，验证账单格式"]
+        AD --- AE["BillValidator.cpp<br/>实现账单验证逻辑"]
+        AC --- AF["BillModifier.h<br/>定义 BillModifier 类，修改账单内容"]
+        AF --- AG["BillModifier.cpp<br/>实现账单修改逻辑"]
+        AC --- AH["Reprocessor.h<br/>定义 Reprocessor 类，提供统一入口"]
+        AH --- AI["Reprocessor.cpp<br/>实现预处理门面，封装验证和修改"]
+    end
+
+    style A fill:#f9f,stroke:#333,stroke-width:2px
 ```
 
 # 2 graph
@@ -76,6 +142,7 @@
 The script reads its configuration from a `generate_report.json` file. If this file is not found or is invalid, default settings will be used.
 
 ### generate_report.json` Example:
+
 
 ```
 {
