@@ -29,6 +29,7 @@
 ├── CMakeLists.txt              # 管理整个项目的构建过程，配置编译器和链接器选项。
 ├── build.sh                    # 一个用于自动化清理和构建流程的 Shell 脚本。
 ├── main.cpp                    # 程序主入口，处理用户菜单交互并协调各个模块。
+├── main_commond.cpp            # 命令行交互
 │
 ├── AppController/              # 应用主控制器模块，负责核心业务流程的调度。
 │   ├── AppController.cpp       # 实现应用控制器的具体逻辑，调用其他模块完成任务。
@@ -68,6 +69,36 @@
     └── Reprocessor.h           # 定义 Reprocessor 类，为验证和修改功能提供统一入口。
 ```
 ## 1.2 架构图
+### 1.2.1 整体
+```mermaid
+graph TD
+    subgraph "核心流程"
+        A["程序入口 (main.cpp)"] --> B["应用控制器 (AppController)"];
+        B --> C["预处理模块 (Reprocessing)"];
+        B --> D["数据库插入模块 (DB Insert)"];
+        B --> E["数据库查询模块 (Query)"];
+    end
+
+    subgraph "支持模块与资源"
+        F["配置文件 (Config)"] --> C;
+        G["通用工具 (Common)"]
+        H[("数据库 (SQLite)")]
+    end
+    
+    C --> G;
+    D --> G;
+    E --> G;
+
+    D -- "写入数据" --> H;
+    E -- "读取数据" --> H;
+
+    classDef core fill:#e6f3ff,stroke:#367dcc,stroke-width:2px;
+    classDef support fill:#f0f0f0,stroke:#666,stroke-width:1px,stroke-dasharray: 5 5;
+    
+    class A,B,C,D,E core;
+    class F,G,H support;
+```
+### 1.2.2 细节
 ```mermaid
 graph TD
     A["/ (项目根目录)"]
