@@ -4,6 +4,7 @@
 #include <cctype>
 #include <string>
 #include <algorithm>
+#include <stdexcept> // for std::invalid_argument, std::out_of_range
 
 static bool is_whitespace(const std::string& s) {
     for (char c : s) {
@@ -46,10 +47,22 @@ ParsedBill BillParser::parse(const std::string& file_path) {
         }
 
         if (line.rfind("DATE:", 0) == 0) {
-            bill_data.date = line.substr(5);
+            std::string date_str = line.substr(5);
+            if (date_str.length() != 6) {
+                throw std::runtime_error("日期格式无效，必须为 YYYYMM 格式。");
+            }
+            try {
+                bill_data.date = date_str; // 存储原始字符串
+                bill_data.year = std::stoi(date_str.substr(0, 4));
+                bill_data.month = std::stoi(date_str.substr(4, 2));
+            } catch (const std::invalid_argument& ia) {
+                throw std::runtime_error("无法将日期转换为数字: " + std::string(ia.what()));
+            } catch (const std::out_of_range& oor) {
+                throw std::runtime_error("日期数字超出范围: " + std::string(oor.what()));
+            }
         } else if (line.rfind("REMARK:", 0) == 0) {
             bill_data.remark = line.substr(7);
-        } 
+        }
         // --- 核心修改：识别并提取正确的标题 ---
         else if (is_parent_title(line)) {
             size_t pos = 0;
@@ -63,7 +76,7 @@ ParsedBill BillParser::parse(const std::string& file_path) {
                 pos++;
             }
             current_sub = line.substr(0, pos);
-        } 
+        }
         else {
             std::stringstream ss(line);
             double amount;

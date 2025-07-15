@@ -3,6 +3,8 @@
 #include "MonthlyQuery.h"
 #include <stdexcept>
 #include <vector>
+#include <sstream>
+#include <iomanip>
 
 // --- Constructor / Destructor (Assumed to be the same) ---
 QueryFacade::QueryFacade(const std::string& db_path) : m_db(nullptr) {
@@ -19,22 +21,22 @@ QueryFacade::~QueryFacade() {
     }
 }
 
-// --- Existing Report Generation Methods (Unchanged) ---
-std::string QueryFacade::get_yearly_summary_report(const std::string& year) {
+// --- MODIFIED Report Generation Methods ---
+std::string QueryFacade::get_yearly_summary_report(int year) {
     YearlyQuery query(m_db);
     return query.generate_report(year);
 }
 
-std::string QueryFacade::get_monthly_details_report(const std::string& month) {
+std::string QueryFacade::get_monthly_details_report(int year, int month) {
     MonthlyQuery query(m_db);
-    return query.generate_report(month);
+    return query.generate_report(year, month);
 }
 
 
-// --- New Method Implementation ---
+// --- MODIFIED Method Implementation ---
 std::vector<std::string> QueryFacade::get_all_bill_dates() {
     std::vector<std::string> dates;
-    const char* sql = "SELECT DISTINCT bill_date FROM transactions ORDER BY bill_date;";
+    const char* sql = "SELECT DISTINCT year, month FROM transactions ORDER BY year, month;";
     
     sqlite3_stmt* stmt = nullptr;
     if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -42,10 +44,12 @@ std::vector<std::string> QueryFacade::get_all_bill_dates() {
     }
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        const char* date_text = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        if (date_text) {
-            dates.push_back(date_text);
-        }
+        int year = sqlite3_column_int(stmt, 0);
+        int month = sqlite3_column_int(stmt, 1);
+        
+        std::stringstream ss;
+        ss << year << std::setfill('0') << std::setw(2) << month;
+        dates.push_back(ss.str());
     }
 
     sqlite3_finalize(stmt);

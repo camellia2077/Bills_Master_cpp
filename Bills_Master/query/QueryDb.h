@@ -14,9 +14,9 @@ public:
     QueryFacade(const QueryFacade&) = delete;
     QueryFacade& operator=(const QueryFacade&) = delete;
 
-    // --- Existing Methods ---
-    std::string get_yearly_summary_report(const std::string& year);
-    std::string get_monthly_details_report(const std::string& month);
+    // --- MODIFIED Methods ---
+    std::string get_yearly_summary_report(int year);
+    std::string get_monthly_details_report(int year, int month);
 
     // --- New Method ---
     /**

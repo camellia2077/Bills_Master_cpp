@@ -10,7 +10,8 @@ public:
     explicit YearlyQuery(sqlite3* db_connection);
 
     // **MODIFIED**: The method now returns the report as a string.
-    std::string generate_report(const std::string& year);
+    // **MODIFIED**: The method signature is changed to accept year as an integer.
+    std::string generate_report(int year);
 
 private:
     sqlite3* m_db; // 不管理连接的生命周期，只使用它
