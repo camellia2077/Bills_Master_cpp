@@ -43,7 +43,7 @@ public:
      * @brief 处理报告的导出。
      * @param type 导出类型 ("year", "month", "all")。
      * @param value 导出的具体值（例如，年份或月份字符串），对于 "all" 类型则忽略。
-     * @param format_str 导出的格式 ("md" 或 "tex")，默认为 "md"。
+     * @param format_str 导出的格式 ("md", "tex", "typ")，默认为 "md"。
      */
     void handle_export(const std::string& type, const std::string& value = "", const std::string& format_str = "md");
 

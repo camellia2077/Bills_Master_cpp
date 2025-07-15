@@ -53,7 +53,7 @@ std::string TypstReportFormatter::format_report(const MonthlyReportData& data) {
 
     // 1. 设置文档参数和标题
     ss << "#set document(title: \"" << data.year << "年" << data.month << "月消费报告\", author: \"BillsMaster\")\n";
-    ss << "#set text(font: \"Noto Sans SC\", size: 12pt)\n\n";
+    ss << "#set text(font: \"Noto Serif SC\", size: 12pt)\n\n";
 
     ss << "= " << data.year << "年" << data.month << "月 消费报告\n\n";
     

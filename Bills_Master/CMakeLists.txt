@@ -22,12 +22,18 @@ find_package(nlohmann_json REQUIRED)
 find_package(SQLite3 REQUIRED)
 
 
-# --- MODIFIED: Define shared library for common logic ---
 # 1. 自动从每个子目录中查找源文件 (*.cpp)
-# 注意：使用 file(GLOB) 很方便，但它的缺点是，如果你新增或删除了源文件，
-# 你必须手动重新运行 CMake，构建系统才能检测到这个变化。
-file(GLOB REPROCESSING_SOURCES "reprocessing/*.cpp")
-file(GLOB DB_INSERT_SOURCES   "db_insert/*.cpp")
+file(GLOB REPROCESSING_SOURCES 
+    "reprocessing/*.cpp"
+    "reprocessing/validator/*.cpp"
+    "reprocessing/modifier/*.cpp"
+    
+)
+file(GLOB DB_INSERT_SOURCES   
+    "db_insert/*.cpp"
+    "db_insert/insertor/*.cpp"
+    "db_insert/parser/*.cpp"
+)
 file(GLOB QUERY_SOURCES       
     "query/*.cpp"
     "query/export/*.cpp"
@@ -44,8 +50,8 @@ file(GLOB QUERY_SOURCES
     "query/month/_month_query/*.cpp"
 
 )
-file(GLOB FILEHANDLER_SOURCES "FileHandler/*.cpp")
-file(GLOB APPCONTROLLER_SOURCES "AppController/*.cpp")
+file(GLOB FILEHANDLER_SOURCES "file_handler/*.cpp")
+file(GLOB APPCONTROLLER_SOURCES "app_controller/*.cpp")
 
 # 将所有找到的源文件合并到一个列表中
 set(SHARED_SOURCES
@@ -65,9 +71,9 @@ target_include_directories(bill_master_lib PUBLIC
     "reprocessing"
     "db_insert"
     "query"
-    "FileHandler"
+    "file_handler"
     "common"
-    "AppController"
+    "app_controller"
 )
 
 target_link_libraries(bill_master_lib PUBLIC
