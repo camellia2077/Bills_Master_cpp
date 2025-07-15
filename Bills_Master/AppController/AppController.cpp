@@ -4,10 +4,11 @@
 #include <filesystem>
 #include <vector>
 #include <stdexcept>
+#include <string>
 
 #include "Reprocessor.h"
 #include "DataProcessor.h"
-#include "QueryDb.h" 
+#include "QueryDb.h"
 #include "FileHandler.h"
 #include "version.h"
 #include "common_utils.h"
@@ -15,7 +16,7 @@
 namespace fs = std::filesystem;
 
 AppController::AppController() {
-    // 构造函数可用于未来需要的一次性设置。
+    // 构造函数
 }
 
 void AppController::handle_validation(const std::string& path) {
@@ -163,21 +164,33 @@ void AppController::handle_full_workflow(const std::string& path) {
     stats.print_summary("完整工作流");
 }
 
-void AppController::handle_export(const std::string& type, const std::string& value) {
+
+void AppController::handle_export(const std::string& type, const std::string& value, const std::string& format_str) {
     try {
+        // 将格式字符串转换为 ReportFormat 枚举
+        ReportFormat format;
+        if (format_str == "tex") {
+            format = ReportFormat::LATEX;
+        } else if (format_str == "md") {
+            format = ReportFormat::MARKDOWN;
+        } else {
+            throw std::runtime_error("不支持的格式: " + format_str + "。请使用 'md' 或 'tex'。");
+        }
+
         QueryFacade facade("bills.db");
         if (type == "all") {
-            facade.export_all_reports();
+            facade.export_all_reports(format);
         } else if (type == "year") {
             if (value.empty()) {
                 throw std::runtime_error("导出年度报告需要提供年份。");
             }
+            // 注意：年度报告当前只支持 Markdown，QueryDb 内部会处理此逻辑
             facade.export_yearly_report(value);
         } else if (type == "month") {
             if (value.empty()) {
                 throw std::runtime_error("导出月度报告需要提供月份 (YYYYMM)。");
             }
-            facade.export_monthly_report(value);
+            facade.export_monthly_report(value, format);
         } else {
             throw std::runtime_error("未知的导出类型: " + type);
         }

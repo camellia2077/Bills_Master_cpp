@@ -1,8 +1,8 @@
 #include "QueryDb.h"
 #include "year/YearlyReportGenerator.h"
 #include "month/MonthlyReportGenerator.h"
-#include "ProcessStats.h" // 需要 ProcessStats
-#include "common_utils.h"      // 需要颜色宏
+#include "ProcessStats.h"
+#include "common_utils.h"
 #include <stdexcept>
 #include <vector>
 #include <sstream>
@@ -14,11 +14,11 @@
 
 namespace fs = std::filesystem;
 
-// --- 构造函数 / 析构函数 ---
+// --- 构造函数 / 析构函数 (无变化) ---
 QueryFacade::QueryFacade(const std::string& db_path) : m_db(nullptr) {
     if (sqlite3_open_v2(db_path.c_str(), &m_db, SQLITE_OPEN_READWRITE, nullptr) != SQLITE_OK) {
         std::string errmsg = sqlite3_errmsg(m_db);
-        sqlite3_close(m_db); // 失败时清理
+        sqlite3_close(m_db);
         throw std::runtime_error("无法打开数据库: " + errmsg);
     }
 }
@@ -36,13 +36,13 @@ std::string QueryFacade::get_yearly_summary_report(int year) {
     return generator.generate(year);
 }
 
-std::string QueryFacade::get_monthly_details_report(int year, int month) {
+// 现在将格式参数传递给底层的生成器
+std::string QueryFacade::get_monthly_details_report(int year, int month, ReportFormat format) {
     MonthlyReportGenerator generator(m_db);
-    return generator.generate(year, month);
+    return generator.generate(year, month, format);
 }
 
-// --- 数据获取方法 ---
-
+// --- 数据获取方法 (无变化) ---
 std::vector<std::string> QueryFacade::get_all_bill_dates() {
     std::vector<std::string> dates;
     const char* sql = "SELECT DISTINCT year, month FROM transactions ORDER BY year, month;";
@@ -78,6 +78,7 @@ void QueryFacade::save_report(const std::string& report_content, const std::stri
     output_file << report_content;
 }
 
+// 年报导出暂时只支持 Markdown
 void QueryFacade::export_yearly_report(const std::string& year_str, bool suppress_output) {
     try {
         int year = std::stoi(year_str);
@@ -102,7 +103,8 @@ void QueryFacade::export_yearly_report(const std::string& year_str, bool suppres
     }
 }
 
-void QueryFacade::export_monthly_report(const std::string& month_str, bool suppress_output) {
+// 月报导出已更新，支持不同格式
+void QueryFacade::export_monthly_report(const std::string& month_str, ReportFormat format, bool suppress_output) {
     try {
         if (month_str.length() != 6) {
             throw std::invalid_argument("月份格式无效。");
@@ -110,15 +112,21 @@ void QueryFacade::export_monthly_report(const std::string& month_str, bool suppr
         int year = std::stoi(month_str.substr(0, 4));
         int month = std::stoi(month_str.substr(4, 2));
 
-        std::string report = get_monthly_details_report(year, month);
+        // 调用更新后的 get_monthly_details_report
+        std::string report = get_monthly_details_report(year, month, format);
 
         if (!suppress_output) {
             std::cout << report;
         }
 
         if (report.find("未找到") == std::string::npos) {
-            fs::path target_dir = fs::path("markdown_bills") / "months" / month_str.substr(0, 4);
-            fs::path output_path = target_dir / (month_str + ".md");
+            // 根据格式确定文件扩展名和目录
+            std::string extension = (format == ReportFormat::LATEX) ? ".tex" : ".md";
+            std::string base_dir = (format == ReportFormat::LATEX) ? "latex_bills" : "markdown_bills";
+
+            fs::path target_dir = fs::path(base_dir) / "months" / month_str.substr(0, 4);
+            fs::path output_path = target_dir / (month_str + extension);
+            
             save_report(report, output_path.string());
             if (!suppress_output) {
                 std::cout << "\n" << GREEN_COLOR << "成功: " << RESET_COLOR << "报告已保存至 " << output_path.string() << "\n";
@@ -131,9 +139,11 @@ void QueryFacade::export_monthly_report(const std::string& month_str, bool suppr
     }
 }
 
-void QueryFacade::export_all_reports() {
+// '导出所有' 功能现在也可以指定格式
+void QueryFacade::export_all_reports(ReportFormat format) {
     ProcessStats monthly_stats, yearly_stats;
-    std::cout << "\n--- 开始导出所有报告 ---\n";
+    std::string format_name = (format == ReportFormat::LATEX) ? "LaTeX" : "Markdown";
+    std::cout << "\n--- 开始导出所有报告 (" << format_name << " 格式) ---\n";
 
     try {
         std::vector<std::string> all_months = get_all_bill_dates();
@@ -144,35 +154,44 @@ void QueryFacade::export_all_reports() {
         }
 
         std::cout << "发现 " << all_months.size() << " 个独立月份需要处理。\n";
-        std::set<std::string> unique_years;
-        for (const auto& month : all_months) {
-            if (month.length() >= 4) {
-                unique_years.insert(month.substr(0, 4));
-            }
-        }
-
+        
+        // --- 导出月度报告 ---
         std::cout << "\n--- 导出月度报告 ---\n";
         for (const auto& month : all_months) {
             std::cout << "正在导出报告 " << month << "...";
-            export_monthly_report(month, true);
+            export_monthly_report(month, format, true); // 传递格式参数
             std::cout << GREEN_COLOR << " 完成\n" << RESET_COLOR;
             monthly_stats.success++;
         }
 
-        std::cout << "\n--- 导出年度报告 ---\n";
-        for (const auto& year : unique_years) {
-            std::cout << "正在导出摘要 " << year << "...";
-            export_yearly_report(year, true);
-            std::cout << GREEN_COLOR << " 完成\n" << RESET_COLOR;
-            yearly_stats.success++;
+        // --- 导出年度报告 (注意：年度报告仍为 Markdown) ---
+        if (format == ReportFormat::MARKDOWN) {
+            std::cout << "\n--- 导出年度报告 (Markdown) ---\n";
+            std::set<std::string> unique_years;
+            for (const auto& month : all_months) {
+                if (month.length() >= 4) {
+                    unique_years.insert(month.substr(0, 4));
+                }
+            }
+            for (const auto& year : unique_years) {
+                std::cout << "正在导出摘要 " << year << "...";
+                export_yearly_report(year, true);
+                std::cout << GREEN_COLOR << " 完成\n" << RESET_COLOR;
+                yearly_stats.success++;
+            }
+        } else {
+             std::cout << "\n--- 年度报告导出已跳过 (仅支持 Markdown) ---\n";
         }
+
 
     } catch (const std::runtime_error& e) {
         std::cerr << RED_COLOR << "导出失败: " << RESET_COLOR << e.what() << std::endl;
-        yearly_stats.failure = 1;
+        monthly_stats.failure = 1; // 标记操作失败
     }
 
     monthly_stats.print_summary("月度报告导出");
-    yearly_stats.print_summary("年度报告导出");
+    if (format == ReportFormat::MARKDOWN) {
+        yearly_stats.print_summary("年度报告导出");
+    }
     std::cout << "\n" << GREEN_COLOR << "成功: " << RESET_COLOR << "所有报告导出完成。\n";
 }
