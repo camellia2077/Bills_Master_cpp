@@ -78,14 +78,14 @@ std::string LatexReportFormatter::format_report(const MonthlyReportData& data) {
     ss << "\\maketitle\n\n";
 
     // --- 3. 手动创建的摘要部分 ---
+    // *** 这是核心改动：将所有内容放入 center 环境并调整字体 ***
     ss << "% --- Manually created summary section ---\n";
     ss << "\\begin{center}\n";
-    ss << "    \\Large\\bfseries 摘要\n"; // 手动设置标题格式
-    ss << "\\end{center}\n";
-    ss << "\\begin{quotation}\n"; // 使用 quotation 环境来缩进摘要内容
-    ss << "    \\textbf{总支出：} ¥" << data.grand_total << "\\\\\n";
+    ss << "    \\Large\\bfseries 摘要\\par\\vspace{1em} % 摘要标题，并增加一点垂直间距\n";
+    ss << "    \\large % 将后续文本设置为 large 尺寸\n";
+    ss << "    \\textbf{总支出：} ¥" << data.grand_total << "\\\\\n"; // 用 \\ 换行
     ss << "    \\textbf{备注：} " << escape_latex(data.remark) << "\n";
-    ss << "\\end{quotation}\n\n";
+    ss << "\\end{center}\n\n";
 
     // 4. 遍历所有类别并生成内容
     for (size_t i = 0; i < sorted_parents.size(); ++i) {
