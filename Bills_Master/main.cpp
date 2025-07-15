@@ -20,7 +20,7 @@ void setup_console() {
 }
 
 void print_menu() {
-    std::println("--- {}Menu{} ---",CYAN_COLOR,RESET_COLOR);
+    std::println("--- {}Menu{} ---",GREEN_COLOR,RESET_COLOR);
     std::cout << "1. Validate Bill File(s)\n"; 
     std::cout << "2. Modify Bill File(s)\n"; 
     std::cout << "3. Parse and Insert Bill(s) to Database\n"; 
@@ -77,12 +77,12 @@ int main() {
                 case 4:
                     std::cout << "Enter year to query (e.g., 2025): ";
                     std::getline(std::cin, input_str);
-                    if (!input_str.empty()) controller.handle_yearly_query(input_str);
+                    if (!input_str.empty()) controller.handle_export("year", input_str); // 更新
                     break;
                 case 5:
                     std::cout << "Enter month to query (e.g., 202506): ";
                     std::getline(std::cin, input_str);
-                     if (!input_str.empty()) controller.handle_monthly_query(input_str);
+                     if (!input_str.empty()) controller.handle_export("month", input_str); // 更新
                     break;
                 case 6:
                     std::cout << "Enter path for the full workflow: ";
@@ -90,7 +90,7 @@ int main() {
                     if (!input_str.empty()) controller.handle_full_workflow(input_str);
                     break;
                 case 7: 
-                    controller.handle_export_all();
+                    controller.handle_export("all"); // 更新
                     break;
                 case 8: 
                     controller.display_version();

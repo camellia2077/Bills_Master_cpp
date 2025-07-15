@@ -1,18 +1,25 @@
-// QueryDb.cpp
 #include "QueryDb.h"
 #include "year/YearlyReportGenerator.h"
 #include "month/MonthlyReportGenerator.h"
+#include "ProcessStats.h" // 需要 ProcessStats
+#include "common_utils.h"      // 需要颜色宏
 #include <stdexcept>
 #include <vector>
 #include <sstream>
 #include <iomanip>
+#include <iostream>
+#include <fstream>
+#include <filesystem>
+#include <set>
 
-// --- Constructor / Destructor  ---
+namespace fs = std::filesystem;
+
+// --- 构造函数 / 析构函数 ---
 QueryFacade::QueryFacade(const std::string& db_path) : m_db(nullptr) {
-    if (sqlite3_open_v2(db_path.c_str(), &m_db, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK) {
+    if (sqlite3_open_v2(db_path.c_str(), &m_db, SQLITE_OPEN_READWRITE, nullptr) != SQLITE_OK) {
         std::string errmsg = sqlite3_errmsg(m_db);
-        sqlite3_close(m_db); // Clean up on failure
-        throw std::runtime_error("无法以只读模式打开数据库: " + errmsg);
+        sqlite3_close(m_db); // 失败时清理
+        throw std::runtime_error("无法打开数据库: " + errmsg);
     }
 }
 
@@ -22,21 +29,20 @@ QueryFacade::~QueryFacade() {
     }
 }
 
-// --- Report Generation Methods ---
+// --- 报告生成方法 ---
 
 std::string QueryFacade::get_yearly_summary_report(int year) {
-    // Use the new YearlyReportGenerator
     YearlyReportGenerator generator(m_db);
     return generator.generate(year);
 }
 
 std::string QueryFacade::get_monthly_details_report(int year, int month) {
-    // Use the new MonthlyReportGenerator
     MonthlyReportGenerator generator(m_db);
     return generator.generate(year, month);
 }
 
-// --- get_all_bill_dates ---
+// --- 数据获取方法 ---
+
 std::vector<std::string> QueryFacade::get_all_bill_dates() {
     std::vector<std::string> dates;
     const char* sql = "SELECT DISTINCT year, month FROM transactions ORDER BY year, month;";
@@ -57,4 +63,116 @@ std::vector<std::string> QueryFacade::get_all_bill_dates() {
 
     sqlite3_finalize(stmt);
     return dates;
+}
+
+// --- 报告导出实现 ---
+
+void QueryFacade::save_report(const std::string& report_content, const std::string& file_path_str) {
+    fs::path file_path(file_path_str);
+    fs::create_directories(file_path.parent_path());
+
+    std::ofstream output_file(file_path);
+    if (!output_file) {
+        throw std::runtime_error("无法打开文件进行写入: " + file_path.string());
+    }
+    output_file << report_content;
+}
+
+void QueryFacade::export_yearly_report(const std::string& year_str, bool suppress_output) {
+    try {
+        int year = std::stoi(year_str);
+        std::string report = get_yearly_summary_report(year);
+
+        if (!suppress_output) {
+            std::cout << report;
+        }
+
+        if (report.find("未找到") == std::string::npos) {
+            fs::path target_dir = fs::path("markdown_bills") / "years";
+            fs::path output_path = target_dir / (year_str + ".md");
+            save_report(report, output_path.string());
+            if (!suppress_output) {
+                std::cout << "\n" << GREEN_COLOR << "成功: " << RESET_COLOR << "报告已保存至 " << output_path.string() << "\n";
+            }
+        }
+    } catch (const std::exception& e) {
+        if (!suppress_output) {
+            std::cerr << RED_COLOR << "查询失败: " << RESET_COLOR << e.what() << std::endl;
+        }
+    }
+}
+
+void QueryFacade::export_monthly_report(const std::string& month_str, bool suppress_output) {
+    try {
+        if (month_str.length() != 6) {
+            throw std::invalid_argument("月份格式无效。");
+        }
+        int year = std::stoi(month_str.substr(0, 4));
+        int month = std::stoi(month_str.substr(4, 2));
+
+        std::string report = get_monthly_details_report(year, month);
+
+        if (!suppress_output) {
+            std::cout << report;
+        }
+
+        if (report.find("未找到") == std::string::npos) {
+            fs::path target_dir = fs::path("markdown_bills") / "months" / month_str.substr(0, 4);
+            fs::path output_path = target_dir / (month_str + ".md");
+            save_report(report, output_path.string());
+            if (!suppress_output) {
+                std::cout << "\n" << GREEN_COLOR << "成功: " << RESET_COLOR << "报告已保存至 " << output_path.string() << "\n";
+            }
+        }
+    } catch (const std::exception& e) {
+        if (!suppress_output) {
+            std::cerr << RED_COLOR << "查询失败: " << RESET_COLOR << e.what() << std::endl;
+        }
+    }
+}
+
+void QueryFacade::export_all_reports() {
+    ProcessStats monthly_stats, yearly_stats;
+    std::cout << "\n--- 开始导出所有报告 ---\n";
+
+    try {
+        std::vector<std::string> all_months = get_all_bill_dates();
+
+        if (all_months.empty()) {
+            std::cout << YELLOW_COLOR << "警告: " << RESET_COLOR << "数据库中未找到数据，无法导出。\n";
+            return;
+        }
+
+        std::cout << "发现 " << all_months.size() << " 个独立月份需要处理。\n";
+        std::set<std::string> unique_years;
+        for (const auto& month : all_months) {
+            if (month.length() >= 4) {
+                unique_years.insert(month.substr(0, 4));
+            }
+        }
+
+        std::cout << "\n--- 导出月度报告 ---\n";
+        for (const auto& month : all_months) {
+            std::cout << "正在导出报告 " << month << "...";
+            export_monthly_report(month, true);
+            std::cout << GREEN_COLOR << " 完成\n" << RESET_COLOR;
+            monthly_stats.success++;
+        }
+
+        std::cout << "\n--- 导出年度报告 ---\n";
+        for (const auto& year : unique_years) {
+            std::cout << "正在导出摘要 " << year << "...";
+            export_yearly_report(year, true);
+            std::cout << GREEN_COLOR << " 完成\n" << RESET_COLOR;
+            yearly_stats.success++;
+        }
+
+    } catch (const std::runtime_error& e) {
+        std::cerr << RED_COLOR << "导出失败: " << RESET_COLOR << e.what() << std::endl;
+        yearly_stats.failure = 1;
+    }
+
+    monthly_stats.print_summary("月度报告导出");
+    yearly_stats.print_summary("年度报告导出");
+    std::cout << "\n" << GREEN_COLOR << "成功: " << RESET_COLOR << "所有报告导出完成。\n";
 }
