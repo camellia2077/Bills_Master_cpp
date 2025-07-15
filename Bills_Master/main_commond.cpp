@@ -19,11 +19,11 @@ void setup_console() {
 #endif
 }
 
-// 更新帮助信息以包含 --format 标志
+// 更新帮助信息
 void print_help(const char* program_name) {
 
     std::println("Bill Master - A command-line tool for processing bill files.\n\n");
-    std::println("Usage: {} <command> [arguments] [--format <md|tex>]\n", program_name);
+    std::println("Usage: {} <command> [arguments] [--format <md|tex|typ>]\n", program_name);
 
     std::cout << GREEN_COLOR << "--- Reprocessor ---\n" << RESET_COLOR;
     std::println("--validate, -v <path> \t\tValidate a .txt bill file or all .txt files in a directory.");
@@ -34,12 +34,12 @@ void print_help(const char* program_name) {
     std::println("--process, -p <path> \t\tRun the full workflow (validate, modify, import)");
 
     std::cout << GREEN_COLOR << "--- Query & Export ---\n" << RESET_COLOR;
-    std::println("--query year, -q y <year> \t\tQuery the annual summary for the given year and export (e.g., 2025)");
-    std::println("--query month, -q m <month> \t\tQuery the detailed monthly bill for the given month and export (e.g., 202507).");
-    std::println("--export all, -e a \t\t\tExport all yearly and monthly reports from the database.");
+    std::println("--query year, -q y <year> \t\tQuery and export the annual summary.");
+    std::println("--query month, -q m <month> \t\tQuery and export the monthly details.");
+    std::println("--export all, -e a \t\t\tExport all reports. Defaults to all formats unless --format is used.");
 
     std::cout << GREEN_COLOR << "--- Options ---\n" << RESET_COLOR;
-    std::println("  --format, -f <format>\t\tSpecify the output format ('md' or 'tex'). Default is 'md'.");
+    std::println("  --format, -f <format>\t\tSpecify output format ('md', 'tex', or 'typ'). Default is 'md'.");
 
     std::cout << GREEN_COLOR << "--- General ---\n" << RESET_COLOR;
     std::println("  -h, --help\t\t\tShow this help message.");
@@ -55,45 +55,42 @@ int main(int argc, char* argv[]) {
     }
 
     AppController controller;
-    std::vector<std::string> args(argv + 1, argv + argc);
+    std::vector<std::string> args;
     std::string command;
     std::string path_or_value;
-    std::string format_str = "md"; // 默认格式为 markdown
+    std::string format_str = "md"; // 默认格式
+    bool format_specified = false;
 
-    // --- 解析参数，分离出命令、值和格式 ---
-    for (size_t i = 0; i < args.size(); ++i) {
-        if (args[i] == "--format" || args[i] == "-f") {
-            if (i + 1 < args.size()) {
-                format_str = args[i + 1];
-                i++; // 跳过格式值
+    // --- 新的、更可靠的参数解析逻辑 ---
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--format" || arg == "-f") {
+            if (i + 1 < argc) {
+                format_str = argv[++i]; // 获取格式并跳过下一个参数
+                format_specified = true;
             } else {
                 std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing value for format flag.\n";
                 return 1;
             }
-        } else if (command.empty()) {
-            command = args[i];
-        } else if (path_or_value.empty()) {
-             // 处理 "query year" 或 "query month" 这种两段式命令
-            if ((command == "--query" || command == "-q") && (args[i] == "year" || args[i] == "month" || args[i] == "y" || args[i] == "m")) {
-                command += " " + args[i];
-            } else {
-                 path_or_value = args[i];
+        } else {
+            args.push_back(arg);
+        }
+    }
+
+    if (!args.empty()) {
+        command = args[0];
+        // 检查两段式命令
+        if ((command == "--query" || command == "-q" || command == "--export" || command == "-e") && args.size() > 1) {
+            // 将 "query year" 或 "export all" 组合成一个命令
+            command += " " + args[1];
+            if (args.size() > 2) {
+                path_or_value = args[2];
             }
-        } else if ((command == "--query year" || command == "-q y" || command == "--query month" || command == "-q m") && path_or_value.empty()){
-            path_or_value = args[i];
+        } else if (args.size() > 1) {
+            path_or_value = args[1];
         }
     }
     
-    // 如果 path_or_value 仍然为空，但 args 中还有未处理的参数，则它是 path_or_value
-    if (path_or_value.empty() && args.size() > 1 && (args[0] != "--help" && args[0] != "-h" && args[0] != "--version" && args[0] != "-V")) {
-        if (args.size() > 1 && (args[1] != "--format" && args[1] != "-f")){
-           size_t value_index = 1;
-            if((command == "--query" || command == "-q") && args.size() > 2) value_index = 2;
-            if(args.size() > value_index) path_or_value = args[value_index];
-        }
-    }
-
-
     try {
         if (command == "--help" || command == "-h") {
             print_help(argv[0]);
@@ -102,7 +99,17 @@ int main(int argc, char* argv[]) {
             controller.display_version();
         }
         else if (command == "--export all" || command == "-e a") {
-             controller.handle_export("all", "", format_str);
+            if (format_specified) {
+                // 如果用户指定了格式，则只导出该格式
+                std::cout << "Exporting all reports in " << format_str << " format...\n";
+                controller.handle_export("all", "", format_str);
+            } else {
+                // 如果未指定格式，则导出所有三种格式
+                std::cout << "Exporting all reports in Markdown, LaTeX, and Typst formats...\n";
+                controller.handle_export("all", "", "md");
+                controller.handle_export("all", "", "tex");
+                controller.handle_export("all", "", "typ");
+            }
         }
         else if (command == "--process" || command == "-p") {
             if (path_or_value.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path for 'process' command.\n"; return 1; }

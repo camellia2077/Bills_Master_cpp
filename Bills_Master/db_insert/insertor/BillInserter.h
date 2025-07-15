@@ -1,7 +1,7 @@
 #ifndef INSERT_H
 #define INSERT_H
 
-#include "parser.h" // 依赖于解析器定义的数据结构
+#include "parser/BillParser.h" // 依赖于解析器定义的数据结构
 #include <sqlite3.h>
 #include <string>
 #include <stdexcept>

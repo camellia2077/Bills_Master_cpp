@@ -1,6 +1,10 @@
 #include <iostream>
 #include <string>
 #include <limits>
+#include <vector>
+#include <set>
+#include <sstream>
+#include <algorithm>
 #include <print>
 
 #include "AppController.h"
@@ -20,19 +24,30 @@ void setup_console() {
 }
 
 void print_menu() {
-    std::println("--- {}Menu{} ---",CYAN_COLOR,RESET_COLOR);
+    std::println("--- {}Menu{} ---",GREEN_COLOR,RESET_COLOR);
     std::cout << "1. Validate Bill File(s)\n"; 
     std::cout << "2. Modify Bill File(s)\n"; 
     std::cout << "3. Parse and Insert Bill(s) to Database\n"; 
-    std::cout << "4. Query Yearly Summary and Export (Markdown)\n";
-    std::cout << "5. Query Monthly Details and Export (md/tex)\n";
+    std::cout << "4. Query Yearly Summary and Export (md/tex/typ)\n"; // 更新菜单
+    std::cout << "5. Query Monthly Details and Export (md/tex/typ)\n"; // 更新菜单
     std::cout << "6. Auto-Process Full Workflow (File or Directory)\n";
-    std::cout << "7. Export All Reports from Database (Markdown)\n";
+    std::cout << "7. Export All Reports from Database (md, tex, typ, or all)\n"; // 更新菜单
     std::cout << "8. Version\n";
     std::cout << "9. Exit\n";
 
     std::string line(10,'-');
     std::println("{}", line);
+}
+
+// 辅助函数：去除字符串两端的空格
+std::string trim(const std::string& str) {
+    const std::string WHITESPACE = " \n\r\t\f\v";
+    size_t first = str.find_first_not_of(WHITESPACE);
+    if (std::string::npos == first) {
+        return str;
+    }
+    size_t last = str.find_last_not_of(WHITESPACE);
+    return str.substr(first, (last - first + 1));
 }
 
 int main() {
@@ -44,6 +59,9 @@ int main() {
     int choice = 0;
     while (choice != 9) { 
         print_menu();
+
+        std::cout << "\nEnter your choice: ";
+
         std::cin >> choice;
 
         if (std::cin.fail()) { 
@@ -75,28 +93,38 @@ int main() {
                     if (!input_str.empty()) controller.handle_import(input_str);
                     break; 
                 case 4:
-                    std::cout << "Enter year to query (e.g., 2025): ";
-                    std::getline(std::cin, input_str);
-                    // 年度报告默认导出为 markdown
-                    if (!input_str.empty()) controller.handle_export("year", input_str, "md");
+                    { 
+                        std::cout << "Enter year to query (e.g., 2025): ";
+                        std::getline(std::cin, input_str);
+                        if (input_str.empty()) break;
+
+                        std::cout << "Enter format (md/tex/typ) [default: md]: ";
+                        std::string format_input;
+                        std::getline(std::cin, format_input);
+
+                        std::string format_str = trim(format_input);
+                        std::string format_to_use = "md";
+                        if (format_str == "tex" || format_str == "typ") {
+                            format_to_use = format_str;
+                        }
+                        controller.handle_export("year", input_str, format_to_use);
+                    }
                     break;
                 case 5:
-                    { // 使用花括号创建局部作用域
+                    {
                         std::cout << "Enter month to query (e.g., 202507): ";
                         std::getline(std::cin, input_str);
                         if (input_str.empty()) break;
 
-                        // --- 新增：询问导出格式 ---
-                        std::cout << "Enter format (md/tex) [default: md]: ";
+                        std::cout << "Enter format (md/tex/typ) [default: md]: ";
                         std::string format_input;
                         std::getline(std::cin, format_input);
-
-                        std::string format_to_use = "md"; // 默认值为 "md"
-                        if (format_input == "tex") {
-                            format_to_use = "tex";
+                        
+                        std::string format_str = trim(format_input);
+                        std::string format_to_use = "md";
+                        if (format_str == "tex" || format_str == "typ") {
+                            format_to_use = format_str;
                         }
-                        // --- 结束新增逻辑 ---
-
                         controller.handle_export("month", input_str, format_to_use);
                     }
                     break;
@@ -105,9 +133,39 @@ int main() {
                     std::getline(std::cin, input_str);
                     if (!input_str.empty()) controller.handle_full_workflow(input_str);
                     break;
-                case 7: 
-                    // 导出所有报告默认使用 markdown
-                    controller.handle_export("all", "", "md");
+                case 7:
+                    {
+                        std::cout << "Enter format(s) (e.g., md, tex, typ) [default: all]: ";
+                        std::string format_input;
+                        std::getline(std::cin, format_input);
+
+                        std::set<std::string> formats_to_export;
+                        if (format_input.empty()) {
+                            formats_to_export.insert("md");
+                            formats_to_export.insert("tex");
+                            formats_to_export.insert("typ");
+                        } else {
+                            std::stringstream ss(format_input);
+                            std::string segment;
+                            while(std::getline(ss, segment, ',')) {
+                                std::string format = trim(segment);
+                                if (format == "md" || format == "tex" || format == "typ") {
+                                    formats_to_export.insert(format);
+                                }
+                            }
+                        }
+
+                        if (formats_to_export.empty()){
+                             std::cout << "No valid formats entered. Defaulting to all formats.\n";
+                             formats_to_export.insert("md");
+                             formats_to_export.insert("tex");
+                             formats_to_export.insert("typ");
+                        }
+
+                        for (const auto& format : formats_to_export) {
+                            controller.handle_export("all", "", format);
+                        }
+                    }
                     break;
                 case 8: 
                     controller.display_version();
@@ -120,7 +178,6 @@ int main() {
                     break;
             }
         } catch (const std::exception& e) {
-            // This catch block handles exceptions from the controller
             std::cerr << "\n" << RED_COLOR << "An unexpected error occurred: " << RESET_COLOR << e.what() << std::endl;
         }
     }

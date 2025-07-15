@@ -2,8 +2,8 @@
 #define DATA_PROCESSOR_H
 
 #include <string>
-#include "parser.h"
-#include "insert.h"
+#include "parser/BillParser.h"
+#include "insertor/BillInserter.h"
 
 /**
  * @class DataProcessor

@@ -171,10 +171,12 @@ void AppController::handle_export(const std::string& type, const std::string& va
         ReportFormat format;
         if (format_str == "tex") {
             format = ReportFormat::LATEX;
+        } else if (format_str == "typ") { // *** 这是核心改动 ***
+            format = ReportFormat::TYPST;
         } else if (format_str == "md") {
             format = ReportFormat::MARKDOWN;
         } else {
-            throw std::runtime_error("不支持的格式: " + format_str + "。请使用 'md' 或 'tex'。");
+            throw std::runtime_error("不支持的格式: " + format_str + "。请使用 'md', 'tex', 或 'typ'。");
         }
 
         QueryFacade facade("bills.db");
@@ -184,8 +186,7 @@ void AppController::handle_export(const std::string& type, const std::string& va
             if (value.empty()) {
                 throw std::runtime_error("导出年度报告需要提供年份。");
             }
-            // 注意：年度报告当前只支持 Markdown，QueryDb 内部会处理此逻辑
-            facade.export_yearly_report(value);
+            facade.export_yearly_report(value, format);
         } else if (type == "month") {
             if (value.empty()) {
                 throw std::runtime_error("导出月度报告需要提供月份 (YYYYMM)。");

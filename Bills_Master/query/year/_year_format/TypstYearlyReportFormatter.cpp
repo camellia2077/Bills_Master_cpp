@@ -7,7 +7,7 @@ std::string TypstYearlyReportFormatter::format_report(const YearlyReportData& da
 
     // --- 设置文档参数和标题 ---
     ss << "#set document(title: \"" << data.year << "年消费总览\", author: \"BillsMaster\")\n";
-    ss << "#set text(font: \"Noto Sans SC\", size: 12pt)\n\n";
+    ss << "#set text(font: \"Noto Serif SC\", size: 12pt)\n\n";
     
     ss << "= " << data.year << "年 消费总览\n\n";
 
