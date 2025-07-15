@@ -1,19 +1,10 @@
 #include <iostream>
 #include <string>
 #include <limits>
-#include <filesystem>
-#include <fstream> 
-#include <vector>
+#include <print>
 
-// 包含我们所有的功能模块接口
-#include "Reprocessor.h"
-#include "DataProcessor.h" 
-#include "QueryDb.h" 
-#include "FileHandler.h"
-
-#include "version.h"
-
-namespace fs = std::filesystem;
+#include "AppController.h"
+#include "common_utils.h" // for colors
 
 // For UTF-8 output on Windows
 #ifdef _WIN32
@@ -29,239 +20,92 @@ void setup_console() {
 }
 
 void print_menu() {
-    std::cout << "\n===== Bill Reprocessor Menu =====\n"; 
+    std::println("--- {}Menu{} ---",CYAN_COLOR,RESET_COLOR);
     std::cout << "1. Validate Bill File(s)\n"; 
     std::cout << "2. Modify Bill File(s)\n"; 
     std::cout << "3. Parse and Insert Bill(s) to Database\n"; 
     std::cout << "4. Query Yearly Summary and Export\n";
     std::cout << "5. Query Monthly Details and Export\n";
     std::cout << "6. Auto-Process Full Workflow (File or Directory)\n";
-    std::cout << "7. version\n";
-    std::cout << "8. Exit\n";
-    std::cout << "=================================\n"; 
-    std::cout << "Enter your choice: "; 
+    std::cout << "7. Export All Reports from Database\n";
+    std::cout << "8. Version\n";
+    std::cout << "9. Exit\n";
+
+    std::string line(10,'-');
+    std::println("{}", line);
 }
 
 int main() {
     setup_console(); 
+    std::println("Welcome to the bill_master\n"); 
 
-    std::cout << "Welcome to the Bill Reprocessor! (UTF-8 enabled)\n"; 
+    AppController controller; // Create a single controller instance
 
-    try {
-        Reprocessor reprocessor("./config"); 
-        DataProcessor data_processor; 
-        FileHandler file_handler; // **MODIFIED**: Create an instance of the new module
+    int choice = 0;
+    while (choice != 9) { 
+        print_menu();
+        std::cin >> choice;
 
-        int choice = 0;
-        while (choice != 7) {
-            print_menu();
-            std::cin >> choice;
-
-            if (std::cin.fail()) { 
-                std::cin.clear(); 
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
-                std::cout << "Invalid input. Please enter a number.\n"; 
-                choice = 0; 
-                continue; 
-            }
-
+        if (std::cin.fail()) { 
+            std::cin.clear(); 
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
+            std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Invalid input. Please enter a number." << "\n"; 
+            choice = 0; 
+            continue; 
+        }
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
 
-            std::string user_path; 
+        std::string input_str; 
 
+        try {
             switch (choice) {
-                // **MODIFIED**: Case 1 now handles single files or directories.
-                case 1: { 
-                    std::cout << "Enter path to a .txt file or a directory for validation: ";
-                    std::getline(std::cin, user_path);
-                    if (user_path.empty()) break;
-
-                    try {
-                        std::vector<fs::path> files = file_handler.find_txt_files(user_path);
-                        for (const auto& file : files) {
-                            std::cout << "\n--- Validating: " << file.string() << " ---\n";
-                            reprocessor.validate_bill(file.string());
-                        }
-                    } catch (const std::runtime_error& e) {
-                        std::cerr << "Error: " << e.what() << std::endl;
-                    }
+                case 1:
+                    std::cout << "Enter path for validation: ";
+                    std::getline(std::cin, input_str);
+                    if (!input_str.empty()) controller.handle_validation(input_str);
                     break; 
-                }
-                // **MODIFIED**: Case 2 now handles single files or directories.
-                case 2: { 
-                    std::cout << "Enter path to a .txt file or a directory for modification: ";
-                    std::getline(std::cin, user_path);
-                    if (user_path.empty()) break;
-
-                    try {
-                        std::vector<fs::path> files = file_handler.find_txt_files(user_path);
-                        const std::string output_dir_str = "txt_raw";
-                        fs::create_directory(output_dir_str);
-
-                        for (const auto& file : files) {
-                            fs::path modified_path = fs::path(output_dir_str) / file.filename();
-                            std::cout << "\n--- Modifying: " << file.string() << " -> " << modified_path.string() << " ---\n";
-                            reprocessor.modify_bill(file.string(), modified_path.string());
-                        }
-                    } catch (const std::runtime_error& e) {
-                        std::cerr << "Error: " << e.what() << std::endl;
-                    }
+                case 2:
+                    std::cout << "Enter path for modification: ";
+                    std::getline(std::cin, input_str);
+                    if (!input_str.empty()) controller.handle_modification(input_str);
                     break; 
-                }
-                // **MODIFIED**: Case 3 now handles single files or directories.
-                case 3: { 
-                    std::cout << "Enter path to a .txt file or a directory to parse and insert: ";
-                    std::getline(std::cin, user_path);
-                    if (user_path.empty()) break;
-
-                    const std::string db_path = "bills.db";
-                    std::cout << "Using database file: " << db_path << "\n";
-
-                    try {
-                        std::vector<fs::path> files = file_handler.find_txt_files(user_path);
-                        for (const auto& file : files) {
-                            std::cout << "\n--- Processing for DB: " << file.string() << " ---\n";
-                            data_processor.process_and_insert(file.string(), db_path);
-                        }
-                    } catch (const std::runtime_error& e) {
-                        std::cerr << "Error: " << e.what() << std::endl;
-                    }
+                case 3:
+                    std::cout << "Enter path to import to database: ";
+                    std::getline(std::cin, input_str);
+                    if (!input_str.empty()) controller.handle_import(input_str);
                     break; 
-                }
-                
-                case 4: {
-                    std::string year;
+                case 4:
                     std::cout << "Enter year to query (e.g., 2025): ";
-                    std::getline(std::cin, year);
-                    if (!year.empty()) {
-                        try {
-                            QueryFacade facade("bills.db");
-                            std::string report = facade.get_yearly_summary_report(year);
-                            std::cout << report;
-
-                            if (report.find("未找到") == std::string::npos) {
-                                try {
-                                    fs::path base_dir("markdown_bills");
-                                    fs::path target_dir = base_dir / "year";
-                                    fs::create_directories(target_dir);
-                                    fs::path output_path = target_dir / (year + ".md");
-                                    
-                                    std::ofstream output_file(output_path);
-                                    if (output_file) {
-                                        output_file << report;
-                                        output_file.close();
-                                        std::cout << "\n--- Report also saved to " << output_path.string() << " ---\n";
-                                    } else {
-                                        std::cerr << "\nError: Could not open file for writing: " << output_path.string() << std::endl;
-                                    }
-                                } catch (const fs::filesystem_error& e) {
-                                    std::cerr << "\nFilesystem error while saving report: " << e.what() << std::endl;
-                                }
-                            }
-                        } catch (const std::runtime_error& e) {
-                            std::cerr << "Query failed: " << e.what() << std::endl;
-                        }
-                    } else {
-                        std::cout << "Year cannot be empty.\n";
-                    }
+                    std::getline(std::cin, input_str);
+                    if (!input_str.empty()) controller.handle_yearly_query(input_str);
                     break;
-                }
-                case 5: {
-                    std::string month;
+                case 5:
                     std::cout << "Enter month to query (e.g., 202506): ";
-                    std::getline(std::cin, month);
-                     if (!month.empty()) {
-                        try {
-                            QueryFacade facade("bills.db");
-                            std::string report = facade.get_monthly_details_report(month);
-                            std::cout << report;
-
-                            if (report.find("未找到") == std::string::npos) {
-                                const std::string output_dir = "markdown_bills";
-                                fs::create_directory(output_dir);
-                                std::string filename = output_dir + "/" + month + ".md";
-                                
-                                std::ofstream output_file(filename);
-                                if (output_file) {
-                                    output_file << report;
-                                    output_file.close();
-                                    std::cout << "\n--- Report also saved to " << filename << " ---\n";
-                                } else {
-                                    std::cerr << "\nError: Could not open file for writing: " << filename << std::endl;
-                                }
-                            }
-                        } catch (const std::runtime_error& e) {
-                            std::cerr << "Query failed: " << e.what() << std::endl;
-                        }
-                    } else {
-                        std::cout << "Month cannot be empty.\n";
-                    }
+                    std::getline(std::cin, input_str);
+                     if (!input_str.empty()) controller.handle_monthly_query(input_str);
                     break;
-                }
-                case 6: {
-                    std::cout << "--- Auto-Process Workflow Started ---\n";
-                    std::cout << "Enter path to a source .txt file or a directory containing .txt files: ";
-                    std::getline(std::cin, user_path);
-                    if (user_path.empty()) {
-                        std::cout << "Path cannot be empty. Aborting.\n";
-                        break;
-                    }
-
-                    try {
-                        std::vector<fs::path> files = file_handler.find_txt_files(user_path);
-                        if (files.empty()) break;
-                        
-                        for (const auto& file_path : files) {
-                            std::cout << "\n========================================\n";
-                            std::cout << "Processing file: " << file_path.string() << "\n";
-                            std::cout << "========================================\n";
-                            
-                            std::cout << "\n[Step 1/3] Validating bill file...\n";
-                            if (!reprocessor.validate_bill(file_path.string())) {
-                                std::cerr << "Validation failed for " << file_path.string() << ". Skipping this file.\n";
-                                continue;
-                            }
-                            std::cout << "Validation successful.\n";
-
-                            const std::string output_dir = "txt_raw";
-                            fs::create_directory(output_dir);
-                            fs::path modified_path = fs::path(output_dir) / file_path.filename();
-                            
-                            std::cout << "\n[Step 2/3] Modifying bill file...\n";
-                            if (!reprocessor.modify_bill(file_path.string(), modified_path.string())) {
-                                std::cerr << "Modification failed for " << file_path.string() << ". Skipping this file.\n";
-                                continue;
-                            }
-                            std::cout << "Modification successful. Modified file saved to '" << modified_path.string() << "'.\n";
-                            
-                            std::cout << "\n[Step 3/3] Parsing and inserting into database...\n";
-                            const std::string db_path = "bills.db";
-                            data_processor.process_and_insert(modified_path.string(), db_path);
-                            std::cout << "Database insertion process completed for this file.\n";
-                        }
-                        std::cout << "\n--- Auto-Process Workflow Finished for all processed files ---\n";
-
-                    } catch (const std::runtime_error& e) {
-                        std::cerr << "An error occurred during the workflow: " << e.what() << std::endl;
-                    }
+                case 6:
+                    std::cout << "Enter path for the full workflow: ";
+                    std::getline(std::cin, input_str);
+                    if (!input_str.empty()) controller.handle_full_workflow(input_str);
                     break;
-                }
-                case 7:
-                    std::cout << "BillsMaster Version: " << AppInfo::VERSION << std::endl;
-                    std::cout << "Last Updated: " << AppInfo::LAST_UPDATED << std::endl;
+                case 7: 
+                    controller.handle_export_all();
                     break;
-                case 8:
+                case 8: 
+                    controller.display_version();
+                    break;
+                case 9: 
                     std::cout << "Exiting program. Goodbye!\n";
                     break;
                 default:
-                    std::cout << "Invalid choice. Please select a number from the menu.\n"; 
+                    std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Invalid choice. Please select a number from the menu." << "\n"; 
                     break;
             }
+        } catch (const std::exception& e) {
+            // This catch block handles exceptions from the controller
+            std::cerr << "\n" << RED_COLOR << "An unexpected error occurred: " << RESET_COLOR << e.what() << std::endl;
         }
-    } catch (const std::runtime_error& e) {
-        std::cerr << "\nA critical error occurred: " << e.what() << std::endl; 
-        return 1; 
     }
-
     return 0; 
 }

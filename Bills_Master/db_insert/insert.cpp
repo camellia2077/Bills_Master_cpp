@@ -23,6 +23,8 @@ void BillInserter::initialize_database() {
         "CREATE TABLE IF NOT EXISTS transactions ("
         "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
         "  bill_date TEXT NOT NULL,"
+        "  year INTEGER NOT NULL,"
+        "  month INTEGER NOT NULL,"
         "  parent_category TEXT NOT NULL,"
         "  sub_category TEXT NOT NULL,"
         "  amount REAL NOT NULL,"
@@ -52,7 +54,7 @@ void BillInserter::insert_bill(const ParsedBill& bill_data) {
     }
 
     try {
-        // 步骤 1: 删除该月份的所有现有记录
+        // 步骤 1: 删除该月份的所有现有记录 (使用原始date字符串，保持逻辑一致)
         sqlite3_stmt* delete_stmt = nullptr;
         const char* delete_sql = "DELETE FROM transactions WHERE bill_date = ?;";
         if (sqlite3_prepare_v2(m_db, delete_sql, -1, &delete_stmt, nullptr) != SQLITE_OK) {
@@ -70,20 +72,22 @@ void BillInserter::insert_bill(const ParsedBill& bill_data) {
         // 步骤 2: 插入所有新记录
         sqlite3_stmt* insert_stmt = nullptr;
         const char* insert_sql =
-            "INSERT INTO transactions (bill_date, parent_category, sub_category, amount, description, remark) "
-            "VALUES (?, ?, ?, ?, ?, ?);";
-        
+            "INSERT INTO transactions (bill_date, year, month, parent_category, sub_category, amount, description, remark) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+
         if (sqlite3_prepare_v2(m_db, insert_sql, -1, &insert_stmt, nullptr) != SQLITE_OK) {
             throw std::runtime_error("准备 INSERT 语句失败: " + std::string(sqlite3_errmsg(m_db)));
         }
 
         for (const auto& transaction : bill_data.transactions) {
             sqlite3_bind_text(insert_stmt, 1, bill_data.date.c_str(), -1, SQLITE_STATIC);
-            sqlite3_bind_text(insert_stmt, 2, transaction.parent_category.c_str(), -1, SQLITE_STATIC);
-            sqlite3_bind_text(insert_stmt, 3, transaction.sub_category.c_str(), -1, SQLITE_STATIC);
-            sqlite3_bind_double(insert_stmt, 4, transaction.amount);
-            sqlite3_bind_text(insert_stmt, 5, transaction.description.c_str(), -1, SQLITE_STATIC);
-            sqlite3_bind_text(insert_stmt, 6, bill_data.remark.c_str(), -1, SQLITE_STATIC);
+            sqlite3_bind_int(insert_stmt, 2, bill_data.year);
+            sqlite3_bind_int(insert_stmt, 3, bill_data.month);
+            sqlite3_bind_text(insert_stmt, 4, transaction.parent_category.c_str(), -1, SQLITE_STATIC);
+            sqlite3_bind_text(insert_stmt, 5, transaction.sub_category.c_str(), -1, SQLITE_STATIC);
+            sqlite3_bind_double(insert_stmt, 6, transaction.amount);
+            sqlite3_bind_text(insert_stmt, 7, transaction.description.c_str(), -1, SQLITE_STATIC);
+            sqlite3_bind_text(insert_stmt, 8, bill_data.remark.c_str(), -1, SQLITE_STATIC);
 
             if (sqlite3_step(insert_stmt) != SQLITE_DONE) {
                 sqlite3_finalize(insert_stmt);
