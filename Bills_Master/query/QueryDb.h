@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <sqlite3.h>
-#include "month/MonthlyReportGenerator.h" // 1. 包含以获取 ReportFormat 枚举
+#include "ReportFormat.h" // 确保引用了共享的枚举文件
 
 class QueryFacade {
 public:
@@ -16,16 +16,13 @@ public:
     QueryFacade& operator=(const QueryFacade&) = delete;
 
     // --- 数据查询方法 ---
-    std::string get_yearly_summary_report(int year);
-    // 2. 更新 get_monthly_details_report 以接受格式参数
+    std::string get_yearly_summary_report(int year, ReportFormat format = ReportFormat::MARKDOWN);
     std::string get_monthly_details_report(int year, int month, ReportFormat format = ReportFormat::MARKDOWN);
     std::vector<std::string> get_all_bill_dates();
 
     // --- 报告导出方法 ---
-    void export_yearly_report(const std::string& year_str, bool suppress_output = false);
-    // 3. 更新 export_monthly_report 以接受格式参数
+    void export_yearly_report(const std::string& year_str, ReportFormat format = ReportFormat::MARKDOWN, bool suppress_output = false);
     void export_monthly_report(const std::string& month_str, ReportFormat format = ReportFormat::MARKDOWN, bool suppress_output = false);
-    // 4. 更新 export_all_reports 以接受格式参数
     void export_all_reports(ReportFormat format = ReportFormat::MARKDOWN);
 
 private:
