@@ -1,8 +1,9 @@
 #include <iostream>
 #include <string>
+#include <print>
 
 #include "AppController.h"
-#include "common_utils.h"
+#include "common_utils.h" // for colors
 
 // For UTF-8 output on Windows
 #ifdef _WIN32
@@ -16,22 +17,44 @@ void setup_console() {
     SetConsoleCP(CP_UTF8);
 #endif
 }
+// 辅助函数，用于打印居中的彩色标题
+void print_centered_title(const std::string& text, int total_width) {
+    // 计算标题的可见长度（不包括颜色代码）
+    const std::string visible_text = "------------ " + text + " ------------";
+    const int padding = (total_width - visible_text.length()) / 2;
 
+    // 1. 打印左边距
+    std::print("{:>{}}", "", padding); 
+    // 2. 打印带颜色的标题
+    std::println("--- {}{}{} ---", GREEN_COLOR, text, RESET_COLOR);
+}
 // Prints the help message with all available commands
 void print_help(const char* program_name) {
-    std::cout << "Bill Reprocessor - A command-line tool for processing bill files.\n\n";
-    std::cout << "Usage: " << program_name << " <command> [arguments...]\n\n";
-    std::cout << "Commands:\n";
-    std::cout << "  process, -p <path>          Run the full workflow (validate, modify, import) on a file or directory.\n";
-    std::cout << "  export-all, -ea             Export all yearly and monthly reports from the database.\n"; // MODIFIED: New command
-    std::cout << "  validate, -v <path>         Validate a .txt bill file or all .txt files in a directory.\n";
-    std::cout << "  modify, -m <path>           Modify a .txt file or all .txt files in a directory.\n";
-    std::cout << "  import, -i <path>           Parse and insert a .txt file or a directory of .txt files into the database.\n";
-    std::cout << "  query-year, -qy <year>      Query the annual summary for the given year (e.g., 2025).\n";
-    std::cout << "  query-month, -qm <month>    Query the detailed monthly bill for the given month (e.g., 202507).\n\n";
-    std::cout << "Options:\n";
-    std::cout << "  --version, -V               Display application version information.\n";
-    std::cout << "  --help, -h                  Display this help message.\n";
+    const int command_width = 30;
+    const int total_width = 80; // 设置一个用于居中的总行宽
+
+    std::println("Bill Reprocessor - A command-line tool for processing bill files.\n\n");
+    std::println("Usage: {} <command> [arguments]\n", program_name);
+
+    // --- 使用辅助函数来打印居中的标题 ---
+    print_centered_title("Reprocessor", total_width);
+    std::println("{:^{}} {}", "validate, -v <path>", command_width, "Validate a .txt bill file or all .txt files in a directory.");
+    std::println("{:^{}} {}\n", "modify, -m <path>", command_width, "Modify a .txt file or all .txt files in a directory.");
+
+    print_centered_title("DB Insertor", total_width);
+    std::println("{:^{}} {}", "import, -i <path>", command_width, "Parse and insert a .txt file or a directory into the database.");
+    std::println("{:^{}} {}\n", "process, -p <path>", command_width, "Run the full workflow (validate, modify, import).");
+
+    print_centered_title("Query", total_width);
+    std::println("{:^{}} {}", "query-year, -qy <year>", command_width, "Query the annual summary for the given year (e.g., 2025).");
+    std::println("{:^{}} {}\n", "query-month, -qm <month>", command_width, "Query the detailed monthly bill for the given month (e.g., 202507).");
+
+    print_centered_title("Export", total_width);
+    std::println("{:^{}} {}\n", "export-all, -ea", command_width, "Export all yearly and monthly reports from the database.");
+
+    print_centered_title("General", total_width);
+    std::println("{:^{}} {}", "--version, -V", command_width, "Display application version information.");
+    std::println("{:^{}} {}", "--help, -h", command_width, "Display this help message.");
 }
 
 int main(int argc, char* argv[]) {
@@ -52,30 +75,30 @@ int main(int argc, char* argv[]) {
         else if (command == "--version" || command == "-V") {
             controller.display_version();
         }
-        else if (command == "export-all" || command == "-ea") { 
+        else if (command == "-export all" || command == "-e a") { 
             controller.handle_export_all();
         }
-        else if (command == "process" || command == "-p") {
+        else if (command == "-process" || command == "-p") {
             if (argc < 3) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path argument for 'process' command.\n"; return 1; }
             controller.handle_full_workflow(argv[2]);
         }
-        else if (command == "validate" || command == "-v") {
+        else if (command == "-validate" || command == "-v") {
             if (argc < 3) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path argument for 'validate' command.\n"; return 1; }
             controller.handle_validation(argv[2]);
         }
-        else if (command == "modify" || command == "-m") {
+        else if (command == "-modify" || command == "-m") {
             if (argc < 3) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path argument for 'modify' command.\n"; return 1; }
             controller.handle_modification(argv[2]);
         }
-        else if (command == "import" || command == "-i") {
+        else if (command == "-import" || command == "-i") {
             if (argc < 3) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path argument for 'import' command.\n"; return 1; }
             controller.handle_import(argv[2]);
         }
-        else if (command == "query-year" || command == "-qy") {
+        else if (command == "-query year" || command == "-q y") {
             if (argc < 3) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing <year> argument for 'query-year' command.\n"; return 1; }
             controller.handle_yearly_query(argv[2]);
         }
-        else if (command == "query-month" || command == "-qm") {
+        else if (command == "-query month" || command == "-q m") {
              if (argc < 3) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing <month> argument for 'query-month' command.\n"; return 1; }
             controller.handle_monthly_query(argv[2]);
         }

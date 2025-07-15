@@ -1,9 +1,10 @@
 #include <iostream>
 #include <string>
 #include <limits>
+#include <print>
 
 #include "AppController.h"
-#include "common_utils.h"
+#include "common_utils.h" // for colors
 
 // For UTF-8 output on Windows
 #ifdef _WIN32
@@ -19,7 +20,7 @@ void setup_console() {
 }
 
 void print_menu() {
-    std::cout << "\n===== Bill Reprocessor Menu =====\n"; 
+    std::println("--- {}Menu{} ---",CYAN_COLOR,RESET_COLOR);
     std::cout << "1. Validate Bill File(s)\n"; 
     std::cout << "2. Modify Bill File(s)\n"; 
     std::cout << "3. Parse and Insert Bill(s) to Database\n"; 
@@ -29,13 +30,14 @@ void print_menu() {
     std::cout << "7. Export All Reports from Database\n";
     std::cout << "8. Version\n";
     std::cout << "9. Exit\n";
-    std::cout << "=================================\n"; 
-    std::cout << "Enter your choice: "; 
+
+    std::string line(10,'-');
+    std::println("{}", line);
 }
 
 int main() {
     setup_console(); 
-    std::cout << "Welcome to the Bill Reprocessor! (UTF-8 enabled)\n"; 
+    std::println("Welcome to the bill_master\n"); 
 
     AppController controller; // Create a single controller instance
 

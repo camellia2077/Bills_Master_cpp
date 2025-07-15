@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 3.10)
 # 定义项目名称和所用语言
 project(BillReprocessor VERSION "0.2.1" LANGUAGES CXX)
 
-# 设置 C++ 标准为 C++17
-set(CMAKE_CXX_STANDARD 17) 
+# 设置 C++ 标准为 C++23
+set(CMAKE_CXX_STANDARD 23) 
 set(CMAKE_CXX_STANDARD_REQUIRED ON) 
 
 # --- 为 Release 构建类型设置优化编译选项 ---
@@ -55,10 +55,11 @@ target_include_directories(bill_master_lib PUBLIC
 target_link_libraries(bill_master_lib PUBLIC
     nlohmann_json::nlohmann_json
     SQLite::SQLite3
+    stdc++exp
 )
 
 # Set common compile options for the library code.
-target_compile_options(bill_master_lib PRIVATE -Wall)
+target_compile_options(bill_master_lib PRIVATE -Wall -fdiagnostics-color=always)
 
 
 # --- MODIFIED: Define two executable targets ---
