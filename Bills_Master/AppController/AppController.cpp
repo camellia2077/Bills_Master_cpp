@@ -8,7 +8,7 @@
 
 #include "Reprocessor.h"
 #include "DataProcessor.h"
-#include "QueryDb.h"
+#include "QueryDb.h" // 确保包含了 QueryDb.h
 #include "FileHandler.h"
 #include "version.h"
 #include "common_utils.h"
@@ -184,8 +184,9 @@ void AppController::handle_export(const std::string& type, const std::string& va
             if (value.empty()) {
                 throw std::runtime_error("导出年度报告需要提供年份。");
             }
-            // 注意：年度报告当前只支持 Markdown，QueryDb 内部会处理此逻辑
-            facade.export_yearly_report(value);
+            // *** 这是唯一的改动 ***
+            // 现在将解析后的格式传递给 export_yearly_report
+            facade.export_yearly_report(value, format);
         } else if (type == "month") {
             if (value.empty()) {
                 throw std::runtime_error("导出月度报告需要提供月份 (YYYYMM)。");

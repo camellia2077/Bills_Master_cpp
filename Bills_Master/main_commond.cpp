@@ -19,7 +19,7 @@ void setup_console() {
 #endif
 }
 
-// 更新帮助信息以包含 --format 标志
+// 更新帮助信息
 void print_help(const char* program_name) {
 
     std::println("Bill Master - A command-line tool for processing bill files.\n\n");
@@ -34,12 +34,12 @@ void print_help(const char* program_name) {
     std::println("--process, -p <path> \t\tRun the full workflow (validate, modify, import)");
 
     std::cout << GREEN_COLOR << "--- Query & Export ---\n" << RESET_COLOR;
-    std::println("--query year, -q y <year> \t\tQuery the annual summary for the given year and export (e.g., 2025)");
-    std::println("--query month, -q m <month> \t\tQuery the detailed monthly bill for the given month and export (e.g., 202507).");
-    std::println("--export all, -e a \t\t\tExport all yearly and monthly reports from the database.");
+    std::println("--query year, -q y <year> \t\tQuery and export the annual summary (use --format for md/tex).");
+    std::println("--query month, -q m <month> \t\tQuery and export the monthly details (use --format for md/tex).");
+    std::println("--export all, -e a \t\t\tExport all reports in BOTH Markdown and LaTeX formats."); // 更新此行
 
     std::cout << GREEN_COLOR << "--- Options ---\n" << RESET_COLOR;
-    std::println("  --format, -f <format>\t\tSpecify the output format ('md' or 'tex'). Default is 'md'.");
+    std::println("  --format, -f <format>\t\tSpecify output format ('md' or 'tex') for single queries. Default is 'md'.");
 
     std::cout << GREEN_COLOR << "--- General ---\n" << RESET_COLOR;
     std::println("  -h, --help\t\t\tShow this help message.");
@@ -61,6 +61,7 @@ int main(int argc, char* argv[]) {
     std::string format_str = "md"; // 默认格式为 markdown
 
     // --- 解析参数，分离出命令、值和格式 ---
+    // (这部分解析逻辑保持不变，因为它对于 query year/month 仍然是必需的)
     for (size_t i = 0; i < args.size(); ++i) {
         if (args[i] == "--format" || args[i] == "-f") {
             if (i + 1 < args.size()) {
@@ -73,7 +74,6 @@ int main(int argc, char* argv[]) {
         } else if (command.empty()) {
             command = args[i];
         } else if (path_or_value.empty()) {
-             // 处理 "query year" 或 "query month" 这种两段式命令
             if ((command == "--query" || command == "-q") && (args[i] == "year" || args[i] == "month" || args[i] == "y" || args[i] == "m")) {
                 command += " " + args[i];
             } else {
@@ -84,7 +84,6 @@ int main(int argc, char* argv[]) {
         }
     }
     
-    // 如果 path_or_value 仍然为空，但 args 中还有未处理的参数，则它是 path_or_value
     if (path_or_value.empty() && args.size() > 1 && (args[0] != "--help" && args[0] != "-h" && args[0] != "--version" && args[0] != "-V")) {
         if (args.size() > 1 && (args[1] != "--format" && args[1] != "-f")){
            size_t value_index = 1;
@@ -102,7 +101,11 @@ int main(int argc, char* argv[]) {
             controller.display_version();
         }
         else if (command == "--export all" || command == "-e a") {
-             controller.handle_export("all", "", format_str);
+            // *** 这是核心改动 ***
+            // 不再使用 format_str，而是直接导出两种格式
+            std::cout << "Exporting all reports in both Markdown and LaTeX formats...\n";
+            controller.handle_export("all", "", "md");  // 导出 MD 格式
+            controller.handle_export("all", "", "tex"); // 导出 TeX 格式
         }
         else if (command == "--process" || command == "-p") {
             if (path_or_value.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path for 'process' command.\n"; return 1; }
@@ -122,10 +125,12 @@ int main(int argc, char* argv[]) {
         }
         else if (command == "--query year" || command == "-q y") {
             if (path_or_value.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing <year> for 'query year' command.\n"; return 1; }
+            // query year 仍然遵循 --format 标志
             controller.handle_export("year", path_or_value, format_str);
         }
         else if (command == "--query month" || command == "-q m") {
            if (path_or_value.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing <month> for 'query month' command.\n"; return 1; }
+           // query month 仍然遵循 --format 标志
            controller.handle_export("month", path_or_value, format_str);
        }
         else {
