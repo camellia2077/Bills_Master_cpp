@@ -5,6 +5,7 @@
 #include <fstream>
 #include <vector>
 #include <set>
+#include <stdexcept> // for std::invalid_argument, std::out_of_range
 
 #include "Reprocessor.h"
 #include "DataProcessor.h"
@@ -164,8 +165,10 @@ void AppController::handle_full_workflow(const std::string& path) {
     stats.print_summary("Full Workflow");
 }
 
-bool AppController::handle_yearly_query(const std::string& year, bool is_part_of_export_all) {
+bool AppController::handle_yearly_query(const std::string& year_str, bool is_part_of_export_all) {
     try {
+        int year = std::stoi(year_str);
+
         QueryFacade facade("bills.db");
         std::string report = facade.get_yearly_summary_report(year);
         
@@ -179,7 +182,7 @@ bool AppController::handle_yearly_query(const std::string& year, bool is_part_of
 
         fs::path target_dir = fs::path("markdown_bills") / "years";
         fs::create_directories(target_dir);
-        fs::path output_path = target_dir / (year + ".md");
+        fs::path output_path = target_dir / (year_str + ".md");
         
         std::ofstream output_file(output_path);
         if (output_file) {
@@ -192,16 +195,25 @@ bool AppController::handle_yearly_query(const std::string& year, bool is_part_of
             std::cerr << "\n" << RED_COLOR << "Error: " << RESET_COLOR << "Could not open file for writing: " << output_path.string() << std::endl;
             return false;
         }
+    } catch (const std::invalid_argument& e) {
+        std::cerr << RED_COLOR << "Query Failed: " << RESET_COLOR << "Invalid year format. Please provide a 4-digit year (e.g., 2025).\n";
+        return false;
     } catch (const std::exception& e) {
         std::cerr << RED_COLOR << "Query Failed: " << RESET_COLOR << e.what() << std::endl;
         return false;
     }
 }
 
-bool AppController::handle_monthly_query(const std::string& month, bool is_part_of_export_all) {
+bool AppController::handle_monthly_query(const std::string& month_str, bool is_part_of_export_all) {
     try {
+        if (month_str.length() != 6) {
+            throw std::invalid_argument("Invalid month format.");
+        }
+        int year = std::stoi(month_str.substr(0, 4));
+        int month = std::stoi(month_str.substr(4, 2));
+
         QueryFacade facade("bills.db");
-        std::string report = facade.get_monthly_details_report(month);
+        std::string report = facade.get_monthly_details_report(year, month);
 
         if (!is_part_of_export_all) {
             std::cout << report;
@@ -212,15 +224,15 @@ bool AppController::handle_monthly_query(const std::string& month, bool is_part_
         }
 
         fs::path output_path;
-        if (month.length() >= 4) {
-            std::string year = month.substr(0, 4);
-            fs::path target_dir = fs::path("markdown_bills") / "months" / year;
+        if (month_str.length() >= 4) {
+            std::string year_dir = month_str.substr(0, 4);
+            fs::path target_dir = fs::path("markdown_bills") / "months" / year_dir;
             fs::create_directories(target_dir);
-            output_path = target_dir / (month + ".md");
+            output_path = target_dir / (month_str + ".md");
         } else {
             fs::path target_dir = fs::path("markdown_bills") / "months";
             fs::create_directories(target_dir);
-            output_path = target_dir / (month + ".md");
+            output_path = target_dir / (month_str + ".md");
         }
 
         std::ofstream output_file(output_path);
@@ -234,6 +246,9 @@ bool AppController::handle_monthly_query(const std::string& month, bool is_part_
             std::cerr << "\n" << RED_COLOR << "Error: " << RESET_COLOR << "Could not open file for writing: " << output_path.string() << std::endl;
             return false;
         }
+    } catch (const std::invalid_argument& e) {
+        std::cerr << RED_COLOR << "Query Failed: " << RESET_COLOR << "Invalid month format. Please provide a 6-digit month (e.g., 202506).\n";
+        return false;
     } catch (const std::exception& e) {
         std::cerr << RED_COLOR << "Query Failed: " << RESET_COLOR << e.what() << std::endl;
         return false;

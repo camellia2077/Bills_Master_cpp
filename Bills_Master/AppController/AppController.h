@@ -42,19 +42,19 @@ public:
 
     /**
      * @brief Handles querying and exporting a yearly summary report.
-     * @param year The 4-digit year to query.
+     * @param year_str The 4-digit year to query as a string.
      * @param is_part_of_export_all Suppresses console output when true.
      * @return True on success, false on failure.
      */
-    bool handle_yearly_query(const std::string& year, bool is_part_of_export_all = false);
+    bool handle_yearly_query(const std::string& year_str, bool is_part_of_export_all = false);
 
     /**
      * @brief Handles querying and exporting a monthly details report.
-     * @param month The 6-digit month to query (YYYYMM).
+     * @param month_str The 6-digit month to query (YYYYMM) as a string.
      * @param is_part_of_export_all Suppresses console output when true.
      * @return True on success, false on failure.
      */
-    bool handle_monthly_query(const std::string& month, bool is_part_of_export_all = false);
+    bool handle_monthly_query(const std::string& month_str, bool is_part_of_export_all = false);
 
     /**
      * @brief Displays the application's version information.
