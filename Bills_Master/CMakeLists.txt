@@ -30,6 +30,9 @@ file(GLOB REPROCESSING_SOURCES "reprocessing/*.cpp")
 file(GLOB DB_INSERT_SOURCES   "db_insert/*.cpp")
 file(GLOB QUERY_SOURCES       
     "query/*.cpp"
+    "query/export/*.cpp"
+
+
     "query/year/*.cpp"
     "query/year/_year_data/*.cpp"
     "query/year/_year_format/*.cpp"

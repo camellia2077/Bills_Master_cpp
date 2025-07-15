@@ -1,70 +1,55 @@
 #ifndef APP_CONTROLLER_H
 #define APP_CONTROLLER_H
 
-#include "ProcessStats.h" // Include the new stats helper
+#include "ProcessStats.h"
 #include <string>
 
 /**
  * @class AppController
- * @brief Acts as the central controller for the application.
+ * @brief 作为应用程序的中央控制器。
  *
- * This class encapsulates the core business logic, such as validation,
- * modification, database import, and querying. It is designed to be called
- * by different user interfaces (e.g., an interactive menu or a command-line tool).
+ * 封装了验证、修改、数据库导入和查询等核心业务逻辑。
+ * 旨在被不同的用户界面（例如，交互式菜单或命令行工具）调用。
  */
 class AppController {
 public:
     AppController();
 
     /**
-     * @brief Handles the validation of one or more bill files.
-     * @param path A path to a single .txt file or a directory to search recursively.
+     * @brief 处理一个或多个账单文件的验证。
+     * @param path 单个 .txt 文件或要递归搜索的目录的路径。
      */
     void handle_validation(const std::string& path);
 
     /**
-     * @brief Handles the modification of one or more bill files.
-     * @param path A path to a single .txt file or a directory to search recursively.
+     * @brief 处理一个或多个账单文件的修改。
+     * @param path 单个 .txt 文件或要递归搜索的目录的路径。
      */
     void handle_modification(const std::string& path);
 
     /**
-     * @brief Handles the import of one or more bill files into the database.
-     * @param path A path to a single .txt file or a directory to search recursively.
+     * @brief 处理将一个或多个账单文件导入数据库。
+     * @param path 单个 .txt 文件或要递归搜索的目录的路径。
      */
     void handle_import(const std::string& path);
 
     /**
-     * @brief Handles the full processing workflow (validate -> modify -> import).
-     * @param path A path to a single .txt file or a directory to search recursively.
+     * @brief 处理完整的处理工作流（验证 -> 修改 -> 导入）。
+     * @param path 单个 .txt 文件或要递归搜索的目录的路径。
      */
     void handle_full_workflow(const std::string& path);
 
     /**
-     * @brief Handles querying and exporting a yearly summary report.
-     * @param year_str The 4-digit year to query as a string.
-     * @param is_part_of_export_all Suppresses console output when true.
-     * @return True on success, false on failure.
+     * @brief 处理报告的导出。
+     * @param type 导出类型 ("year", "month", "all")。
+     * @param value 导出的具体值（例如，年份或月份字符串），对于 "all" 类型则忽略。
      */
-    bool handle_yearly_query(const std::string& year_str, bool is_part_of_export_all = false);
+    void handle_export(const std::string& type, const std::string& value = "");
 
     /**
-     * @brief Handles querying and exporting a monthly details report.
-     * @param month_str The 6-digit month to query (YYYYMM) as a string.
-     * @param is_part_of_export_all Suppresses console output when true.
-     * @return True on success, false on failure.
-     */
-    bool handle_monthly_query(const std::string& month_str, bool is_part_of_export_all = false);
-
-    /**
-     * @brief Displays the application's version information.
+     * @brief 显示应用程序的版本信息。
      */
     void display_version();
-
-    /**
-     * @brief Handles exporting all yearly and monthly reports from the database.
-     */
-    void handle_export_all();
 };
 
 #endif // APP_CONTROLLER_H

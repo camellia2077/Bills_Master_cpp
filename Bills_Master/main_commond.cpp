@@ -27,7 +27,7 @@ void print_help(const char* program_name) {
     std::cout << GREEN_COLOR << "--- Reprocessor ---\n" << RESET_COLOR;
     std::println("--validate, -v <path> \t\tValidate a .txt bill file or all .txt files in a directory.");
 
-    std::println("--modify, -m <path>, -v <path> \t\tModify a .txt file or all .txt files in a directory.");
+    std::println("--modify, -m <path> \t\tModify a .txt file or all .txt files in a directory.");
 
 
     std::cout << GREEN_COLOR << "--- DB Insertor ---\n" << RESET_COLOR;
@@ -35,16 +35,14 @@ void print_help(const char* program_name) {
     std::println("--import, -i <path> \t\tParse and insert a .txt file or a directory into the database.");
     std::println("--process, -p <path> \t\tRun the full workflow (validate, modify, import)");
 
-    std::cout << GREEN_COLOR << "--- Query ---\n" << RESET_COLOR;
+    std::cout << GREEN_COLOR << "--- Query & Export ---\n" << RESET_COLOR;
 
-    std::println("--query year, -q y <year> \t\tQuery the annual summary for the given year (e.g., 2025)");
-    std::println("--query month, -q m <month> \t\tQuery the detailed monthly bill for the given month (e.g., 202507).");
-
-    std::cout << GREEN_COLOR << "--- Export ---\n" << RESET_COLOR;
-    std::println("--export all, -e a \t\tExport all yearly and monthly reports from the database.");
+    std::println("--query year, -q y <year> \t\tQuery the annual summary for the given year and export (e.g., 2025)");
+    std::println("--query month, -q m <month> \t\tQuery the detailed monthly bill for the given month and export (e.g., 202507).");
+    std::println("--export all, -e a \t\t\tExport all yearly and monthly reports from the database.");
 
 
-    std::cout << GREEN_COLOR << "--- Export ---\n" << RESET_COLOR;
+    std::cout << GREEN_COLOR << "--- General ---\n" << RESET_COLOR;
 
 
     std::println("  -h, --help\t\t\tShow this help message.\n");
@@ -69,8 +67,8 @@ int main(int argc, char* argv[]) {
         else if (command == "--version" || command == "-V") {
             controller.display_version();
         }
-        else if (command == "--export all" || (command == "-e" && argc > 2 && std::string(argv[2]) == "a")) {
-            controller.handle_export_all();
+        else if ((command == "--export" && argc > 2 && std::string(argv[2]) == "all") || (command == "-e" && argc > 2 && std::string(argv[2]) == "a")) {
+            controller.handle_export("all"); // 更新
         }
         else if (command == "--process" || command == "-p") {
             if (argc < 3) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path argument for 'process' command.\n"; return 1; }
@@ -89,16 +87,18 @@ int main(int argc, char* argv[]) {
             controller.handle_import(argv[2]);
         }
         else if ((command == "--query" && argc > 2 && std::string(argv[2]) == "year") || (command == "-q" && argc > 2 && std::string(argv[2]) == "y")) {
-            // 对于 -q y <year>，年份值是 argv[3]
-            if (argc < 4) { // 至少需要4个参数 (程序名, -q, y, <年份>)
-                std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing <year> argument for 'query year' command.\n"; // 更新错误提示
+            if (argc < 4) {
+                std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing <year> argument for 'query year' command.\n";
                 return 1;
             }
-            controller.handle_yearly_query(argv[3]); // 传递 argv[3]
+            controller.handle_export("year", argv[3]); // 更新
         }
         else if ((command == "--query" && argc > 2 && std::string(argv[2]) == "month") || (command == "-q" && argc > 2 && std::string(argv[2]) == "m")) {
-            if (argc < 3) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing <month> argument for 'query-month' command.\n"; return 1; }
-           controller.handle_monthly_query(argv[3]);
+            if (argc < 4) { // 修正：检查参数数量
+                std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing <month> argument for 'query month' command.\n";
+                return 1;
+            }
+           controller.handle_export("month", argv[3]); // 更新
        }
         else {
             std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Unknown command '" << command << "'\n\n";
