@@ -92,16 +92,16 @@ void QueryFacade::export_yearly_report(const std::string& year_str, ReportFormat
             switch(format) {
                 case ReportFormat::LATEX:
                     extension = ".tex";
-                    base_dir = "latex_bills";
+                    base_dir = "exported_files/latex_bills"; // 修改点
                     break;
                 case ReportFormat::TYPST:
                     extension = ".typ";
-                    base_dir = "typst_bills";
+                    base_dir = "exported_files/typst_bills"; // 修改点
                     break;
                 case ReportFormat::MARKDOWN:
                 default:
                     extension = ".md";
-                    base_dir = "markdown_bills";
+                    base_dir = "exported_files/markdown_bills"; // 修改点
                     break;
             }
             
@@ -140,16 +140,16 @@ void QueryFacade::export_monthly_report(const std::string& month_str, ReportForm
             switch(format) {
                 case ReportFormat::LATEX:
                     extension = ".tex";
-                    base_dir = "latex_bills";
+                    base_dir = "exported_files/latex_bills"; // 修改点
                     break;
                 case ReportFormat::TYPST:
                     extension = ".typ";
-                    base_dir = "typst_bills";
+                    base_dir = "exported_files/typst_bills"; // 修改点
                     break;
                 case ReportFormat::MARKDOWN:
                 default:
                     extension = ".md";
-                    base_dir = "markdown_bills";
+                    base_dir = "exported_files/markdown_bills"; // 修改点
                     break;
             }
 
