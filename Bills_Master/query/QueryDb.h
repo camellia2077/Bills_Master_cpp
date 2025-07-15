@@ -14,11 +14,8 @@ public:
     QueryFacade(const QueryFacade&) = delete;
     QueryFacade& operator=(const QueryFacade&) = delete;
 
-    // --- MODIFIED Methods ---
     std::string get_yearly_summary_report(int year);
     std::string get_monthly_details_report(int year, int month);
-
-    // --- New Method ---
     /**
      * @brief Retrieves all distinct bill dates (YYYYMM) from the database.
      * @return A vector of strings, where each string is a unique bill date.

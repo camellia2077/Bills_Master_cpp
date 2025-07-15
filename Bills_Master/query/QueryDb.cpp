@@ -1,16 +1,17 @@
+// QueryDb.cpp
 #include "QueryDb.h"
-#include "YearlyQuery.h"
-#include "MonthlyQuery.h"
+#include "year/YearlyReportGenerator.h"
+#include "month/MonthlyReportGenerator.h"
 #include <stdexcept>
 #include <vector>
 #include <sstream>
 #include <iomanip>
 
-// --- Constructor / Destructor (Assumed to be the same) ---
+// --- Constructor / Destructor  ---
 QueryFacade::QueryFacade(const std::string& db_path) : m_db(nullptr) {
     if (sqlite3_open_v2(db_path.c_str(), &m_db, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK) {
         std::string errmsg = sqlite3_errmsg(m_db);
-        sqlite3_close(m_db);
+        sqlite3_close(m_db); // Clean up on failure
         throw std::runtime_error("无法以只读模式打开数据库: " + errmsg);
     }
 }
@@ -21,19 +22,21 @@ QueryFacade::~QueryFacade() {
     }
 }
 
-// --- MODIFIED Report Generation Methods ---
+// --- Report Generation Methods ---
+
 std::string QueryFacade::get_yearly_summary_report(int year) {
-    YearlyQuery query(m_db);
-    return query.generate_report(year);
+    // Use the new YearlyReportGenerator
+    YearlyReportGenerator generator(m_db);
+    return generator.generate(year);
 }
 
 std::string QueryFacade::get_monthly_details_report(int year, int month) {
-    MonthlyQuery query(m_db);
-    return query.generate_report(year, month);
+    // Use the new MonthlyReportGenerator
+    MonthlyReportGenerator generator(m_db);
+    return generator.generate(year, month);
 }
 
-
-// --- MODIFIED Method Implementation ---
+// --- get_all_bill_dates ---
 std::vector<std::string> QueryFacade::get_all_bill_dates() {
     std::vector<std::string> dates;
     const char* sql = "SELECT DISTINCT year, month FROM transactions ORDER BY year, month;";
