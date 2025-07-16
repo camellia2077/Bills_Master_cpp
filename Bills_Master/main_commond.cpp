@@ -19,33 +19,73 @@ void setup_console() {
 #endif
 }
 
-// 更新帮助信息
 void print_help(const char* program_name) {
 
-    std::println("Bill Master - A command-line tool for processing bill files.\n\n");
+    std::println("Bill Master - A command-line tool for processing bill files.\n");
     std::println("Usage: {} <command> [arguments] [--format <md|tex|typ>]\n", program_name);
 
+    // --- Full Workflow ---
+    std::cout << GREEN_COLOR << "--- Full Workflow ---\n" << RESET_COLOR;
+    
+    std::println("--all process, -a p <path>");
+    std::println("  Runs the processing workflow (validate, modify, import).");
+    std::println("  Example: {} -a p ./my_bills/\n", program_name);
+
+    std::println("--all export, -a e <path>");
+    std::println("  Runs the entire workflow (validate, modify, import, export).");
+    std::println("  Example: {} -a e ./my_bills/ --format md\n", program_name);
+
+    // --- Reprocessor ---
     std::cout << GREEN_COLOR << "--- Reprocessor ---\n" << RESET_COLOR;
-    std::println("--validate, -v <path> \t\tValidate a .txt bill file or all .txt files in a directory.");
-    std::println("--modify, -m <path> \t\tModify a .txt file or all .txt files in a directory.");
+    
+    std::println("--validate, -v <path>");
+    std::println("  Validates a .txt bill file or all .txt files in a directory.");
+    std::println("  Example: {} -v ./bills/2024-01.txt\n", program_name);
 
+    std::println("--modify, -m <path>");
+    std::println("  Modifies a .txt file or all .txt files in a directory.");
+    std::println("  Example: {} -m ./bills_to_process/\n", program_name);
+
+    // --- DB Insertor ---
     std::cout << GREEN_COLOR << "--- DB Insertor ---\n" << RESET_COLOR;
-    std::println("--import, -i <path> \t\tParse and insert a .txt file or a directory into the database.");
-    std::println("--process, -p <path> \t\tRun the full workflow (validate, modify, import)");
-
+    
+    std::println("--import, -i <path>");
+    std::println("  Parses and inserts a .txt file or a directory into the database.");
+    std::println("  Example: {} -i ./modified_bills/2024-02.txt\n", program_name);
+    
+    // --- Query & Export ---
     std::cout << GREEN_COLOR << "--- Query & Export ---\n" << RESET_COLOR;
-    std::println("--query year, -q y <year> \t\tQuery and export the annual summary.");
-    std::println("--query month, -q m <month> \t\tQuery and export the monthly details.");
-    std::println("--export all, -e a \t\t\tExport all reports. Defaults to all formats unless --format is used.");
 
+    std::println("--query year, -q y <year>");
+    std::println("  Queries and exports the annual summary.");
+    std::println("  Example: {} -q y 2024 --format tex\n", program_name);
+
+    std::println("--query month, -q m <month>");
+    std::println("  Queries and exports the monthly details (format: YYYY-MM).");
+    std::println("  Example: {} -q m 2024-07\n", program_name);
+
+    std::println("--export all, -e a");
+    std::println("  Exports all available reports from the database.");
+    std::println("  Example: {} -e a\n", program_name);
+
+    // --- Options ---
     std::cout << GREEN_COLOR << "--- Options ---\n" << RESET_COLOR;
-    std::println("  --format, -f <format>\t\tSpecify output format ('md', 'tex', or 'typ'). Default is 'md'.");
+    
+    std::println("  --format, -f <format>");
+    std::println("    Specify output format ('md', 'tex', or 'typ'). Defaults to 'md'.");
+    std::println("    Example: --format md\n");
 
+    // --- General ---
     std::cout << GREEN_COLOR << "--- General ---\n" << RESET_COLOR;
-    std::println("  -h, --help\t\t\tShow this help message.");
-    std::println("  -v, --version\t\t\tShow program version.\n");
-}
+    
+    std::println("  -h, --help");
+    std::println("    Shows this help message.");
+    std::println("    Example: {} -h\n", program_name);
 
+    std::println("  -V, --version");
+    std::println("    Shows the program version.");
+    std::println("    Example: {} -V\n", program_name);
+}
 int main(int argc, char* argv[]) {
     setup_console();
 
@@ -61,12 +101,12 @@ int main(int argc, char* argv[]) {
     std::string format_str = "md"; // 默认格式
     bool format_specified = false;
 
-    // --- 新的、更可靠的参数解析逻辑 ---
+    // --- 参数解析逻辑 ---
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--format" || arg == "-f") {
             if (i + 1 < argc) {
-                format_str = argv[++i]; // 获取格式并跳过下一个参数
+                format_str = argv[++i];
                 format_specified = true;
             } else {
                 std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing value for format flag.\n";
@@ -79,9 +119,9 @@ int main(int argc, char* argv[]) {
 
     if (!args.empty()) {
         command = args[0];
-        // 检查两段式命令
-        if ((command == "--query" || command == "-q" || command == "--export" || command == "-e") && args.size() > 1) {
-            // 将 "query year" 或 "export all" 组合成一个命令
+        // *** 修改: 扩展两段式命令的解析逻辑以包含 --all / -a ***
+        if ((command == "--query" || command == "-q" || command == "--export" || command == "-e" || command == "--all" || command == "-a") && args.size() > 1) {
+            // 将 "all process" 或 "query year" 组合成一个命令
             command += " " + args[1];
             if (args.size() > 2) {
                 path_or_value = args[2];
@@ -98,21 +138,44 @@ int main(int argc, char* argv[]) {
         else if (command == "--version" || command == "-V") {
             controller.display_version();
         }
-        else if (command == "--export all" || command == "-e a") {
+        // *** 修改: 旧的 --all / -a 命令被重命名 ***
+        else if (command == "--all export" || command == "-a e") {
+            if (path_or_value.empty()) { 
+                std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path for 'all export' command.\n"; 
+                return 1; 
+            }
+
+            // 步骤 1, 2, 3: Validate, Modify, Import
+            std::println(CYAN_COLOR, "\n--- Step 1/2: Running Full Processing Workflow (Validate, Modify, Import) ---", RESET_COLOR);
+            controller.handle_full_workflow(path_or_value);
+            
+            // 步骤 4: Export All
+            std::println(CYAN_COLOR, "\n--- Step 2/2: Exporting All Reports ---", RESET_COLOR);
             if (format_specified) {
-                // 如果用户指定了格式，则只导出该格式
                 std::cout << "Exporting all reports in " << format_str << " format...\n";
                 controller.handle_export("all", "", format_str);
             } else {
-                // 如果未指定格式，则导出所有三种格式
+                std::cout << "Exporting all reports in Markdown, LaTeX, and Typst formats...\n";
+                controller.handle_export("all", "", "md");
+                controller.handle_export("all", "", "tex");
+                controller.handle_export("all", "", "typ");
+            }
+            std::println(GREEN_COLOR, "\n✅ Entire workflow completed successfully!", RESET_COLOR);
+        }
+        else if (command == "--export all" || command == "-e a") {
+            if (format_specified) {
+                std::cout << "Exporting all reports in " << format_str << " format...\n";
+                controller.handle_export("all", "", format_str);
+            } else {
                 std::cout << "Exporting all reports in Markdown, LaTeX, and Typst formats...\n";
                 controller.handle_export("all", "", "md");
                 controller.handle_export("all", "", "tex");
                 controller.handle_export("all", "", "typ");
             }
         }
-        else if (command == "--process" || command == "-p") {
-            if (path_or_value.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path for 'process' command.\n"; return 1; }
+        // *** 修改: 旧的 --process / -p 命令被重命名 ***
+        else if (command == "--all process" || command == "-a p") {
+            if (path_or_value.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path for 'all process' command.\n"; return 1; }
             controller.handle_full_workflow(path_or_value);
         }
         else if (command == "--validate" || command == "-v") {
