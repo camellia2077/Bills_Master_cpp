@@ -27,10 +27,14 @@ file(GLOB REPROCESSING_SOURCES
     "reprocessing/*.cpp"
     "reprocessing/validator/*.cpp"
     "reprocessing/modifier/*.cpp"
+    "reprocessing/modifier/config_loader/*.cpp"
+    "reprocessing/modifier/processor/*.cpp"
+    "reprocessing/modifier/raw_format/*.cpp"
     
 )
 file(GLOB DB_INSERT_SOURCES   
     "db_insert/*.cpp"
+    "db_insert/bill_structures/*.cpp"
     "db_insert/insertor/*.cpp"
     "db_insert/parser/*.cpp"
 )
