@@ -5,8 +5,6 @@
 #include <iomanip>
 #include <iostream>
 
-// --- 构造函数和主方法 ---
-
 BillModifier::BillModifier(const nlohmann::json& config_json) {
     // 解析 modification_flags
     if (config_json.contains("modification_flags")) {
@@ -63,9 +61,6 @@ std::string BillModifier::modify(const std::string& bill_content) {
     return _process_structured_modifications(lines);
 }
 
-
-// --- 阶段 1: 初始修改实现 ---
-
 void BillModifier::_perform_initial_modifications(std::vector<std::string>& lines) {
     if (m_config.flags.enable_summing) {
         for (std::string& line : lines) {
@@ -73,7 +68,6 @@ void BillModifier::_perform_initial_modifications(std::vector<std::string>& line
         }
     }
 
-    // 修改：使用新的配置结构来控制自动续费
     if (m_config.auto_renewal.enabled) {
         for (const auto& pair : m_config.auto_renewal.rules) {
             const std::string& category_title = pair.first;
@@ -115,7 +109,6 @@ void BillModifier::_perform_initial_modifications(std::vector<std::string>& line
     }
 }
 
-
 void BillModifier::_sum_up_line(std::string& line) {
     std::regex expr_regex(R"(^([\d\.\s]+\+[\d\.\s\+]+)(.*))");
     std::smatch match;
@@ -139,9 +132,6 @@ void BillModifier::_sum_up_line(std::string& line) {
     }
 }
 
-
-// --- 阶段 2: 结构化修改实现 ---
-
 std::string BillModifier::_process_structured_modifications(const std::vector<std::string>& lines) {
     std::vector<std::string> metadata_lines;
     std::vector<ParentItem> bill_structure = _parse_into_structure(lines, metadata_lines);
@@ -156,7 +146,6 @@ std::string BillModifier::_process_structured_modifications(const std::vector<st
 
     return _reconstruct_content_with_formatting(bill_structure, metadata_lines);
 }
-
 
 std::vector<ParentItem> BillModifier::_parse_into_structure(const std::vector<std::string>& lines, std::vector<std::string>& metadata_lines) const {
     std::vector<ParentItem> structure;
@@ -176,32 +165,23 @@ std::vector<ParentItem> BillModifier::_parse_into_structure(const std::vector<st
         }
     }
 
-    for (size_t i = 0; i < temp_lines.size(); ++i) {
-        const std::string& line = temp_lines[i];
-
-        if (_is_title(line)) {
-            bool is_parent = false;
-            if (i + 1 < temp_lines.size()) {
-                if (_is_title(temp_lines[i+1])) {
-                    is_parent = true;
-                }
-            }
-
-            if (is_parent) {
+    for (const std::string& line : temp_lines) {
+        if (_is_parent_title(line)) {
+            structure.emplace_back();
+            current_parent = &structure.back();
+            current_parent->title = line;
+            current_sub_item = nullptr;
+        } else if (_is_title(line)) {
+            if (!current_parent) {
                 structure.emplace_back();
                 current_parent = &structure.back();
-                current_parent->title = line;
-                current_sub_item = nullptr;
-            } else {
-                if (!current_parent) {
-                    structure.emplace_back();
-                    current_parent = &structure.back();
-                    current_parent->title = "Default Parent";
-                }
-                current_parent->sub_items.emplace_back();
-                current_sub_item = &current_parent->sub_items.back();
-                current_sub_item->title = line;
+                current_parent->title = "Default Parent"; 
             }
+            current_parent->sub_items.emplace_back();
+
+            current_sub_item = &current_parent->sub_items.back();
+
+            current_sub_item->title = line;
         } else {
             if (current_sub_item) {
                 current_sub_item->contents.push_back(line);
@@ -211,6 +191,7 @@ std::vector<ParentItem> BillModifier::_parse_into_structure(const std::vector<st
     return structure;
 }
 
+// ... (其他函数 _sort_bill_structure, _cleanup_bill_structure, _reconstruct_content_with_formatting 等保持不变) ...
 void BillModifier::_sort_bill_structure(std::vector<ParentItem>& bill_structure) const {
     for (auto& parent : bill_structure) {
         for (auto& sub_item : parent.sub_items) {
@@ -286,11 +267,8 @@ std::string BillModifier::_reconstruct_content_with_formatting(const std::vector
 
 // --- 辅助函数实现 ---
 
-// 修改：重写函数以使用 m_config 中的前缀列表
 bool BillModifier::_is_metadata_line(const std::string& line) const {
-    // 遍历从 JSON 配置中读取的所有前缀
     for (const auto& prefix : m_config.metadata_prefixes) {
-        // 检查行是否以其中任何一个前缀开头 (rfind a at pos 0)
         if (line.rfind(prefix, 0) == 0) {
             return true;
         }
@@ -307,6 +285,16 @@ double BillModifier::_get_numeric_value_from_content(const std::string& content_
     } catch (const std::invalid_argument&) {
         return 0.0;
     }
+}
+
+// 定义 _is_parent_title 函数
+bool BillModifier::_is_parent_title(const std::string& line) {
+    for (char c : line) {
+        if (std::isupper(static_cast<unsigned char>(c))) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool BillModifier::_is_title(const std::string& line) {
