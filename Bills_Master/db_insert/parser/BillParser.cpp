@@ -19,6 +19,9 @@ static bool is_whitespace(const std::string& s) {
 // 现在只检查行首是否为大写字母，以识别父标题行
 bool BillParser::is_parent_title(const std::string& line) {
     if (line.empty()) return false;
+    // 错误：std::isupper 期望一个字符，而不是整个字符串
+    // return std::isupper(static_cast<unsigned char>(line));
+    // 正确：检查字符串的第一个字符
     return std::isupper(static_cast<unsigned char>(line[0]));
 }
 
@@ -26,9 +29,11 @@ bool BillParser::is_parent_title(const std::string& line) {
 // 现在只检查行首是否为小写字母，以识别子标题行
 bool BillParser::is_sub_title(const std::string& line) {
     if (line.empty()) return false;
+    // 错误：std::islower 期望一个字符，而不是整个字符串
+    // return std::islower(static_cast<unsigned char>(line));
+    // 正确：检查字符串的第一个字符
     return std::islower(static_cast<unsigned char>(line[0]));
 }
-
 
 ParsedBill BillParser::parse(const std::string& file_path) {
     std::ifstream file(file_path);
