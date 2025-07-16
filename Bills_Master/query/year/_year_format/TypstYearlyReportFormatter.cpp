@@ -20,7 +20,7 @@ std::string TypstYearlyReportFormatter::format_report(const YearlyReportData& da
 
     // --- 摘要部分 ---
     ss << "== 年度总览\n\n";
-    ss << "  - *年度总支出：* ¥" << data.grand_total << "\n\n";
+    ss << "  - *年度总支出:* ¥" << data.grand_total << "\n\n";
     
     // --- 每月支出详情 ---
     ss << "== 每月支出\n\n";
@@ -28,7 +28,7 @@ std::string TypstYearlyReportFormatter::format_report(const YearlyReportData& da
         int month_val = pair.first;
         double month_total = pair.second;
         ss << "  - " << data.year << "-" << std::setfill('0') << std::setw(2) << month_val
-           << "：¥" << month_total << "\n";
+           << ":¥" << month_total << "\n";
     }
 
     return ss.str();
