@@ -49,7 +49,7 @@ def print_color_demo():
         "BG_BRIGHT_WHITE_COLOR": "\033[107m",
     }
 
-    phrase = "The quick fox jump over lazy dog"
+    phrase = "The quick fox jumps over lazy dog"
 
     print("--- ANSI Color Code Demo (Simplified) ---")
     print("Each line below shows a color macro name and the phrase in that color:")
