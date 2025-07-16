@@ -93,7 +93,7 @@ target_compile_options(bill_master_lib PRIVATE -Wall -fdiagnostics-color=always)
 add_executable(bill_matser_app main.cpp)
 
 # Target 2: The command-line interface application
-add_executable(bill_master_cli main_commond.cpp)
+add_executable(bill_master_cli main_command.cpp)
 
 
 # --- MODIFIED: Link each executable to the shared library ---
