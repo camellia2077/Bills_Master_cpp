@@ -1,9 +1,9 @@
-// YearlyReportFormatter.cpp
-#include "YearlyReportFormatter.h"
+// YearMdFormat.cpp
+#include "YearMdFormat.h"
 #include <sstream>
 #include <iomanip>
 
-std::string YearlyReportFormatter::format_report(const YearlyReportData& data) {
+std::string YearMdFormat::format_report(const YearlyReportData& data) {
     std::stringstream ss;
 
     if (!data.data_found) {

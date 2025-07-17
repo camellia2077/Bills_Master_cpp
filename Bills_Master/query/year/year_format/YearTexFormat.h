@@ -1,14 +1,14 @@
-#ifndef LATEX_YEARLY_REPORT_FORMATTER_H
-#define LATEX_YEARLY_REPORT_FORMATTER_H
+#ifndef YEAR_TEX_FORMAT_H
+#define YEAR_TEX_FORMAT_H
 
 #include <string>
 #include "year/_year_data/YearlyReportData.h"
 
 /**
- * @class LatexYearlyReportFormatter
+ * @class YearTexFormat
  * @brief 将年度报告数据格式化为 LaTeX 字符串。
  */
-class LatexYearlyReportFormatter {
+class YearTexFormat {
 public:
     /**
      * @brief 接收年度数据并返回格式化的 LaTeX 字符串。
@@ -18,4 +18,4 @@ public:
     std::string format_report(const YearlyReportData& data);
 };
 
-#endif // LATEX_YEARLY_REPORT_FORMATTER_H
+#endif // YEAR_TEX_FORMAT_H

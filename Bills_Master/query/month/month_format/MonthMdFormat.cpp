@@ -1,11 +1,11 @@
-// ReportFormatter.cpp
-#include "ReportFormatter.h"
+// MonthMdFormat.cpp
+#include "MonthMdFormat.h"
 #include <sstream>
 #include <iomanip>
 #include <vector>
 #include <algorithm>
 
-std::string ReportFormatter::format_report(const MonthlyReportData& data) {
+std::string MonthMdFormat::format_report(const MonthlyReportData& data) {
     std::stringstream ss;
 
     if (!data.data_found) {

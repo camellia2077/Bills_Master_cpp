@@ -1,4 +1,4 @@
-#include "LatexReportFormatter.h"
+#include "MonthTexFormat.h"
 #include <sstream>
 #include <iomanip>
 #include <vector>
@@ -6,7 +6,7 @@
 #include <string>
 
 // 实现 LaTeX 特殊字符转义
-std::string LatexReportFormatter::escape_latex(const std::string& input) {
+std::string MonthTexFormat::escape_latex(const std::string& input) {
     std::string output;
     output.reserve(input.size());
     for (const char c : input) {
@@ -27,7 +27,7 @@ std::string LatexReportFormatter::escape_latex(const std::string& input) {
     return output;
 }
 
-std::string LatexReportFormatter::format_report(const MonthlyReportData& data) {
+std::string MonthTexFormat::format_report(const MonthlyReportData& data) {
     std::stringstream ss;
 
     // --- 1. 文档前导和字体设置 ---

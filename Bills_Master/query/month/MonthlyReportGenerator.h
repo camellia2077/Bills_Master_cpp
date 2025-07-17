@@ -5,10 +5,10 @@
 #include <string>
 #include <sqlite3.h>
 #include "ReportFormat.h"
-#include "_month_query/TransactionReader.h"
-#include "_month_format/ReportFormatter.h"
-#include "_month_format/LatexReportFormatter.h"
-#include "_month_format/TypstReportFormatter.h" // 1. 包含新的 Typst 格式化器
+#include "month_query/MonthQuery.h"
+#include "month_format/MonthMdFormat.h"
+#include "month_format/MonthTexFormat.h"
+#include "month_format/MonthTypFormat.h"
 
 /*
  * @class MonthlyReportGenerator
@@ -30,10 +30,10 @@ public:
 
 private:
     // 内部持有的组件
-    TransactionReader m_reader;
-    ReportFormatter m_markdown_formatter;
-    LatexReportFormatter m_latex_formatter;
-    TypstReportFormatter m_typst_formatter; // 2. 添加 Typst 格式化器实例
+    MonthQuery m_reader;
+    MonthMdFormat m_markdown_formatter;
+    MonthTexFormat m_latex_formatter;
+    MonthTypFormat m_typst_formatter; 
 };
 
 #endif // MONTHLY_REPORT_GENERATOR_H

@@ -1,17 +1,17 @@
-#ifndef LATEX_REPORT_FORMATTER_H
-#define LATEX_REPORT_FORMATTER_H
+#ifndef TEX_FORMAT_H
+#define TEX_FORMAT_H
 
 #include <string>
 #include "month/_month_data/ReportData.h"
 
 /**
- * @class LatexReportFormatter
+ * @class MonthTexFormat
  * @brief 将月度报告数据格式化为 LaTeX 字符串。
  *
  * 该类接收一个 MonthlyReportData 结构体，并生成一个完整的、
  * 可以被编译的 LaTeX 文档字符串，用于创建 PDF 报告。
  */
-class LatexReportFormatter {
+class MonthTexFormat {
 public:
     /**
      * @brief 接收数据结构并返回格式化的 LaTeX 字符串。
@@ -29,4 +29,4 @@ private:
     std::string escape_latex(const std::string& input);
 };
 
-#endif // LATEX_REPORT_FORMATTER_H
+#endif // TEX_FORMAT_H

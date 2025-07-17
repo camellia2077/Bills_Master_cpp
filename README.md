@@ -18,78 +18,97 @@
 ## 1.1 目录结构
 ```
 Bills_Master/
-├── app_controller/                       # 应用程序控制器模块
-│   ├── AppController.cpp                 # 应用程序控制器的实现
-│   ├── AppController.h                   # 应用程序控制器的头文件
-│   └── ProcessStats.h                    # 处理统计数据结构
-├── build.sh                              # 项目构建脚本
-├── CMakeLists.txt                        # CMake 构建配置文件
-├── common/                               # 通用工具和定义
-│   ├── common_utils.h                    # 通用工具函数和宏定义 (如颜色代码)
-│   └── version.h                         # 应用程序版本信息
-├── config/                               # 配置文件目录
-│   ├── Modifier_Config.json              # 账单修改器的配置
-│   └── Validator_Config.json             # 账单验证器的配置
-├── db_insert/                            # 数据库插入模块
-│   ├── DataProcessor.cpp                 # 数据处理器的实现 (解析并插入)
-│   ├── DataProcessor.h                   # 数据处理器的头文件
+├── app_controller/                       # 应用程序控制器模块，负责协调各个功能模块，处理用户请求
+│   ├── AppController.cpp                 # AppController 类的实现，包含业务逻辑
+│   ├── AppController.h                   # AppController 类的头文件，定义了应用程序的核心接口
+│   └── ProcessStats.h                    # 用于跟踪和汇总处理操作（成功/失败）的统计数据结构
+├── build.sh                              # 用于编译和构建项目的 Shell 脚本
+├── CMakeLists.txt                        # CMake 构建系统的配置文件，定义项目结构、源文件和依赖
+├── common/                               # 通用工具和定义，供整个项目共享
+│   ├── common_utils.h                    # 包含通用工具函数和宏定义，如控制台颜色代码
+│   └── version.h                         # 定义应用程序的版本信息
+├── config/                               # 存放应用程序的配置文件
+│   ├── Modifier_Config.json              # 账单修改器的配置，定义修改规则和格式化设置
+│   └── Validator_Config.json             # 账单验证器的配置，定义账单分类和验证规则
+├── db_insert/                            # 数据库插入模块，处理账单数据到 SQLite 数据库的导入
+│   ├── DataProcessor.cpp                 # DataProcessor 类的实现，协调账单解析和数据库插入
+│   ├── DataProcessor.h                   # DataProcessor 类的头文件
+│   ├── bill_structures/                  # 数据库插入模块的数据结构定义
+│   │   └── BillStructures.h              # 定义了用于数据库插入的账单相关数据结构（如 Transaction, ParsedBill）
 │   ├── insertor/                         # 数据库插入器
-│   │   ├── BillInserter.cpp              # 账单插入器的实现
-│   │   └── BillInserter.h                # 账单插入器的头文件
+│   │   ├── BillInserter.cpp              # BillInserter 类的实现，处理数据库连接和数据插入操作
+│   │   └── BillInserter.h                # BillInserter 类的头文件
 │   └── parser/                           # 账单解析器
-│       ├── BillParser.cpp                # 账单解析器的实现
-│       └── BillParser.h                  # 账单解析器的头文件
-├── file_handler/                         # 文件处理模块
-│   ├── FileHandler.cpp                   # 文件处理器的实现
-│   └── FileHandler.h                     # 文件处理器的头文件
-├── main.cpp                              # 交互式菜单主程序
-├── main_commond.cpp                      # 命令行接口主程序
-├── query/                                # 查询和报告模块
+│       ├── BillParser.cpp                # BillParser 类的实现，负责解析原始账单文件
+│       └── BillParser.h                  # BillParser 类的头文件
+├── file_handler/                         # 文件处理模块，用于查找和管理文件
+│   ├── FileHandler.cpp                   # FileHandler 类的实现，包含文件查找逻辑
+│   └── FileHandler.h                     # FileHandler 类的头文件
+├── main.cpp                              # 应用程序的交互式菜单主程序入口
+├── main_command.cpp                      # 应用程序的命令行接口主程序入口
+├── query/                                # 查询和报告模块，用于从数据库查询数据并生成报告
+│   ├── QueryDb.cpp                       # QueryFacade 类的实现，作为数据库查询的门面
+│   ├── QueryDb.h                         # QueryFacade 类的头文件
+│   ├── ReportFormat.h                    # 定义报告输出格式的枚举类型（如 Markdown, LaTeX, Typst）
 │   ├── export/                           # 报告导出器
-│   │   ├── ReportExporter.cpp            # 报告导出器的实现
-│   │   └── ReportExporter.h              # 报告导出器的头文件
+│   │   ├── ReportExporter.cpp            # ReportExporter 类的实现，处理各种报告的导出
+│   │   └── ReportExporter.h              # ReportExporter 类的头文件
 │   ├── month/                            # 月度报告相关文件
-│   │   ├── _month_data/                  # 月度数据结构
-│   │   │   └── ReportData.h              # 月度报告数据结构定义
-│   │   ├── _month_format/                # 月度报告格式化器
-│   │   │   ├── LatexReportFormatter.cpp  # LaTeX 月度报告格式化器实现
-│   │   │   ├── LatexReportFormatter.h    # LaTeX 月度报告格式化器头文件
-│   │   │   ├── ReportFormatter.cpp       # Markdown 月度报告格式化器实现
-│   │   │   ├── ReportFormatter.h         # Markdown 月度报告格式化器头文件 (通用基类或默认)
-│   │   │   ├── TypstReportFormatter.cpp  # Typst 月度报告格式化器实现
-│   │   │   └── TypstReportFormatter.h    # Typst 月度报告格式化器头文件
-│   │   ├── _month_query/                 # 月度查询器
-│   │   │   ├── TransactionReader.cpp     # 交易数据读取器实现
-│   │   │   └── TransactionReader.h       # 交易数据读取器头文件
-│   │   ├── MonthlyReportGenerator.cpp    # 月度报告生成器实现
-│   │   └── MonthlyReportGenerator.h      # 月度报告生成器头文件
-│   ├── QueryDb.cpp                       # 数据库查询门面实现
-│   ├── QueryDb.h                         # 数据库查询门面头文件
-│   ├── ReportFormat.h                    # 报告格式枚举定义
-│   ├── year/                             # 年度报告相关文件
-│   │   ├── _year_data/                   # 年度数据结构
-│   │   │   └── YearlyReportData.h        # 年度报告数据结构定义
-│   │   ├── _year_format/                 # 年度报告格式化器
-│   │   │   ├── LatexYearlyReportFormatter.cpp # LaTeX 年度报告格式化器实现
-│   │   │   ├── LatexYearlyReportFormatter.h   # LaTeX 年度报告格式化器头文件
-│   │   │   ├── TypstYearlyReportFormatter.cpp # Typst 年度报告格式化器实现
-│   │   │   ├── TypstYearlyReportFormatter.h   # Typst 年度报告格式化器头文件
-│   │   │   ├── YearlyReportFormatter.cpp      # Markdown 年度报告格式化器实现
-│   │   │   └── YearlyReportFormatter.h        # Markdown 年度报告格式化器头文件 (通用基类或默认)
-│   │   ├── _year_query/                  # 年度查询器
-│   │   │   ├── YearlyDataReader.cpp      # 年度数据读取器实现
-│   │   │   └── YearlyDataReader.h        # 年度数据读取器头文件
-│   │   ├── YearlyReportGenerator.cpp     # 年度报告生成器实现
-│   │   └── YearlyReportGenerator.h       # 年度报告生成器头文件
-└── reprocessing/                         # 预处理模块 (验证和修改)
+│   │   ├── MonthlyReportGenerator.cpp    # MonthlyReportGenerator 类的实现，协调月度报告生成流程
+│   │   ├── MonthlyReportGenerator.h      # MonthlyReportGenerator 类的头文件
+│   │   ├── _month_data/                  # 月度报告数据结构
+│   │   │   └── ReportData.h              # 定义了月度报告所需的数据结构
+│   │   ├── month_format/                 # 月度报告格式化器
+│   │   │   ├── MonthMdFormat.cpp         # 月度 Markdown 报告格式化器的实现
+│   │   │   ├── MonthMdFormat.h           # 月度 Markdown 报告格式化器的头文件
+│   │   │   ├── MonthTexFormat.cpp        # 月度 LaTeX 报告格式化器的实现
+│   │   │   ├── MonthTexFormat.h          # 月度 LaTeX 报告格式化器的头文件
+│   │   │   ├── MonthTypFormat.cpp        # 月度 Typst 报告格式化器的实现
+│   │   │   └── MonthTypFormat.h          # 月度 Typst 报告格式化器的头文件
+│   │   └── month_query/                  # 月度查询器
+│   │       ├── MonthQuery.cpp            # MonthQuery 类的实现，从数据库读取月度数据
+│   │       └── MonthQuery.h              # MonthQuery 类的头文件
+│   └── year/                             # 年度报告相关文件
+│   │   ├── YearlyReportGenerator.cpp     # YearlyReportGenerator 类的实现，协调年度报告生成流程
+│   │   ├── YearlyReportGenerator.h       # YearlyReportGenerator 类的头文件
+│   │   ├── _year_data/                   # 年度报告数据结构
+│   │   │   └── YearlyReportData.h        # 定义了年度报告所需的数据结构
+│   │   ├── year_format/                  # 年度报告格式化器
+│   │   │   ├── YearMdFormat.cpp          # 年度 Markdown 报告格式化器的实现
+│   │   │   ├── YearMdFormat.h            # 年度 Markdown 报告格式化器的头文件
+│   │   │   ├── YearTexFormat.cpp         # 年度 LaTeX 报告格式化器的实现
+│   │   │   ├── YearTexFormat.h           # 年度 LaTeX 报告格式化器的头文件
+│   │   │   ├── YearTypFormat.cpp         # 年度 Typst 报告格式化器的实现
+│   │   │   └── YearTypFormat.h           # 年度 Typst 报告格式化器的头文件
+│   │   └── year_query/                   # 年度查询器
+│   │       ├── YearlyDataReader.cpp      # YearlyDataReader 类的实现，从数据库读取年度数据
+│   │       └── YearlyDataReader.h        # YearlyDataReader 类的头文件
+└── reprocessing/                         # 预处理模块，包含账单的验证和修改功能
+    ├── Reprocessor.cpp                   # Reprocessor 类的实现，封装了验证和修改的流程
+    ├── Reprocessor.h                     # Reprocessor 类的头文件
     ├── modifier/                         # 账单修改器
-    │   ├── BillModifier.cpp              # 账单修改器的实现
-    │   └── BillModifier.h                # 账单修改器的头文件
-    ├── Reprocessor.cpp                   # 预处理器的实现 (封装验证和修改)
-    ├── Reprocessor.h                     # 预处理器的头文件
+    │   ├── BillModifier.cpp              # BillModifier 类的实现，根据配置修改账单内容
+    │   ├── BillModifier.h                # BillModifier 类的头文件
+    │   ├── _shared_structures/           # 修改器模块共享的数据结构定义
+    │   │   └── BillDataStructures.h      # 定义了账单处理中使用的通用数据结构（如 Config, ParentItem）
+    │   ├── config_loader/                # 配置加载器
+    │   │   ├── ConfigLoader.cpp          # ConfigLoader 类的实现，用于从 JSON 加载配置
+    │   │   └── ConfigLoader.h            # ConfigLoader 类的头文件
+    │   ├── processor/                    # 账单处理器（修改逻辑）
+    │   │   ├── BillProcessor.cpp         # BillProcessor 类的实现，执行账单内容的具体修改操作
+    │   │   └── BillProcessor.h           # BillProcessor 类的头文件
+    │   └── raw_format/                   # 原始格式化器
+    │       ├── BillFormatter.cpp         # BillFormatter 类的实现，将结构化数据格式化为原始账单文本
+    │       └── BillFormatter.h           # BillFormatter 类的头文件
     └── validator/                        # 账单验证器
-        ├── BillValidator.cpp             # 账单验证器的实现
-        └── BillValidator.h               # 账单验证器的头文件
+        ├── BillConfig.cpp                # BillConfig 类的实现，加载和管理验证配置
+        ├── BillConfig.h                  # BillConfig 类的头文件
+        ├── BillProcessor.cpp             # BillProcessor 类的实现，执行账单的核心验证逻辑
+        ├── BillProcessor.h               # BillProcessor 类的头文件
+        ├── BillValidator.cpp             # BillValidator 类的实现，作为验证过程的门面
+        ├── BillValidator.h               # BillValidator 类的头文件
+        ├── ValidationResult.cpp          # ValidationResult 类的实现，收集和报告验证错误与警告
+        └── ValidationResult.h            # ValidationResult 类的头文件
 ```
 ## 1.2 架构图
 ### 1.2.1 整体
