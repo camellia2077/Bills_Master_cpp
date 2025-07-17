@@ -90,18 +90,18 @@ void QueryFacade::export_yearly_report(const std::string& year_str, ReportFormat
             std::string extension;
             std::string base_dir;
             switch(format) {
-                case ReportFormat::LATEX:
+                case ReportFormat::LaTeX:
                     extension = ".tex";
-                    base_dir = "exported_files/latex_bills"; // 修改点
+                    base_dir = "exported_files/LaTeX_bills"; // 修改点
                     break;
-                case ReportFormat::TYPST:
+                case ReportFormat::Typst:
                     extension = ".typ";
                     base_dir = "exported_files/typst_bills"; // 修改点
                     break;
-                case ReportFormat::MARKDOWN:
+                case ReportFormat::Markdown:
                 default:
                     extension = ".md";
-                    base_dir = "exported_files/markdown_bills"; // 修改点
+                    base_dir = "exported_files/Markdown_bills"; // 修改点
                     break;
             }
             
@@ -138,18 +138,18 @@ void QueryFacade::export_monthly_report(const std::string& month_str, ReportForm
             std::string extension;
             std::string base_dir;
             switch(format) {
-                case ReportFormat::LATEX:
+                case ReportFormat::LaTeX:
                     extension = ".tex";
-                    base_dir = "exported_files/latex_bills"; // 修改点
+                    base_dir = "exported_files/LaTeX_bills"; // 修改点
                     break;
-                case ReportFormat::TYPST:
+                case ReportFormat::Typst:
                     extension = ".typ";
                     base_dir = "exported_files/typst_bills"; // 修改点
                     break;
-                case ReportFormat::MARKDOWN:
+                case ReportFormat::Markdown:
                 default:
                     extension = ".md";
-                    base_dir = "exported_files/markdown_bills"; // 修改点
+                    base_dir = "exported_files/Markdown_bills"; // 修改点
                     break;
             }
 
@@ -174,13 +174,13 @@ void QueryFacade::export_all_reports(ReportFormat format) {
     // --- 核心改动：增加对 Typst 的处理 ---
     std::string format_name;
     switch(format) {
-        case ReportFormat::LATEX:
+        case ReportFormat::LaTeX:
             format_name = "LaTeX";
             break;
-        case ReportFormat::TYPST:
+        case ReportFormat::Typst:
             format_name = "Typst";
             break;
-        case ReportFormat::MARKDOWN:
+        case ReportFormat::Markdown:
         default:
             format_name = "Markdown";
             break;

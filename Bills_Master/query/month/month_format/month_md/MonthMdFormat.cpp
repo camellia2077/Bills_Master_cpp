@@ -5,7 +5,7 @@
 #include <vector>
 #include <algorithm>
 
-std::string MonthMdFormat::format_report(const MonthlyReportData& data) {
+std::string MonthMdFormat::format_report(const MonthlyReportData& data) const {
     std::stringstream ss;
 
     if (!data.data_found) {

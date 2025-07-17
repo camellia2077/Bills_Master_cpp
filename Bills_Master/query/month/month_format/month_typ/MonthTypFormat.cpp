@@ -7,7 +7,7 @@
 
 // Typst 对特殊字符的处理比 LaTeX 友好得多，
 // 但为了安全起见，我们还是转义一些可能引起冲突的字符。
-std::string MonthTypFormat::escape_typst(const std::string& input) {
+std::string MonthTypFormat::escape_typst(const std::string& input) const { // <-- Add const here
     std::string output;
     output.reserve(input.size());
     for (const char c : input) {
@@ -16,14 +16,14 @@ std::string MonthTypFormat::escape_typst(const std::string& input) {
             case '*':  output += "\\*";  break;
             case '_':  output += "\\_";  break;
             // Typst 中的 # 用于代码，最好也转义
-            case '#':  output += "\\#";  break; 
+            case '#':  output += "\\#";  break;
             default:   output += c;    break;
         }
     }
     return output;
 }
 
-std::string MonthTypFormat::format_report(const MonthlyReportData& data) {
+std::string MonthTypFormat::format_report(const MonthlyReportData& data) const { // <-- Add const here
     std::stringstream ss;
 
     if (!data.data_found) {
@@ -56,7 +56,7 @@ std::string MonthTypFormat::format_report(const MonthlyReportData& data) {
     ss << "#set text(font: \"Noto Serif SC\", size: 12pt)\n\n";
 
     ss << "= " << data.year << "年" << data.month << "月 消费报告\n\n";
-    
+
     // 2. 总体摘要
     ss << "*总支出:* ¥" << data.grand_total << "\n";
     ss << "*备注:* " << escape_typst(data.remark) << "\n\n";
