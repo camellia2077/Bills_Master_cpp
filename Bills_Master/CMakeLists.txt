@@ -51,6 +51,11 @@ file(GLOB QUERY_SOURCES
     "query/month/*.cpp"
     "query/month/_month_data/*.cpp"
     "query/month/month_format/*.cpp"
+    "query/month/month_format/month_md/*.cpp"
+    "query/month/month_format/month_tex/*.cpp"
+    "query/month/month_format/month_typ/*.cpp"
+
+
     "query/month/month_query/*.cpp"
 
 )

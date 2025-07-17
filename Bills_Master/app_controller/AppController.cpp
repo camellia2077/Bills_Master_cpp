@@ -170,11 +170,11 @@ void AppController::handle_export(const std::string& type, const std::string& va
         // 将格式字符串转换为 ReportFormat 枚举
         ReportFormat format;
         if (format_str == "tex") {
-            format = ReportFormat::LATEX;
+            format = ReportFormat::LaTeX;
         } else if (format_str == "typ") { // *** 这是核心改动 ***
-            format = ReportFormat::TYPST;
+            format = ReportFormat::Typst;
         } else if (format_str == "md") {
-            format = ReportFormat::MARKDOWN;
+            format = ReportFormat::Markdown;
         } else {
             throw std::runtime_error("不支持的格式: " + format_str + "。请使用 'md', 'tex', 或 'typ'。");
         }

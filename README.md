@@ -18,18 +18,24 @@
 ## 1.1 目录结构
 ```
 Bills_Master/
+├── main.cpp                              # 应用程序的交互式菜单主程序入口
+├── main_command.cpp                      # 应用程序的命令行接口主程序入口
+├── build.sh                              # 用于编译和构建项目的 Shell 脚本
+├── CMakeLists.txt                        
+│
 ├── app_controller/                       # 应用程序控制器模块，负责协调各个功能模块，处理用户请求
 │   ├── AppController.cpp                 # AppController 类的实现，包含业务逻辑
 │   ├── AppController.h                   # AppController 类的头文件，定义了应用程序的核心接口
 │   └── ProcessStats.h                    # 用于跟踪和汇总处理操作（成功/失败）的统计数据结构
-├── build.sh                              # 用于编译和构建项目的 Shell 脚本
-├── CMakeLists.txt                        # CMake 构建系统的配置文件，定义项目结构、源文件和依赖
+│
 ├── common/                               # 通用工具和定义，供整个项目共享
 │   ├── common_utils.h                    # 包含通用工具函数和宏定义，如控制台颜色代码
 │   └── version.h                         # 定义应用程序的版本信息
+│
 ├── config/                               # 存放应用程序的配置文件
 │   ├── Modifier_Config.json              # 账单修改器的配置，定义修改规则和格式化设置
 │   └── Validator_Config.json             # 账单验证器的配置，定义账单分类和验证规则
+│
 ├── db_insert/                            # 数据库插入模块，处理账单数据到 SQLite 数据库的导入
 │   ├── DataProcessor.cpp                 # DataProcessor 类的实现，协调账单解析和数据库插入
 │   ├── DataProcessor.h                   # DataProcessor 类的头文件
@@ -41,48 +47,53 @@ Bills_Master/
 │   └── parser/                           # 账单解析器
 │       ├── BillParser.cpp                # BillParser 类的实现，负责解析原始账单文件
 │       └── BillParser.h                  # BillParser 类的头文件
+│
 ├── file_handler/                         # 文件处理模块，用于查找和管理文件
 │   ├── FileHandler.cpp                   # FileHandler 类的实现，包含文件查找逻辑
 │   └── FileHandler.h                     # FileHandler 类的头文件
-├── main.cpp                              # 应用程序的交互式菜单主程序入口
-├── main_command.cpp                      # 应用程序的命令行接口主程序入口
-├── query/                                # 查询和报告模块，用于从数据库查询数据并生成报告
-│   ├── QueryDb.cpp                       # QueryFacade 类的实现，作为数据库查询的门面
-│   ├── QueryDb.h                         # QueryFacade 类的头文件
-│   ├── ReportFormat.h                    # 定义报告输出格式的枚举类型（如 Markdown, LaTeX, Typst）
-│   ├── export/                           # 报告导出器
-│   │   ├── ReportExporter.cpp            # ReportExporter 类的实现，处理各种报告的导出
-│   │   └── ReportExporter.h              # ReportExporter 类的头文件
-│   ├── month/                            # 月度报告相关文件
-│   │   ├── MonthlyReportGenerator.cpp    # MonthlyReportGenerator 类的实现，协调月度报告生成流程
-│   │   ├── MonthlyReportGenerator.h      # MonthlyReportGenerator 类的头文件
-│   │   ├── _month_data/                  # 月度报告数据结构
-│   │   │   └── ReportData.h              # 定义了月度报告所需的数据结构
-│   │   ├── month_format/                 # 月度报告格式化器
-│   │   │   ├── MonthMdFormat.cpp         # 月度 Markdown 报告格式化器的实现
-│   │   │   ├── MonthMdFormat.h           # 月度 Markdown 报告格式化器的头文件
-│   │   │   ├── MonthTexFormat.cpp        # 月度 LaTeX 报告格式化器的实现
-│   │   │   ├── MonthTexFormat.h          # 月度 LaTeX 报告格式化器的头文件
-│   │   │   ├── MonthTypFormat.cpp        # 月度 Typst 报告格式化器的实现
-│   │   │   └── MonthTypFormat.h          # 月度 Typst 报告格式化器的头文件
-│   │   └── month_query/                  # 月度查询器
-│   │       ├── MonthQuery.cpp            # MonthQuery 类的实现，从数据库读取月度数据
-│   │       └── MonthQuery.h              # MonthQuery 类的头文件
-│   └── year/                             # 年度报告相关文件
-│   │   ├── YearlyReportGenerator.cpp     # YearlyReportGenerator 类的实现，协调年度报告生成流程
-│   │   ├── YearlyReportGenerator.h       # YearlyReportGenerator 类的头文件
-│   │   ├── _year_data/                   # 年度报告数据结构
-│   │   │   └── YearlyReportData.h        # 定义了年度报告所需的数据结构
-│   │   ├── year_format/                  # 年度报告格式化器
-│   │   │   ├── YearMdFormat.cpp          # 年度 Markdown 报告格式化器的实现
-│   │   │   ├── YearMdFormat.h            # 年度 Markdown 报告格式化器的头文件
-│   │   │   ├── YearTexFormat.cpp         # 年度 LaTeX 报告格式化器的实现
-│   │   │   ├── YearTexFormat.h           # 年度 LaTeX 报告格式化器的头文件
-│   │   │   ├── YearTypFormat.cpp         # 年度 Typst 报告格式化器的实现
-│   │   │   └── YearTypFormat.h           # 年度 Typst 报告格式化器的头文件
-│   │   └── year_query/                   # 年度查询器
-│   │       ├── YearlyDataReader.cpp      # YearlyDataReader 类的实现，从数据库读取年度数据
-│   │       └── YearlyDataReader.h        # YearlyDataReader 类的头文件
+│
+├── query/                         # 查询和报告模块，用于从数据库查询数据并生成报告
+│   ├── QueryDb.cpp                # QueryFacade 类的实现，作为数据库查询的门面
+│   ├── QueryDb.h                  # QueryFacade 类的头文件
+│   ├── ReportFormat.h             # 定义报告的输出格式类型枚举（Markdown, LaTeX, Typst）
+│   ├── export/                    # 导出报告
+│   │   ├── ReportExporter.cpp     # 
+│   │   └── ReportExporter.h       
+│   ├── month/ # 月度报告相关文件
+│   │   ├── MonthlyReportGenerator.cpp # 封装
+│   │   ├── MonthlyReportGenerator.h   # 封装
+│   │   ├── _month_data/           # 月度报告数据结构
+│   │   │   └── ReportData.h       # 定义了月度报告所需的数据结构
+│   │   ├── month_format/          # 月度报告格式化器接口及实现
+│   │   │   ├── month_md/
+│   │   │   │   ├── MonthMdFormat.cpp  # 月度 Markdown 报告格式化
+│   │   │   │   └── MonthMdFormat.h 
+│   │   │   ├── month_tex/
+│   │   │   │   ├── MonthMdFormat.cpp  # 月度 LaTeX 报告格式化
+│   │   │   │   └── MonthMdFormat.h 
+│   │   │   └── month_typ/
+│   │   │       ├── MonthTypFormat.cpp  # 月度 Tpyst 报告格式化
+│   │   │       └──MonthTypFormat.h 
+│   │   └── month_query/           # 月度查询器
+│   │       ├── MonthQuery.cpp     # MonthQuery 类的实现，从数据库读取月度数据
+│   │       └── MonthQuery.h       # MonthQuery 类的头文件
+│   │
+│   └── year/                      # 年度报告相关文件
+│       ├── YearlyReportGenerator.cpp # 封装
+│       ├── YearlyReportGenerator.h # YearlyReportGenerator 类的头文件
+│       ├── _year_data/            # 年度报告数据结构
+│       │   └── YearlyReportData.h # 定义了年度报告所需的数据结构
+│       ├── year_format/           # 年度报告格式化器
+│       │   ├── YearMdFormat.cpp   # 年度 Markdown 报告格式化器的实现
+│       │   ├── YearMdFormat.h     # 年度 Markdown 报告格式化器的头文件
+│       │   ├── YearTexFormat.cpp  # 年度 LaTeX 报告格式化器的实现
+│       │   ├── YearTexFormat.h    # 年度 LaTeX 报告格式化器的头文件
+│       │   ├── YearTypFormat.cpp  # 年度 Typst 报告格式化器的实现
+│       │   └── YearTypFormat.h    # 年度 Typst 报告格式化器的头文件
+│       └── year_query/            # 年度查询器
+│           ├── YearlyDataReader.cpp # YearlyDataReader 类的实现，从数据库读取年度数据
+│           └── YearlyDataReader.h # YearlyDataReader 类的头文件
+│   
 └── reprocessing/                         # 预处理模块，包含账单的验证和修改功能
     ├── Reprocessor.cpp                   # Reprocessor 类的实现，封装了验证和修改的流程
     ├── Reprocessor.h                     # Reprocessor 类的头文件
