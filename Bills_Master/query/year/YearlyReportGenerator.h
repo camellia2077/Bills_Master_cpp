@@ -9,6 +9,7 @@
 #include "year_format/YearMdFormat.h"
 #include "year_format/YearTexFormat.h"
 #include "year_format/YearTypFormat.h" 
+#include "year_format/YearRstFormat.h"
 
 /*
  * @class YearlyReportGenerator
@@ -32,7 +33,8 @@ private:
     YearlyDataReader m_reader;
     YearMdFormat m_markdown_formatter;
     YearTexFormat m_latex_formatter;
-    YearTypFormat m_typst_formatter; // 2. 添加 Typst 格式化器实例
+    YearTypFormat m_typst_formatter;
+    YearRstFormat m_rst_formatter;
 };
 
 #endif // YEARLY_REPORT_GENERATOR_H

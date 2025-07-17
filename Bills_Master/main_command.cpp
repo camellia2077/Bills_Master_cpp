@@ -74,7 +74,7 @@ void print_help(const char* program_name) {
     std::cout << GREEN_COLOR << "--- Options ---\n" << RESET_COLOR;
     
     std::println("  --format, -f <format>");
-    std::println("    Specify output format ('md', 'tex', or 'typ'). Defaults to 'md'.");
+    std::println("    Specify output format ('md', 'tex', 'typ' , 'rst'). Defaults to 'md'.");
     std::println("    Example: --format md\n");
 
     // --- General ---
@@ -121,7 +121,6 @@ int main(int argc, char* argv[]) {
 
     if (!args.empty()) {
         command = args[0];
-        // *** 修改: 扩展两段式命令的解析逻辑以包含 --all / -a ***
         if ((command == "--query" || command == "-q" || command == "--export" || command == "-e" || command == "--all" || command == "-a") && args.size() > 1) {
             // 将 "all process" 或 "query year" 组合成一个命令
             command += " " + args[1];
@@ -140,7 +139,6 @@ int main(int argc, char* argv[]) {
         else if (command == "--version" || command == "-V") {
             controller.display_version();
         }
-        // *** 修改: 旧的 --all / -a 命令被重命名 ***
         else if (command == "--all export" || command == "-a e") {
             if (path_or_value.empty()) { 
                 std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path for 'all export' command.\n"; 
@@ -161,6 +159,7 @@ int main(int argc, char* argv[]) {
                 controller.handle_export("all", "", "md");
                 controller.handle_export("all", "", "tex");
                 controller.handle_export("all", "", "typ");
+                controller.handle_export("all", "", "rst");
             }
             std::println(GREEN_COLOR, "\n✅ Entire workflow completed successfully!", RESET_COLOR);
         }
@@ -173,9 +172,9 @@ int main(int argc, char* argv[]) {
                 controller.handle_export("all", "", "md");
                 controller.handle_export("all", "", "tex");
                 controller.handle_export("all", "", "typ");
+                controller.handle_export("all", "", "rst");
             }
         }
-        // *** 修改: 旧的 --process / -p 命令被重命名 ***
         else if (command == "--all process" || command == "-a p") {
             if (path_or_value.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path for 'all process' command.\n"; return 1; }
             controller.handle_full_workflow(path_or_value);

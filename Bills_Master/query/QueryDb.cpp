@@ -14,7 +14,6 @@
 
 namespace fs = std::filesystem;
 
-// --- 构造函数 / 析构函数 (无变化) ---
 QueryFacade::QueryFacade(const std::string& db_path) : m_db(nullptr) {
     if (sqlite3_open_v2(db_path.c_str(), &m_db, SQLITE_OPEN_READWRITE, nullptr) != SQLITE_OK) {
         std::string errmsg = sqlite3_errmsg(m_db);
@@ -40,7 +39,6 @@ std::string QueryFacade::get_monthly_details_report(int year, int month, ReportF
     return generator.generate(year, month, format);
 }
 
-// --- 数据获取方法 (无变化) ---
 std::vector<std::string> QueryFacade::get_all_bill_dates() {
     std::vector<std::string> dates;
     const char* sql = "SELECT DISTINCT year, month FROM transactions ORDER BY year, month;";
@@ -76,49 +74,6 @@ void QueryFacade::save_report(const std::string& report_content, const std::stri
     output_file << report_content;
 }
 
-void QueryFacade::export_yearly_report(const std::string& year_str, ReportFormat format, bool suppress_output) {
-    try {
-        int year = std::stoi(year_str);
-        std::string report = get_yearly_summary_report(year, format);
-
-        if (!suppress_output) {
-            std::cout << report;
-        }
-
-        if (report.find("未找到") == std::string::npos) {
-            // --- 核心改动：增加对 Typst 的处理 ---
-            std::string extension;
-            std::string base_dir;
-            switch(format) {
-                case ReportFormat::LaTeX:
-                    extension = ".tex";
-                    base_dir = "exported_files/LaTeX_bills"; // 修改点
-                    break;
-                case ReportFormat::Typst:
-                    extension = ".typ";
-                    base_dir = "exported_files/typst_bills"; // 修改点
-                    break;
-                case ReportFormat::Markdown:
-                default:
-                    extension = ".md";
-                    base_dir = "exported_files/Markdown_bills"; // 修改点
-                    break;
-            }
-            
-            fs::path target_dir = fs::path(base_dir) / "years";
-            fs::path output_path = target_dir / (year_str + extension);
-            save_report(report, output_path.string());
-            if (!suppress_output) {
-                std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Report also saved to " << output_path.string() << "\n";
-            }
-        }
-    } catch (const std::exception& e) {
-        if (!suppress_output) {
-            std::cerr << RED_COLOR << "Query Failed: " << RESET_COLOR << e.what() << std::endl;
-        }
-    }
-}
-
 void QueryFacade::export_monthly_report(const std::string& month_str, ReportFormat format, bool suppress_output) {
     try {
         if (month_str.length() != 6) {
@@ -134,22 +89,25 @@ void QueryFacade::export_monthly_report(const std::string& month_str, ReportForm
         }
 
         if (report.find("未找到") == std::string::npos) {
-            // --- 核心改动：增加对 Typst 的处理 ---
             std::string extension;
             std::string base_dir;
             switch(format) {
                 case ReportFormat::LaTeX:
                     extension = ".tex";
-                    base_dir = "exported_files/LaTeX_bills"; // 修改点
+                    base_dir = "exported_files/LaTeX_bills"; 
                     break;
                 case ReportFormat::Typst:
                     extension = ".typ";
-                    base_dir = "exported_files/typst_bills"; // 修改点
+                    base_dir = "exported_files/typst_bills"; 
+                    break;
+                case ReportFormat::Rst:
+                    extension = ".rst";
+                    base_dir = "exported_files/reST_bills";
                     break;
                 case ReportFormat::Markdown:
                 default:
                     extension = ".md";
-                    base_dir = "exported_files/Markdown_bills"; // 修改点
+                    base_dir = "exported_files/Markdown_bills"; 
                     break;
             }
 
@@ -168,10 +126,57 @@ void QueryFacade::export_monthly_report(const std::string& month_str, ReportForm
     }
 }
 
+void QueryFacade::export_yearly_report(const std::string& year_str, ReportFormat format, bool suppress_output) {
+    try {
+        int year = std::stoi(year_str);
+        std::string report = get_yearly_summary_report(year, format);
+
+        if (!suppress_output) {
+            std::cout << report;
+        }
+
+        if (report.find("未找到") == std::string::npos) {
+            std::string extension;
+            std::string base_dir;
+            switch(format) {
+                case ReportFormat::LaTeX:
+                    extension = ".tex";
+                    base_dir = "exported_files/LaTeX_bills"; 
+                    break;
+                case ReportFormat::Typst:
+                    extension = ".typ";
+                    base_dir = "exported_files/typst_bills"; 
+                    break;
+                case ReportFormat::Rst:
+                    extension = ".rst";
+                    base_dir = "exported_files/reST_bills";
+                    break;
+                case ReportFormat::Markdown:
+                default:
+                    extension = ".md";
+                    base_dir = "exported_files/Markdown_bills";
+                    break;
+            }
+            
+            fs::path target_dir = fs::path(base_dir) / "years";
+            fs::path output_path = target_dir / (year_str + extension);
+            save_report(report, output_path.string());
+            if (!suppress_output) {
+                std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Report also saved to " << output_path.string() << "\n";
+            }
+        }
+    } catch (const std::exception& e) {
+        if (!suppress_output) {
+            std::cerr << RED_COLOR << "Query Failed: " << RESET_COLOR << e.what() << std::endl;
+        }
+    }
+}
+
+
+
 void QueryFacade::export_all_reports(ReportFormat format) {
     ProcessStats monthly_stats, yearly_stats;
     
-    // --- 核心改动：增加对 Typst 的处理 ---
     std::string format_name;
     switch(format) {
         case ReportFormat::LaTeX:
@@ -179,6 +184,9 @@ void QueryFacade::export_all_reports(ReportFormat format) {
             break;
         case ReportFormat::Typst:
             format_name = "Typst";
+            break;
+        case ReportFormat::Rst:
+            format_name = "reStructuredText";
             break;
         case ReportFormat::Markdown:
         default:

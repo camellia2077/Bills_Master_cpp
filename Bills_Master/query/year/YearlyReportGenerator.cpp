@@ -7,7 +7,9 @@ YearlyReportGenerator::YearlyReportGenerator(sqlite3* db_connection)
     : m_reader(db_connection), 
       m_markdown_formatter(), 
       m_latex_formatter(),
-      m_typst_formatter() {} // 1. 在构造函数中初始化 typst_formatter
+      m_typst_formatter(),
+      m_rst_formatter()
+       {} 
 
 // generate 方法现在根据所选格式进行操作
 std::string YearlyReportGenerator::generate(int year, ReportFormat format) {
@@ -20,12 +22,12 @@ std::string YearlyReportGenerator::generate(int year, ReportFormat format) {
         case ReportFormat::LaTeX:
             report = m_latex_formatter.format_report(data);
             break;
-        
-        // 2. 为 TYPST 格式添加新的 case
         case ReportFormat::Typst:
             report = m_typst_formatter.format_report(data);
             break;
-
+        case ReportFormat::Rst:
+            report = m_rst_formatter.format_report(data);
+            break;
         case ReportFormat::Markdown:
         default: // 默认使用 Markdown 格式
             report = m_markdown_formatter.format_report(data);

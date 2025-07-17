@@ -28,10 +28,10 @@ void print_menu() {
     std::cout << "1. Validate Bill File(s)\n"; 
     std::cout << "2. Modify Bill File(s)\n"; 
     std::cout << "3. Parse and Insert Bill(s) to Database\n"; 
-    std::cout << "4. Query Yearly Summary and Export (md/tex/typ)\n"; // 更新菜单
-    std::cout << "5. Query Monthly Details and Export (md/tex/typ)\n"; // 更新菜单
+    std::cout << "4. Query Yearly Summary and Export (md/tex/typ)\n"; 
+    std::cout << "5. Query Monthly Details and Export (md/tex/typ)\n"; 
     std::cout << "6. Auto-Process Full Workflow (File or Directory)\n";
-    std::cout << "7. Export All Reports from Database (md, tex, typ, or all)\n"; // 更新菜单
+    std::cout << "7. Export All Reports from Database (md, tex, typ, or all)\n"; 
     std::cout << "8. Version\n";
     std::cout << "9. Exit\n";
 
@@ -144,6 +144,7 @@ int main() {
                             formats_to_export.insert("md");
                             formats_to_export.insert("tex");
                             formats_to_export.insert("typ");
+                            formats_to_export.insert("rst");
                         } else {
                             std::stringstream ss(format_input);
                             std::string segment;
@@ -160,6 +161,7 @@ int main() {
                              formats_to_export.insert("md");
                              formats_to_export.insert("tex");
                              formats_to_export.insert("typ");
+                             formats_to_export.insert("rst");
                         }
 
                         for (const auto& format : formats_to_export) {
