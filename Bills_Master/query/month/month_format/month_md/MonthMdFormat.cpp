@@ -12,7 +12,6 @@ std::string MonthMdFormat::format_report(const MonthlyReportData& data) const {
         ss << "\n未找到 " << data.year << "年" << data.month << "月的任何数据。\n";
         return ss.str();
     }
-
     // --- 排序 ---
     // 1. 内部交易按金额排序
     auto sorted_data = data.aggregated_data; // 创建一个副本以进行排序

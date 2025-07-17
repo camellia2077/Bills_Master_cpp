@@ -12,7 +12,6 @@ std::string MonthRstFormat::format_report(const MonthlyReportData& data) const {
         ss << "未找到 " << data.year << "年" << data.month << "月的任何数据。\n";
         return ss.str();
     }
-    
     // --- 排序逻辑 (和其它格式化器完全一样) ---
     auto sorted_data = data.aggregated_data;
     for (auto& parent_pair : sorted_data) {
