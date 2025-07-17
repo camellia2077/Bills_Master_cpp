@@ -45,13 +45,13 @@ file(GLOB QUERY_SOURCES
 
     "query/year/*.cpp"
     "query/year/_year_data/*.cpp"
-    "query/year/_year_format/*.cpp"
-    "query/year/_year_query/*.cpp"
+    "query/year/year_format/*.cpp"
+    "query/year/year_query/*.cpp"
 
     "query/month/*.cpp"
     "query/month/_month_data/*.cpp"
-    "query/month/_month_format/*.cpp"
-    "query/month/_month_query/*.cpp"
+    "query/month/month_format/*.cpp"
+    "query/month/month_query/*.cpp"
 
 )
 file(GLOB FILEHANDLER_SOURCES "file_handler/*.cpp")

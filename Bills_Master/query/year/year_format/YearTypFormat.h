@@ -1,14 +1,14 @@
-#ifndef TYPST_YEARLY_REPORT_FORMATTER_H
-#define TYPST_YEARLY_REPORT_FORMATTER_H
+#ifndef YEAR_TYP_FORMAT_H
+#define YEAR_TYP_FORMAT_H
 
 #include <string>
 #include "year/_year_data/YearlyReportData.h"
 
 /**
- * @class TypstYearlyReportFormatter
+ * @class YearTypFormat
  * @brief 将年度报告数据格式化为 Typst 字符串。
  */
-class TypstYearlyReportFormatter {
+class YearTypFormat {
 public:
     /**
      * @brief 接收年度数据并返回格式化的 Typst 字符串。
@@ -18,4 +18,4 @@ public:
     std::string format_report(const YearlyReportData& data);
 };
 
-#endif // TYPST_YEARLY_REPORT_FORMATTER_H
+#endif // YEAR_TYP_FORMAT_H

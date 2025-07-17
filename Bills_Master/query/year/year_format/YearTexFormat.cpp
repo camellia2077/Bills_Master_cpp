@@ -1,8 +1,8 @@
-#include "LatexYearlyReportFormatter.h"
+#include "YearTexFormat.h"
 #include <sstream>
 #include <iomanip>
 
-std::string LatexYearlyReportFormatter::format_report(const YearlyReportData& data) {
+std::string YearTexFormat::format_report(const YearlyReportData& data) {
     std::stringstream ss;
 
     // --- 文档前导和标题 ---

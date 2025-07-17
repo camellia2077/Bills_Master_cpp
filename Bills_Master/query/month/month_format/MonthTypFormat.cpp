@@ -1,4 +1,4 @@
-#include "TypstReportFormatter.h"
+#include "MonthTypFormat.h"
 #include <sstream>
 #include <iomanip>
 #include <vector>
@@ -7,7 +7,7 @@
 
 // Typst 对特殊字符的处理比 LaTeX 友好得多，
 // 但为了安全起见，我们还是转义一些可能引起冲突的字符。
-std::string TypstReportFormatter::escape_typst(const std::string& input) {
+std::string MonthTypFormat::escape_typst(const std::string& input) {
     std::string output;
     output.reserve(input.size());
     for (const char c : input) {
@@ -23,7 +23,7 @@ std::string TypstReportFormatter::escape_typst(const std::string& input) {
     return output;
 }
 
-std::string TypstReportFormatter::format_report(const MonthlyReportData& data) {
+std::string MonthTypFormat::format_report(const MonthlyReportData& data) {
     std::stringstream ss;
 
     if (!data.data_found) {

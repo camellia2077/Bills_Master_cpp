@@ -1,17 +1,17 @@
-#ifndef TYPST_REPORT_FORMATTER_H
-#define TYPST_REPORT_FORMATTER_H
+#ifndef TYP_FORMAT_H
+#define TYP_FORMAT_H
 
 #include <string>
 #include "month/_month_data/ReportData.h"
 
 /**
- * @class TypstReportFormatter
+ * @class MonthTypFormat
  * @brief 将月度报告数据格式化为 Typst 字符串。
  *
  * 该类接收一个 MonthlyReportData 结构体，并生成一个
  * 可以被 Typst 编译器直接编译成 PDF 的源文本字符串。
  */
-class TypstReportFormatter {
+class MonthTypFormat {
 public:
     /**
      * @brief 接收数据结构并返回格式化的 Typst 字符串。
@@ -29,4 +29,4 @@ private:
     std::string escape_typst(const std::string& input);
 };
 
-#endif // TYPST_REPORT_FORMATTER_H
+#endif // TYP_FORMAT_H

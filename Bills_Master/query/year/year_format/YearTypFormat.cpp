@@ -1,8 +1,8 @@
-#include "TypstYearlyReportFormatter.h"
+#include "YearTypFormat.h"
 #include <sstream>
 #include <iomanip>
 
-std::string TypstYearlyReportFormatter::format_report(const YearlyReportData& data) {
+std::string YearTypFormat::format_report(const YearlyReportData& data) {
     std::stringstream ss;
 
     // --- 设置文档参数和标题 ---
