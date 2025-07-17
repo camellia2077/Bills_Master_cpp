@@ -1,37 +1,27 @@
 // MonthlyReportGenerator.cpp
 #include "MonthlyReportGenerator.h"
 #include "month/_month_data/ReportData.h"
+#include "month/month_format/IMonthReportFormatter.h" // Include the interface for polymorphism
+#include <stdexcept> // To throw an exception for unsupported formats
 
-// 构造函数通过初始化列表来构建内部的 reader 和所有 formatters
+// The constructor now only initializes the reader.
 MonthlyReportGenerator::MonthlyReportGenerator(sqlite3* db_connection)
-    : m_reader(db_connection), 
-      m_markdown_formatter(), 
-      m_latex_formatter(),
-      m_typst_formatter() {} // 1. 在构造函数中初始化 typst_formatter
+    : m_reader(db_connection) {}
 
-// generate 方法现在协调内部组件并根据所选格式进行操作
+// The generate method now uses the factory.
 std::string MonthlyReportGenerator::generate(int year, int month, ReportFormat format) {
-    // 步骤 1: 使用内部的 reader 从数据库读取和聚合数据
+    // Step 1: Use the internal reader to get data from the database.
     MonthlyReportData data = m_reader.read_monthly_data(year, month);
 
-    // 步骤 2: 根据传入的格式参数选择合适的格式化器
-    std::string report;
-    switch (format) {
-        case ReportFormat::LATEX:
-            report = m_latex_formatter.format_report(data);
-            break;
+    // Step 2: Use the factory to create the appropriate formatter.
+    auto formatter = ReportFormatterFactory::createFormatter(format);
 
-        // 2. 为 TYPST 格式添加新的 case
-        case ReportFormat::TYPST:
-            report = m_typst_formatter.format_report(data);
-            break;
-
-        case ReportFormat::MARKDOWN:
-        default: // 默认使用 Markdown 格式
-            report = m_markdown_formatter.format_report(data);
-            break;
+    // It's good practice to handle cases where the factory might return a null pointer.
+    if (!formatter) {
+        throw std::runtime_error("Unsupported report format specified.");
     }
 
-    // 步骤 3: 返回最终的报告
-    return report;
+    // Step 3: Use the created formatter to generate the report and return it.
+    // Thanks to polymorphism, we call format_report on the interface pointer.
+    return formatter->format_report(data);
 }

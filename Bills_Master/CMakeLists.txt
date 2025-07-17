@@ -27,10 +27,14 @@ file(GLOB REPROCESSING_SOURCES
     "reprocessing/*.cpp"
     "reprocessing/validator/*.cpp"
     "reprocessing/modifier/*.cpp"
+    "reprocessing/modifier/config_loader/*.cpp"
+    "reprocessing/modifier/processor/*.cpp"
+    "reprocessing/modifier/raw_format/*.cpp"
     
 )
 file(GLOB DB_INSERT_SOURCES   
     "db_insert/*.cpp"
+    "db_insert/bill_structures/*.cpp"
     "db_insert/insertor/*.cpp"
     "db_insert/parser/*.cpp"
 )
@@ -41,13 +45,19 @@ file(GLOB QUERY_SOURCES
 
     "query/year/*.cpp"
     "query/year/_year_data/*.cpp"
-    "query/year/_year_format/*.cpp"
-    "query/year/_year_query/*.cpp"
+    "query/year/year_format/*.cpp"
+    "query/year/year_query/*.cpp"
 
     "query/month/*.cpp"
     "query/month/_month_data/*.cpp"
-    "query/month/_month_format/*.cpp"
-    "query/month/_month_query/*.cpp"
+    "query/month/month_format/*.cpp"
+    "query/month/month_format/month_md/*.cpp"
+    "query/month/month_format/month_tex/*.cpp"
+    "query/month/month_format/month_typ/*.cpp"
+    "query/month/month_format/month_rst/*.cpp"
+
+
+    "query/month/month_query/*.cpp"
 
 )
 file(GLOB FILEHANDLER_SOURCES "file_handler/*.cpp")
@@ -89,7 +99,7 @@ target_compile_options(bill_master_lib PRIVATE -Wall -fdiagnostics-color=always)
 add_executable(bill_matser_app main.cpp)
 
 # Target 2: The command-line interface application
-add_executable(bill_master_cli main_commond.cpp)
+add_executable(bill_master_cli main_command.cpp)
 
 
 # --- MODIFIED: Link each executable to the shared library ---

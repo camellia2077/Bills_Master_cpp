@@ -1,4 +1,4 @@
-#include "TypstReportFormatter.h"
+#include "MonthTypFormat.h"
 #include <sstream>
 #include <iomanip>
 #include <vector>
@@ -7,7 +7,7 @@
 
 // Typst 对特殊字符的处理比 LaTeX 友好得多，
 // 但为了安全起见，我们还是转义一些可能引起冲突的字符。
-std::string TypstReportFormatter::escape_typst(const std::string& input) {
+std::string MonthTypFormat::escape_typst(const std::string& input) const { // <-- Add const here
     std::string output;
     output.reserve(input.size());
     for (const char c : input) {
@@ -16,14 +16,14 @@ std::string TypstReportFormatter::escape_typst(const std::string& input) {
             case '*':  output += "\\*";  break;
             case '_':  output += "\\_";  break;
             // Typst 中的 # 用于代码，最好也转义
-            case '#':  output += "\\#";  break; 
+            case '#':  output += "\\#";  break;
             default:   output += c;    break;
         }
     }
     return output;
 }
 
-std::string TypstReportFormatter::format_report(const MonthlyReportData& data) {
+std::string MonthTypFormat::format_report(const MonthlyReportData& data) const { // <-- Add const here
     std::stringstream ss;
 
     if (!data.data_found) {
@@ -56,10 +56,10 @@ std::string TypstReportFormatter::format_report(const MonthlyReportData& data) {
     ss << "#set text(font: \"Noto Serif SC\", size: 12pt)\n\n";
 
     ss << "= " << data.year << "年" << data.month << "月 消费报告\n\n";
-    
+
     // 2. 总体摘要
-    ss << "*总支出：* ¥" << data.grand_total << "\n";
-    ss << "*备注：* " << escape_typst(data.remark) << "\n\n";
+    ss << "*总支出:* ¥" << data.grand_total << "\n";
+    ss << "*备注:* " << escape_typst(data.remark) << "\n\n";
 
     // 3. 遍历所有类别并生成内容
     for (const auto& parent_pair : sorted_parents) {
@@ -69,8 +69,8 @@ std::string TypstReportFormatter::format_report(const MonthlyReportData& data) {
 
         // Typst 的标题
         ss << "== " << escape_typst(parent_name) << "\n\n";
-        ss << "*总计：* ¥" << parent_data.parent_total << "\n";
-        ss << "*占比：* " << parent_percentage << "%\n\n";
+        ss << "*总计:* ¥" << parent_data.parent_total << "\n";
+        ss << "*占比:* " << parent_percentage << "%\n\n";
 
         for (const auto& sub_pair : parent_data.sub_categories) {
             const auto& sub_name = sub_pair.first;
@@ -79,7 +79,7 @@ std::string TypstReportFormatter::format_report(const MonthlyReportData& data) {
 
             // Typst 的子标题
             ss << "=== " << escape_typst(sub_name) << "\n";
-            ss << "  *小计：* ¥" << sub_data.sub_total << " (占比: " << sub_percentage << "%)\n";
+            ss << "  *小计:* ¥" << sub_data.sub_total << " (占比: " << sub_percentage << "%)\n";
 
             // Typst 的列表
             for (const auto& t : sub_data.transactions) {

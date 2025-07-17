@@ -5,10 +5,11 @@
 #include <string>
 #include <sqlite3.h>
 #include "ReportFormat.h"
-#include "_year_query/YearlyDataReader.h"
-#include "_year_format/YearlyReportFormatter.h"
-#include "_year_format/LatexYearlyReportFormatter.h"
-#include "_year_format/TypstYearlyReportFormatter.h" // 1. 包含新的 Typst 格式化器
+#include "year_query/YearlyDataReader.h"
+#include "year_format/YearMdFormat.h"
+#include "year_format/YearTexFormat.h"
+#include "year_format/YearTypFormat.h" 
+#include "year_format/YearRstFormat.h"
 
 /*
  * @class YearlyReportGenerator
@@ -22,17 +23,18 @@ public:
     /**
      * @brief 公共接口：接收年份和格式，返回格式化后的年度报告字符串。
      * @param year 要查询的年份。
-     * @param format 输出报告的格式 (默认为 MARKDOWN)。
+     * @param format 输出报告的格式 (默认为 Markdown)。
      * @return 包含所选格式报告的字符串。
      */
-    std::string generate(int year, ReportFormat format = ReportFormat::MARKDOWN);
+    std::string generate(int year, ReportFormat format = ReportFormat::Markdown);
 
 private:
     // 内部持有的组件
     YearlyDataReader m_reader;
-    YearlyReportFormatter m_markdown_formatter;
-    LatexYearlyReportFormatter m_latex_formatter;
-    TypstYearlyReportFormatter m_typst_formatter; // 2. 添加 Typst 格式化器实例
+    YearMdFormat m_markdown_formatter;
+    YearTexFormat m_latex_formatter;
+    YearTypFormat m_typst_formatter;
+    YearRstFormat m_rst_formatter;
 };
 
 #endif // YEARLY_REPORT_GENERATOR_H

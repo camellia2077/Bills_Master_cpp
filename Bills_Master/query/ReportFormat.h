@@ -6,9 +6,10 @@
  * @brief 定义报告的输出格式类型。
  */
 enum class ReportFormat {
-    MARKDOWN,
-    LATEX,
-    TYPST
+    Markdown,
+    LaTeX,
+    Typst,
+    Rst
 };
 
 #endif // REPORT_FORMAT_H

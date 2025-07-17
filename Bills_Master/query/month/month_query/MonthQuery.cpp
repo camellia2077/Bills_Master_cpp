@@ -1,11 +1,11 @@
-// TransactionReader.cpp
-#include "TransactionReader.h"
+// MonthQuery.cpp
+#include "MonthQuery.h"
 #include <stdexcept>
 #include <string>
 
-TransactionReader::TransactionReader(sqlite3* db_connection) : m_db(db_connection) {}
+MonthQuery::MonthQuery(sqlite3* db_connection) : m_db(db_connection) {}
 
-MonthlyReportData TransactionReader::read_monthly_data(int year, int month) {
+MonthlyReportData MonthQuery::read_monthly_data(int year, int month) {
     MonthlyReportData data;
     data.year = year;
     data.month = month;
