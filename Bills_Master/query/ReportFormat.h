@@ -8,7 +8,8 @@
 enum class ReportFormat {
     Markdown,
     LaTeX,
-    Typst
+    Typst,
+    Rst
 };
 
 #endif // REPORT_FORMAT_H

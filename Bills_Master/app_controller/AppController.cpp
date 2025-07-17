@@ -171,13 +171,13 @@ void AppController::handle_export(const std::string& type, const std::string& va
         ReportFormat format;
         if (format_str == "tex") {
             format = ReportFormat::LaTeX;
-        } else if (format_str == "typ") { // *** 这是核心改动 ***
+        } else if (format_str == "typ") { 
             format = ReportFormat::Typst;
         } else if (format_str == "md") {
             format = ReportFormat::Markdown;
-        } else {
-            throw std::runtime_error("不支持的格式: " + format_str + "。请使用 'md', 'tex', 或 'typ'。");
-        }
+        } else if (format_str == "rst") {
+            format = ReportFormat::Rst;
+        } else {throw std::runtime_error("你输入的格式暂时还没有支持: " + format_str + "。请使用 'md', 'tex', 或 'typ'。");}
 
         QueryFacade facade("bills.db");
         if (type == "all") {
