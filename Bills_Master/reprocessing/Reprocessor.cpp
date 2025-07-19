@@ -6,7 +6,7 @@
 
 // --- Constructor ---
 
-// **MODIFIED**: The constructor now simply stores the directory path.
+// The constructor now simply stores the directory path.
 Reprocessor::Reprocessor(const std::string& config_dir_path) : m_config_dir_path(config_dir_path) {
     // No config loading is done at construction time.
 }
@@ -15,7 +15,6 @@ Reprocessor::Reprocessor(const std::string& config_dir_path) : m_config_dir_path
 
 bool Reprocessor::validate_bill(const std::string& bill_path) {
     try {
-        // **MODIFIED**: Construct the full path to the validator's config file.
         // Note: Using '/' as a path separator works on Windows, Linux, and macOS.
         const std::string validator_config_path = m_config_dir_path + "/Validator_Config.json";
         
@@ -39,7 +38,6 @@ bool Reprocessor::validate_bill(const std::string& bill_path) {
 
 bool Reprocessor::modify_bill(const std::string& input_bill_path, const std::string& output_bill_path) {
     try {
-        // **MODIFIED**: Load the modifier's specific configuration file on the fly.
         const std::string modifier_config_path = m_config_dir_path + "/Modifier_Config.json";
         std::ifstream config_file(modifier_config_path);
         if (!config_file.is_open()) {
@@ -53,8 +51,6 @@ bool Reprocessor::modify_bill(const std::string& input_bill_path, const std::str
             throw std::runtime_error("Error: Failed to parse JSON from '" + modifier_config_path + "': " + std::string(e.what()));
         }
         config_file.close();
-
-
         // 1. Read the input bill file.
         std::ifstream input_file(input_bill_path);
         if (!input_file.is_open()) {

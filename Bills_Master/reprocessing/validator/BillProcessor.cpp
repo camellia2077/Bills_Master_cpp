@@ -14,7 +14,7 @@ bool BillProcessor::validate(const std::string& bill_file_path, const BillConfig
 
     std::ifstream file(bill_file_path);
     if (!file.is_open()) {
-        result.add_error("严重错误: 无法打开账单文件 '" + bill_file_path + "'");
+        result.add_error("Critical Error: Unable to open bill file '" + bill_file_path + "'");
         return false;
     }
 
@@ -35,7 +35,7 @@ bool BillProcessor::validate(const std::string& bill_file_path, const BillConfig
 
         // 检查最后一个子标题是否有内容
         if (!current_sub.empty() && bill_structure[current_parent][current_sub] == 0) {
-            result.add_warning("警告 (文件结尾): 子标题 '" + current_sub + "' 缺少内容行。");
+            result.add_warning("Warning (End of File): Sub-title '" + current_sub + "' is missing content lines.");
         }
     }
 
@@ -51,7 +51,7 @@ void BillProcessor::_process_line(const std::string& line, int line_num, State& 
             break;
         case State::EXPECT_SUB:
             if (!current_sub.empty() && bill_structure.count(current_parent) && bill_structure[current_parent].count(current_sub) && bill_structure[current_parent][current_sub] == 0) {
-                 result.add_warning("警告 (行 " + std::to_string(line_num) + "): 子标题 '" + current_sub + "' 缺少内容行。");
+                result.add_warning("Warning (Line " + std::to_string(line_num) + "): Sub-title '" + current_sub + "' is missing content lines.");
             }
             current_sub.clear(); // 为新的子标题重置
             _handle_sub_state(line, line_num, current_state, current_parent, current_sub, config, result);
@@ -69,11 +69,11 @@ bool BillProcessor::_validate_date_and_remark(std::ifstream& file, int& line_num
         line_num++;
         std::regex date_regex(R"(^DATE:\d{6}$)");
         if (!std::regex_match(line, date_regex)) {
-            result.add_error("错误 (行 " + std::to_string(line_num) + "): 文件第一行必须是 'DATE:YYYYMM' 格式。找到: '" + line + "'");
+            result.add_error("Error (Line " + std::to_string(line_num) + "): The first line of the file must be in 'DATE:YYYYMM' format. Found: '" + line + "'");
             return false;
         }
     } else {
-        result.add_error("错误: 文件为空或少于两行。");
+        result.add_error("Error: File is empty or has less than two lines.");
         return false;
     }
 
@@ -81,11 +81,11 @@ bool BillProcessor::_validate_date_and_remark(std::ifstream& file, int& line_num
         line_num++;
         std::regex remark_regex(R"(^REMARK:.*)");
         if (!std::regex_match(line, remark_regex)) {
-            result.add_error("错误 (行 " + std::to_string(line_num) + "): 文件第二行必须以 'REMARK:' 开头。找到: '" + line + "'");
+            result.add_error("Error (Line " + std::to_string(line_num) + "): The second line of the file must start with 'REMARK:'. Found: '" + line + "'");
             return false;
         }
     } else {
-        result.add_error("错误: 文件少于两行。");
+        result.add_error("Error: File has less than two lines.");
         return false;
     }
     
@@ -98,13 +98,13 @@ void BillProcessor::_handle_parent_state(const std::string& line, int line_num, 
         bill_structure[current_parent]; // 注册父标题
         current_state = State::EXPECT_SUB;
     } else {
-        result.add_error("错误 (行 " + std::to_string(line_num) + "): 期望一个父标题, 但找到无效内容: '" + line + "'");
+        result.add_error("Error (Line " + std::to_string(line_num) + "): Expected a parent title, but found invalid content: '" + line + "'");
     }
 }
 
 void BillProcessor::_handle_sub_state(const std::string& line, int line_num, State& current_state, std::string& current_parent, std::string& current_sub, const BillConfig& config, ValidationResult& result) {
     if (config.is_parent_title(line)) {
-        result.add_error("错误 (行 " + std::to_string(line_num) + "): 父级标题 '" + current_parent + "' 缺少子标题。");
+        result.add_error("Error (Line " + std::to_string(line_num) + "): Parent title '" + current_parent + "' is missing a sub-title."); // 翻译: 错误 (行 ...): 父级标题 '...' 缺少子标题。
         _handle_parent_state(line, line_num, current_state, current_parent, config, result);
         return;
     }
@@ -114,7 +114,7 @@ void BillProcessor::_handle_sub_state(const std::string& line, int line_num, Sta
         bill_structure[current_parent][current_sub] = 0; 
         current_state = State::EXPECT_CONTENT;
     } else {
-        result.add_error("错误 (行 " + std::to_string(line_num) + "): 子标题 '" + line + "' 对于父级标题 '" + current_parent + "' 无效。");
+        result.add_error("Error (Line " + std::to_string(line_num) + "): Sub-title '" + line + "' is invalid for parent title '" + current_parent + "'.");
         // 即使无效，也记录下来并继续处理内容，以发现更多问题
         current_sub = line;
         bill_structure[current_parent][current_sub] = 0;
@@ -125,7 +125,7 @@ void BillProcessor::_handle_sub_state(const std::string& line, int line_num, Sta
 void BillProcessor::_handle_content_state(const std::string& line, int line_num, State& current_state, std::string& current_parent, std::string& current_sub, const BillConfig& config, ValidationResult& result) {
     if (config.is_parent_title(line)) {
         if (!current_sub.empty() && bill_structure[current_parent][current_sub] == 0) {
-            result.add_warning("警告 (行 " + std::to_string(line_num) + "): 子标题 '" + current_sub + "' 缺少内容行。");
+            result.add_warning("Warning (Line " + std::to_string(line_num) + "): Sub-title '" + current_sub + "' is missing content lines.");
         }
         _handle_parent_state(line, line_num, current_state, current_parent, config, result);
         current_sub.clear();
@@ -134,7 +134,7 @@ void BillProcessor::_handle_content_state(const std::string& line, int line_num,
 
     if (config.is_valid_sub_title(current_parent, line)) {
         if (!current_sub.empty() && bill_structure[current_parent][current_sub] == 0) {
-            result.add_warning("警告 (行 " + std::to_string(line_num) + "): 子标题 '" + current_sub + "' 缺少内容行。");
+            result.add_warning("Warning (Line " + std::to_string(line_num) + "): Sub-title '" + current_sub + "' is missing content lines.");
         }
         _handle_sub_state(line, line_num, current_state, current_parent, current_sub, config, result);
         return;
@@ -144,7 +144,7 @@ void BillProcessor::_handle_content_state(const std::string& line, int line_num,
     if (std::regex_match(line, content_regex)) {
         bill_structure[current_parent][current_sub]++;
     } else {
-        result.add_error("错误 (行 " + std::to_string(line_num) + "): 期望内容行、新子标题或新父标题, 但找到无效内容: '" + line + "'");
+        result.add_error("Error (Line " + std::to_string(line_num) + "): Expected content line, new sub-title, or new parent title, but found invalid content: '" + line + "'"); // 翻译: 错误 (行 ...): 期望内容行、新子标题或新父标题, 但找到无效内容: '...'
     }
 }
 
@@ -155,7 +155,7 @@ void BillProcessor::_post_validation_checks(ValidationResult& result) {
 
         if (sub_map.empty()) {
             // 这个错误在 _handle_sub_state 中已经被更即时地捕捉了，这里作为最终保障
-             result.add_error("错误 (文件结尾): 父级标题 '" + parent_title + "' 缺少子标题。");
+            result.add_error("Error (End of File): Parent title '" + parent_title + "' is missing a sub-title."); // 翻译: 错误 (文件结尾): 父级标题 '...' 缺少子标题。
         } else {
             bool all_subs_empty = true;
             for (const auto& sub_pair : sub_map) {
@@ -165,7 +165,7 @@ void BillProcessor::_post_validation_checks(ValidationResult& result) {
                 }
             }
             if (all_subs_empty) {
-                result.add_warning("警告 (文件结尾): 父标题 '" + parent_title + "' 的所有子标题均缺少内容行。");
+                result.add_warning("Warning (End of File): All sub-titles under parent title '" + parent_title + "' are missing content lines.");
             }
         }
     }
