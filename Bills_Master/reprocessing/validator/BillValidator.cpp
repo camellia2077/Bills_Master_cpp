@@ -9,12 +9,12 @@ BillValidator::BillValidator(const std::string& config_path)
 {
     // 构造函数体可以为空，因为所有工作都在初始化列表中完成了
     // 如果配置加载失败，BillConfig的构造函数会抛出异常
-    std::cout << "BillValidator 初始化成功，配置已加载。\n";
+    std::cout << "BillValidator initialized successfully, configuration loaded.\n";
 }
 
 // validate 方法：封装了整个验证流程
 bool BillValidator::validate(const std::string& bill_file_path) {
-    std::cout << "\n开始验证账单文件: " << bill_file_path << "...\n";
+    std::cout << "\nStarting validation for bill file: " << bill_file_path << "...\n";
 
     // 调用 processor 来执行验证，传入配置和结果对象
     // 注意 config 是一个智能指针，需要解引用 (*) 来获取其引用的对象

@@ -1,8 +1,1 @@
-test/
-bills/
-bills/
-output/
-my_config/
-exported_files/
-txt_raw/
-.vscode/
+build/

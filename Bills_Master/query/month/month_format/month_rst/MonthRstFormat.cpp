@@ -60,7 +60,7 @@ std::string MonthRstFormat::format_report(const MonthlyReportData& data) const {
             ss << std::string(sub_name.length() * 2, '^') << "\n";
 
             double sub_percentage = (parent_data.parent_total > 0) ? (sub_data.sub_total / parent_data.parent_total) * 100.0 : 0.0;
-            ss << "小计:¥" << sub_data.sub_total << "（占比:" << sub_percentage << "%）" << "\n\n";
+            ss << "小计:¥" << sub_data.sub_total << "(占比:" << sub_percentage << "%)" << "\n\n";
 
             // RST 的无序列表
             for (const auto& t : sub_data.transactions) {

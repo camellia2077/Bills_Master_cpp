@@ -13,26 +13,26 @@ bool ValidationResult::has_errors() const {
 }
 
 void ValidationResult::print_report() const {
-    std::cout << "\n--- 验证报告 ---\n";
+    std::cout << "\n--- Validation Report ---\n";
     if (errors.empty() && warnings.empty()) {
-        std::cout << "验证通过，未发现错误或警告。\n";
+        std::cout << "Validation passed, no errors or warnings found.\n";
         return;
     }
 
     if (!errors.empty()) {
-        std::cerr << "发现 " << errors.size() << " 个错误:\n";
+        std::cerr << "Found " << errors.size() << " errors:\n";
         for (const auto& err : errors) {
             std::cerr << "- " << err << std::endl;
         }
     }
 
     if (!warnings.empty()) {
-        std::cout << "发现 " << warnings.size() << " 个警告:\n";
+        std::cerr << "Found " << errors.size() << " warnings:\n";
         for (const auto& warn : warnings) {
             std::cout << "- " << warn << std::endl;
         }
     }
-    std::cout << "--- 报告结束 ---\n";
+    std::cout << "--- End of Report ---\n\n";
 }
 
 void ValidationResult::clear() {
