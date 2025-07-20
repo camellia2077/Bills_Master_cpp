@@ -26,12 +26,17 @@ find_package(SQLite3 REQUIRED)
 file(GLOB REPROCESSING_SOURCES 
     "reprocessing/*.cpp"
     "reprocessing/validator/*.cpp"
+    "reprocessing/validator/_internal/*.cpp"
+    
     "reprocessing/modifier/*.cpp"
     "reprocessing/modifier/config_loader/*.cpp"
     "reprocessing/modifier/processor/*.cpp"
     "reprocessing/modifier/raw_format/*.cpp"
     
 )
+# 去除wrapper.cpp，因为这是python模块封装的程序
+list(REMOVE_ITEM REPROCESSING_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/reprocessing/wrapper.cpp")
+
 file(GLOB DB_INSERT_SOURCES   
     "db_insert/*.cpp"
     "db_insert/bill_structures/*.cpp"

@@ -39,7 +39,6 @@ pybind11_add_module(reprocessor_lib ${SOURCES})
 
 
 # --- 指定头文件目录 ---
-# **新增部分**: 这是回答您问题的关键。
 # 此命令告诉编译器在编译 reprocessor_lib 时，
 # 将 "reprocessing" 目录作为一个顶层搜索路径。
 # 这样，像 #include "validator/BillValidator.h" 这样的语句就能被正确解析。

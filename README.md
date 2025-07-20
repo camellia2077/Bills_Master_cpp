@@ -101,7 +101,7 @@ Bills_Master/
     │   ├── BillModifier.cpp              # BillModifier 类的实现，根据配置修改账单内容
     │   ├── BillModifier.h                # BillModifier 类的头文件
     │   ├── _shared_structures/           # 修改器模块共享的数据结构定义
-    │   │   └── BillDataStructures.h      # 定义了账单处理中使用的通用数据结构（如 Config, ParentItem）
+    │   │   └── BillDataStructures.h      # 定义了账单处理中使用的通用数据结构
     │   ├── config_loader/                # 配置加载器
     │   │   ├── ConfigLoader.cpp          # ConfigLoader 类的实现，用于从 JSON 加载配置
     │   │   └── ConfigLoader.h            # ConfigLoader 类的头文件
@@ -112,14 +112,16 @@ Bills_Master/
     │       ├── BillFormatter.cpp         # BillFormatter 类的实现，将结构化数据格式化为原始账单文本
     │       └── BillFormatter.h           # BillFormatter 类的头文件
     └── validator/                        # 账单验证器
-        ├── BillConfig.cpp                # BillConfig 类的实现，加载和管理验证配置
-        ├── BillConfig.h                  # BillConfig 类的头文件
-        ├── BillProcessor.cpp             # BillProcessor 类的实现，执行账单的核心验证逻辑
-        ├── BillProcessor.h               # BillProcessor 类的头文件
-        ├── BillValidator.cpp             # BillValidator 类的实现，作为验证过程的门面
-        ├── BillValidator.h               # BillValidator 类的头文件
-        ├── ValidationResult.cpp          # ValidationResult 类的实现，收集和报告验证错误与警告
-        └── ValidationResult.h            # ValidationResult 类的头文件
+        ├── _internal/                # 内部实现
+        │   ├── BillConfig.cpp            # 加载和管理验证配置
+        │   └── BillConfig.h                  # BillConfig 类的头文件
+        │   ├── BillProcessor.cpp             # 执行账单的核心验证逻辑
+        │   └── BillProcessor.h               
+        │   ├── ValidationResult.cpp        # 收集和报告验证错误与警告
+        │   └── ValidationResult.h            
+        ├── BillValidator.cpp             # 封装
+        └── BillValidator.h               
+
 ```
 ## 1.2 架构图
 ### 1.2.1 整体
