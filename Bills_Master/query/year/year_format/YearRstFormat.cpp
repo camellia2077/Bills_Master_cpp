@@ -3,7 +3,7 @@
 #include <sstream>
 #include <iomanip>
 
-std::string YearRstFormat::format_report(const YearlyReportData& data) {
+std::string YearRstFormat::format_report(const YearlyReportData& data) const{
     std::stringstream ss;
 
     // --- 标题 ---
