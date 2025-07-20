@@ -1,9 +1,9 @@
 #ifndef BILL_VALIDATOR_H
 #define BILL_VALIDATOR_H
 
-#include "BillConfig.h"
-#include "BillProcessor.h"
-#include "ValidationResult.h"
+#include "validator/_internal/BillConfig.h"
+#include "validator/_internal/BillProcessor.h"
+#include "validator/_internal/ValidationResult.h"
 #include <string>
 #include <memory> // 用于 std::unique_ptr
 
