@@ -1,39 +1,24 @@
 // YearlyReportGenerator.cpp
 #include "YearlyReportGenerator.h"
-#include "year/_year_data/YearlyReportData.h"
+#include <stdexcept> // For throwing exceptions
 
-// 构造函数初始化内部的 reader 和所有 formatters
+// The constructor now only needs to initialize the reader.
 YearlyReportGenerator::YearlyReportGenerator(sqlite3* db_connection)
-    : m_reader(db_connection), 
-      m_markdown_formatter(), 
-      m_latex_formatter(),
-      m_typst_formatter(),
-      m_rst_formatter()
-       {} 
+    : m_reader(db_connection) {}
 
-// generate 方法现在根据所选格式进行操作
+// The generate method is now much cleaner and uses the factory.
 std::string YearlyReportGenerator::generate(int year, ReportFormat format) {
-    // 步骤 1: 使用 reader 获取数据
+    // Step 1: Get the data using the reader.
     YearlyReportData data = m_reader.read_yearly_data(year);
 
-    // 步骤 2: 根据传入的格式参数选择合适的格式化器
-    std::string report;
-    switch (format) {
-        case ReportFormat::LaTeX:
-            report = m_latex_formatter.format_report(data);
-            break;
-        case ReportFormat::Typst:
-            report = m_typst_formatter.format_report(data);
-            break;
-        case ReportFormat::Rst:
-            report = m_rst_formatter.format_report(data);
-            break;
-        case ReportFormat::Markdown:
-        default: // 默认使用 Markdown 格式
-            report = m_markdown_formatter.format_report(data);
-            break;
+    // Step 2: Create the correct formatter using the factory.
+    auto formatter = YearlyReportFormatterFactory::createFormatter(format);
+
+    // Always check if the factory returned a valid formatter.
+    if (!formatter) {
+        throw std::runtime_error("An unsupported report format was specified.");
     }
 
-    // 步骤 3: 返回最终报告
-    return report;
+    // Step 3: Use the formatter to generate and return the report.
+    return formatter->format_report(data);
 }
