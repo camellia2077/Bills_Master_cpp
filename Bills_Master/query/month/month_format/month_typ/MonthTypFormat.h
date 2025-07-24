@@ -2,7 +2,7 @@
 #ifndef MONTH_TYP_FORMAT_H
 #define MONTH_TYP_FORMAT_H
 
-#include "month/month_format/IMonthReportFormatter.h" // 包含接口头文件
+#include "query/month/month_format/IMonthReportFormatter.h" // 包含接口头文件
 
 class MonthTypFormat : public IMonthReportFormatter { // 继承接口
 public:

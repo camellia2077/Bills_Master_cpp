@@ -4,7 +4,7 @@
 
 #include <memory>
 #include "IYearlyReportFormatter.h"
-#include "ReportFormat.h" // The shared enum
+#include "query/ReportFormat.h" // 共享的格式化类型枚举
 
 class YearlyReportFormatterFactory {
 public:

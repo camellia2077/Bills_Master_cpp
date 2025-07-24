@@ -3,7 +3,7 @@
 #define I_YEARLY_REPORT_FORMATTER_H
 
 #include <string>
-#include "year/_year_data/YearlyReportData.h" // Path to the data structure
+#include "query/year/_year_data/YearlyReportData.h" // Path to the data structure
 
 /**
  * @class IYearlyReportFormatter

@@ -1,9 +1,9 @@
 // ReportFormatterFactory.cpp
 #include "ReportFormatterFactory.h"
-#include "month_md/MonthMdFormat.h"
-#include "month_tex/MonthTexFormat.h"
-#include "month_typ/MonthTypFormat.h"
-#include "month_rst/MonthRstFormat.h"
+#include "query/month/month_format/month_md/MonthMdFormat.h"
+#include "query/month/month_format/month_tex/MonthTexFormat.h"
+#include "query/month/month_format/month_typ/MonthTypFormat.h"
+#include "query/month/month_format/month_rst/MonthRstFormat.h"
 
 std::unique_ptr<IMonthReportFormatter> ReportFormatterFactory::createFormatter(ReportFormat format) {
     switch (format) {

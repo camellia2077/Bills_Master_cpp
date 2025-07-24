@@ -3,7 +3,7 @@
 
 #include <string>
 #include "QueryDb.h"
-#include "ProcessStats.h"
+#include "app_controller/ProcessStats.h"
 
 class ReportExporter {
 public:

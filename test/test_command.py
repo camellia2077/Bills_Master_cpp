@@ -4,7 +4,7 @@ import sys
 import shutil
 import time
 import re
-# 用于测试cpp 的命令行程序
+
 # ===================================================================
 # 全局配置
 # ===================================================================
@@ -15,7 +15,7 @@ import re
 # Windows 示例: "C:/Projects/MySolution/build/Debug"
 # Linux/macOS 示例: "/home/user/projects/my_project/build"
 #
-BUILD_DIR = "C:/Computer/my_github/github_cpp/Bills_Master_cpp/Bills_Master/build"  # <--- 修改这里！
+BUILD_DIR = "C:/Computer/my_github/github_cpp/bill_master/Bills_Master_cpp/Bills_Master/build"  
 
 # 定义需要清理的文件和文件夹
 FILES_TO_DELETE = [

@@ -1,6 +1,7 @@
 #include "BillProcessor.h"
-#include "BillConfig.h"
-#include "ValidationResult.h"
+
+#include "reprocessing/validator/_internal/BillConfig.h"
+#include "reprocessing/validator/_internal/ValidationResult.h"
 #include <fstream>
 #include <regex>
 
