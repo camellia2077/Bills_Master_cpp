@@ -4,10 +4,9 @@
 
 #include <string>
 #include <sqlite3.h>
-#include "ReportFormat.h"
-#include "year_query/YearlyDataReader.h"
-// The only include you need now is the factory
-#include "year/year_format/YearlyReportFormatterFactory.h"
+#include "query/ReportFormat.h"
+#include "query/year/year_query/YearlyDataReader.h"
+#include "query/year/year_format/YearlyReportFormatterFactory.h"
 
 /**
  * @class YearlyReportGenerator

@@ -1,6 +1,6 @@
 #ifndef INSERT_H
 #define INSERT_H
-#include "bill_structures/BillStructures.h" // 依赖于解析器定义的数据结构，现在从独立的头文件引入
+#include "db_insert/bill_structures/BillStructures.h" // 依赖于解析器定义的数据结构，现在从独立的头文件引入
 #include <sqlite3.h>
 #include <string>
 #include <stdexcept>

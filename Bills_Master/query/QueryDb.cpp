@@ -1,8 +1,8 @@
 #include "QueryDb.h"
-#include "year/YearlyReportGenerator.h"
-#include "month/MonthlyReportGenerator.h"
-#include "ProcessStats.h"
-#include "common_utils.h"
+#include "query/year/YearlyReportGenerator.h"
+#include "query/month/MonthlyReportGenerator.h"
+#include "app_controller/ProcessStats.h"
+#include "common/common_utils.h"
 #include <stdexcept>
 #include <vector>
 #include <sstream>

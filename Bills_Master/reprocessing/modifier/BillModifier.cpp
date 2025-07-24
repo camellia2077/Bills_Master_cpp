@@ -1,8 +1,8 @@
 #include "BillModifier.h"
 
-#include "modifier/config_loader/ConfigLoader.h"
-#include "modifier/processor/BillProcessor.h"
-#include "modifier/raw_format/BillFormatter.h"
+#include "reprocessing/modifier/config_loader/ConfigLoader.h"
+#include "reprocessing/modifier/processor/BillProcessor.h"
+#include "reprocessing/modifier/raw_format/BillFormatter.h"
 
 #include <vector>
 

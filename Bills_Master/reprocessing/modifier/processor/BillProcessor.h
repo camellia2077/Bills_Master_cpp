@@ -1,7 +1,7 @@
 #ifndef BILL_PROCESSOR_H
 #define BILL_PROCESSOR_H
 
-#include "modifier/_shared_structures/BillDataStructures.h"
+#include "reprocessing/modifier/_shared_structures/BillDataStructures.h"
 
 class BillProcessor {
 public:

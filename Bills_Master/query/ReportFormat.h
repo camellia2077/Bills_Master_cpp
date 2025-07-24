@@ -3,7 +3,7 @@
 
 /**
  * @enum ReportFormat
- * @brief 定义报告的输出格式类型。
+ * @brief 定义报告的输出格式的枚举
  */
 enum class ReportFormat {
     Markdown,

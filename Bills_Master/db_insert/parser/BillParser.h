@@ -1,6 +1,6 @@
 #ifndef BILL_PARSER_H
 #define BILL_PARSER_H
-#include "bill_structures/BillStructures.h" // 引入共享数据结构
+#include "db_insert/bill_structures/BillStructures.h" // 引入共享数据结构
 #include <string>
 #include <vector>
 #include <stdexcept>

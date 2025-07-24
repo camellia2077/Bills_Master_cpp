@@ -2,8 +2,8 @@
 #define REPROCESSOR_H
 
 #include <string>
-#include "validator/BillValidator.h"
-#include "modifier/BillModifier.h"
+#include "reprocessing/validator/BillValidator.h"
+#include "reprocessing/modifier/BillModifier.h"
 // nlohmann/json.hpp is no longer needed in the header, it's a detail of the .cpp file now.
 
 class Reprocessor {

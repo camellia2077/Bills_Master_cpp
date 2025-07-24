@@ -6,12 +6,12 @@
 #include <stdexcept>
 #include <string>
 
-#include "Reprocessor.h"
-#include "DataProcessor.h"
-#include "QueryDb.h"
-#include "FileHandler.h"
-#include "version.h"
-#include "common_utils.h"
+#include "reprocessing/Reprocessor.h"
+#include "db_insert/DataProcessor.h"
+#include "query/QueryDb.h"
+#include "file_handler/FileHandler.h"
+#include "common/version.h"
+#include "common/common_utils.h"
 
 namespace fs = std::filesystem;
 

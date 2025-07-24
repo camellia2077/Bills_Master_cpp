@@ -37,7 +37,7 @@ file(GLOB REPROCESSING_SOURCES
 # 去除wrapper.cpp，因为这是python模块封装的程序
 list(REMOVE_ITEM REPROCESSING_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/reprocessing/wrapper.cpp")
 
-file(GLOB DB_INSERT_SOURCES   
+file(GLOB DB_INSERT_SOURCES 
     "db_insert/*.cpp"
     "db_insert/bill_structures/*.cpp"
     "db_insert/insertor/*.cpp"
@@ -48,10 +48,6 @@ file(GLOB QUERY_SOURCES
     "query/export/*.cpp"
 
 
-    "query/year/*.cpp"
-    "query/year/_year_data/*.cpp"
-    "query/year/year_format/*.cpp"
-    "query/year/year_query/*.cpp"
 
     "query/month/*.cpp"
     "query/month/_month_data/*.cpp"
@@ -63,6 +59,22 @@ file(GLOB QUERY_SOURCES
 
 
     "query/month/month_query/*.cpp"
+
+
+    "query/year/*.cpp"
+    "query/year/_year_data/*.cpp"
+    "query/year/year_format/*.cpp"
+    "query/year/year_format/year_md/*.cpp"
+    "query/year/year_format/year_tex/*.cpp"
+    "query/year/year_format/year_typ/*.cpp"
+    "query/year/year_format/year_rst/*.cpp"
+
+
+
+
+    "query/year/year_query/*.cpp"
+
+    
 
 )
 file(GLOB FILEHANDLER_SOURCES "file_handler/*.cpp")
@@ -82,13 +94,9 @@ add_library(bill_master_lib STATIC ${SHARED_SOURCES})
 
 # 3. 为共享库应用包含目录和链接库
 #    链接到此库的可执行文件将继承这些属性。
+# --- MODIFIED: 将项目根目录作为唯一的包含目录 ---
 target_include_directories(bill_master_lib PUBLIC
-    "reprocessing"
-    "db_insert"
-    "query"
-    "file_handler"
-    "common"
-    "app_controller"
+    "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
 target_link_libraries(bill_master_lib PUBLIC

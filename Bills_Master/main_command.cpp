@@ -3,8 +3,8 @@
 #include <vector>
 #include <print>
 
-#include "AppController.h"
-#include "common_utils.h" // for colors
+#include "app_controller/AppController.h"
+#include "common/common_utils.h" // for colors
 
 // For UTF-8 output on Windows
 #ifdef _WIN32

@@ -3,7 +3,7 @@
 #define YEARLY_DATA_READER_H
 
 #include <sqlite3.h>
-#include "year/_year_data/YearlyReportData.h"
+#include "query/year/_year_data/YearlyReportData.h"
 
 class YearlyDataReader {
 public:

@@ -3,7 +3,7 @@
 #define MONTH_QUERY_H
 
 #include <sqlite3.h>
-#include "month/_month_data/ReportData.h"
+#include "query/month/_month_data/ReportData.h"
 
 class MonthQuery {
 public:
