@@ -22,63 +22,68 @@ find_package(nlohmann_json REQUIRED)
 find_package(SQLite3 REQUIRED)
 
 
-# 1. 自动从每个子目录中查找源文件 (*.cpp)
-file(GLOB REPROCESSING_SOURCES 
-    "reprocessing/*.cpp"
-    "reprocessing/validator/*.cpp"
-    "reprocessing/validator/_internal/*.cpp"
-    
-    "reprocessing/modifier/*.cpp"
-    "reprocessing/modifier/config_loader/*.cpp"
-    "reprocessing/modifier/processor/*.cpp"
-    "reprocessing/modifier/raw_format/*.cpp"
-    
+# ==============================================================================
+#  宏观路径定义 (Path Macros Definition)
+# ==============================================================================
+# 定义各个核心模块的根目录路径
+set(REPROCESSING_DIR "reprocessing")
+set(DB_INSERT_DIR    "db_insert")
+set(QUERY_DIR        "query")
+set(FILEHANDLER_DIR  "file_handler")
+set(APPCONTROLLER_DIR "app_controller")
+
+
+# ==============================================================================
+#  源文件收集 (Source File Collection)
+# ==============================================================================
+# 使用上面定义的宏观路径来自动查找每个模块下的源文件 (*.cpp)
+
+# 1. reprocessing 模块源文件
+file(GLOB REPROCESSING_SOURCES
+    "${REPROCESSING_DIR}/*.cpp"
+    "${REPROCESSING_DIR}/validator/*.cpp"
+    "${REPROCESSING_DIR}/validator/_internal/*.cpp" 
+    "${REPROCESSING_DIR}/modifier/*.cpp"
+    "${REPROCESSING_DIR}/modifier/config_loader/*.cpp"
+    "${REPROCESSING_DIR}/modifier/processor/*.cpp"
+    "${REPROCESSING_DIR}/modifier/raw_format/*.cpp"
 )
 # 去除wrapper.cpp，因为这是python模块封装的程序
-list(REMOVE_ITEM REPROCESSING_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/reprocessing/wrapper.cpp")
+list(REMOVE_ITEM REPROCESSING_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${REPROCESSING_DIR}/wrapper.cpp")
 
-file(GLOB DB_INSERT_SOURCES 
-    "db_insert/*.cpp"
-    "db_insert/bill_structures/*.cpp"
-    "db_insert/insertor/*.cpp"
-    "db_insert/parser/*.cpp"
+# 2. db_insert 模块源文件
+file(GLOB DB_INSERT_SOURCES
+    "${DB_INSERT_DIR}/*.cpp"
+    "${DB_INSERT_DIR}/bill_structures/*.cpp"
+    "${DB_INSERT_DIR}/insertor/*.cpp"
+    "${DB_INSERT_DIR}/parser/*.cpp"
 )
-file(GLOB QUERY_SOURCES       
-    "query/*.cpp"
-    "query/export/*.cpp"
 
-
-
-    "query/month/*.cpp"
-    "query/month/_month_data/*.cpp"
-    "query/month/month_format/*.cpp"
-    "query/month/month_format/month_md/*.cpp"
-    "query/month/month_format/month_tex/*.cpp"
-    "query/month/month_format/month_typ/*.cpp"
-    "query/month/month_format/month_rst/*.cpp"
-
-
-    "query/month/month_query/*.cpp"
-
-
-    "query/year/*.cpp"
-    "query/year/_year_data/*.cpp"
-    "query/year/year_format/*.cpp"
-    "query/year/year_format/year_md/*.cpp"
-    "query/year/year_format/year_tex/*.cpp"
-    "query/year/year_format/year_typ/*.cpp"
-    "query/year/year_format/year_rst/*.cpp"
-
-
-
-
-    "query/year/year_query/*.cpp"
-
-    
-
+# 3. query 模块源文件
+file(GLOB QUERY_SOURCES
+    "${QUERY_DIR}/*.cpp"
+    "${QUERY_DIR}/export_bills/*.cpp"
+    "${QUERY_DIR}/month/*.cpp"
+    "${QUERY_DIR}/month/_month_data/*.cpp"
+    "${QUERY_DIR}/month/month_format/*.cpp"
+    "${QUERY_DIR}/month/month_format/month_md/*.cpp"
+    "${QUERY_DIR}/month/month_format/month_tex/*.cpp"
+    "${QUERY_DIR}/month/month_format/month_typ/*.cpp"
+    "${QUERY_DIR}/month/month_format/month_rst/*.cpp"
+    "${QUERY_DIR}/month/month_query/*.cpp"
+    "${QUERY_DIR}/year/*.cpp"
+    "${QUERY_DIR}/year/_year_data/*.cpp"
+    "${QUERY_DIR}/year/year_format/*.cpp"
+    "${QUERY_DIR}/year/year_format/year_md/*.cpp" 
+    "${QUERY_DIR}/year/year_format/year_tex/*.cpp" 
+    "${QUERY_DIR}/year/year_format/year_typ/*.cpp" 
+    "${QUERY_DIR}/year/year_format/year_rst/*.cpp" 
+    "${QUERY_DIR}/year/year_query/*.cpp"
 )
-file(GLOB FILEHANDLER_SOURCES "file_handler/*.cpp")
-file(GLOB APPCONTROLLER_SOURCES "app_controller/*.cpp")
+
+# 4. 其他模块源文件
+file(GLOB FILEHANDLER_SOURCES "${FILEHANDLER_DIR}/*.cpp")
+file(GLOB APPCONTROLLER_SOURCES "${APPCONTROLLER_DIR}/*.cpp")
 
 # 将所有找到的源文件合并到一个列表中
 set(SHARED_SOURCES
@@ -89,14 +94,26 @@ set(SHARED_SOURCES
     ${APPCONTROLLER_SOURCES}
 )
 
-# 2. 从共享源文件创建一个静态库
+
+# ==============================================================================
+#  库和可执行文件目标定义 (Library and Executable Target Definition)
+# ==============================================================================
+
+# 1. 从共享源文件创建一个静态库
 add_library(bill_master_lib STATIC ${SHARED_SOURCES})
 
-# 3. 为共享库应用包含目录和链接库
+# 2. 为共享库应用包含目录和链接库
 #    链接到此库的可执行文件将继承这些属性。
-# --- MODIFIED: 将项目根目录作为唯一的包含目录 ---
+# --- MODIFIED: 将项目根目录和所有核心模块的根目录都添加到包含路径中 ---
+# 这允许在代码中使用更短、更相对的 #include 路径。
 target_include_directories(bill_master_lib PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}"
+    # 添加核心模块的根目录
+    "${CMAKE_CURRENT_SOURCE_DIR}/${REPROCESSING_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/${DB_INSERT_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/${QUERY_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/${FILEHANDLER_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/${APPCONTROLLER_DIR}"
 )
 
 target_link_libraries(bill_master_lib PUBLIC
@@ -108,6 +125,8 @@ target_link_libraries(bill_master_lib PUBLIC
 # 为库代码设置通用的编译选项
 target_compile_options(bill_master_lib PRIVATE -Wall -fdiagnostics-color=always)
 
+# --- 可执行文件目标 ---
+
 # Target 1: The interactive menu-based application
 add_executable(bill_matser_app main.cpp)
 
@@ -115,6 +134,6 @@ add_executable(bill_matser_app main.cpp)
 add_executable(bill_master_cli main_command.cpp)
 
 
-# --- MODIFIED: Link each executable to the shared library ---
+# 将每个可执行文件链接到共享库
 target_link_libraries(bill_matser_app PRIVATE bill_master_lib)
 target_link_libraries(bill_master_cli PRIVATE bill_master_lib)
