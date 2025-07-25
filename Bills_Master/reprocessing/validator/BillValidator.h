@@ -2,7 +2,7 @@
 #define BILL_VALIDATOR_H
 
 #include "reprocessing/validator/_internal/BillConfig.h"
-#include "reprocessing/validator/_internal/BillProcessor.h"
+#include "reprocessing/validator/_internal/BillFormatVerifier.h"
 #include "reprocessing/validator/_internal/ValidationResult.h"
 #include <string>
 #include <memory> // 用于 std::unique_ptr
@@ -11,7 +11,7 @@
  * @class BillValidator
  * @brief 一个高层次的封装类（Facade），用于简化账单验证过程。
  *
- * 此类封装了 BillConfig, BillProcessor, 和 ValidationResult 的所有复杂性，
+ * 此类封装了 BillConfig, BillFormatVerifier, 和 ValidationResult 的所有复杂性，
  * 为用户提供一个简单、统一的接口。
  */
 class BillValidator {
@@ -35,7 +35,7 @@ private:
     std::unique_ptr<BillConfig> config;
     
     // Processor 和 Result 可以是普通成员对象
-    BillProcessor processor;
+    BillFormatVerifier processor;
     ValidationResult result;
 };
 

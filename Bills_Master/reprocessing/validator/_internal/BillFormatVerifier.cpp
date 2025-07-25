@@ -1,15 +1,15 @@
-#include "BillProcessor.h"
+#include "BillFormatVerifier.h"
 
 #include "reprocessing/validator/_internal/BillConfig.h"
 #include "reprocessing/validator/_internal/ValidationResult.h"
 #include <fstream>
 #include <regex>
 
-void BillProcessor::_reset_state() {
+void BillFormatVerifier::_reset_state() {
     bill_structure.clear();
 }
 
-bool BillProcessor::validate(const std::string& bill_file_path, const BillConfig& config, ValidationResult& result) {
+bool BillFormatVerifier::validate(const std::string& bill_file_path, const BillConfig& config, ValidationResult& result) {
     _reset_state();
     result.clear(); // 确保从干净的状态开始
 
@@ -45,7 +45,7 @@ bool BillProcessor::validate(const std::string& bill_file_path, const BillConfig
     return !result.has_errors();
 }
 
-void BillProcessor::_process_line(const std::string& line, int line_num, State& current_state, std::string& current_parent, std::string& current_sub, const BillConfig& config, ValidationResult& result) {
+void BillFormatVerifier::_process_line(const std::string& line, int line_num, State& current_state, std::string& current_parent, std::string& current_sub, const BillConfig& config, ValidationResult& result) {
     switch (current_state) {
         case State::EXPECT_PARENT:
             _handle_parent_state(line, line_num, current_state, current_parent, config, result);
@@ -63,7 +63,7 @@ void BillProcessor::_process_line(const std::string& line, int line_num, State& 
     }
 }
 
-bool BillProcessor::_validate_date_and_remark(std::ifstream& file, int& line_num, ValidationResult& result) {
+bool BillFormatVerifier::_validate_date_and_remark(std::ifstream& file, int& line_num, ValidationResult& result) {
     std::string line;
     
     if (std::getline(file, line)) {
@@ -93,7 +93,7 @@ bool BillProcessor::_validate_date_and_remark(std::ifstream& file, int& line_num
     return true;
 }
 
-void BillProcessor::_handle_parent_state(const std::string& line, int line_num, State& current_state, std::string& current_parent, const BillConfig& config, ValidationResult& result) {
+void BillFormatVerifier::_handle_parent_state(const std::string& line, int line_num, State& current_state, std::string& current_parent, const BillConfig& config, ValidationResult& result) {
     if (config.is_parent_title(line)) {
         current_parent = line;
         bill_structure[current_parent]; // 注册父标题
@@ -103,7 +103,7 @@ void BillProcessor::_handle_parent_state(const std::string& line, int line_num, 
     }
 }
 
-void BillProcessor::_handle_sub_state(const std::string& line, int line_num, State& current_state, std::string& current_parent, std::string& current_sub, const BillConfig& config, ValidationResult& result) {
+void BillFormatVerifier::_handle_sub_state(const std::string& line, int line_num, State& current_state, std::string& current_parent, std::string& current_sub, const BillConfig& config, ValidationResult& result) {
     if (config.is_parent_title(line)) {
         result.add_error("Error (Line " + std::to_string(line_num) + "): Parent title '" + current_parent + "' is missing a sub-title."); // 翻译: 错误 (行 ...): 父级标题 '...' 缺少子标题。
         _handle_parent_state(line, line_num, current_state, current_parent, config, result);
@@ -123,7 +123,7 @@ void BillProcessor::_handle_sub_state(const std::string& line, int line_num, Sta
     }
 }
 
-void BillProcessor::_handle_content_state(const std::string& line, int line_num, State& current_state, std::string& current_parent, std::string& current_sub, const BillConfig& config, ValidationResult& result) {
+void BillFormatVerifier::_handle_content_state(const std::string& line, int line_num, State& current_state, std::string& current_parent, std::string& current_sub, const BillConfig& config, ValidationResult& result) {
     if (config.is_parent_title(line)) {
         if (!current_sub.empty() && bill_structure[current_parent][current_sub] == 0) {
             result.add_warning("Warning (Line " + std::to_string(line_num) + "): Sub-title '" + current_sub + "' is missing content lines.");
@@ -149,7 +149,7 @@ void BillProcessor::_handle_content_state(const std::string& line, int line_num,
     }
 }
 
-void BillProcessor::_post_validation_checks(ValidationResult& result) {
+void BillFormatVerifier::_post_validation_checks(ValidationResult& result) {
     for (const auto& parent_pair : bill_structure) {
         const std::string& parent_title = parent_pair.first;
         const auto& sub_map = parent_pair.second;

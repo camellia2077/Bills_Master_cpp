@@ -1,7 +1,7 @@
 #include "BillModifier.h"
 
 #include "reprocessing/modifier/config_loader/ConfigLoader.h"
-#include "reprocessing/modifier/processor/BillProcessor.h"
+#include "reprocessing/modifier/processor/BillContentTransformer.h"
 #include "reprocessing/modifier/raw_format/BillFormatter.h"
 
 #include <vector>
@@ -19,7 +19,7 @@ std::string BillModifier::modify(const std::string& bill_content) {
     // modify 方法负责协调 Processor 和 Formatter
     
     // 1. 创建处理器，处理账单内容，得到结构化数据
-    BillProcessor processor(m_config);
+    BillContentTransformer processor(m_config);
     std::vector<std::string> metadata_lines;
     std::vector<ParentItem> bill_structure = processor.process(bill_content, metadata_lines);
 
