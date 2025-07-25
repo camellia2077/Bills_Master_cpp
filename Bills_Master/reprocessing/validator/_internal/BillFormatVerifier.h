@@ -10,13 +10,13 @@ class BillConfig;
 class ValidationResult;
 
 /**
- * @class BillProcessor
+ * @class BillFormatVerifier
  * @brief 负责执行账单文件的核心验证逻辑。
  *
  * 此类包含状态机，逐行读取和解析文件，并使用 BillConfig 进行验证，
  * 将结果存入 ValidationResult。
  */
-class BillProcessor {
+class BillFormatVerifier {
 public:
     /**
      * @brief 对给定的账单文件执行完整的验证流程。

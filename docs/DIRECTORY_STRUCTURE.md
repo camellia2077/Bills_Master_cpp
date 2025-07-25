@@ -24,7 +24,7 @@ Bills_Master/
 │   ├── DataProcessor.cpp                 # DataProcessor 类的实现，协调账单解析和数据库插入 
 │   ├── DataProcessor.h                   # DataProcessor 类的头文件 
 │   ├── bill_structures/                  # 数据库插入模块的数据结构定义 
-│   │   └── BillStructures.h              # 定义了用于数据库插入的账单相关数据结构（如 Transaction, ParsedBill） 
+│   │   └── BillStructures.h              # 定义了用于数据库插入的账单相关数据结构
 │   ├── insertor/                         # 数据库插入器 
 │   │   ├── BillInserter.cpp              # BillInserter 类的实现，处理数据库连接和数据插入操作 
 │   │   └── BillInserter.h                # BillInserter 类的头文件 
@@ -36,19 +36,90 @@ Bills_Master/
 │   ├── FileHandler.cpp                   # FileHandler 类的实现，包含文件查找逻辑 
 │   └── FileHandler.h                     # FileHandler 类的头文件 
 │
-├── query/                         # 查询和报告模块，用于从数据库查询数据并生成报告 
-│   ├── QueryDb.cpp                # QueryFacade 类的实现，作为数据库查询的门面 
-│   ├── QueryDb.h                  # QueryFacade 类的头文件 
-│   ├── ReportFormat.h             # 定义报告的输出格式类型枚举（Markdown, LaTeX, Typst） 
-│   ├── export/                    # 导出报告 
-│   │   ├── ReportExporter.cpp  
-│   │   └── ReportExporter.h  
-│   ├── month/                     # 月度报告相关文件 
-│   └── year/                      # 年度报告相关文件 
+├── query
+│   ├── export_bills
+│   │   ├── ReportExporter.cpp
+│   │   └── ReportExporter.h
+│   ├── month
+│   │   ├── _month_data
+│   │   │   └── ReportData.h
+│   │   ├── month_format
+│   │   │   ├── IMonthReportFormatter.h
+│   │   │   ├── month_md
+│   │   │   │   ├── MonthMdFormat.cpp
+│   │   │   │   └── MonthMdFormat.h
+│   │   │   ├── month_rst
+│   │   │   │   ├── MonthRstFormat.cpp
+│   │   │   │   └── MonthRstFormat.h
+│   │   │   ├── month_tex
+│   │   │   │   ├── MonthTexFormat.cpp
+│   │   │   │   └── MonthTexFormat.h
+│   │   │   ├── month_typ
+│   │   │   │   ├── MonthTypFormat.cpp
+│   │   │   │   └── MonthTypFormat.h
+│   │   │   ├── ReportFormatterFactory.cpp 
+│   │   │   └── ReportFormatterFactory.h
+│   │   ├── month_query
+│   │   │   ├── MonthQuery.cpp
+│   │   │   └── MonthQuery.h
+│   │   ├── MonthlyReportGenerator.cpp
+│   │   └── MonthlyReportGenerator.h
+│   ├── QueryDb.cpp
+│   ├── QueryDb.h
+│   ├── ReportFormat.h
+│   └── year/
+│       ├── _year_data/
+│       │   └── YearlyReportData.h
+│       ├── year_format/
+│       │   ├── IYearlyReportFormatter.h
+│       │   ├── year_md/ # Markdown格式
+│       │   │   ├── YearMdFormat.cpp
+│       │   │   └── YearMdFormat.h
+│       │   ├── year_rst/ # 
+│       │   │   ├── YearRstFormat.cpp
+│       │   │   └── YearRstFormat.h
+│       │   ├── year_tex/ # LaTeX格式
+│       │   │   ├── YearTexFormat.cpp
+│       │   │   └── YearTexFormat.h
+│       │   ├── year_typ/
+│       │   │   ├── YearTypFormat.cpp
+│       │   │   └── YearTypFormat.h
+│       │   ├── YearlyReportFormatterFactory.cpp
+│       │   └── YearlyReportFormatterFactory.h
+│       ├── year_query/
+│       │   ├── YearlyDataReader.cpp
+│       │   └── YearlyDataReader.h
+│       ├── YearlyReportGenerator.cpp
+│       └── YearlyReportGenerator.h
 │  
-└── reprocessing/                         # 预处理模块，包含账单的验证和修改功能 
-├── Reprocessor.cpp                   # Reprocessor 类的实现，封装了验证和修改的流程 
-├── Reprocessor.h                     # Reprocessor 类的头文件 
-├── modifier/                         # 账单修改器 
-└── validator/                        # 账单验证器 
+└── reprocessing/
+    ├── CMakeLists.txt # py封装的cmake
+    ├── compile_ucrt64.bat
+    ├── modifier/
+    │   ├── _shared_structures/
+    │   │   └── BillDataStructures.h
+    │   ├── BillModifier.cpp
+    │   ├── BillModifier.h
+    │   ├── config_loader/
+    │   │   ├── ConfigLoader.cpp
+    │   │   └── ConfigLoader.h
+    │   ├── processor/
+    │   │   ├── BillContentTransformer.cpp # 内容转换
+    │   │   └── BillContentTransformer.h
+    │   └── raw_format/
+    │       ├── BillFormatter.cpp
+    │       └── BillFormatter.h
+    ├── Reprocessor.cpp
+    ├── Reprocessor.h
+    ├── validator/
+    │   ├── _internal/
+    │   │   ├── BillConfig.cpp
+    │   │   ├── BillConfig.h
+    │   │   ├── BillFormatVerifier.cpp
+    │   │   ├── BillFormatVerifier.h
+    │   │   ├── ValidationResult.cpp
+    │   │   └── ValidationResult.h
+    │   ├── BillValidator.cpp
+    │   └── BillValidator.h
+    └── wrapper.cpp # py封装
 ```
