@@ -19,6 +19,7 @@ set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -flto -s -
 # nlohmann_json for JSON processing in the reprocessing module
 find_package(nlohmann_json REQUIRED)
 # SQLite3 for the database insertion module
+set(SQLite3_USE_STATIC_LIBS OFF) # 添加此行以请求动态库
 find_package(SQLite3 REQUIRED)
 
 
