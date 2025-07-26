@@ -1,7 +1,7 @@
 #include "BillFormatVerifier.h"
 
-#include "reprocessing/validator/_internal/BillConfig.h"
-#include "reprocessing/validator/_internal/ValidationResult.h"
+#include "reprocessing/validator/config/BillConfig.h"
+#include "reprocessing/validator/result/ValidationResult.h"
 #include <fstream>
 #include <regex>
 

@@ -42,7 +42,10 @@ set(APPCONTROLLER_DIR "app_controller")
 file(GLOB REPROCESSING_SOURCES
     "${REPROCESSING_DIR}/*.cpp"
     "${REPROCESSING_DIR}/validator/*.cpp"
-    "${REPROCESSING_DIR}/validator/_internal/*.cpp" 
+    "${REPROCESSING_DIR}/validator/config/*.cpp" 
+    "${REPROCESSING_DIR}/validator/result/*.cpp" 
+    "${REPROCESSING_DIR}/validator/verifier/*.cpp" 
+
     "${REPROCESSING_DIR}/modifier/*.cpp"
     "${REPROCESSING_DIR}/modifier/config_loader/*.cpp"
     "${REPROCESSING_DIR}/modifier/processor/*.cpp"
