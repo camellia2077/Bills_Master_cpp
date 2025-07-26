@@ -48,13 +48,13 @@ class DatabaseManager:
     def __init__(self, db_path: str):
         if not os.path.exists(db_path):
             raise FileNotFoundError(f"错误: 数据库文件 '{db_path}' 不存在。")
-        self.db_path = db_path
+        self.sqlite3_path = db_path
         self.conn = None
 
     def __enter__(self):
         """上下文管理器进入方法，建立数据库连接。"""
         try:
-            self.conn = sqlite3.connect(self.db_path)
+            self.conn = sqlite3.connect(self.sqlite3_path)
             return self
         except sqlite3.Error as e:
             print(f"数据库连接失败: {e}")
@@ -190,7 +190,7 @@ def main():
         print(f"错误: 无效的日期格式 '{date_filter}'。")
         return
 
-    DB_FILE = "bills.db"
+    DB_FILE = "bills.sqlite3"
     output_filename = f"barchart_{date_filter}.png"
     config = load_config()
 

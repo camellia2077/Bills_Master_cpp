@@ -77,7 +77,7 @@ void AppController::handle_modification(const std::string& path) {
 
 void AppController::handle_import(const std::string& path) {
     ProcessStats stats;
-    const std::string db_path = "bills.db";
+    const std::string db_path = "bills.sqlite3";
     std::cout << "正在使用数据库文件: " << db_path << "\n";
 
     try {
@@ -148,7 +148,7 @@ void AppController::handle_full_workflow(const std::string& path) {
             std::cout << GREEN_COLOR << "成功: " << RESET_COLOR << "修改完成。修改后的文件已保存至 '" << modified_path.string() << "'。\n";
             
             std::cout << "\n[步骤 3/3] 正在解析并插入数据库...\n";
-            const std::string db_path = "bills.db";
+            const std::string db_path = "bills.sqlite3";
             if (data_processor.process_and_insert(modified_path.string(), db_path)) {
                 std::cout << GREEN_COLOR << "成功: " << RESET_COLOR << "此文件的数据库导入完成。" << "\n";
                 stats.success++;
@@ -179,7 +179,7 @@ void AppController::handle_export(const std::string& type, const std::string& va
             format = ReportFormat::Rst;
         } else {throw std::runtime_error("你输入的格式暂时还没有支持: " + format_str + "。请使用 'md', 'tex', 或 'typ'。");}
 
-        QueryFacade facade("bills.db");
+        QueryFacade facade("bills.sqlite3");
         if (type == "all") {
             facade.export_all_reports(format);
         } else if (type == "year") {
