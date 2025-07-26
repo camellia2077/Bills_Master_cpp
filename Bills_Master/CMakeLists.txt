@@ -9,7 +9,8 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # --- 为 Release 构建类型设置优化编译选项 ---
-#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Os -flto -march=native")
+# 注意 同时开启Os和 flto编译的时候，会因为json库导致编译失败 所以不能同时使用Os和flto
+#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Os -march=native") 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -flto -march=native")
 
 # --- 为 Release 构建类型设置优化链接选项 ---
