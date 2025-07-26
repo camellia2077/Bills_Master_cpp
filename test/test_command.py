@@ -19,7 +19,7 @@ BUILD_DIR = "C:/Computer/my_github/github_cpp/bill_master/Bills_Master_cpp/Bills
 
 # 定义需要清理的文件和文件夹
 FILES_TO_DELETE = [
-    "bills.sqlite3"
+    "bills.db"
 ]
 DIRS_TO_DELETE = [
     "txt_raw", # 经过预处理的文件
