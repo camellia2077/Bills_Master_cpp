@@ -1,7 +1,7 @@
 #ifndef BILL_FORMATTER_H
 #define BILL_FORMATTER_H
 
-#include "modifier/_shared_structures/BillDataStructures.h"
+#include "reprocessing/modifier/_shared_structures/BillDataStructures.h"
 
 class BillFormatter {
 public:

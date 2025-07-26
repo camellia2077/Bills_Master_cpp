@@ -4,8 +4,8 @@
 
 #include <string>
 #include <sqlite3.h>
-#include "month/month_format/ReportFormatterFactory.h" // Use the factory instead of individual formatters
-#include "month_query/MonthQuery.h"
+#include "query/month/month_format/ReportFormatterFactory.h" // Use the factory instead of individual formatters
+#include "query/month/month_query/MonthQuery.h"
 
 /**
  * @class MonthlyReportGenerator

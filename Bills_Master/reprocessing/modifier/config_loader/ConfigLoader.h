@@ -1,7 +1,7 @@
 #ifndef CONFIG_LOADER_H
 #define CONFIG_LOADER_H
 
-#include "modifier/_shared_structures/BillDataStructures.h"
+#include "reprocessing/modifier/_shared_structures/BillDataStructures.h"
 #include "nlohmann/json.hpp"
 
 class ConfigLoader {

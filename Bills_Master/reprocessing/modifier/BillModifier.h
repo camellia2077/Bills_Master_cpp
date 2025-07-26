@@ -2,7 +2,7 @@
 #define BILL_MODIFIER_H
 
 #include <string>
-#include "modifier/_shared_structures/BillDataStructures.h" // 包含共用的数据结构
+#include "reprocessing/modifier/_shared_structures/BillDataStructures.h" // 包含共用的数据结构
 #include "nlohmann/json.hpp"
 
 class BillModifier {

@@ -1,7 +1,7 @@
 // MonthlyReportGenerator.cpp
 #include "MonthlyReportGenerator.h"
-#include "month/_month_data/ReportData.h"
-#include "month/month_format/IMonthReportFormatter.h" // Include the interface for polymorphism
+#include "query/month/_month_data/ReportData.h"
+#include "query/month/month_format/IMonthReportFormatter.h" // Include the interface for polymorphism
 #include <stdexcept> // To throw an exception for unsupported formats
 
 // The constructor now only initializes the reader.

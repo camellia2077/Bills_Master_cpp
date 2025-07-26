@@ -15,7 +15,7 @@ import re
 # Windows 示例: "C:/Projects/MySolution/build/Debug"
 # Linux/macOS 示例: "/home/user/projects/my_project/build"
 #
-BUILD_DIR = "C:/Computer/my_github/github_cpp/Bills_Master_cpp/Bills_Master/build"  # <--- 修改这里！
+BUILD_DIR = "C:/Computer/my_github/github_cpp/bill_master/Bills_Master_cpp/Bills_Master/build"  
 
 # 定义需要清理的文件和文件夹
 FILES_TO_DELETE = [
@@ -194,9 +194,12 @@ def main():
     export_path = os.path.join(script_dir, "exported_files")
     output_dir = os.path.join(script_dir, "output")
     
+    # --- LOGIC MODIFIED ---
+    # 检查核心的 'bills' 文件夹是否存在。如果不存在，则终止程序。
     if not os.path.exists(bills_path):
-        os.makedirs(bills_path)
-        print(f"{YELLOW}警告: 'bills' 文件夹不存在，已为您创建。请添加账单文件以进行测试。{RESET}")
+        print(f"\n{RED}错误: 'bills' 文件夹不存在，无法执行测试。{RESET}")
+        print(f"{YELLOW}请在脚本所在目录创建 'bills' 文件夹并放入您的账单文件。{RESET}")
+        sys.exit(1)
 
     executor = CommandExecutor(exe_path, output_dir)
 
