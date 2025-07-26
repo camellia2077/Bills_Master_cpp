@@ -194,9 +194,12 @@ def main():
     export_path = os.path.join(script_dir, "exported_files")
     output_dir = os.path.join(script_dir, "output")
     
+    # --- LOGIC MODIFIED ---
+    # 检查核心的 'bills' 文件夹是否存在。如果不存在，则终止程序。
     if not os.path.exists(bills_path):
-        os.makedirs(bills_path)
-        print(f"{YELLOW}警告: 'bills' 文件夹不存在，已为您创建。请添加账单文件以进行测试。{RESET}")
+        print(f"\n{RED}错误: 'bills' 文件夹不存在，无法执行测试。{RESET}")
+        print(f"{YELLOW}请在脚本所在目录创建 'bills' 文件夹并放入您的账单文件。{RESET}")
+        sys.exit(1)
 
     executor = CommandExecutor(exe_path, output_dir)
 
