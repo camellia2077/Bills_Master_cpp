@@ -56,3 +56,27 @@ std::string MonthMdFormat::format_report(const MonthlyReportData& data) const {
 
     return ss.str();
 }
+extern "C" {
+
+    // 定义平台特定的导出宏
+    // - 在Windows上，__declspec(dllexport) 会将函数导出到DLL。
+    // - 在Linux/macOS上，__attribute__((visibility("default"))) 实现同样的效果。
+    #ifdef _WIN32
+        #define PLUGIN_API __declspec(dllexport)
+    #else
+        #define PLUGIN_API __attribute__((visibility("default")))
+    #endif
+    
+    /**
+     * @brief 创建 MonthMdFormat 格式化器实例的工厂函数。
+     * @return 指向 IMonthReportFormatter 接口的指针。
+     *
+     * 这是动态库的唯一入口点。主应用程序将加载此库并调用此函数
+     * 来获取一个格式化器对象，而无需知道具体的实现类。
+     */
+    PLUGIN_API IMonthReportFormatter* create_formatter() {
+        // 创建并返回一个新的格式化器实例
+        return new MonthMdFormat();
+    }
+    
+    } // extern "C"
