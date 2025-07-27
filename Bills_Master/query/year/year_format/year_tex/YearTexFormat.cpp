@@ -5,7 +5,7 @@
 #include <iomanip>
 
 // --- 实现新的构造函数 ---
-YearTexFormat::YearTexFormat(const YearlyTexReportConfig& config)
+YearTexFormat::YearTexFormat(const YearlyTexConfig& config)
     : m_config(config) 
 {
 }

@@ -4,13 +4,13 @@
 #include <string>
 
 /**
- * @struct YearlyTexReportConfig
+ * @struct YearlyTexConfig
  * @brief 用于封装所有年度 LaTeX 报告生成选项的配置结构体。
  *
  * 通过实例化并修改这个结构体，用户可以自定义年度报告的
  * 字体、布局和静态文本标签，而无需修改核心的 C++ 格式化逻辑。
  */
-struct YearlyTexReportConfig {
+struct YearlyTexConfig {
     // ===================================================================
     // 文档元数据 (Document Metadata)
     // ===================================================================
