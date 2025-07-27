@@ -72,10 +72,16 @@ file(GLOB QUERY_SOURCES
     "${QUERY_DIR}/month/_month_data/*.cpp" 
     "${QUERY_DIR}/month/common/*.cpp" 
     "${QUERY_DIR}/month/month_format/*.cpp" 
-    "${QUERY_DIR}/month/month_format/month_md/*.cpp" 
-    "${QUERY_DIR}/month/month_format/month_tex/*.cpp" 
-    "${QUERY_DIR}/month/month_format/month_typ/*.cpp" 
-    "${QUERY_DIR}/month/month_format/month_rst/*.cpp" 
+    # =================================================================================
+    # ==                 核心修改点 1: 移除插件源文件                  ==
+    # =================================================================================
+    # 以下各行已被移除或注释掉，因为这些格式化器现在将作为独立的动态库被编译。
+    # 将它们包含在这里会导致“重复定义”的链接错误。
+    # "${QUERY_DIR}/month/month_format/month_md/*.cpp"
+    # "${QUERY_DIR}/month/month_format/month_tex/*.cpp"
+    # "${QUERY_DIR}/month/month_format/month_typ/*.cpp"
+    # "${QUERY_DIR}/month/month_format/month_rst/*.cpp"
+    # =================================================================================
     "${QUERY_DIR}/month/month_query/*.cpp" 
     "${QUERY_DIR}/year/*.cpp" 
     "${QUERY_DIR}/year/_year_data/*.cpp" 
@@ -133,3 +139,19 @@ foreach(target bill_matser_app bill_master_cli)
     # 设置编译选项
     target_compile_options(${target} PRIVATE -Wall -fdiagnostics-color=always)
 endforeach()
+
+# ==============================================================================
+#  加载插件模块 (Load Plugin Modules)
+# ==============================================================================
+# =================================================================================
+# ==                  核心修改点 2: 添加所有插件子目录                  ==
+# =================================================================================
+# 使用 add_subdirectory 指令来包含并处理每个插件的 CMakeLists.txt 文件。
+# CMake会进入这些目录，执行其中的CMake指令，并创建我们定义的动态库目标。
+
+message(STATUS "Loading report formatter plugins...")
+add_subdirectory(query/month/month_format/month_md)
+add_subdirectory(query/month/month_format/month_rst)
+add_subdirectory(query/month/month_format/month_tex)
+add_subdirectory(query/month/month_format/month_typ)
+message(STATUS "All plugins configured.")
