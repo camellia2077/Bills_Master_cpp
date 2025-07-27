@@ -36,7 +36,7 @@ echo "==> Entered build directory: $(pwd)"
 # Run CMake to generate the build files (e.g., Makefiles).
 # The ".." tells CMake to look for CMakeLists.txt in the parent directory.
 echo "==> Running CMake to configure the project..."
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Release ..
 
 # Run the build command.
 # This tells CMake to invoke the underlying build system (like make or ninja) to compile the code.
