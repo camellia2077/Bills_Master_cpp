@@ -35,7 +35,7 @@ target_compile_options(md_formatter PRIVATE
     # -flto: 启用链接时优化(Link-Time Optimization)。允许编译器在链接阶段跨文件进行优化，能有效减小体积。
     # -fvisibility=hidden: 将所有符号的可见性默认设为“隐藏”。这是优化共享库体积最关键的一步。
     # -ffunction-sections 和 -fdata-sections: 告诉编译器将每个函数和数据片段放入独立的节区。
-    $<$<CONFIG:Release>:-O3 -flto -fvisibility=hidden -ffunction-sections -fdata-sections>
+    $<$<CONFIG:Release>:-Os -flto -fvisibility=hidden -ffunction-sections -fdata-sections>
 )
 
 # --- 链接选项 (Linker Flags) ---
