@@ -1,16 +1,52 @@
+// YearTexFormat.cpp
+
 #include "YearTexFormat.h"
 #include <sstream>
 #include <iomanip>
 
+// --- 实现新的构造函数 ---
+YearTexFormat::YearTexFormat(const YearlyTexReportConfig& config)
+    : m_config(config) 
+{
+}
+
+// --- 新增: 实现 escape_latex 工具函数 ---
+std::string YearTexFormat::escape_latex(const std::string& input) const {
+    std::string output;
+    output.reserve(input.size());
+    for (const char c : input) {
+        switch (c) {
+            case '&':  output += "\\&";        break;
+            case '%':  output += "\\%";        break;
+            case '$':  output += "\\$";        break;
+            case '#':  output += "\\#";        break;
+            case '_':  output += "\\_";        break;
+            case '{':  output += "\\{";        break;
+            case '}':  output += "\\}";        break;
+            case '~':  output += "\\textasciitilde{}"; break;
+            case '^':  output += "\\textasciicircum{}"; break;
+            case '\\': output += "\\textbackslash{}"; break;
+            default:   output += c;            break;
+        }
+    }
+    return output;
+}
+
 std::string YearTexFormat::format_report(const YearlyReportData& data) const{
     std::stringstream ss;
 
-    // --- 文档前导和标题 ---
-    ss << "\\documentclass[12pt]{article}\n";
-    ss << "\\usepackage{ctex}\n";
-    ss << "\\usepackage[a4paper, margin=1in]{geometry}\n";
-    ss << "\\title{" << data.year << "年 消费总览}\n";
-    ss << "\\author{BillsMaster}\n";
+    // --- 使用配置变量构建文档前导 ---
+    ss << "\\documentclass[" << m_config.base_font_size << "pt]{" << m_config.document_class << "}\n";
+    ss << "\\usepackage{fontspec}\n"; // 添加 fontspec 以支持 setmainfont
+    ss << "\\usepackage[nofonts]{ctex}\n"; // 将 ctex 改为 nofonts 模式，手动控制字体
+    ss << "\\usepackage[" << m_config.paper_size << ", margin=" << m_config.margin << "]{geometry}\n\n";
+
+    ss << "% --- Font Settings from Config ---\n";
+    ss << "\\setmainfont{" << m_config.main_font << "}\n";
+    ss << "\\setCJKmainfont{" << m_config.cjk_font << "}\n\n";
+
+    ss << "\\title{" << data.year << escape_latex(m_config.title_suffix) << "}\n";
+    ss << "\\author{" << escape_latex(m_config.author) << "}\n";
     ss << "\\date{\\today}\n\n";
     ss << "\\begin{document}\n";
     ss << "\\maketitle\n\n";
@@ -23,19 +59,20 @@ std::string YearTexFormat::format_report(const YearlyReportData& data) const{
 
     ss << std::fixed << std::setprecision(2);
 
-    // --- 摘要部分 ---
-    ss << "\\section*{年度总览}\n";
+    // --- 使用配置变量构建摘要部分 ---
+    ss << "\\section*{" << escape_latex(m_config.summary_section_title) << "}\n";
     ss << "\\begin{itemize}\n";
-    ss << "    \\item \\textbf{年度总支出：} ¥" << data.grand_total << "\n";
+    ss << "    \\item \\textbf{" << escape_latex(m_config.grand_total_label) << "} ¥" << data.grand_total << "\n";
     ss << "\\end{itemize}\n\n";
 
-    // --- 每月支出详情 ---
-    ss << "\\section*{每月支出}\n";
+    // --- 使用配置变量构建每月详情 ---
+    ss << "\\section*{" << escape_latex(m_config.monthly_breakdown_title) << "}\n";
     ss << "\\begin{itemize}\n";
     for (const auto& pair : data.monthly_totals) {
         int month_val = pair.first;
         double month_total = pair.second;
-        ss << "    \\item " << data.year << "-" << std::setfill('0') << std::setw(2) << month_val
+        ss << "    \\item " << data.year << escape_latex(m_config.year_month_separator) 
+           << std::setfill('0') << std::setw(2) << month_val
            << "：¥" << month_total << "\n";
     }
     ss << "\\end{itemize}\n\n";

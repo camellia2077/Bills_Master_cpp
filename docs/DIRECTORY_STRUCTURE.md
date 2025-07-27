@@ -53,7 +53,8 @@ Bills_Master/
 │   │   │   │   └── MonthRstFormat.h
 │   │   │   ├── month_tex
 │   │   │   │   ├── MonthTexFormat.cpp
-│   │   │   │   └── MonthTexFormat.h
+│   │   │   │   ├── MonthTexFormat.h
+│       │   │   └── MonthTexReport.h # 格式的结构体
 │   │   │   ├── month_typ
 │   │   │   │   ├── MonthTypFormat.cpp
 │   │   │   │   └── MonthTypFormat.h
@@ -75,13 +76,14 @@ Bills_Master/
 │       │   ├── year_md/ # Markdown格式
 │       │   │   ├── YearMdFormat.cpp
 │       │   │   └── YearMdFormat.h
-│       │   ├── year_rst/ # 
+│       │   ├── year_rst/ # reST格式
 │       │   │   ├── YearRstFormat.cpp
 │       │   │   └── YearRstFormat.h
 │       │   ├── year_tex/ # LaTeX格式
 │       │   │   ├── YearTexFormat.cpp
-│       │   │   └── YearTexFormat.h
-│       │   ├── year_typ/
+│       │   │   ├── YearTexFormat.h
+│       │   │   └── YearTexReport.h # 格式的结构体
+│       │   ├── year_typ/ # typst格式
 │       │   │   ├── YearTypFormat.cpp
 │       │   │   └── YearTypFormat.h
 │       │   ├── YearlyReportFormatterFactory.cpp
