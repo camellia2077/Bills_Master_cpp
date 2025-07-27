@@ -1,49 +1,55 @@
 // MonthMdFormat.cpp
 #include "MonthMdFormat.h"
-#include "query/month/common/ReportSorter.h" // 排序器头文件 
+#include "query/month/common/ReportSorter.h" // 排序器头文件
 #include <sstream>
 #include <iomanip>
 #include <vector>
-// #include <algorithm> // algorithm 现在可以移除了，因为排序在别处完成
 
+// 构造函数实现：初始化配置成员
+MonthMdFormat::MonthMdFormat(const MonthMdConfig& config) : config(config) {}
+
+// format_report 方法现在组合硬编码的Markdown语法和来自配置的标签
 std::string MonthMdFormat::format_report(const MonthlyReportData& data) const {
     std::stringstream ss;
 
     if (!data.data_found) {
-        ss << "\n未找到 " << data.year << "年" << data.month << "月的任何数据。\n";
+        ss << config.not_found_msg_part1 << data.year << config.not_found_msg_part2 
+           << data.month << config.not_found_msg_part3;
         return ss.str();
     }
 
-    // --- 排序 ---
-    // 2. 直接调用 ReportSorter 来获取排好序的数据
     auto sorted_parents = ReportSorter::sort_report_data(data);
 
-    // --- 按最终格式构建报告字符串 ---
-    // (这部分代码完全不需要改变)
-    ss << std::fixed << std::setprecision(2);
-    ss << "\n# DATE:" << data.year << std::setfill('0') << std::setw(2) << data.month << std::endl;
-    ss << "# TOTAL:¥" << data.grand_total << std::endl;
-    ss << "# REMARK:" << data.remark << std::endl;
+    ss << std::fixed << std::setprecision(config.precision);
+
+    // --- 元数据：硬编码'# '前缀 ---
+    ss << "\n# " << config.date_label << data.year << std::setfill(config.fill_char) << std::setw(config.month_width) << data.month << std::endl;
+    ss << "# " << config.total_label << config.currency_symbol << data.grand_total << std::endl;
+    ss << "# " << config.remark_label << data.remark << std::endl;
 
     for (const auto& parent_pair : sorted_parents) {
         const std::string& parent_name = parent_pair.first;
         const ParentCategoryData& parent_data = parent_pair.second;
-
+        
+        // --- 父分类：硬编码'# '前缀 ---
         ss << "\n# " << parent_name << std::endl;
         double parent_percentage = (data.grand_total > 0) ? (parent_data.parent_total / data.grand_total) * 100.0 : 0.0;
-        ss << "总计：¥" << parent_data.parent_total << std::endl;
-        ss << "占比：" << parent_percentage << "%" << std::endl;
+        ss << config.parent_total_label << config.currency_symbol << parent_data.parent_total << std::endl;
+        ss << config.parent_percentage_label << parent_percentage << config.percentage_symbol << std::endl;
 
         for (const auto& sub_pair : parent_data.sub_categories) {
             const std::string& sub_name = sub_pair.first;
             const SubCategoryData& sub_data = sub_pair.second;
-
+            
+            // --- 子分类：硬编码'## '前缀 ---
             ss << "\n## " << sub_name << std::endl;
             double sub_percentage = (parent_data.parent_total > 0) ? (sub_data.sub_total / parent_data.parent_total) * 100.0 : 0.0;
-            ss << "小计：¥" << sub_data.sub_total << "（占比：" << sub_percentage << "%）" << std::endl;
+            ss << config.sub_total_label << config.currency_symbol << sub_data.sub_total 
+               << config.sub_percentage_label_prefix << sub_percentage << config.sub_percentage_label_suffix << std::endl;
 
             for (const auto& t : sub_data.transactions) {
-                ss << "- ¥" << t.amount << " " << t.description << std::endl;
+                // --- 交易项：硬编码'- '前缀 ---
+                ss << "- " << config.currency_symbol << t.amount << " " << t.description << std::endl;
             }
         }
     }

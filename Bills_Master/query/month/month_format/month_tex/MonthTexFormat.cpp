@@ -78,7 +78,7 @@ std::string MonthTexFormat::format_report(const MonthlyReportData& data) const {
     ss << "\\begin{center}\n";
     ss << "    {" << m_config.summary_title_format_cmd << " " << escape_latex(m_config.summary_title) << "}\\par\\vspace{1em}\n";
     ss << "    {" << m_config.summary_body_format_cmd << "\n";
-    ss << "    \\textbf{" << escape_latex(m_config.grand_total_label) << "} ¥" << data.grand_total << "\\\\\n";
+    ss << "    \\textbf{" << escape_latex(m_config.grand_total_label) << "} CNY" << data.grand_total << "\\\\\n";
     ss << "    \\textbf{" << escape_latex(m_config.remark_label) << "} " << escape_latex(data.remark) << "\n";
     ss << "    }\n";
     ss << "\\end{center}\n";
@@ -91,7 +91,7 @@ std::string MonthTexFormat::format_report(const MonthlyReportData& data) const {
         double parent_percentage = (data.grand_total > 0) ? (parent_data.parent_total / data.grand_total) * 100.0 : 0.0;
         
         ss << "\\section*{" << escape_latex(parent_name) << "}\n";
-        ss << escape_latex(m_config.parent_total_label) << "¥" << parent_data.parent_total 
+        ss << escape_latex(m_config.parent_total_label) << "CNY" << parent_data.parent_total 
            << " \t (" << escape_latex(m_config.parent_percent_label) << " " << parent_percentage << "\\%)\n\n";
         
         for (const auto& sub_pair : parent_data.sub_categories) {
@@ -100,12 +100,12 @@ std::string MonthTexFormat::format_report(const MonthlyReportData& data) const {
             double sub_percentage = (parent_data.parent_total > 0) ? (sub_data.sub_total / parent_data.parent_total) * 100.0 : 0.0;
 
             ss << "\\subsection*{" << escape_latex(sub_name) << "}\n";
-            ss << "\\textbf{" << escape_latex(m_config.sub_total_label) << "} ¥" << sub_data.sub_total 
+            ss << "\\textbf{" << escape_latex(m_config.sub_total_label) << "} CNY" << sub_data.sub_total 
                << " (" << escape_latex(m_config.sub_percent_label) << " " << sub_percentage << "\\%)\n";
             
             ss << "\\begin{itemize}\n";
             for (const auto& t : sub_data.transactions) {
-                ss << "    \\item ¥" << t.amount << " " << escape_latex(m_config.transaction_separator) << " " << escape_latex(t.description) << "\n";
+                ss << "    \\item CNY" << t.amount << " " << escape_latex(m_config.transaction_separator) << " " << escape_latex(t.description) << "\n";
             }
             ss << "\\end{itemize}\n";
         }

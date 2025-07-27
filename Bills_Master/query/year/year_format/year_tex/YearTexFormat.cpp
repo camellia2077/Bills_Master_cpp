@@ -62,7 +62,7 @@ std::string YearTexFormat::format_report(const YearlyReportData& data) const{
     // --- 使用配置变量构建摘要部分 ---
     ss << "\\section*{" << escape_latex(m_config.summary_section_title) << "}\n";
     ss << "\\begin{itemize}\n";
-    ss << "    \\item \\textbf{" << escape_latex(m_config.grand_total_label) << "} ¥" << data.grand_total << "\n";
+    ss << "    \\item \\textbf{" << escape_latex(m_config.grand_total_label) << "} CNY" << data.grand_total << "\n";
     ss << "\\end{itemize}\n\n";
 
     // --- 使用配置变量构建每月详情 ---
@@ -73,7 +73,7 @@ std::string YearTexFormat::format_report(const YearlyReportData& data) const{
         double month_total = pair.second;
         ss << "    \\item " << data.year << escape_latex(m_config.year_month_separator) 
            << std::setfill('0') << std::setw(2) << month_val
-           << "：¥" << month_total << "\n";
+           << "：CNY" << month_total << "\n";
     }
     ss << "\\end{itemize}\n\n";
 
