@@ -11,6 +11,8 @@ from compile_module.base_compiler import BaseCompiler
 from compile_module.latex_compiler import LaTeXCompiler
 from compile_module.typst_compiler import TypstCompiler
 from compile_module.md_compiler import MdCompiler
+from compile_module.rst_compiler import RstCompiler # <-- 1. 导入新的 RstCompiler
+
 from config import COMPILE_TYPES, COMPILER_CONFIGS, SOURCE_ROOT_DIR, PDF_OUTPUT_ROOT_DIR
 from utils import check_compiler_availability, find_source_files
 
@@ -68,7 +70,8 @@ def main():
     compiler_map = {
         'tex': {'class': LaTeXCompiler, 'check_cmd': ['xelatex', '--version']},
         'typ': {'class': TypstCompiler, 'check_cmd': ['typst', '--version']},
-        'md': {'class': MdCompiler, 'check_cmd': ['pandoc', '--version']}
+        'md': {'class': MdCompiler, 'check_cmd': ['pandoc', '--version']},
+        'rst': {'class': RstCompiler, 'check_cmd': ['pandoc', '--version']} # <-- 添加 rst 编译器
     }
     
     output_root_to_delete = os.path.join(script_dir, PDF_OUTPUT_ROOT_DIR)
