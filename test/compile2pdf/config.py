@@ -4,7 +4,7 @@
 
 # 定义要编译的文件类型。
 # 可选: ['tex'], ['typ'], 或 ['tex', 'typ', 'rst']
-COMPILE_TYPES = ['typ', 'tex']
+COMPILE_TYPES = ['md']
 
 # 定义源文件和PDF输出的根目录名称
 SOURCE_ROOT_DIR = "C:\\Computer\\my_github\\github_cpp\\bill_master\\Bills_Master_cpp\\my_test\\exported_files"
@@ -21,7 +21,12 @@ COMPILER_CONFIGS = {
         "source_subfolder": "typst_bills",
         "output_subfolder": "typst_bills",
         "extension": ".typ"
-    }
+    },
+    "md": {
+         "source_subfolder": "markdown_bills",
+         "output_subfolder": "markdown_bills",
+         "extension": ".md"
+     }
     # 未来可以轻松扩展, 例如:
     # "rst": {
     #     "source_subfolder": "rst_bills",

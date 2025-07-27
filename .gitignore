@@ -3,3 +3,16 @@ my_test/
 .vscode/
 pdf_files/
 __pycache__/
+
+*.pdf
+# 忽略所有 .exe 可执行文件
+*.exe
+
+# 忽略所有 Markdown 文件
+*.md
+
+# 忽略所有 .tex 可执行文件
+*.tex
+
+# 忽略所有 .typ 文件
+*.typ

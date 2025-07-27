@@ -5,17 +5,29 @@ import sys
 from config import COMPILE_TYPES, COMPILER_CONFIGS, SOURCE_ROOT_DIR, PDF_OUTPUT_ROOT_DIR
 from utils import check_compiler_availability, find_source_files
 
-# --- 核心修改：从新的 compile_module 包中导入类 ---
+# --- 核心修改：从 compile_module 包中导入所有需要的编译器 ---
 from compile_module.latex_compiler import LaTeXCompiler
 from compile_module.typst_compiler import TypstCompiler
+from compile_module.md_compiler import MdCompiler  # <-- 1. 导入新的 MdCompiler
 
 def main():
     """主函数，编排整个编译流程。"""
     script_dir = os.path.dirname(os.path.abspath(__file__))
     
+    # --- 核心修改：在映射中注册 md 类型 ---
     compiler_map = {
-        'tex': {'class': LaTeXCompiler, 'check_cmd': ['xelatex', '--version']},
-        'typ': {'class': TypstCompiler, 'check_cmd': ['typst', '--version']}
+        'tex': {
+            'class': LaTeXCompiler, 
+            'check_cmd': ['xelatex', '--version']
+        },
+        'typ': {
+            'class': TypstCompiler, 
+            'check_cmd': ['typst', '--version']
+        },
+        'md': {
+            'class': MdCompiler, 
+            'check_cmd': ['pandoc', '--version']
+        }  # <-- 2. 在映射中注册 md 类型和其编译器
     }
 
     print("--- 开始批量编译任务 ---")
