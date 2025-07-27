@@ -1,27 +1,28 @@
 // MonthlyReportGenerator.cpp
 #include "MonthlyReportGenerator.h"
 #include "query/month/_month_data/ReportData.h"
-#include "query/month/month_format/IMonthReportFormatter.h" // Include the interface for polymorphism
-#include <stdexcept> // To throw an exception for unsupported formats
+#include "query/month/month_format/IMonthReportFormatter.h"
+#include <stdexcept>
 
-// The constructor now only initializes the reader.
+// 在构造函数的初始化列表中初始化工厂
+// 默认在 "build/plugins" 目录下查找插件
 MonthlyReportGenerator::MonthlyReportGenerator(sqlite3* db_connection)
-    : m_reader(db_connection) {}
+    : m_reader(db_connection), m_factory("build/plugins") {
+}
 
-// The generate method now uses the factory.
-std::string MonthlyReportGenerator::generate(int year, int month, ReportFormat format) {
-    // Step 1: Use the internal reader to get data from the database.
+// generate方法的实现
+std::string MonthlyReportGenerator::generate(int year, int month, const std::string& format_name) {
+    // 步骤 1: 使用内部读取器从数据库获取数据
     MonthlyReportData data = m_reader.read_monthly_data(year, month);
 
-    // Step 2: Use the factory to create the appropriate formatter.
-    auto formatter = ReportFormatterFactory::createFormatter(format);
+    // 步骤 2: 将格式名称字符串传递给工厂，让工厂创建对应的格式化器实例
+    auto formatter = m_factory.createFormatter(format_name);
 
-    // It's good practice to handle cases where the factory might return a null pointer.
+    // 步骤 3: 如果工厂返回空指针，说明没有找到对应的插件
     if (!formatter) {
-        throw std::runtime_error("Unsupported report format specified.");
+        throw std::runtime_error("Unsupported or unloaded report format specified: " + format_name);
     }
 
-    // Step 3: Use the created formatter to generate the report and return it.
-    // Thanks to polymorphism, we call format_report on the interface pointer.
+    // 步骤 4: 使用创建好的格式化器生成报告并返回
     return formatter->format_report(data);
 }

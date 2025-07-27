@@ -4,33 +4,28 @@
 
 #include <string>
 #include <sqlite3.h>
-#include "query/month/month_format/ReportFormatterFactory.h" // Use the factory instead of individual formatters
-#include "query/month/month_query/MonthQuery.h"
+#include "query/month/month_format/ReportFormatterFactory.h" // 包含工厂头文件
+#include "query/month/month_query/MonthQuery.h"             // 包含数据读取器头文件
 
-/**
- * @class MonthlyReportGenerator
- * @brief 一个门面类，利用工厂模式封装了报表生成的整个流程。
- *
- * The class now uses ReportFormatterFactory to dynamically create the
- * required formatter, instead of holding an instance of each one.
- */
 class MonthlyReportGenerator {
 public:
-    // The constructor now only needs to initialize the query component.
+    /**
+     * @brief 构造函数，初始化数据库读取器和插件工厂。
+     */
     explicit MonthlyReportGenerator(sqlite3* db_connection);
 
     /**
-     * @brief 公共接口：接收年份、月份和格式，返回完整的报表字符串。
-     * @param year The year to query.
-     * @param month The month to query.
-     * @param format The format of the output report (defaults to MARKDOWN).
-     * @return A string containing the report in the selected format.
+     * @brief 公共接口：接收年份、月份和格式名称字符串，返回完整的报表。
+     * @param year 要查询的年份。
+     * @param month 要查询的月份。
+     * @param format_name 报表的格式名称 (例如 "md", "tex", "typ")。
+     * @return 包含所选格式报告的字符串。
      */
-    std::string generate(int year, int month, ReportFormat format = ReportFormat::Markdown);
+    std::string generate(int year, int month, const std::string& format_name);
 
 private:
-    // Only the query component is needed as a member.
-    MonthQuery m_reader;
+    MonthQuery m_reader;              // 职责1：负责读取数据
+    ReportFormatterFactory m_factory; // 职责2：负责创建格式化器
 };
 
 #endif // MONTHLY_REPORT_GENERATOR_H

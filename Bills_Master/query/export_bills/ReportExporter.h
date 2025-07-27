@@ -9,9 +9,16 @@ class ReportExporter {
 public:
     explicit ReportExporter(const std::string& db_path);
 
-    void export_all_reports();
-    bool export_yearly_report(const std::string& year_str, bool suppress_output = false);
-    bool export_monthly_report(const std::string& month_str, bool suppress_output = false);
+    // =======================================================================
+    // ==                      核心修改点 START                            ==
+    // ==  为所有公共接口添加 format_name 参数，并提供默认值 "md"            ==
+    // =======================================================================
+    void export_all_reports(const std::string& format_name = "md");
+    bool export_yearly_report(const std::string& year_str, const std::string& format_name = "md", bool suppress_output = false);
+    bool export_monthly_report(const std::string& month_str, const std::string& format_name = "md", bool suppress_output = false);
+    // =======================================================================
+    // ==                       核心修改点 END                             ==
+    // =======================================================================
 
 private:
     QueryFacade m_query_facade;
@@ -20,4 +27,4 @@ private:
     void save_report(const std::string& report_content, const std::string& file_path);
 };
 
-#endif // REPORT_EXPORTER_H
+#endif // REPORT_EXPORTER_H 
