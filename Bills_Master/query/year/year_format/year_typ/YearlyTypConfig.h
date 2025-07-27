@@ -24,7 +24,7 @@ struct YearlyTypConfig {
     std::string author = "camellia";
 
     // ================== 格式化符号 ==================
-    std::string currency_symbol = "¥";
+    std::string currency_symbol = "CNY";
     uint8_t decimal_precision = 2;
 
     // ================== 文本标签集 ==================

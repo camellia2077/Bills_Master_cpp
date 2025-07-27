@@ -20,7 +20,7 @@ std::string YearRstFormat::format_report(const YearlyReportData& data) const{
     ss << std::fixed << std::setprecision(2);
 
     // --- 摘要部分 ---
-    ss << "**年度总支出:** ¥" << data.grand_total << "\n\n";
+    ss << "**年度总支出:** CNY" << data.grand_total << "\n\n";
     
     // --- 每月支出详情 (二级标题) ---
     std::string subtitle = "每月支出";
@@ -32,7 +32,7 @@ std::string YearRstFormat::format_report(const YearlyReportData& data) const{
         int month_val = pair.first;
         double month_total = pair.second;
         ss << "* " << data.year << "-" << std::setfill('0') << std::setw(2) << month_val
-           << ": ¥" << month_total << "\n";
+           << ": CNY" << month_total << "\n";
     }
 
     return ss.str();

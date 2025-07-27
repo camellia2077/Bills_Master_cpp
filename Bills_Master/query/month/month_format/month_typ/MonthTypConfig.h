@@ -29,7 +29,7 @@ struct MonthTypConfig {
     std::string author = "camellia";
 
     // ================== 格式化符号 ==================
-    std::string currency_symbol = "¥";
+    std::string currency_symbol = "CNY";
     uint8_t decimal_precision = 2;
     std::string percentage_symbol = "%";
 

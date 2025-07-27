@@ -26,7 +26,7 @@ std::string MonthRstFormat::format_report(const MonthlyReportData& data) const {
     ss << title << "\n";
     ss << std::string(title.length() * 2, '=') << "\n\n";
 
-    ss << "**总支出:** ¥" << data.grand_total << "\n";
+    ss << "**总支出:** CNY" << data.grand_total << "\n";
     ss << "**备注:** " << data.remark << "\n\n";
 
     for (const auto& parent_pair : sorted_parents) {
@@ -38,7 +38,7 @@ std::string MonthRstFormat::format_report(const MonthlyReportData& data) const {
         ss << std::string(parent_name.length() * 2, '-') << "\n";
         
         double parent_percentage = (data.grand_total > 0) ? (parent_data.parent_total / data.grand_total) * 100.0 : 0.0;
-        ss << "总计:¥" << parent_data.parent_total << "\n";
+        ss << "总计:CNY" << parent_data.parent_total << "\n";
         ss << "占比:" << parent_percentage << "%" << "\n\n";
 
         for (const auto& sub_pair : parent_data.sub_categories) {
@@ -49,10 +49,10 @@ std::string MonthRstFormat::format_report(const MonthlyReportData& data) const {
             ss << std::string(sub_name.length() * 2, '^') << "\n";
 
             double sub_percentage = (parent_data.parent_total > 0) ? (sub_data.sub_total / parent_data.parent_total) * 100.0 : 0.0;
-            ss << "小计:¥" << sub_data.sub_total << "(占比:" << sub_percentage << "%)" << "\n\n";
+            ss << "小计:CNY" << sub_data.sub_total << "(占比:" << sub_percentage << "%)" << "\n\n";
 
             for (const auto& t : sub_data.transactions) {
-                ss << "* ¥" << t.amount << " " << t.description << "\n";
+                ss << "* CNY" << t.amount << " " << t.description << "\n";
             }
             ss << "\n";
         }
