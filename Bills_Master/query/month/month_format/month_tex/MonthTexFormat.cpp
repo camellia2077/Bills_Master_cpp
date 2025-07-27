@@ -115,3 +115,27 @@ std::string MonthTexFormat::format_report(const MonthlyReportData& data) const {
 
     return ss.str();
 }
+
+extern "C" {
+
+    // 定义平台特定的导出宏
+    #ifdef _WIN32
+        #define PLUGIN_API __declspec(dllexport)
+    #else
+        #define PLUGIN_API __attribute__((visibility("default")))
+    #endif
+    
+    /**
+     * @brief 创建 MonthTexFormat 格式化器实例的工厂函数。
+     * @return 指向 IMonthReportFormatter 接口的指针。
+     *
+     * 这是动态库的唯一入口点。主应用程序将加载此库并调用此函数
+     * 来获取一个格式化器对象，而无需知道具体的实现类。
+     * 因为 MonthTexFormat 的构造函数有默认参数，所以可以直接调用。
+     */
+    PLUGIN_API IMonthReportFormatter* create_formatter() {
+        // 创建并返回一个新的格式化器实例
+        return new MonthTexFormat();
+    }
+    
+} // extern "C"

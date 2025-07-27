@@ -22,18 +22,24 @@ void ReportExporter::save_report(const std::string& report_content, const std::s
     output_file << report_content;
 }
 
-bool ReportExporter::export_yearly_report(const std::string& year_str, bool suppress_output) {
+// **修改1：更新函数签名，接收 format_name**
+bool ReportExporter::export_yearly_report(const std::string& year_str, const std::string& format_name, bool suppress_output) {
     try {
         int year = std::stoi(year_str);
-        std::string report = m_query_facade.get_yearly_summary_report(year);
+        // **修改2：将 format_name 传递给 facade**
+        std::string report = m_query_facade.get_yearly_summary_report(year, format_name);
 
         if (!suppress_output) {
             std::cout << report;
         }
 
         if (report.find("未找到") == std::string::npos) {
-            fs::path target_dir = fs::path("markdown_bills") / "years";
-            fs::path output_path = target_dir / (year_str + ".md");
+            // **修改3：动态构建路径和扩展名**
+            std::string extension = "." + format_name;
+            std::string base_dir = format_name + "_bills";
+            fs::path target_dir = fs::path(base_dir) / "years";
+            fs::path output_path = target_dir / (year_str + extension);
+            
             save_report(report, output_path.string());
             if (!suppress_output) {
                 std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Report also saved to " << output_path.string() << "\n";
@@ -48,7 +54,8 @@ bool ReportExporter::export_yearly_report(const std::string& year_str, bool supp
     }
 }
 
-bool ReportExporter::export_monthly_report(const std::string& month_str, bool suppress_output) {
+// **修改1：更新函数签名，接收 format_name**
+bool ReportExporter::export_monthly_report(const std::string& month_str, const std::string& format_name, bool suppress_output) {
     try {
         if (month_str.length() != 6) {
             throw std::invalid_argument("Invalid month format.");
@@ -56,15 +63,20 @@ bool ReportExporter::export_monthly_report(const std::string& month_str, bool su
         int year = std::stoi(month_str.substr(0, 4));
         int month = std::stoi(month_str.substr(4, 2));
 
-        std::string report = m_query_facade.get_monthly_details_report(year, month);
+        // **修改2：将 format_name 传递给 facade**
+        std::string report = m_query_facade.get_monthly_details_report(year, month, format_name);
 
         if (!suppress_output) {
             std::cout << report;
         }
 
         if (report.find("未找到") == std::string::npos) {
-            fs::path target_dir = fs::path("markdown_bills") / "months" / month_str.substr(0, 4);
-            fs::path output_path = target_dir / (month_str + ".md");
+            // **修改3：动态构建路径和扩展名**
+            std::string extension = "." + format_name;
+            std::string base_dir = format_name + "_bills";
+            fs::path target_dir = fs::path(base_dir) / "months" / month_str.substr(0, 4);
+            fs::path output_path = target_dir / (month_str + extension);
+
             save_report(report, output_path.string());
             if (!suppress_output) {
                 std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Report also saved to " << output_path.string() << "\n";
@@ -79,9 +91,10 @@ bool ReportExporter::export_monthly_report(const std::string& month_str, bool su
     }
 }
 
-void ReportExporter::export_all_reports() {
+// **修改1：更新函数签名，接收 format_name**
+void ReportExporter::export_all_reports(const std::string& format_name) {
     ProcessStats monthly_stats, yearly_stats;
-    std::cout << "\n--- Starting Full Report Export ---\n";
+    std::cout << "\n--- Starting Full Report Export (" << format_name << " format) ---\n";
 
     try {
         std::vector<std::string> all_months = m_query_facade.get_all_bill_dates();
@@ -102,7 +115,8 @@ void ReportExporter::export_all_reports() {
         std::cout << "\n--- Exporting Monthly Reports ---\n";
         for (const auto& month : all_months) {
             std::cout << "Exporting report for " << month << "...";
-            if (export_monthly_report(month, true)) {
+            // **修改2：在调用时传递 format_name**
+            if (export_monthly_report(month, format_name, true)) {
                 std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
                 monthly_stats.success++;
             } else {
@@ -114,7 +128,8 @@ void ReportExporter::export_all_reports() {
         std::cout << "\n--- Exporting Yearly Reports ---\n";
         for (const auto& year : unique_years) {
             std::cout << "Exporting summary for " << year << "...";
-            if (export_yearly_report(year, true)) {
+            // **修改2：在调用时传递 format_name**
+            if (export_yearly_report(year, format_name, true)) {
                 std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
                 yearly_stats.success++;
             } else {

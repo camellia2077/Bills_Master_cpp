@@ -19,6 +19,7 @@ AppController::AppController() {
     // 构造函数
 }
 
+// handle_validation, handle_modification, handle_import, handle_full_workflow 函数保持不变
 void AppController::handle_validation(const std::string& path) {
     ProcessStats stats;
     try {
@@ -164,38 +165,41 @@ void AppController::handle_full_workflow(const std::string& path) {
     stats.print_summary("完整工作流");
 }
 
-
 void AppController::handle_export(const std::string& type, const std::string& value, const std::string& format_str) {
     try {
-        // 将格式字符串转换为 ReportFormat 枚举
-        ReportFormat format;
-        if (format_str == "tex") {
-            format = ReportFormat::LaTeX;
-        } else if (format_str == "typ") { 
-            format = ReportFormat::Typst;
-        } else if (format_str == "md") {
-            format = ReportFormat::Markdown;
-        } else if (format_str == "rst") {
-            format = ReportFormat::Rst;
-        } else {throw std::runtime_error("你输入的格式暂时还没有支持: " + format_str + "。请使用 'md', 'tex', 或 'typ'。");}
+        // =============================================================
+        // ==                 核心修改点 START                       ==
+        // =============================================================
+
+        // 1. 移除所有 if-else if 检查和手动枚举转换。
+        //    我们现在完全信任 `format_str`，并将其直接传递下去。
 
         QueryFacade facade("bills.sqlite3");
+
+        // 2. 将 `format_str` 直接传递给 facade 的相应方法。
         if (type == "all") {
-            facade.export_all_reports(format);
+            facade.export_all_reports(format_str);
         } else if (type == "year") {
             if (value.empty()) {
                 throw std::runtime_error("导出年度报告需要提供年份。");
             }
-            facade.export_yearly_report(value, format);
+            facade.export_yearly_report(value, format_str);
         } else if (type == "month") {
             if (value.empty()) {
                 throw std::runtime_error("导出月度报告需要提供月份 (YYYYMM)。");
             }
-            facade.export_monthly_report(value, format);
+            facade.export_monthly_report(value, format_str);
         } else {
-            throw std::runtime_error("未知的导出类型: " + type);
+            throw std::runtime_error("未知的导出类型: " + type + "。请使用 'all', 'year', 或 'month'。");
         }
+        
+        // =============================================================
+        // ==                  核心修改点 END                        ==
+        // =============================================================
+
     } catch (const std::exception& e) {
+        // 这个 catch 块现在可以捕获来自更深层次的错误，
+        // 例如，如果 MonthlyReportGenerator 抛出 "Unsupported format"，这里就能捕获到。
         std::cerr << RED_COLOR << "导出失败: " << RESET_COLOR << e.what() << std::endl;
     }
 }
