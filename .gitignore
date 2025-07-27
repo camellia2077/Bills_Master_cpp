@@ -1,3 +1,5 @@
 build/
 my_test/
 .vscode/
+pdf_files/
+__pycache__/

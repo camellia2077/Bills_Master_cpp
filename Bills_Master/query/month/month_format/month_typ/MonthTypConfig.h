@@ -26,7 +26,7 @@ struct MonthTypConfig {
     // ================== 核心文档样式 ==================
     std::string font_family = "Noto Serif SC";
     uint8_t font_size_pt = 12;
-    std::string author = "BillsMaster";
+    std::string author = "camellia";
 
     // ================== 格式化符号 ==================
     std::string currency_symbol = "¥";
