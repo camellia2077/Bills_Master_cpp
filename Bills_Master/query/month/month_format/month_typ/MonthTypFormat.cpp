@@ -1,14 +1,15 @@
 // MonthTypFormat.cpp
 #include "MonthTypFormat.h"
-#include "query/month/common/ReportSorter.h" // 1. 引入共享的排序器头文件
+#include "query/month/common/ReportSorter.h"
 #include <sstream>
 #include <iomanip>
 #include <vector>
 #include <string>
-// #include <algorithm> //不再需要
 
-// Typst 对特殊字符的处理比 LaTeX 友好得多，
-// 但为了安全起见，我们还是转义一些可能引起冲突的字符。
+// 构造函数保持不变
+MonthTypFormat::MonthTypFormat(const MonthTypConfig& config) : config_(config) {}
+
+// escape_typst 函数保持不变
 std::string MonthTypFormat::escape_typst(const std::string& input) const {
     std::string output;
     output.reserve(input.size());
@@ -17,7 +18,6 @@ std::string MonthTypFormat::escape_typst(const std::string& input) const {
             case '\\': output += "\\\\"; break;
             case '*':  output += "\\*";  break;
             case '_':  output += "\\_";  break;
-            // Typst 中的 # 用于代码，最好也转义
             case '#':  output += "\\#";  break;
             default:   output += c;    break;
         }
@@ -28,52 +28,47 @@ std::string MonthTypFormat::escape_typst(const std::string& input) const {
 std::string MonthTypFormat::format_report(const MonthlyReportData& data) const {
     std::stringstream ss;
 
+    // --- 文档头部设置 (使用新的日期连接符) ---
+    ss << "#set document(title: \"" << data.year << config_.labels.year_suffix << data.month << config_.labels.report_title_suffix << "\", author: \"" << config_.author << "\")\n";
+    ss << "#set text(font: \"" << config_.font_family << "\", size: " << static_cast<int>(config_.font_size_pt) << "pt)\n\n";
+
+    // --- 报告内容主体 (使用新的日期连接符) ---
+    ss << "= " << data.year << config_.labels.year_suffix << data.month << config_.labels.month_suffix << config_.labels.report_title_suffix << "\n\n";
+
     if (!data.data_found) {
-        ss << "= " << data.year << "年" << data.month << "月消费报告\n\n";
-        ss << "未找到该月的任何数据。\n";
+        ss << config_.labels.no_data_found << "\n";
         return ss.str();
     }
 
-    // --- 排序 ---
-    // 2. 用对 ReportSorter 的单行调用替换掉所有排序代码
     auto sorted_parents = ReportSorter::sort_report_data(data);
+    
+    ss << std::fixed << std::setprecision(config_.decimal_precision);
 
-    // --- 构建 Typst 文档 ---
-    ss << std::fixed << std::setprecision(2);
+    // 摘要部分 (完全来自 config)
+    ss << "*" << config_.labels.grand_total << ":* " << config_.currency_symbol << data.grand_total << "\n";
+    ss << "*" << config_.labels.remark << ":* " << escape_typst(data.remark) << "\n\n";
 
-    // 1. 设置文档参数和标题
-    ss << "#set document(title: \"" << data.year << "年" << data.month << "月消费报告\", author: \"BillsMaster\")\n";
-    ss << "#set text(font: \"Noto Serif SC\", size: 12pt)\n\n";
-
-    ss << "= " << data.year << "年" << data.month << "月 消费报告\n\n";
-
-    // 2. 总体摘要
-    ss << "*总支出:* ¥" << data.grand_total << "\n";
-    ss << "*备注:* " << escape_typst(data.remark) << "\n\n";
-
-    // 3. 遍历所有类别并生成内容 (这部分代码保持不变)
+    // 遍历所有类别并使用配置生成内容
     for (const auto& parent_pair : sorted_parents) {
         const auto& parent_name = parent_pair.first;
         const auto& parent_data = parent_pair.second;
         double parent_percentage = (data.grand_total > 0) ? (parent_data.parent_total / data.grand_total) * 100.0 : 0.0;
 
-        // Typst 的标题
         ss << "== " << escape_typst(parent_name) << "\n\n";
-        ss << "*总计:* ¥" << parent_data.parent_total << "\n";
-        ss << "*占比:* " << parent_percentage << "%\n\n";
+        ss << "*" << config_.labels.category_total << ":* " << config_.currency_symbol << parent_data.parent_total << "\n";
+        ss << "*" << config_.labels.percentage_share << ":* " << parent_percentage << config_.percentage_symbol << "\n\n";
 
         for (const auto& sub_pair : parent_data.sub_categories) {
             const auto& sub_name = sub_pair.first;
             const auto& sub_data = sub_pair.second;
             double sub_percentage = (parent_data.parent_total > 0) ? (sub_data.sub_total / parent_data.parent_total) * 100.0 : 0.0;
 
-            // Typst 的子标题
             ss << "=== " << escape_typst(sub_name) << "\n";
-            ss << "  *小计:* ¥" << sub_data.sub_total << " (占比: " << sub_percentage << "%)\n";
+            ss << "  *" << config_.labels.sub_category_total << ":* " << config_.currency_symbol << sub_data.sub_total 
+               << " (" << config_.labels.percentage_share << ": " << sub_percentage << config_.percentage_symbol << ")\n";
 
-            // Typst 的列表
             for (const auto& t : sub_data.transactions) {
-                ss << "  - ¥" << t.amount << " " << escape_typst(t.description) << "\n";
+                ss << "  - " << config_.currency_symbol << t.amount << " " << escape_typst(t.description) << "\n";
             }
             ss << "\n";
         }
