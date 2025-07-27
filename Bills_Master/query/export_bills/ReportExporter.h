@@ -2,7 +2,7 @@
 #define REPORT_EXPORTER_H
 
 #include <string>
-#include "QueryDb.h"
+#include "query/QueryDb.h"
 #include "app_controller/ProcessStats.h"
 
 class ReportExporter {
