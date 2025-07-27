@@ -1,13 +1,15 @@
+// MonthTypFormat.cpp
 #include "MonthTypFormat.h"
+#include "query/month/common/ReportSorter.h" // 1. 引入共享的排序器头文件
 #include <sstream>
 #include <iomanip>
 #include <vector>
-#include <algorithm>
 #include <string>
+// #include <algorithm> //不再需要
 
 // Typst 对特殊字符的处理比 LaTeX 友好得多，
 // 但为了安全起见，我们还是转义一些可能引起冲突的字符。
-std::string MonthTypFormat::escape_typst(const std::string& input) const { // <-- Add const here
+std::string MonthTypFormat::escape_typst(const std::string& input) const {
     std::string output;
     output.reserve(input.size());
     for (const char c : input) {
@@ -23,7 +25,7 @@ std::string MonthTypFormat::escape_typst(const std::string& input) const { // <-
     return output;
 }
 
-std::string MonthTypFormat::format_report(const MonthlyReportData& data) const { // <-- Add const here
+std::string MonthTypFormat::format_report(const MonthlyReportData& data) const {
     std::stringstream ss;
 
     if (!data.data_found) {
@@ -32,21 +34,9 @@ std::string MonthTypFormat::format_report(const MonthlyReportData& data) const {
         return ss.str();
     }
 
-    // --- 排序逻辑 (与其他格式化器相同) ---
-    auto sorted_data = data.aggregated_data;
-    for (auto& parent_pair : sorted_data) {
-        for (auto& sub_pair : parent_pair.second.sub_categories) {
-            std::sort(sub_pair.second.transactions.begin(), sub_pair.second.transactions.end(),
-                [](const Transaction& a, const Transaction& b) { return a.amount > b.amount; });
-        }
-    }
-
-    std::vector<std::pair<std::string, ParentCategoryData>> sorted_parents;
-    for (const auto& pair : sorted_data) {
-        sorted_parents.push_back(pair);
-    }
-    std::sort(sorted_parents.begin(), sorted_parents.end(),
-        [](const auto& a, const auto& b) { return a.second.parent_total > b.second.parent_total; });
+    // --- 排序 ---
+    // 2. 用对 ReportSorter 的单行调用替换掉所有排序代码
+    auto sorted_parents = ReportSorter::sort_report_data(data);
 
     // --- 构建 Typst 文档 ---
     ss << std::fixed << std::setprecision(2);
@@ -61,7 +51,7 @@ std::string MonthTypFormat::format_report(const MonthlyReportData& data) const {
     ss << "*总支出:* ¥" << data.grand_total << "\n";
     ss << "*备注:* " << escape_typst(data.remark) << "\n\n";
 
-    // 3. 遍历所有类别并生成内容
+    // 3. 遍历所有类别并生成内容 (这部分代码保持不变)
     for (const auto& parent_pair : sorted_parents) {
         const auto& parent_name = parent_pair.first;
         const auto& parent_data = parent_pair.second;
