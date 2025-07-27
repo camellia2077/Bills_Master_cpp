@@ -19,45 +19,41 @@ add_library(typ_formatter SHARED
 )
 
 # --- 配置包含目录 ---
-# 告诉编译器去项目的根目录 (Bills_Master/) 查找头文件。
+# 告诉编译器去项目的根目录查找头文件。
 target_include_directories(typ_formatter PRIVATE
     "${CMAKE_SOURCE_DIR}"
 )
 
-# ======================================================================
-# ==                      核心修改点 START                            ==
-# ==            为 Release 构建类型添加编译和链接优化选项             ==
-# ======================================================================
-
-# --- 编译选项 (Compiler Flags) ---
+# --- 为 Release 构建类型添加编译和链接优化选项 ---
 target_compile_options(typ_formatter PRIVATE
-    # $<BUILD_TYPE:Release> 是一个生成器表达式，表示这些选项仅在 Release 模式下生效
-    # -Os: 优化大小。相比 -O3 (优化速度)，编译器会更倾向于生成更小的代码。
-    # -flto: 启用链接时优化(Link-Time Optimization)。允许编译器在链接阶段跨文件进行优化，能有效减小体积。
-    # -fvisibility=hidden: 将所有符号的可见性默认设为“隐藏”。这是优化共享库体积最关键的一步。
-    # -ffunction-sections 和 -fdata-sections: 告诉编译器将每个函数和数据片段放入独立的节区。
     $<$<CONFIG:Release>:-Os -flto -fvisibility=hidden -ffunction-sections -fdata-sections>
 )
 
-# --- 链接选项 (Linker Flags) ---
 target_link_options(typ_formatter PRIVATE
-    # --gc-sections: (垃圾回收) 链接器会移除所有未被引用的代码节区，需要与上面的-ffunction-sections配合。
-    # -s: 剥离 (Strip) 所有符号表和重定位信息，能显著减小最终文件的大小。
     $<$<CONFIG:Release>:-Wl,--gc-sections -s>
 )
 
 # ======================================================================
-# ==                       核心修改点 END                             ==
+# ==                      核心修改点 START                            ==
+# ==          移除手动设置的输出目录，并规范化插件名称              ==
 # ======================================================================
 
-
-# --- 设置输出目录 ---
-# 将生成的插件库文件统一存放到项目根目录下的 "build/plugins" 文件夹中。
+# --- 设置插件属性 ---
 set_target_properties(typ_formatter PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build/plugins"
-    # 为了在不同平台上生成一致的文件名 (例如 typ_formatter.dll)，而不是 libtyp_formatter.so
+    # 为了在不同平台上生成一致的文件名 (例如 typ_formatter.dll)，
+    # 而不是 libtyp_formatter.so (Linux) 或 libtyp_formatter.dll (Windows 默认)
+    # 我们将库的前缀 "lib" 去掉。
     PREFIX ""
 )
+
+# 移除了 LIBRARY_OUTPUT_DIRECTORY 设置。
+# 现在，此插件的输出位置将由根 CMakeLists.txt 文件中定义的
+# 全局变量 CMAKE_LIBRARY_OUTPUT_DIRECTORY 控制，
+# 确保所有 DLL 和 EXE 都被统一输出到 build/bin 目录。
+
+# ======================================================================
+# ==                       核心修改点 END                             ==
+# ======================================================================
 
 # 打印状态信息，方便调试
 message(STATUS "Configured Typst formatter plugin 'typ_formatter'.")

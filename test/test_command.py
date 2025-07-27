@@ -9,26 +9,30 @@ import re
 # 全局配置
 # ===================================================================
 
-# *** 重要: 请将此路径修改为您项目中 bill_master_cli.exe 所在的实际构建目录 ***
-# 这是一个占位符路径，您必须根据自己的环境进行更改。
-#
-# Windows 示例: "C:/Projects/MySolution/build/Debug"
-# Linux/macOS 示例: "/home/user/projects/my_project/build"
-#
-BUILD_DIR = "C:/Computer/my_github/github_cpp/bill_master/Bills_Master_cpp/Bills_Master/build"  
+# *** 重要: 这是您项目中所有产物 (exe, dll) 所在的目录 ***
+BUILD_DIR = "C:/Computer/my_github/github_cpp/bill_master/Bills_Master_cpp/Bills_Master/build/bin"  
+
+# <--- 新增: 定义所有需要复制的插件 DLL 名称 --->
+PLUGIN_DLLS = [
+    "md_formatter.dll",
+    "rst_formatter.dll",
+    "tex_formatter.dll",
+    "typ_formatter.dll"
+]
 
 # 定义需要清理的文件和文件夹
 FILES_TO_DELETE = [
     "bills.db"
 ]
 DIRS_TO_DELETE = [
-    "txt_raw", # 经过预处理的文件
-    "exported_files", # 导出的格式化文件，md,tex,typ
-    "output"  # 新增：清理旧的输出日志文件夹
+    "txt_raw",
+    "exported_files",
+    "output",
+    "build"  # <--- 新增: 在测试前清理旧的本地构建目录
 ]
 # ===================================================================
 
-# 定义常量和颜色（用于美化输出）
+# 定义常量和颜色
 GREEN = '\033[92m'
 YELLOW = '\033[93m'
 RED = '\033[91m'
@@ -47,14 +51,7 @@ class CommandExecutor:
         self.output_dir = output_dir
 
     def run(self, step_name, command_args, log_filename):
-        """
-        执行一个命令，并将其 stdout 和 stderr 保存到日志文件。
-
-        :param step_name: 测试步骤的名称（用于打印状态）。
-        :param command_args: 传递给可执行文件的参数列表。
-        :param log_filename: 保存输出的日志文件名。
-        :return: 如果命令成功执行（返回码为0），则为 True。
-        """
+        """执行一个命令，并将其 stdout 和 stderr 保存到日志文件。"""
         full_command = [self.exe_path] + command_args
         log_path = os.path.join(self.output_dir, log_filename)
         
@@ -72,7 +69,6 @@ class CommandExecutor:
             end_time = time.time()
             duration = end_time - start_time
 
-            # *** 新增: 在写入文件前，清除输出中的颜色代码 ***
             clean_stdout = remove_ansi_codes(result.stdout)
             clean_stderr = remove_ansi_codes(result.stderr)
 
@@ -102,28 +98,62 @@ class TestPreparer:
     def __init__(self, base_dir):
         self.base_dir = base_dir
         self.exe_name = "bill_master_cli.exe"
+        # 定义测试脚本本地的构建和插件目录
+        self.local_build_dir = os.path.join(self.base_dir, "build")
+        self.local_plugins_dir = os.path.join(self.local_build_dir, "plugins")
 
-    def prepare_executable(self):
-        print(f"{CYAN}--- 1. Preparing Executable ---{RESET}")
+    def prepare_runtime_env(self):
+        """
+        准备完整的运行时环境，包括可执行文件和所有插件。
+        """
+        print(f"{CYAN}--- 1. Preparing Runtime Environment ---{RESET}")
+        
+        # 检查并验证 BUILD_DIR
         if "C:/path/to/your/project/build/Debug" in BUILD_DIR:
             print(f"  {RED}错误: 请先在脚本中修改 'BUILD_DIR' 变量。{RESET}")
             return False
-            
-        source_exe_path = os.path.join(BUILD_DIR, self.exe_name)
-        dest_exe_path = os.path.join(self.base_dir, self.exe_name)
-
-        if os.path.exists(dest_exe_path):
-            os.remove(dest_exe_path)
-        
-        if not os.path.exists(source_exe_path):
-            print(f"  {RED}错误: 源文件未找到 '{source_exe_path}'.{RESET}")
+        if not os.path.exists(BUILD_DIR):
+            print(f"  {RED}错误: 构建目录未找到 '{BUILD_DIR}'.{RESET}")
             return False
 
+        # 1. 准备可执行文件
+        source_exe_path = os.path.join(BUILD_DIR, self.exe_name)
+        dest_exe_path = os.path.join(self.local_build_dir, self.exe_name)
+
+        if not os.path.exists(source_exe_path):
+            print(f"  {RED}错误: 源可执行文件未找到 '{source_exe_path}'.{RESET}")
+            return False
+            
+        # 确保本地 build 目录存在
+        os.makedirs(self.local_build_dir, exist_ok=True)
         shutil.copy(source_exe_path, dest_exe_path)
-        print(f"  {GREEN}可执行文件已准备就绪。{RESET}")
+        print(f"  {GREEN}已复制可执行文件: {self.exe_name}{RESET}")
+
+        # 2. 准备插件 DLL
+        # 确保本地 plugins 目录存在
+        os.makedirs(self.local_plugins_dir, exist_ok=True)
+        
+        all_plugins_found = True
+        for dll_name in PLUGIN_DLLS:
+            source_dll_path = os.path.join(BUILD_DIR, dll_name)
+            dest_dll_path = os.path.join(self.local_plugins_dir, dll_name)
+            
+            if not os.path.exists(source_dll_path):
+                print(f"  {RED}错误: 插件未找到 '{source_dll_path}'.{RESET}")
+                all_plugins_found = False
+                continue
+            
+            shutil.copy(source_dll_path, dest_dll_path)
+            print(f"  {GREEN}已复制插件: {dll_name}{RESET}")
+
+        if not all_plugins_found:
+            return False
+            
+        print(f"  {GREEN}运行时环境已准备就绪。{RESET}")
         return True
 
     def cleanup_and_setup_dirs(self):
+        """清理旧的产物并设置日志目录。"""
         print(f"{CYAN}--- 2. Cleaning Artifacts & Setting up Directories ---{RESET}")
         for dir_name in DIRS_TO_DELETE:
             dir_path = os.path.join(self.base_dir, dir_name)
@@ -146,7 +176,6 @@ class ImportTasks:
     def __init__(self, executor, bills_path):
         self.executor = executor
         self.bills_path = bills_path
-
     def run(self):
         print(f"{CYAN}--- 3. Running Import Tasks ---{RESET}")
         if not self.executor.run("Validate", ["--validate", self.bills_path], "1_validate.log"): return False
@@ -158,7 +187,6 @@ class QueryTasks:
     """查询类：负责执行数据查询任务。"""
     def __init__(self, executor):
         self.executor = executor
-
     def run(self):
         print(f"{CYAN}--- 4. Running Query Tasks ---{RESET}")
         if not self.executor.run("Query Year", ["--query", "year", "2024"], "4_query_year.log"): return False
@@ -170,7 +198,6 @@ class ExportTasks:
     def __init__(self, executor, export_path):
         self.executor = executor
         self.export_path = export_path
-
     def run(self):
         print(f"{CYAN}--- 5. Running Export Tasks ---{RESET}")
         if not self.executor.run("Export All", ["--export", "all", self.export_path], "6_export_all.log"): return False
@@ -185,17 +212,17 @@ def main():
     
     # --- 1. 预处理 ---
     preparer = TestPreparer(script_dir)
-    if not preparer.prepare_executable(): sys.exit(1)
+    # 将两个准备步骤分开调用
     if not preparer.cleanup_and_setup_dirs(): sys.exit(1)
+    if not preparer.prepare_runtime_env(): sys.exit(1)
 
     # --- 2. 设置路径和执行器 ---
-    exe_path = os.path.join(script_dir, "bill_master_cli.exe")
+    # 现在可执行文件的路径是在本地的 build 目录中
+    exe_path = os.path.join(preparer.local_build_dir, preparer.exe_name)
     bills_path = os.path.join(script_dir, "bills")
     export_path = os.path.join(script_dir, "exported_files")
     output_dir = os.path.join(script_dir, "output")
     
-    # --- LOGIC MODIFIED ---
-    # 检查核心的 'bills' 文件夹是否存在。如果不存在，则终止程序。
     if not os.path.exists(bills_path):
         print(f"\n{RED}错误: 'bills' 文件夹不存在，无法执行测试。{RESET}")
         print(f"{YELLOW}请在脚本所在目录创建 'bills' 文件夹并放入您的账单文件。{RESET}")
