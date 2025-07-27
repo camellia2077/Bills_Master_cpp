@@ -1,9 +1,10 @@
 // MonthMdFormat.cpp
 #include "MonthMdFormat.h"
+#include "query/month/common/ReportSorter.h" // 排序器头文件 
 #include <sstream>
 #include <iomanip>
 #include <vector>
-#include <algorithm>
+// #include <algorithm> // algorithm 现在可以移除了，因为排序在别处完成
 
 std::string MonthMdFormat::format_report(const MonthlyReportData& data) const {
     std::stringstream ss;
@@ -12,29 +13,13 @@ std::string MonthMdFormat::format_report(const MonthlyReportData& data) const {
         ss << "\n未找到 " << data.year << "年" << data.month << "月的任何数据。\n";
         return ss.str();
     }
-    // --- 排序 ---
-    // 1. 内部交易按金额排序
-    auto sorted_data = data.aggregated_data; // 创建一个副本以进行排序
-    for (auto& parent_pair : sorted_data) {
-        for (auto& sub_pair : parent_pair.second.sub_categories) {
-            std::sort(sub_pair.second.transactions.begin(), sub_pair.second.transactions.end(),
-                [](const Transaction& a, const Transaction& b) {
-                    return a.amount > b.amount;
-                });
-        }
-    }
 
-    // 2. 父类别按总金额排序
-    std::vector<std::pair<std::string, ParentCategoryData>> sorted_parents;
-    for (const auto& pair : sorted_data) {
-        sorted_parents.push_back(pair);
-    }
-    std::sort(sorted_parents.begin(), sorted_parents.end(),
-        [](const auto& a, const auto& b) {
-            return a.second.parent_total > b.second.parent_total;
-        });
+    // --- 排序 ---
+    // 2. 直接调用 ReportSorter 来获取排好序的数据
+    auto sorted_parents = ReportSorter::sort_report_data(data);
 
     // --- 按最终格式构建报告字符串 ---
+    // (这部分代码完全不需要改变)
     ss << std::fixed << std::setprecision(2);
     ss << "\n# DATE:" << data.year << std::setfill('0') << std::setw(2) << data.month << std::endl;
     ss << "# TOTAL:¥" << data.grand_total << std::endl;

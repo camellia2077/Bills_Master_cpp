@@ -1,9 +1,11 @@
+// MonthTexFormat.cpp
 #include "MonthTexFormat.h"
+#include "query/month/common/ReportSorter.h" // 1. 引入共享的排序器头文件
 #include <sstream>
 #include <iomanip>
 #include <vector>
-#include <algorithm>
 #include <string>
+// #include <algorithm> // algorithm 不再需要，因为排序逻辑已移出
 
 // 实现 LaTeX 特殊字符转义
 // 在函数定义的末尾添加 const
@@ -49,25 +51,14 @@ std::string MonthTexFormat::format_report(const MonthlyReportData& data) const {
         return ss.str();
     }
 
-    // --- 排序逻辑 (保持不变) ---
-    auto sorted_data = data.aggregated_data;
-    for (auto& parent_pair : sorted_data) {
-        for (auto& sub_pair : parent_pair.second.sub_categories) {
-            std::sort(sub_pair.second.transactions.begin(), sub_pair.second.transactions.end(),
-                [](const Transaction& a, const Transaction& b) { return a.amount > b.amount; });
-        }
-    }
-    std::vector<std::pair<std::string, ParentCategoryData>> sorted_parents;
-    for (const auto& pair : sorted_data) {
-        sorted_parents.push_back(pair);
-    }
-    std::sort(sorted_parents.begin(), sorted_parents.end(),
-        [](const auto& a, const auto& b) { return a.second.parent_total > b.second.parent_total; });
+    // --- 排序 ---
+    // 2. 直接调用 ReportSorter，移除本地的重复排序逻辑
+    auto sorted_parents = ReportSorter::sort_report_data(data);
 
     // --- 构建 LaTeX 文档 ---
     ss << std::fixed << std::setprecision(2);
     
-    // 2. 文档信息
+    // 文档信息
     ss << "\\usepackage{titlesec}\n";
     ss << "\\titleformat{\\section}{\\Large\\bfseries}{\\thesection}{1em}{}\n";
     ss << "\\titleformat{\\subsection}{\\large\\bfseries}{\\thesubsection}{1em}{}\n\n";
@@ -79,8 +70,7 @@ std::string MonthTexFormat::format_report(const MonthlyReportData& data) const {
     ss << "\\begin{document}\n";
     ss << "\\maketitle\n\n";
 
-    // --- 3. 手动创建的摘要部分 ---
-    // *** 这是核心改动：用 \hrulefill 包裹摘要内容 ***
+    // --- 手动创建的摘要部分 ---
     ss << "% --- Manually created summary section with rules ---\n";
     ss << "\\vspace{1em} % 在顶部分割线上方增加一点空间\n";
     ss << "\\hrulefill\n"; // 顶部分割线
@@ -92,7 +82,7 @@ std::string MonthTexFormat::format_report(const MonthlyReportData& data) const {
     ss << "\\end{center}\n";
     ss << "\\hrulefill\n\n"; // 底部分割线
 
-    // 4. 遍历所有类别并生成内容
+    // 3. 遍历所有类别并生成内容 (这部分代码无需改动)
     for (size_t i = 0; i < sorted_parents.size(); ++i) {
         const auto& parent_pair = sorted_parents[i];
         const auto& parent_name = parent_pair.first;

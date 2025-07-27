@@ -70,6 +70,7 @@ file(GLOB QUERY_SOURCES
     "${QUERY_DIR}/export_bills/*.cpp" 
     "${QUERY_DIR}/month/*.cpp" 
     "${QUERY_DIR}/month/_month_data/*.cpp" 
+    "${QUERY_DIR}/month/common/*.cpp" 
     "${QUERY_DIR}/month/month_format/*.cpp" 
     "${QUERY_DIR}/month/month_format/month_md/*.cpp" 
     "${QUERY_DIR}/month/month_format/month_tex/*.cpp" 
