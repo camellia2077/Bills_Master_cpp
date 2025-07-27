@@ -5,7 +5,7 @@
 # 定义要编译的文件类型。
 # 可选: ['tex'], ['typ'], 或 ['tex', 'typ' , "md" ,"rst"]
 # --- CHANGE THIS LINE ---
-COMPILE_TYPES = ['tex', 'typ' , "md" ,"rst"]
+COMPILE_TYPES = ['tex']
 
 # 定义源文件和PDF输出的根目录名称
 SOURCE_ROOT_DIR = "C:\\Computer\\my_github\\github_cpp\\bill_master\\Bills_Master_cpp\\my_test\\exported_files"
