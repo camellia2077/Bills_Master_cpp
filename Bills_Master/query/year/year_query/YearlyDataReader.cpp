@@ -9,11 +9,22 @@ YearlyReportData YearlyDataReader::read_yearly_data(int year) {
     YearlyReportData data;
     data.year = year;
 
-    const char* sql = "SELECT month, SUM(amount) FROM transactions WHERE year = ? GROUP BY month ORDER BY month;";
+    // --- MODIFICATION START ---
+    // The SQL query now joins the transactions and bills tables.
+    // We select b.month (from bills) and filter by b.year (from bills).
+    const char* sql = "SELECT b.month, SUM(t.amount) "
+                      "FROM transactions AS t "
+                      "JOIN bills AS b ON t.bill_id = b.id "
+                      "WHERE b.year = ? "
+                      "GROUP BY b.month "
+                      "ORDER BY b.month;";
+    // --- MODIFICATION END ---
+                      
     sqlite3_stmt* stmt = nullptr;
 
     if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
-        throw std::runtime_error("准备年度查询 SQL 语句失败: " + std::string(sqlite3_errmsg(m_db)));
+        // This error message now correctly reflects the potential failure point.
+        throw std::runtime_error("Failed to prepare yearly query SQL statement: " + std::string(sqlite3_errmsg(m_db)));
     }
 
     sqlite3_bind_int(stmt, 1, year);
