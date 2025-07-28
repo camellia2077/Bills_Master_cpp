@@ -91,13 +91,22 @@ std::unique_ptr<IMonthReportFormatter> FormatterPluginManager::createFormatter(c
 }
 
 
-// --- 辅助函数：从文件名提取格式名 ---
+// --- 辅助函数：从dll提取格式名 ---
 std::string FormatterPluginManager::getFormatNameFromFile(const std::filesystem::path& file_path) {
-    std::string filename = file_path.stem().string(); // 获取文件名（不含扩展名）
-    // 我们的插件命名可能是 "md_formatter.dll"，需要去掉 "_formatter"
-    const std::string suffix = "_formatter";
-    if (filename.size() > suffix.size() && filename.substr(filename.size() - suffix.size()) == suffix) {
-        return filename.substr(0, filename.size() - suffix.size());
+    // 获取文件名，不含扩展名。例如 "md_month_formatter"
+    std::string filename = file_path.stem().string(); 
+
+    // 查找第一个下划线的位置
+    size_t first_underscore_pos = filename.find('_');
+
+    // 如果找到了下划线
+    if (first_underscore_pos != std::string::npos) {
+        // 返回从字符串开始到第一个下划线之前的部分
+        // 例如，对于 "md_month_formatter", 将返回 "md"
+        return filename.substr(0, first_underscore_pos);
     }
-    return filename; // 如果命名不规范，直接返回文件名作为格式名
+
+    // 如果文件名中没有下划线（为了兼容旧的命名或意外情况），
+    // 则直接返回完整的文件名作为格式名，作为一种安全的回退机制。
+    return filename;
 }

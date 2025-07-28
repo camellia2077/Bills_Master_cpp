@@ -14,10 +14,10 @@ BUILD_DIR = "C:/Computer/my_github/github_cpp/bill_master/Bills_Master_cpp/Bills
 
 # <--- 新增: 定义所有需要复制的插件 DLL 名称 --->
 PLUGIN_DLLS = [
-    "md_formatter.dll",
-    "rst_formatter.dll",
-    "tex_formatter.dll",
-    "typ_formatter.dll"
+    "md_month_formatter.dll",
+    "rst_month_formatter.dll",
+    "tex_month_formatter.dll",
+    "typ_month_formatter.dll"
 ]
 
 # 定义需要清理的文件和文件夹
