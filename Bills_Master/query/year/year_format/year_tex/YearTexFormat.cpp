@@ -81,3 +81,29 @@ std::string YearTexFormat::format_report(const YearlyReportData& data) const{
 
     return ss.str();
 }
+
+// =================================================================
+// ================== 以下是为动态库添加的部分 ==================
+// =================================================================
+extern "C" {
+
+    // 定义平台特定的导出宏
+    #ifdef _WIN32
+        #define PLUGIN_API __declspec(dllexport)
+    #else
+        #define PLUGIN_API __attribute__((visibility("default")))
+    #endif
+
+    /**
+     * @brief 创建 YearTexFormat 格式化器实例的工厂函数。
+     * @return 指向 IYearlyReportFormatter 接口的指针。
+     *
+     * 这是此动态库的唯一入口点。主应用程序将加载此库并调用此函数
+     * 来获取一个格式化器对象。
+     */
+    PLUGIN_API IYearlyReportFormatter* create_tex_year_formatter() {
+        // 创建并返回一个新的格式化器实例
+        return new YearTexFormat();
+    }
+
+} // extern "C"

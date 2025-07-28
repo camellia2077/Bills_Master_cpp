@@ -74,7 +74,7 @@ extern "C" {
      * 这是动态库的唯一入口点。主应用程序将加载此库并调用此函数
      * 来获取一个格式化器对象，而无需知道具体的实现类。
      */
-    PLUGIN_API IMonthReportFormatter* create_formatter() {
+    PLUGIN_API IMonthReportFormatter* create_md_month_formatter() {
         // 创建并返回一个新的格式化器实例
         return new MonthMdFormat();
     }

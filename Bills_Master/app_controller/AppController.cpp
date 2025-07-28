@@ -15,11 +15,28 @@
 
 namespace fs = std::filesystem;
 
-// 初始化成员变量
-AppController::AppController(const std::string& db_path, const std::string& plugin_path)
-    : m_db_path(db_path), m_plugin_path(plugin_path) {}
+// The constructor signature now matches the header.
+AppController::AppController(const std::string& db_path)
+    : m_db_path(db_path) {
+    // Defines the exact list of plugin DLL/SO files to be used.
+    m_plugin_files = {
+        "plugins/md_month_formatter.dll",
+        "plugins/md_year_formatter.dll",
 
-// **Return type changed to bool**
+        "plugins/tex_month_formatter.dll",
+        "plugins/tex_year_formatter.dll",
+
+        "plugins/rst_month_formatter.dll",
+        "plugins/rst_year_formatter.dll",
+
+        "plugins/typ_month_formatter.dll", 
+        "plugins/typ_year_formatter.dll"
+        // On Linux/macOS, the filenames should end in .so
+        // e.g., "plugins/md_month_formatter.so", 
+    };
+}
+
+// ... handle_validation, handle_modification, handle_import, and handle_full_workflow methods remain unchanged ...
 bool AppController::handle_validation(const std::string& path) {
     ProcessStats stats;
     try {
@@ -39,10 +56,9 @@ bool AppController::handle_validation(const std::string& path) {
         stats.failure++;
     }
     stats.print_summary("Validation");
-    return stats.failure == 0; // **Return true if no failures**
+    return stats.failure == 0;
 }
 
-// **Return type changed to bool**
 bool AppController::handle_modification(const std::string& path) {
     ProcessStats stats;
     try {
@@ -76,10 +92,9 @@ bool AppController::handle_modification(const std::string& path) {
         stats.failure++;
     }
     stats.print_summary("Modification");
-    return stats.failure == 0; // **Return true if no failures**
+    return stats.failure == 0;
 }
 
-// **Return type changed to bool**
 bool AppController::handle_import(const std::string& path) {
     ProcessStats stats;
     const std::string db_path = "bills.sqlite3";
@@ -102,10 +117,9 @@ bool AppController::handle_import(const std::string& path) {
         stats.failure++;
     }
     stats.print_summary("Database Import");
-    return stats.failure == 0; // **Return true if no failures**
+    return stats.failure == 0;
 }
 
-// **Return type changed to bool**
 bool AppController::handle_full_workflow(const std::string& path) {
     ProcessStats stats;
     std::cout << "--- Automatic processing workflow started ---\n";
@@ -118,7 +132,7 @@ bool AppController::handle_full_workflow(const std::string& path) {
         if (files.empty()) {
             std::cout << "No files found to process.\n";
             stats.print_summary("Full Workflow");
-            return true; // No files is not a failure
+            return true;
         }
         
         for (const auto& file_path : files) {
@@ -170,14 +184,16 @@ bool AppController::handle_full_workflow(const std::string& path) {
         stats.failure++;
     }
     stats.print_summary("Full Workflow");
-    return stats.failure == 0; // **Return true if no failures**
+    return stats.failure == 0;
 }
+
 
 bool AppController::handle_export(const std::string& type, const std::string& value, const std::string& format_str) {
     bool success = false;
     try {
-        // 使用成员变量来初始化 QueryFacade
-        QueryFacade facade(m_db_path, m_plugin_path);
+        // [FIXED] Use the new m_plugin_files member to initialize QueryFacade.
+        QueryFacade facade(m_db_path, m_plugin_files);
+
         if (type == "all") {
             success = facade.export_all_reports(format_str);
         } else if (type == "year") {

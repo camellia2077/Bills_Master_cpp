@@ -17,7 +17,12 @@ PLUGIN_DLLS = [
     "md_month_formatter.dll",
     "rst_month_formatter.dll",
     "tex_month_formatter.dll",
-    "typ_month_formatter.dll"
+    "typ_month_formatter.dll",
+    
+    "md_year_formatter.dll",
+    "rst_year_formatter.dll",
+    "tex_year_formatter.dll",
+    "typ_year_formatter.dll"
 ]
 
 # 定义需要清理的文件和文件夹
