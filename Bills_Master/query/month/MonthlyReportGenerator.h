@@ -3,30 +3,26 @@
 #define MONTHLY_REPORT_GENERATOR_H
 
 #include <string>
+#include <vector> // CHANGED: Add include for vector
 #include <sqlite3.h>
-#include "query/month/month_format/FormatterPluginManager.h" 
-#include "query/month/month_query/MonthQuery.h"             // 包含数据读取器头文件
+// CHANGED: Include the new specific plugin manager header
+#include "query/month/month_format/MonthlyReportFormatterPluginManager.h" 
+#include "query/month/month_query/MonthQuery.h"
 
 class MonthlyReportGenerator {
 public:
-    /**
-     * @brief 构造函数，初始化数据库读取器和插件工厂.
-     * @param plugin_path 插件（DLL/SO文件）所在的目录路径。
-     */
+    // Constructor for directory scanning
     explicit MonthlyReportGenerator(sqlite3* db_connection, const std::string& plugin_path);
 
-    /**
-     * @brief 公共接口：接收年份、月份和格式名称字符串，返回完整的报表。
-     * @param year 要查询的年份。
-     * @param month 要查询的月份。
-     * @param format_name 报表的格式名称 (例如 "md", "tex", "typ")。
-     * @return 包含所选格式报告的字符串。
-     */
+    // CHANGED: Add constructor to accept a list of plugin files
+    explicit MonthlyReportGenerator(sqlite3* db_connection, const std::vector<std::string>& plugin_file_paths);
+
     std::string generate(int year, int month, const std::string& format_name);
 
 private:
-    MonthQuery m_reader;              // 职责1：负责读取数据
-    FormatterPluginManager m_factory; // 职责2：负责创建格式化器
+    MonthQuery m_reader;
+    // CHANGED: Use the new specific plugin manager class
+    MonthlyReportFormatterPluginManager m_plugin_manager;
 };
 
 #endif // MONTHLY_REPORT_GENERATOR_H

@@ -17,8 +17,8 @@
 namespace fs = std::filesystem;
 
 // 构造函数和析构函数保持不变
-QueryFacade::QueryFacade(const std::string& db_path, const std::string& plugin_path) 
-    : m_db(nullptr), m_plugin_path(plugin_path) {
+QueryFacade::QueryFacade(const std::string& db_path, const std::vector<std::string>& plugin_paths)
+    : m_db(nullptr), m_plugin_paths(plugin_paths), m_use_plugin_list(true) {
     if (sqlite3_open_v2(db_path.c_str(), &m_db, SQLITE_OPEN_READWRITE, nullptr) != SQLITE_OK) {
         std::string errmsg = sqlite3_errmsg(m_db);
         sqlite3_close(m_db);
@@ -31,41 +31,31 @@ QueryFacade::~QueryFacade() {
         sqlite3_close(m_db);
     }
 }
-
+std::vector<std::string> QueryFacade::get_all_bill_dates() {
+    BillMetadataReader reader(m_db);
+    return reader.get_all_bill_dates();
+}
 // --- 报告生成方法 ---
 
 std::string QueryFacade::get_yearly_summary_report(int year, const std::string& format_name) {
-    // =================================================================================
-    // == 临时兼容性层 (技术债) START
-    // == 因为 YearlyReportGenerator 尚未更新为插件模型，我们在这里手动将字符串转回旧的枚举
-    // == 当 YearlyReportGenerator 也被修改后，应移除此部分，并直接传递 format_name
-    // =================================================================================
-    ReportFormat format_enum = ReportFormat::Markdown; // 默认值
-    static const std::map<std::string, ReportFormat> format_map = {
-        {"md", ReportFormat::Markdown},
-        {"tex", ReportFormat::LaTeX},
-        {"typ", ReportFormat::Typst},
-        {"rst", ReportFormat::Rst}
-    };
-    auto it = format_map.find(format_name);
-    if (it != format_map.end()) {
-        format_enum = it->second;
+    // 根据标志位选择不同的生成器初始化方式
+    if (m_use_plugin_list) {
+        YearlyReportGenerator generator(m_db, m_plugin_paths);
+        return generator.generate(year, format_name);
     } else {
-        // 如果格式不被年报生成器支持，可以抛出异常或使用默认值
-        // 这里我们选择使用默认的 Markdown
+        YearlyReportGenerator generator(m_db, m_plugin_directory_path);
+        return generator.generate(year, format_name);
     }
-    
-    YearlyReportGenerator generator(m_db);
-    return generator.generate(year, format_enum); // 调用旧的、基于枚举的接口
-    // =================================================================================
-    // == 临时兼容性层 END
-    // =================================================================================
 }
-
 std::string QueryFacade::get_monthly_details_report(int year, int month, const std::string& format_name) {
-    MonthlyReportGenerator generator(m_db, m_plugin_path);
-    // 直接将 format_name 字符串传递给新的、基于插件的生成器
-    return generator.generate(year, month, format_name);
+    // 根据标志位选择不同的生成器初始化方式
+    if (m_use_plugin_list) {
+        MonthlyReportGenerator generator(m_db, m_plugin_paths);
+        return generator.generate(year, month, format_name);
+    } else {
+        MonthlyReportGenerator generator(m_db, m_plugin_directory_path);
+        return generator.generate(year, month, format_name);
+    }
 }
 
 

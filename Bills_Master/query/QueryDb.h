@@ -6,32 +6,35 @@
 #include <vector>
 #include <sqlite3.h>
 
-
 class QueryFacade {
 public:
-    // 构造函数接收数据库路径和插件路径
-    explicit QueryFacade(const std::string& db_path, const std::string& plugin_path);
+    // Constructors remain the same
+    explicit QueryFacade(const std::string& db_path, const std::string& plugin_directory_path);
+    explicit QueryFacade(const std::string& db_path, const std::vector<std::string>& plugin_paths);
     ~QueryFacade();
 
     QueryFacade(const QueryFacade&) = delete;
     QueryFacade& operator=(const QueryFacade&) = delete;
 
-    // 公共接口保持不变
+    // Public API for report generation
     std::string get_yearly_summary_report(int year, const std::string& format_name);
     std::string get_monthly_details_report(int year, int month, const std::string& format_name);
+
+    // [FIXED] Add the missing method back to the public interface
     std::vector<std::string> get_all_bill_dates();
 
-    // 将 void 修改为 bool
+    // Export methods remain the same
     bool export_yearly_report(const std::string& year_str, const std::string& format_name, bool suppress_output = false);
     bool export_monthly_report(const std::string& month_str, const std::string& format_name, bool suppress_output = false);
     bool export_all_reports(const std::string& format_name);
 
 private:
     sqlite3* m_db;
-    std::string m_plugin_path; // 新增成员变量来存储插件路径
-    void save_report(const std::string& report_content, const std::string& file_path_str);
+    std::string m_plugin_directory_path;
+    std::vector<std::string> m_plugin_paths;
+    bool m_use_plugin_list;
 
-    //将短格式名转换为统一的目录显示名
+    void save_report(const std::string& report_content, const std::string& file_path_str);
     std::string get_display_format_name(const std::string& short_name) const;
 };
 

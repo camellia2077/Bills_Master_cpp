@@ -76,10 +76,13 @@ file(GLOB QUERY_SOURCES
     "${QUERY_DIR}/year/*.cpp" 
     "${QUERY_DIR}/year/_year_data/*.cpp" 
     "${QUERY_DIR}/year/year_format/*.cpp" 
-    "${QUERY_DIR}/year/year_format/year_md/*.cpp" 
-    "${QUERY_DIR}/year/year_format/year_tex/*.cpp" 
-    "${QUERY_DIR}/year/year_format/year_typ/*.cpp" 
-    "${QUERY_DIR}/year/year_format/year_rst/*.cpp" 
+    # ==========================================================
+    # ==      核心修改点 1: 移除年度报告插件的源文件        ==
+    # ==========================================================
+    # "${QUERY_DIR}/year/year_format/year_md/*.cpp" 
+    # "${QUERY_DIR}/year/year_format/year_tex/*.cpp" 
+    # "${QUERY_DIR}/year/year_format/year_typ/*.cpp" 
+    # "${QUERY_DIR}/year/year_format/year_rst/*.cpp" 
     "${QUERY_DIR}/year/year_query/*.cpp" 
 )
 file(GLOB FILEHANDLER_SOURCES "${FILEHANDLER_DIR}/*.cpp")
@@ -129,13 +132,24 @@ endforeach()
 
 
 # ==============================================================================
-#  加载插件模块 (无变化)
+#  加载插件模块
 # ==============================================================================
 message(STATUS "Loading report formatter plugins...")
+# --- 月度报告插件 ---
 add_subdirectory(query/month/month_format/month_md)
 add_subdirectory(query/month/month_format/month_rst)
 add_subdirectory(query/month/month_format/month_tex)
 add_subdirectory(query/month/month_format/month_typ)
+
+# ==========================================================
+# ==      核心修改点 2: 添加年度报告插件的子目录        ==
+# ==========================================================
+# --- 年度报告插件 ---
+add_subdirectory(query/year/year_format/year_md)
+add_subdirectory(query/year/year_format/year_tex)
+add_subdirectory(query/year/year_format/year_rst)
+add_subdirectory(query/year/year_format/year_typ)
+
 message(STATUS "All plugins configured.")
 
 # ==============================================================================

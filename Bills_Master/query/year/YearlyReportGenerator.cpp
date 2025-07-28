@@ -1,24 +1,37 @@
 // YearlyReportGenerator.cpp
 #include "YearlyReportGenerator.h"
-#include <stdexcept> // For throwing exceptions
+#include <stdexcept>
+#include <iostream>
 
-// The constructor now only needs to initialize the reader.
-YearlyReportGenerator::YearlyReportGenerator(sqlite3* db_connection)
-    : m_reader(db_connection) {}
+// --- Constructor 1 (no change) ---
+YearlyReportGenerator::YearlyReportGenerator(sqlite3* db_connection, const std::string& plugin_directory_path)
+    : m_reader(db_connection),
+      m_plugin_manager(plugin_directory_path)
+{
+    std::cout << "YearlyReportGenerator initialized by scanning directory." << std::endl;
+}
 
-// The generate method is now much cleaner and uses the factory.
-std::string YearlyReportGenerator::generate(int year, ReportFormat format) {
-    // Step 1: Get the data using the reader.
+// --- Constructor 2 (no change in logic) ---
+YearlyReportGenerator::YearlyReportGenerator(sqlite3* db_connection, const std::vector<std::string>& plugin_file_paths)
+    : m_reader(db_connection),
+      m_plugin_manager() // Now correctly calls the new default constructor
+{
+    std::cout << "YearlyReportGenerator initialized with specific plugins." << std::endl;
+    for (const auto& path : plugin_file_paths) {
+        m_plugin_manager.loadPlugin(path); // Now correctly calls the new public method
+    }
+}
+
+// --- [FIXED] `generate` method implementation ---
+// The signature now matches the header file: it takes a const std::string&
+std::string YearlyReportGenerator::generate(int year, const std::string& format_name) {
     YearlyReportData data = m_reader.read_yearly_data(year);
 
-    // Step 2: Create the correct formatter using the factory.
-    auto formatter = YearlyReportFormatterFactory::createFormatter(format);
+    auto formatter = m_plugin_manager.createFormatter(format_name);
 
-    // Always check if the factory returned a valid formatter.
     if (!formatter) {
-        throw std::runtime_error("An unsupported report format was specified.");
+        throw std::runtime_error("Failed to create formatter for format: " + format_name + ". Is the required plugin loaded?");
     }
 
-    // Step 3: Use the formatter to generate and return the report.
     return formatter->format_report(data);
 }
