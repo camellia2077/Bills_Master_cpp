@@ -10,9 +10,10 @@
 class MonthlyReportGenerator {
 public:
     /**
-     * @brief 构造函数，初始化数据库读取器和插件工厂。
+     * @brief 构造函数，初始化数据库读取器和插件工厂.
+     * @param plugin_path 插件（DLL/SO文件）所在的目录路径。
      */
-    explicit MonthlyReportGenerator(sqlite3* db_connection);
+    explicit MonthlyReportGenerator(sqlite3* db_connection, const std::string& plugin_path);
 
     /**
      * @brief 公共接口：接收年份、月份和格式名称字符串，返回完整的报表。

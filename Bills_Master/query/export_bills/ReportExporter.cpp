@@ -8,8 +8,9 @@
 
 namespace fs = std::filesystem;
 
-ReportExporter::ReportExporter(const std::string& db_path)
-    : m_query_facade(db_path), m_db_path(db_path) {}
+// Update constructor to pass both arguments to the m_query_facade member
+ReportExporter::ReportExporter(const std::string& db_path, const std::string& plugin_path)
+    : m_query_facade(db_path, plugin_path), m_db_path(db_path) {}
 
 void ReportExporter::save_report(const std::string& report_content, const std::string& file_path_str) {
     fs::path file_path(file_path_str);

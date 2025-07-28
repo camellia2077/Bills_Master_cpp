@@ -37,7 +37,7 @@ Bills_Master/
 │   └── FileHandler.h                     # FileHandler 类的头文件 
 │
 ├── query
-│   ├── export_bills/
+│   ├── export_bills/ # 将“获取报告数据”和“将数据存为文件”这两个步骤封装成一个完整的“导出报告”功能
 │   │   ├── ReportExporter.cpp
 │   │   └── ReportExporter.h
 │   ├── metadata_reader/

@@ -15,9 +15,9 @@
 
 namespace fs = std::filesystem;
 
-AppController::AppController() {
-    // Constructor
-}
+// 初始化成员变量
+AppController::AppController(const std::string& db_path, const std::string& plugin_path)
+    : m_db_path(db_path), m_plugin_path(plugin_path) {}
 
 // **Return type changed to bool**
 bool AppController::handle_validation(const std::string& path) {
@@ -176,7 +176,8 @@ bool AppController::handle_full_workflow(const std::string& path) {
 bool AppController::handle_export(const std::string& type, const std::string& value, const std::string& format_str) {
     bool success = false;
     try {
-        QueryFacade facade("bills.sqlite3");
+        // 使用成员变量来初始化 QueryFacade
+        QueryFacade facade(m_db_path, m_plugin_path);
         if (type == "all") {
             success = facade.export_all_reports(format_str);
         } else if (type == "year") {

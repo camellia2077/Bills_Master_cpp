@@ -5,11 +5,12 @@
 #include <string>
 #include <vector>
 #include <sqlite3.h>
-// #include "ReportFormat.h" // 这一行应该已经被移除了
+
 
 class QueryFacade {
 public:
-    explicit QueryFacade(const std::string& db_path);
+    // 构造函数接收数据库路径和插件路径
+    explicit QueryFacade(const std::string& db_path, const std::string& plugin_path);
     ~QueryFacade();
 
     QueryFacade(const QueryFacade&) = delete;
@@ -27,16 +28,11 @@ public:
 
 private:
     sqlite3* m_db;
+    std::string m_plugin_path; // 新增成员变量来存储插件路径
     void save_report(const std::string& report_content, const std::string& file_path_str);
 
-    // ======================================================================
-    // ==                    核心修改点 START                            ==
-    // ==  新增一个私有辅助函数，用于将短格式名转换为统一的目录显示名       ==
-    // ======================================================================
+    //将短格式名转换为统一的目录显示名
     std::string get_display_format_name(const std::string& short_name) const;
-    // ======================================================================
-    // ==                     核心修改点 END                             ==
-    // ======================================================================
 };
 
 #endif // QUERY_FACADE_H
