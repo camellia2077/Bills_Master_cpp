@@ -32,5 +32,6 @@ Bills_Master 是一款 C++ 应用程序，设计用于对账单文件进行预�
 
 * **[依赖项 (Dependencies)](docs/DEPENDENCIES.md)**: 项目所使用的开源库列表。
 * **[架构设计 (Architecture)](docs/ARCHITECTURE.md)**: 项目的整体架构和模块交互说明。
+* **[目录结构 (Directory Structure)](docs/DATABASE_SCHEMA.md)**: 表结构
 * **[目录结构 (Directory Structure)](docs/DIRECTORY_STRUCTURE.md)**: 项目源代码的目录结构详解。
 * **[图表配置 (Graph Configuration)](docs/GRAPH_CONFIGURATION.md)**: 关于图表生成脚本的配置说明。
