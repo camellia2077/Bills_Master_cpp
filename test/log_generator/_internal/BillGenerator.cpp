@@ -8,7 +8,7 @@
 
 using json = nlohmann::json;
 
-BillGenerator::BillGenerator() : random_engine_(0) {} // Fixed seed for reproducibility
+BillGenerator::BillGenerator() : random_engine_(0) {} // Fixed seed for reproducibility 
 
 bool BillGenerator::load_config(const std::string& config_path) {
     std::ifstream config_file(config_path);
@@ -41,11 +41,22 @@ void BillGenerator::generate_bill_file(int year, int month, const std::filesyste
 
     outfile << "DATE:" << year_month << std::endl;
     outfile << "REMARK:" << std::endl;
+    
+    // Add two blank lines after the REMARK line
+    outfile << std::endl;
+    outfile << std::endl;
 
-    for (const auto& parent_config : config_) {
-        outfile << parent_config["name"].get<std::string>() << std::endl;
-        for (const auto& sub_config : parent_config["sub_items"]) {
+    // Use an iterator-based loop to check if we are on the last parent category
+    for (auto parent_it = config_.begin(); parent_it != config_.end(); ++parent_it) {
+        // Print the parent category name
+        outfile << (*parent_it)["name"].get<std::string>() << std::endl;
+
+        const auto& sub_items = (*parent_it)["sub_items"];
+        for (const auto& sub_config : sub_items) {
+            // Add a blank line before each sub-category block
+            outfile << std::endl;
             outfile << sub_config["name"].get<std::string>() << std::endl;
+
             std::vector<json> details_vector;
             if (sub_config.contains("details")) {
                 for (const auto& detail_item : sub_config["details"]) {
@@ -62,6 +73,13 @@ void BillGenerator::generate_bill_file(int year, int month, const std::filesyste
                 double cost = random_double(item["min_cost"], item["max_cost"]);
                 outfile << std::fixed << std::setprecision(2) << cost << item["description"].get<std::string>() << std::endl;
             }
+        }
+
+        // After all sub-categories of a parent are done, add two blank lines,
+        // but only if it's not the very last parent category in the file.
+        if (std::next(parent_it) != config_.end()) {
+            outfile << std::endl;
+            outfile << std::endl;
         }
     }
     outfile.close();
