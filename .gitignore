@@ -4,6 +4,8 @@ my_test/
 pdf_files/
 __pycache__/
 
+bills_output_from_config/
+
 *.pdf
 *.rst
 # 忽略所有 .exe 可执行文件
