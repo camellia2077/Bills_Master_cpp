@@ -10,7 +10,10 @@ MonthlyReportData MonthQuery::read_monthly_data(int year, int month) {
     data.year = year;
     data.month = month;
 
-    const char* sql = "SELECT parent_category, sub_category, amount, description, remark FROM transactions WHERE year = ? AND month = ?;";
+    const char* sql = "SELECT t.parent_category, t.sub_category, t.amount, t.description, b.remark "
+                  "FROM transactions AS t "
+                  "JOIN bills AS b ON t.bill_id = b.id "
+                  "WHERE b.year = ? AND b.month = ?;";
     sqlite3_stmt* stmt = nullptr;
 
     if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) != SQLITE_OK) {

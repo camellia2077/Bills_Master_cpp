@@ -1,6 +1,7 @@
 #include "QueryDb.h"
 #include "query/year/YearlyReportGenerator.h"
 #include "query/month/MonthlyReportGenerator.h"
+#include "query/metadata_reader/BillMetadataReader.h" // 获取所有日期
 #include "app_controller/ProcessStats.h"
 #include "common/common_utils.h"
 #include <stdexcept>
@@ -66,29 +67,6 @@ std::string QueryFacade::get_monthly_details_report(int year, int month, const s
     return generator.generate(year, month, format_name);
 }
 
-// --- 数据查询方法 (无变化) ---
-std::vector<std::string> QueryFacade::get_all_bill_dates() {
-    std::vector<std::string> dates;
-    const char* sql = "SELECT DISTINCT year, month FROM transactions ORDER BY year, month;";
-    
-    sqlite3_stmt* stmt = nullptr;
-    if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare SQL statement to get all dates: " + std::string(sqlite3_errmsg(m_db)));
-    }
-
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int year = sqlite3_column_int(stmt, 0);
-        int month = sqlite3_column_int(stmt, 1);
-        
-        std::stringstream ss;
-        ss << year << std::setfill('0') << std::setw(2) << month;
-        dates.push_back(ss.str());
-    }
-
-    sqlite3_finalize(stmt);
-    return dates;
-}
-
 
 
 std::string QueryFacade::get_display_format_name(const std::string& short_name) const {
@@ -114,7 +92,7 @@ void QueryFacade::save_report(const std::string& report_content, const std::stri
     output_file << report_content;
 }
 
-void QueryFacade::export_monthly_report(const std::string& month_str, const std::string& format_name, bool suppress_output) {
+bool QueryFacade::export_monthly_report(const std::string& month_str, const std::string& format_name, bool suppress_output) {
     try {
         if (month_str.length() != 6) throw std::invalid_argument("Invalid month format.");
         int year = std::stoi(month_str.substr(0, 4));
@@ -125,7 +103,6 @@ void QueryFacade::export_monthly_report(const std::string& month_str, const std:
 
         if (report.find("未找到") == std::string::npos) {
             std::string extension = "." + format_name;
-            // **修改点**: 调用辅助函数来获取统一的目录名
             std::string display_format = get_display_format_name(format_name);
             std::string base_dir = "exported_files/" + display_format + "_bills";
 
@@ -137,12 +114,15 @@ void QueryFacade::export_monthly_report(const std::string& month_str, const std:
                 std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Report also saved to " << output_path.string() << "\n";
             }
         }
+        return true; // 操作成功
     } catch (const std::exception& e) {
         if (!suppress_output) std::cerr << RED_COLOR << "Query Failed: " << RESET_COLOR << e.what() << std::endl;
+        return false; // 操作失败
     }
 }
 
-void QueryFacade::export_yearly_report(const std::string& year_str, const std::string& format_name, bool suppress_output) {
+
+bool QueryFacade::export_yearly_report(const std::string& year_str, const std::string& format_name, bool suppress_output) {
     try {
         int year = std::stoi(year_str);
         std::string report = get_yearly_summary_report(year, format_name);
@@ -151,7 +131,6 @@ void QueryFacade::export_yearly_report(const std::string& year_str, const std::s
 
         if (report.find("未找到") == std::string::npos) {
             std::string extension = "." + format_name;
-            // **修改点**: 移除旧的switch/if-else，调用辅助函数来获取统一的目录名
             std::string display_format = get_display_format_name(format_name);
             std::string base_dir = "exported_files/" + display_format + "_bills";
 
@@ -162,23 +141,27 @@ void QueryFacade::export_yearly_report(const std::string& year_str, const std::s
                 std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Report also saved to " << output_path.string() << "\n";
             }
         }
+        return true; // 操作成功
     } catch (const std::exception& e) {
         if (!suppress_output) std::cerr << RED_COLOR << "Query Failed: " << RESET_COLOR << e.what() << std::endl;
+        return false; // 操作失败
     }
 }
 
-void QueryFacade::export_all_reports(const std::string& format_name) {
+bool QueryFacade::export_all_reports(const std::string& format_name) {
     ProcessStats monthly_stats, yearly_stats;
+    bool overall_success = true; // 追踪整体操作是否成功
     
-    // **修改点**: 直接使用 format_name 字符串，移除了 switch
     std::cout << "\n--- Starting Full Report Export (" << format_name << " format) ---\n";
 
     try {
-        std::vector<std::string> all_months = get_all_bill_dates();
+        // 使用新的 BillMetadataReader 来获取日期
+        BillMetadataReader metadata_reader(m_db);
+        std::vector<std::string> all_months = metadata_reader.get_all_bill_dates();
 
         if (all_months.empty()) {
             std::cout << YELLOW_COLOR << "Warning: " << RESET_COLOR << "No data found in the database. Nothing to export.\n";
-            return;
+            return true; // 没有数据可导出，但操作本身是成功的
         }
 
         std::cout << "Found " << all_months.size() << " unique months to process.\n";
@@ -186,9 +169,14 @@ void QueryFacade::export_all_reports(const std::string& format_name) {
         std::cout << "\n--- Exporting Monthly Reports ---\n";
         for (const auto& month : all_months) {
             std::cout << "Exporting report for " << month << "...";
-            export_monthly_report(month, format_name, true);
-            std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
-            monthly_stats.success++;
+            if (export_monthly_report(month, format_name, true)) {
+                std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
+                monthly_stats.success++;
+            } else {
+                std::cout << RED_COLOR << " FAILED\n" << RESET_COLOR;
+                monthly_stats.failure++;
+                overall_success = false; // 标记为失败
+            }
         }
 
         std::cout << "\n--- Exporting Yearly Reports ---\n";
@@ -200,17 +188,30 @@ void QueryFacade::export_all_reports(const std::string& format_name) {
         }
         for (const auto& year : unique_years) {
             std::cout << "Exporting summary for " << year << "...";
-            export_yearly_report(year, format_name, true);
-            std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
-            yearly_stats.success++;
+            if (export_yearly_report(year, format_name, true)) {
+                std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
+                yearly_stats.success++;
+            } else {
+                std::cout << RED_COLOR << " FAILED\n" << RESET_COLOR;
+                yearly_stats.failure++;
+                overall_success = false; // 标记为失败
+            }
         }
 
     } catch (const std::runtime_error& e) {
         std::cerr << RED_COLOR << "Export Failed: " << RESET_COLOR << e.what() << std::endl;
         yearly_stats.failure = 1;
+        overall_success = false; // 标记为失败
     }
 
     monthly_stats.print_summary("Monthly Export");
     yearly_stats.print_summary("Yearly Export");
-    std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Full report export completed.\n";
+    
+    if(overall_success) {
+        std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Full report export completed.\n";
+    } else {
+        std::cout << "\n" << RED_COLOR << "Failed: " << RESET_COLOR << "Full report export completed with errors.\n";
+    }
+
+    return overall_success;
 }
