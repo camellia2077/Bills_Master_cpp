@@ -91,9 +91,10 @@ bool ReportExporter::export_monthly_report(const std::string& month_str, const s
     }
 }
 
-// **修改1：更新函数签名，接收 format_name**
-void ReportExporter::export_all_reports(const std::string& format_name) {
+// **修改：返回类型从 void 变为 bool**
+bool ReportExporter::export_all_reports(const std::string& format_name) {
     ProcessStats monthly_stats, yearly_stats;
+    bool overall_success = true; // 新增：追踪整体操作是否成功
     std::cout << "\n--- Starting Full Report Export (" << format_name << " format) ---\n";
 
     try {
@@ -101,7 +102,7 @@ void ReportExporter::export_all_reports(const std::string& format_name) {
 
         if (all_months.empty()) {
             std::cout << YELLOW_COLOR << "Warning: " << RESET_COLOR << "No data found in the database. Nothing to export.\n";
-            return;
+            return true; // 没有数据可导，但操作本身是成功的
         }
 
         std::cout << "Found " << all_months.size() << " unique months to process.\n";
@@ -115,35 +116,44 @@ void ReportExporter::export_all_reports(const std::string& format_name) {
         std::cout << "\n--- Exporting Monthly Reports ---\n";
         for (const auto& month : all_months) {
             std::cout << "Exporting report for " << month << "...";
-            // **修改2：在调用时传递 format_name**
             if (export_monthly_report(month, format_name, true)) {
                 std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
                 monthly_stats.success++;
             } else {
                 std::cout << RED_COLOR << " FAILED\n" << RESET_COLOR;
                 monthly_stats.failure++;
+                overall_success = false; // **修改：如果失败，则更新标志**
             }
         }
 
         std::cout << "\n--- Exporting Yearly Reports ---\n";
         for (const auto& year : unique_years) {
             std::cout << "Exporting summary for " << year << "...";
-            // **修改2：在调用时传递 format_name**
             if (export_yearly_report(year, format_name, true)) {
                 std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
                 yearly_stats.success++;
             } else {
                 std::cout << RED_COLOR << " FAILED\n" << RESET_COLOR;
                 yearly_stats.failure++;
+                overall_success = false; // **修改：如果失败，则更新标志**
             }
         }
 
     } catch (const std::runtime_error& e) {
         std::cerr << RED_COLOR << "Export Failed: " << RESET_COLOR << e.what() << std::endl;
         yearly_stats.failure = 1;
+        overall_success = false; // **修改：捕获到异常也意味着失败**
     }
 
     monthly_stats.print_summary("Monthly Export");
     yearly_stats.print_summary("Yearly Export");
-    std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Full report export completed.\n";
+    
+    // **修改：根据最终状态打印不同的消息**
+    if(overall_success) {
+        std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Full report export completed.\n";
+    } else {
+        std::cout << "\n" << RED_COLOR << "Failed: " << RESET_COLOR << "Full report export completed with errors.\n";
+    }
+
+    return overall_success; // **修改：返回最终的成功状态**
 }

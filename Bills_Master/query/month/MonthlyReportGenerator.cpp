@@ -5,9 +5,9 @@
 #include <stdexcept>
 
 // 在构造函数的初始化列表中初始化工厂
-// 默认在 "build/plugins" 目录下查找插件
+// 默认在 "plugins" 目录下查找插件
 MonthlyReportGenerator::MonthlyReportGenerator(sqlite3* db_connection)
-    : m_reader(db_connection), m_factory("build/plugins") {
+    : m_reader(db_connection), m_factory("plugins") {
 }
 
 // generate方法的实现
