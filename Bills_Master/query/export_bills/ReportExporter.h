@@ -13,7 +13,7 @@ public:
     // ==                      核心修改点 START                            ==
     // ==  为所有公共接口添加 format_name 参数，并提供默认值 "md"            ==
     // =======================================================================
-    void export_all_reports(const std::string& format_name = "md");
+    bool export_all_reports(const std::string& format_name = "md"); // 将 void 修改为 bool
     bool export_yearly_report(const std::string& year_str, const std::string& format_name = "md", bool suppress_output = false);
     bool export_monthly_report(const std::string& month_str, const std::string& format_name = "md", bool suppress_output = false);
     // =======================================================================

@@ -28,7 +28,8 @@ DIRS_TO_DELETE = [
     "txt_raw",
     "exported_files",
     "output",
-    "build"  # <--- 新增: 在测试前清理旧的本地构建目录
+    "build",    # 清理旧版本脚本创建的 build 目录
+    "plugins"   # 清理本地的插件目录
 ]
 # ===================================================================
 
@@ -98,9 +99,9 @@ class TestPreparer:
     def __init__(self, base_dir):
         self.base_dir = base_dir
         self.exe_name = "bill_master_cli.exe"
-        # 定义测试脚本本地的构建和插件目录
-        self.local_build_dir = os.path.join(self.base_dir, "build")
-        self.local_plugins_dir = os.path.join(self.local_build_dir, "plugins")
+        # 定义测试脚本本地的插件目录
+        # 可执行文件将位于 base_dir (脚本根目录)
+        self.local_plugins_dir = os.path.join(self.base_dir, "plugins")
 
     def prepare_runtime_env(self):
         """
@@ -118,19 +119,19 @@ class TestPreparer:
 
         # 1. 准备可执行文件
         source_exe_path = os.path.join(BUILD_DIR, self.exe_name)
-        dest_exe_path = os.path.join(self.local_build_dir, self.exe_name)
+        # 目标路径现在是脚本的根目录
+        dest_exe_path = os.path.join(self.base_dir, self.exe_name)
 
         if not os.path.exists(source_exe_path):
             print(f"  {RED}错误: 源可执行文件未找到 '{source_exe_path}'.{RESET}")
             return False
             
-        # 确保本地 build 目录存在
-        os.makedirs(self.local_build_dir, exist_ok=True)
+        # 直接将可执行文件复制到脚本根目录
         shutil.copy(source_exe_path, dest_exe_path)
-        print(f"  {GREEN}已复制可执行文件: {self.exe_name}{RESET}")
+        print(f"  {GREEN}已复制可执行文件到脚本目录: {self.exe_name}{RESET}")
 
         # 2. 准备插件 DLL
-        # 确保本地 plugins 目录存在
+        # 确保本地 plugins 目录存在 (在脚本根目录下)
         os.makedirs(self.local_plugins_dir, exist_ok=True)
         
         all_plugins_found = True
@@ -217,8 +218,8 @@ def main():
     if not preparer.prepare_runtime_env(): sys.exit(1)
 
     # --- 2. 设置路径和执行器 ---
-    # 现在可执行文件的路径是在本地的 build 目录中
-    exe_path = os.path.join(preparer.local_build_dir, preparer.exe_name)
+    # 可执行文件现在位于脚本所在的目录中
+    exe_path = os.path.join(script_dir, preparer.exe_name)
     bills_path = os.path.join(script_dir, "bills")
     export_path = os.path.join(script_dir, "exported_files")
     output_dir = os.path.join(script_dir, "output")

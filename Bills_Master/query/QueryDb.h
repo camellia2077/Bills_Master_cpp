@@ -20,9 +20,10 @@ public:
     std::string get_monthly_details_report(int year, int month, const std::string& format_name);
     std::vector<std::string> get_all_bill_dates();
 
-    void export_yearly_report(const std::string& year_str, const std::string& format_name, bool suppress_output = false);
-    void export_monthly_report(const std::string& month_str, const std::string& format_name, bool suppress_output = false);
-    void export_all_reports(const std::string& format_name);
+    // 将 void 修改为 bool
+    bool export_yearly_report(const std::string& year_str, const std::string& format_name, bool suppress_output = false);
+    bool export_monthly_report(const std::string& month_str, const std::string& format_name, bool suppress_output = false);
+    bool export_all_reports(const std::string& format_name);
 
 private:
     sqlite3* m_db;

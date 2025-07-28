@@ -97,13 +97,15 @@ int main(int argc, char* argv[]) {
     }
 
     AppController controller;
+    bool operation_successful = true; // **修改点1: 引入成功标志**
+    
     std::vector<std::string> args;
     std::string command;
     std::string path_or_value;
     std::string format_str = "md"; // 默认格式
     bool format_specified = false;
 
-    // --- 参数解析逻辑 ---
+    // --- 参数解析逻辑 (保持不变) ---
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--format" || arg == "-f") {
@@ -122,7 +124,6 @@ int main(int argc, char* argv[]) {
     if (!args.empty()) {
         command = args[0];
         if ((command == "--query" || command == "-q" || command == "--export" || command == "-e" || command == "--all" || command == "-a") && args.size() > 1) {
-            // 将 "all process" 或 "query year" 组合成一个命令
             command += " " + args[1];
             if (args.size() > 2) {
                 path_or_value = args[2];
@@ -145,59 +146,81 @@ int main(int argc, char* argv[]) {
                 return 1; 
             }
 
-            // 步骤 1, 2, 3: Validate, Modify, Import
+            // **修改点2: 检查工作流的返回值**
+            // 假设 handle_full_workflow 也被修改为返回 bool
             std::println(CYAN_COLOR, "\n--- Step 1/2: Running Full Processing Workflow (Validate, Modify, Import) ---", RESET_COLOR);
-            controller.handle_full_workflow(path_or_value);
-            
-            // 步骤 4: Export All
-            std::println(CYAN_COLOR, "\n--- Step 2/2: Exporting All Reports ---", RESET_COLOR);
-            if (format_specified) {
-                std::cout << "Exporting all reports in " << format_str << " format...\n";
-                controller.handle_export("all", "", format_str);
-            } else {
-                std::cout << "Exporting all reports in Markdown, LaTeX, and Typst formats...\n";
-                controller.handle_export("all", "", "md");
-                controller.handle_export("all", "", "tex");
-                controller.handle_export("all", "", "typ");
-                controller.handle_export("all", "", "rst");
+            if (!controller.handle_full_workflow(path_or_value)) {
+                operation_successful = false;
             }
-            std::println(GREEN_COLOR, "\n✅ Entire workflow completed successfully!", RESET_COLOR);
+            
+            // 只有在工作流成功时才继续导出
+            if(operation_successful) {
+                std::println(CYAN_COLOR, "\n--- Step 2/2: Exporting All Reports ---", RESET_COLOR);
+                if (format_specified) {
+                    std::cout << "Exporting all reports in " << format_str << " format...\n";
+                    if (!controller.handle_export("all", "", format_str)) {
+                        operation_successful = false;
+                    }
+                } else {
+                    std::cout << "Exporting all reports in Markdown, LaTeX, Typst, and reST formats...\n";
+                    // **修改点3: 只要有一个失败，整体就失败**
+                    bool md_ok = controller.handle_export("all", "", "md");
+                    bool tex_ok = controller.handle_export("all", "", "tex");
+                    bool typ_ok = controller.handle_export("all", "", "typ");
+                    bool rst_ok = controller.handle_export("all", "", "rst");
+                    if (!md_ok || !tex_ok || !typ_ok || !rst_ok) {
+                        operation_successful = false;
+                    }
+                }
+            }
+
+            if(operation_successful) {
+                std::println(GREEN_COLOR, "\n✅ Entire workflow completed successfully!", RESET_COLOR);
+            } else {
+                std::println(RED_COLOR, "\n❌ Entire workflow failed. Check logs for details.", RESET_COLOR);
+            }
         }
         else if (command == "--export all" || command == "-e a") {
             if (format_specified) {
                 std::cout << "Exporting all reports in " << format_str << " format...\n";
-                controller.handle_export("all", "", format_str);
+                if (!controller.handle_export("all", "", format_str)) {
+                    operation_successful = false;
+                }
             } else {
-                std::cout << "Exporting all reports in Markdown, LaTeX, and Typst formats...\n";
-                controller.handle_export("all", "", "md");
-                controller.handle_export("all", "", "tex");
-                controller.handle_export("all", "", "typ");
-                controller.handle_export("all", "", "rst");
+                std::cout << "Exporting all reports in Markdown, LaTeX, Typst, and reST formats...\n";
+                bool md_ok = controller.handle_export("all", "", "md");
+                bool tex_ok = controller.handle_export("all", "", "tex");
+                bool typ_ok = controller.handle_export("all", "", "typ");
+                bool rst_ok = controller.handle_export("all", "", "rst");
+                if (!md_ok || !tex_ok || !typ_ok || !rst_ok) {
+                    operation_successful = false;
+                }
             }
         }
+        // **修改点4: 修改所有对 controller 方法的调用，以捕获其返回值**
         else if (command == "--all process" || command == "-a p") {
             if (path_or_value.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path for 'all process' command.\n"; return 1; }
-            controller.handle_full_workflow(path_or_value);
+            if (!controller.handle_full_workflow(path_or_value)) operation_successful = false;
         }
         else if (command == "--validate" || command == "-v") {
             if (path_or_value.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path for 'validate' command.\n"; return 1; }
-            controller.handle_validation(path_or_value);
+            if (!controller.handle_validation(path_or_value)) operation_successful = false;
         }
         else if (command == "--modify" || command == "-m") {
             if (path_or_value.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path for 'modify' command.\n"; return 1; }
-            controller.handle_modification(path_or_value);
+            if (!controller.handle_modification(path_or_value)) operation_successful = false;
         }
         else if (command == "--import" || command == "-i") {
             if (path_or_value.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path for 'import' command.\n"; return 1; }
-            controller.handle_import(path_or_value);
+            if (!controller.handle_import(path_or_value)) operation_successful = false;
         }
         else if (command == "--query year" || command == "-q y") {
             if (path_or_value.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing <year> for 'query year' command.\n"; return 1; }
-            controller.handle_export("year", path_or_value, format_str);
+            if (!controller.handle_export("year", path_or_value, format_str)) operation_successful = false;
         }
         else if (command == "--query month" || command == "-q m") {
            if (path_or_value.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing <month> for 'query month' command.\n"; return 1; }
-           controller.handle_export("month", path_or_value, format_str);
+           if (!controller.handle_export("month", path_or_value, format_str)) operation_successful = false;
        }
         else {
             std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Unknown or incomplete command '" << command << "'\n\n";
@@ -206,8 +229,9 @@ int main(int argc, char* argv[]) {
         }
     } catch (const std::exception& e) {
         std::cerr << "\n" << RED_COLOR << "Critical Error: " << RESET_COLOR << e.what() << std::endl; 
-        return 1; 
+        return 1; // 捕获到异常，直接返回失败
     }
 
-    return 0; 
+    // **修改点5: 根据最终的成功标志返回退出码**
+    return operation_successful ? 0 : 1; 
 }

@@ -67,7 +67,7 @@ int main() {
         if (std::cin.fail()) { 
             std::cin.clear(); 
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
-            std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Invalid input. Please enter a number." << "\n"; 
+            std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Invalid input. Please enter a number." << "\n\n"; 
             choice = 0; 
             continue; 
         }
@@ -76,21 +76,35 @@ int main() {
         std::string input_str; 
 
         try {
+            // **修改点：在每个case中检查controller方法的返回值**
+            // 假设 AppController 中的 handle_* 方法都已被修改为返回 bool
             switch (choice) {
                 case 1:
                     std::cout << "Enter path for validation: ";
                     std::getline(std::cin, input_str);
-                    if (!input_str.empty()) controller.handle_validation(input_str);
+                    if (!input_str.empty()) {
+                        if (!controller.handle_validation(input_str)) {
+                            std::println(RED_COLOR, "\nValidation failed. Please check the output above.", RESET_COLOR);
+                        }
+                    }
                     break; 
                 case 2:
                     std::cout << "Enter path for modification: ";
                     std::getline(std::cin, input_str);
-                    if (!input_str.empty()) controller.handle_modification(input_str);
+                    if (!input_str.empty()) {
+                        if (!controller.handle_modification(input_str)) {
+                            std::println(RED_COLOR, "\nModification failed. Please check the output above.", RESET_COLOR);
+                        }
+                    }
                     break; 
                 case 3:
                     std::cout << "Enter path to import to database: ";
                     std::getline(std::cin, input_str);
-                    if (!input_str.empty()) controller.handle_import(input_str);
+                    if (!input_str.empty()) {
+                        if (!controller.handle_import(input_str)) {
+                            std::println(RED_COLOR, "\nImport failed. Please check the output above.", RESET_COLOR);
+                        }
+                    }
                     break; 
                 case 4:
                     { 
@@ -98,16 +112,16 @@ int main() {
                         std::getline(std::cin, input_str);
                         if (input_str.empty()) break;
 
-                        std::cout << "Enter format (md/tex/typ) [default: md]: ";
+                        std::cout << "Enter format (md/tex/typ/rst) [default: md]: ";
                         std::string format_input;
                         std::getline(std::cin, format_input);
 
                         std::string format_str = trim(format_input);
-                        std::string format_to_use = "md";
-                        if (format_str == "tex" || format_str == "typ") {
-                            format_to_use = format_str;
+                        if (format_str.empty()) format_str = "md";
+                        
+                        if (!controller.handle_export("year", input_str, format_str)) {
+                            std::println(RED_COLOR, "\nYearly report export failed. Please check the output above.", RESET_COLOR);
                         }
-                        controller.handle_export("year", input_str, format_to_use);
                     }
                     break;
                 case 5:
@@ -116,26 +130,30 @@ int main() {
                         std::getline(std::cin, input_str);
                         if (input_str.empty()) break;
 
-                        std::cout << "Enter format (md/tex/typ) [default: md]: ";
+                        std::cout << "Enter format (md/tex/typ/rst) [default: md]: ";
                         std::string format_input;
                         std::getline(std::cin, format_input);
                         
                         std::string format_str = trim(format_input);
-                        std::string format_to_use = "md";
-                        if (format_str == "tex" || format_str == "typ") {
-                            format_to_use = format_str;
+                        if (format_str.empty()) format_str = "md";
+
+                        if (!controller.handle_export("month", input_str, format_str)) {
+                             std::println(RED_COLOR, "\nMonthly report export failed. Please check the output above.", RESET_COLOR);
                         }
-                        controller.handle_export("month", input_str, format_to_use);
                     }
                     break;
                 case 6:
                     std::cout << "Enter path for the full workflow: ";
                     std::getline(std::cin, input_str);
-                    if (!input_str.empty()) controller.handle_full_workflow(input_str);
+                    if (!input_str.empty()) {
+                        if (!controller.handle_full_workflow(input_str)) {
+                            std::println(RED_COLOR, "\nFull workflow failed. Please check the output above.", RESET_COLOR);
+                        }
+                    }
                     break;
                 case 7:
                     {
-                        std::cout << "Enter format(s) (e.g., md, tex, typ) [default: all]: ";
+                        std::cout << "Enter format(s) separated by commas (md, tex, typ, rst) [default: all]: ";
                         std::string format_input;
                         std::getline(std::cin, format_input);
 
@@ -150,7 +168,7 @@ int main() {
                             std::string segment;
                             while(std::getline(ss, segment, ',')) {
                                 std::string format = trim(segment);
-                                if (format == "md" || format == "tex" || format == "typ") {
+                                if (format == "md" || format == "tex" || format == "typ" || format == "rst") {
                                     formats_to_export.insert(format);
                                 }
                             }
@@ -164,8 +182,17 @@ int main() {
                              formats_to_export.insert("rst");
                         }
 
+                        bool all_succeeded = true;
                         for (const auto& format : formats_to_export) {
-                            controller.handle_export("all", "", format);
+                            if (!controller.handle_export("all", "", format)) {
+                                all_succeeded = false; // 只要有一个失败，就标记为失败
+                            }
+                        }
+
+                        if (!all_succeeded) {
+                            std::println(RED_COLOR, "\nOne or more export operations failed. Please check the output above.", RESET_COLOR);
+                        } else {
+                            std::println(GREEN_COLOR, "\nAll specified formats exported successfully.", RESET_COLOR);
                         }
                     }
                     break;
@@ -182,6 +209,7 @@ int main() {
         } catch (const std::exception& e) {
             std::cerr << "\n" << RED_COLOR << "An unexpected error occurred: " << RESET_COLOR << e.what() << std::endl;
         }
+        std::cout << "\n"; // 在每次循环后添加换行，使界面更清晰
     }
     return 0; 
 }

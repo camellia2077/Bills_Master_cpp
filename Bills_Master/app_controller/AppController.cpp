@@ -16,18 +16,18 @@
 namespace fs = std::filesystem;
 
 AppController::AppController() {
-    // 构造函数
+    // Constructor
 }
 
-// handle_validation, handle_modification, handle_import, handle_full_workflow 函数保持不变
-void AppController::handle_validation(const std::string& path) {
+// **Return type changed to bool**
+bool AppController::handle_validation(const std::string& path) {
     ProcessStats stats;
     try {
         FileHandler file_handler;
         Reprocessor reprocessor("./config");
         std::vector<fs::path> files = file_handler.find_txt_files(path);
         for (const auto& file : files) {
-            std::cout << "\n--- 正在验证: " << file.string() << " ---\n";
+            std::cout << "\n--- Validating: " << file.string() << " ---\n";
             if (reprocessor.validate_bill(file.string())) {
                 stats.success++;
             } else {
@@ -35,13 +35,15 @@ void AppController::handle_validation(const std::string& path) {
             }
         }
     } catch (const std::runtime_error& e) {
-        std::cerr << RED_COLOR << "错误: " << RESET_COLOR << e.what() << std::endl;
+        std::cerr << RED_COLOR << "Error: " << RESET_COLOR << e.what() << std::endl;
         stats.failure++;
     }
-    stats.print_summary("验证");
+    stats.print_summary("Validation");
+    return stats.failure == 0; // **Return true if no failures**
 }
 
-void AppController::handle_modification(const std::string& path) {
+// **Return type changed to bool**
+bool AppController::handle_modification(const std::string& path) {
     ProcessStats stats;
     try {
         FileHandler file_handler;
@@ -56,13 +58,13 @@ void AppController::handle_modification(const std::string& path) {
                 fs::create_directories(target_dir);
                 modified_path = target_dir / file.filename();
             } else {
-                std::cerr << YELLOW_COLOR << "警告: " << RESET_COLOR << "无法从文件名 '" << file.filename().string() << "' 确定年份。保存在根 txt_raw 目录中。\n";
+                std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Could not determine year from filename '" << file.filename().string() << "'. Saving in root txt_raw directory.\n";
                 fs::path target_dir("txt_raw");
                 fs::create_directory(target_dir);
                 modified_path = target_dir / file.filename();
             }
             
-            std::cout << "\n--- 正在修改: " << file.string() << " -> " << modified_path.string() << " ---\n";
+            std::cout << "\n--- Modifying: " << file.string() << " -> " << modified_path.string() << " ---\n";
             if(reprocessor.modify_bill(file.string(), modified_path.string())) {
                 stats.success++;
             } else {
@@ -70,23 +72,25 @@ void AppController::handle_modification(const std::string& path) {
             }
         }
     } catch (const std::runtime_error& e) {
-        std::cerr << RED_COLOR << "错误: " << RESET_COLOR << e.what() << std::endl;
+        std::cerr << RED_COLOR << "Error: " << RESET_COLOR << e.what() << std::endl;
         stats.failure++;
     }
-    stats.print_summary("修改");
+    stats.print_summary("Modification");
+    return stats.failure == 0; // **Return true if no failures**
 }
 
-void AppController::handle_import(const std::string& path) {
+// **Return type changed to bool**
+bool AppController::handle_import(const std::string& path) {
     ProcessStats stats;
     const std::string db_path = "bills.sqlite3";
-    std::cout << "正在使用数据库文件: " << db_path << "\n";
+    std::cout << "Using database file: " << db_path << "\n";
 
     try {
         FileHandler file_handler;
         DataProcessor data_processor;
         std::vector<fs::path> files = file_handler.find_txt_files(path);
         for (const auto& file : files) {
-            std::cout << "\n--- 正在为数据库处理: " << file.string() << " ---\n";
+            std::cout << "\n--- Processing for database: " << file.string() << " ---\n";
             if (data_processor.process_and_insert(file.string(), db_path)) {
                 stats.success++;
             } else {
@@ -94,15 +98,17 @@ void AppController::handle_import(const std::string& path) {
             }
         }
     } catch (const std::runtime_error& e) {
-        std::cerr << RED_COLOR << "错误: " << RESET_COLOR << e.what() << std::endl;
+        std::cerr << RED_COLOR << "Error: " << RESET_COLOR << e.what() << std::endl;
         stats.failure++;
     }
-    stats.print_summary("数据库导入");
+    stats.print_summary("Database Import");
+    return stats.failure == 0; // **Return true if no failures**
 }
 
-void AppController::handle_full_workflow(const std::string& path) {
+// **Return type changed to bool**
+bool AppController::handle_full_workflow(const std::string& path) {
     ProcessStats stats;
-    std::cout << "--- 自动处理工作流已启动 ---\n";
+    std::cout << "--- Automatic processing workflow started ---\n";
     try {
         FileHandler file_handler;
         Reprocessor reprocessor("./config");
@@ -110,22 +116,23 @@ void AppController::handle_full_workflow(const std::string& path) {
 
         std::vector<fs::path> files = file_handler.find_txt_files(path);
         if (files.empty()) {
-            std::cout << "未找到要处理的文件。\n";
-            return;
+            std::cout << "No files found to process.\n";
+            stats.print_summary("Full Workflow");
+            return true; // No files is not a failure
         }
         
         for (const auto& file_path : files) {
             std::cout << "\n========================================\n";
-            std::cout << "正在处理文件: " << file_path.string() << "\n";
+            std::cout << "Processing file: " << file_path.string() << "\n";
             std::cout << "========================================\n";
             
-            std::cout << "\n[步骤 1/3] 正在验证账单文件...\n";
+            std::cout << "\n[Step 1/3] Validating bill file...\n";
             if (!reprocessor.validate_bill(file_path.string())) {
-                std::cerr << RED_COLOR << "验证失败" << RESET_COLOR << " 对于 " << file_path.string() << ". 跳过此文件。" << "\n";
+                std::cerr << RED_COLOR << "Validation failed" << RESET_COLOR << " for " << file_path.string() << ". Skipping this file." << "\n";
                 stats.failure++;
                 continue;
             }
-            std::cout << GREEN_COLOR << "成功: " << RESET_COLOR << "验证完成。" << "\n";
+            std::cout << GREEN_COLOR << "Success: " << RESET_COLOR << "Validation complete." << "\n";
             
             std::string filename_stem = file_path.stem().string();
             fs::path modified_path;
@@ -140,68 +147,56 @@ void AppController::handle_full_workflow(const std::string& path) {
                 modified_path = target_dir / file_path.filename();
             }
 
-            std::cout << "\n[步骤 2/3] 正在修改账单文件...\n";
+            std::cout << "\n[Step 2/3] Modifying bill file...\n";
             if (!reprocessor.modify_bill(file_path.string(), modified_path.string())) {
-                std::cerr << RED_COLOR << "修改失败" << RESET_COLOR << " 对于 " << file_path.string() << ". 跳过此文件。" << "\n";
+                std::cerr << RED_COLOR << "Modification failed" << RESET_COLOR << " for " << file_path.string() << ". Skipping this file." << "\n";
                 stats.failure++;
                 continue;
             }
-            std::cout << GREEN_COLOR << "成功: " << RESET_COLOR << "修改完成。修改后的文件已保存至 '" << modified_path.string() << "'。\n";
+            std::cout << GREEN_COLOR << "Success: " << RESET_COLOR << "Modification complete. Modified file saved to '" << modified_path.string() << "'.\n";
             
-            std::cout << "\n[步骤 3/3] 正在解析并插入数据库...\n";
+            std::cout << "\n[Step 3/3] Parsing and inserting into database...\n";
             const std::string db_path = "bills.sqlite3";
             if (data_processor.process_and_insert(modified_path.string(), db_path)) {
-                std::cout << GREEN_COLOR << "成功: " << RESET_COLOR << "此文件的数据库导入完成。" << "\n";
+                std::cout << GREEN_COLOR << "Success: " << RESET_COLOR << "Database import for this file is complete." << "\n";
                 stats.success++;
             } else {
-                std::cerr << RED_COLOR << "数据库导入失败" << RESET_COLOR << " 对于此文件。" << "\n";
+                std::cerr << RED_COLOR << "Database import failed" << RESET_COLOR << " for this file." << "\n";
                 stats.failure++;
             }
         }
     } catch (const std::runtime_error& e) {
-        std::cerr << RED_COLOR << "错误: " << RESET_COLOR << "工作流期间发生错误: " << e.what() << std::endl;
+        std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "An error occurred during the workflow: " << e.what() << std::endl;
         stats.failure++;
     }
-    stats.print_summary("完整工作流");
+    stats.print_summary("Full Workflow");
+    return stats.failure == 0; // **Return true if no failures**
 }
 
-void AppController::handle_export(const std::string& type, const std::string& value, const std::string& format_str) {
+bool AppController::handle_export(const std::string& type, const std::string& value, const std::string& format_str) {
+    bool success = false;
     try {
-        // =============================================================
-        // ==                 核心修改点 START                       ==
-        // =============================================================
-
-        // 1. 移除所有 if-else if 检查和手动枚举转换。
-        //    我们现在完全信任 `format_str`，并将其直接传递下去。
-
         QueryFacade facade("bills.sqlite3");
-
-        // 2. 将 `format_str` 直接传递给 facade 的相应方法。
         if (type == "all") {
-            facade.export_all_reports(format_str);
+            success = facade.export_all_reports(format_str);
         } else if (type == "year") {
             if (value.empty()) {
-                throw std::runtime_error("导出年度报告需要提供年份。");
+                throw std::runtime_error("A year must be provided to export a yearly report.");
             }
-            facade.export_yearly_report(value, format_str);
+            success = facade.export_yearly_report(value, format_str);
         } else if (type == "month") {
             if (value.empty()) {
-                throw std::runtime_error("导出月度报告需要提供月份 (YYYYMM)。");
+                throw std::runtime_error("A month (YYYYMM) must be provided to export a monthly report.");
             }
-            facade.export_monthly_report(value, format_str);
+            success = facade.export_monthly_report(value, format_str);
         } else {
-            throw std::runtime_error("未知的导出类型: " + type + "。请使用 'all', 'year', 或 'month'。");
+            throw std::runtime_error("Unknown export type: " + type + ". Please use 'all', 'year', or 'month'.");
         }
-        
-        // =============================================================
-        // ==                  核心修改点 END                        ==
-        // =============================================================
-
     } catch (const std::exception& e) {
-        // 这个 catch 块现在可以捕获来自更深层次的错误，
-        // 例如，如果 MonthlyReportGenerator 抛出 "Unsupported format"，这里就能捕获到。
-        std::cerr << RED_COLOR << "导出失败: " << RESET_COLOR << e.what() << std::endl;
+        std::cerr << RED_COLOR << "Export failed: " << RESET_COLOR << e.what() << std::endl;
+        return false;
     }
+    return success;
 }
 
 void AppController::display_version() {

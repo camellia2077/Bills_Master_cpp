@@ -4,7 +4,7 @@
 
 #include <string>
 #include <sqlite3.h>
-#include "query/month/month_format/ReportFormatterFactory.h" // 包含工厂头文件
+#include "query/month/month_format/FormatterPluginManager.h" 
 #include "query/month/month_query/MonthQuery.h"             // 包含数据读取器头文件
 
 class MonthlyReportGenerator {
@@ -25,7 +25,7 @@ public:
 
 private:
     MonthQuery m_reader;              // 职责1：负责读取数据
-    ReportFormatterFactory m_factory; // 职责2：负责创建格式化器
+    FormatterPluginManager m_factory; // 职责2：负责创建格式化器
 };
 
 #endif // MONTHLY_REPORT_GENERATOR_H
