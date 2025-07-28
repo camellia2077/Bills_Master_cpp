@@ -7,7 +7,7 @@
 
 // 子结构体，用于组织年度报告的所有本地化文本标签
 struct YearlyTypLabels {
-    std::string year_suffix = "年 "; // 新增：用于连接年份和标题后缀的文本
+    std::string year_suffix = "年 "; // 新增:用于连接年份和标题后缀的文本
     std::string report_title_suffix = "消费总览";
     std::string overview_section_title = "年度总览";
     std::string grand_total = "年度总支出";

@@ -4,7 +4,7 @@
 
 #include <string>
 
-// 结构体：用于存储Markdown格式化报告的所有内容标签和格式设置
+// 结构体:用于存储Markdown格式化报告的所有内容标签和格式设置
 struct MonthMdConfig {
     // --- 报告元数据标签(不含'#') ---
     std::string date_label = "DATE:";
@@ -15,10 +15,10 @@ struct MonthMdConfig {
     std::string not_found_msg_part1 = "\n未找到 ";
     std::string not_found_msg_part2 = "年";
     std::string not_found_msg_part3 = "月的任何数据。\n";
-    std::string parent_total_label = "总计：";
-    std::string parent_percentage_label = "占比：";
-    std::string sub_total_label = "小计：";
-    std::string sub_percentage_label_prefix = "(占比：";
+    std::string parent_total_label = "总计:";
+    std::string parent_percentage_label = "占比:";
+    std::string sub_total_label = "小计:";
+    std::string sub_percentage_label_prefix = "(占比:";
     std::string sub_percentage_label_suffix = "%)";
 
     // --- 符号 ---

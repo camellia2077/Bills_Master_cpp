@@ -5,10 +5,15 @@
 #include <stdexcept>
 
 // 在构造函数的初始化列表中初始化工厂
-// 默认在 "plugins" 目录下查找插件
+// ==========================================================
+// ===== MODIFICATION START: Add "month" as the second argument
+// ==========================================================
 MonthlyReportGenerator::MonthlyReportGenerator(sqlite3* db_connection, const std::string& plugin_path)
-    : m_reader(db_connection), m_factory(plugin_path) {
- }
+    : m_reader(db_connection), m_factory(plugin_path, "month") {
+}
+// ==========================================================
+// ===== MODIFICATION END ===================================
+// ==========================================================
 
 // generate方法的实现
 std::string MonthlyReportGenerator::generate(int year, int month, const std::string& format_name) {

@@ -35,7 +35,7 @@ struct YearlyTexConfig {
     // 文本标签 (Text Labels for Internationalization - i18n)
     // ===================================================================
     std::string summary_section_title = "年度总览";
-    std::string grand_total_label = "年度总支出：";
+    std::string grand_total_label = "年度总支出:";
     std::string monthly_breakdown_title = "每月支出";
     std::string year_month_separator = "-";
 };
