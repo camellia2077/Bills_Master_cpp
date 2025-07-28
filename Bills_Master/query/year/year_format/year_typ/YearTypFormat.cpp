@@ -2,18 +2,17 @@
 #include <sstream>
 #include <iomanip>
 
-// 构造函数保持不变
+// The constructor initializes the configuration object.
 YearTypFormat::YearTypFormat(const YearlyTypConfig& config) : config_(config) {}
 
 std::string YearTypFormat::format_report(const YearlyReportData& data) const {
     std::stringstream ss;
 
-    // --- 文档头部设置 (完全来自 config) ---
+    // --- Document header setup (from config) ---
     ss << "#set document(title: \"" << data.year << config_.labels.report_title_suffix << "\", author: \"" << config_.author << "\")\n";
     ss << "#set text(font: \"" << config_.font_family << "\", size: " << static_cast<int>(config_.font_size_pt) << "pt)\n\n";
     
-    // --- 报告内容主体 (完全来自 config) ---
-    // 使用新的配置项替换硬编码的 "年 "
+    // --- Report body (from config) ---
     ss << "= " << data.year << config_.labels.year_suffix << config_.labels.report_title_suffix << "\n\n";
 
     if (!data.data_found) {
@@ -23,11 +22,11 @@ std::string YearTypFormat::format_report(const YearlyReportData& data) const {
     
     ss << std::fixed << std::setprecision(config_.decimal_precision);
 
-    // --- 摘要部分 (完全来自 config) ---
+    // --- Summary section (from config) ---
     ss << "== " << config_.labels.overview_section_title << "\n\n";
     ss << "  - *" << config_.labels.grand_total << ":* " << config_.currency_symbol << data.grand_total << "\n\n";
     
-    // --- 每月支出详情 (完全来自 config) ---
+    // --- Monthly breakdown (from config) ---
     ss << "== " << config_.labels.monthly_breakdown_section_title << "\n\n";
     for (const auto& pair : data.monthly_totals) {
         int month_val = pair.first;
@@ -38,3 +37,29 @@ std::string YearTypFormat::format_report(const YearlyReportData& data) const {
 
     return ss.str();
 }
+
+// =================================================================
+// ================== 以下是为动态库添加的部分 ==================
+// =================================================================
+extern "C" {
+
+    // Define platform-specific export macros
+    #ifdef _WIN32
+        #define PLUGIN_API __declspec(dllexport)
+    #else
+        #define PLUGIN_API __attribute__((visibility("default")))
+    #endif
+
+    /**
+     * @brief Creates an instance of the YearTypFormat formatter.
+     * @return A pointer to the IYearlyReportFormatter interface.
+     *
+     * This is the sole entry point for this dynamic library. The main application
+     * will load the library and call this function to get a formatter object.
+     */
+    PLUGIN_API IYearlyReportFormatter* create_typ_year_formatter() {
+        // Create and return a new formatter instance
+        return new YearTypFormat();
+    }
+
+} // extern "C"

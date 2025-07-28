@@ -4,7 +4,10 @@
 #include <stdexcept>
 
 // --- 构造函数：加载插件 ---
-FormatterPluginManager::FormatterPluginManager(const std::string& plugin_path) {
+FormatterPluginManager::FormatterPluginManager(const std::string& plugin_path, const std::string& plugin_type) {
+    // 根据传入的类型，构建期望的文件名后缀
+    // 例如，如果 plugin_type 是 "month"，m_plugin_suffix 将是 "_month_formatter"
+    m_plugin_suffix = "_" + plugin_type + "_formatter";
     loadPlugins(plugin_path);
 }
 
@@ -29,6 +32,7 @@ void FormatterPluginManager::loadPlugins(const std::string& plugin_path) {
     }
 
     std::cout << "Scanning for plugins in: " << plugin_path << std::endl;
+    std::cout << "Required plugin suffix: " << m_plugin_suffix << std::endl;
 
 #ifdef _WIN32
     const std::string extension = ".dll";
@@ -37,16 +41,21 @@ void FormatterPluginManager::loadPlugins(const std::string& plugin_path) {
 #endif
 
     for (const auto& entry : std::filesystem::directory_iterator(plugin_path)) {
-        if (entry.is_regular_file() && entry.path().extension() == extension) {
+        std::string filename_stem = entry.path().stem().string(); // 获取文件名主体，例如 "md_month_formatter"
+        
+        // ==========================================================
+        // ===== MODIFICATION START: Filter plugins by suffix   ====
+        // ==========================================================
+        // 检查文件是否为常规文件，扩展名是否正确，并且文件名是否包含正确的类型后缀
+        if (entry.is_regular_file() && 
+            entry.path().extension() == extension &&
+            filename_stem.rfind(m_plugin_suffix) != std::string::npos) {
+        // ==========================================================
+        // ===== MODIFICATION END ===================================
+        // ==========================================================
             LibraryHandle handle = nullptr;
 #ifdef _WIN32
-            // ==========================================================
-            // ===== MODIFICATION START: Use LoadLibraryA explicitly ====
-            // ==========================================================
             handle = LoadLibraryA(entry.path().string().c_str());
-            // ==========================================================
-            // ===== MODIFICATION END ===================================
-            // ==========================================================
 #else
             handle = dlopen(entry.path().string().c_str(), RTLD_LAZY);
 #endif
@@ -83,21 +92,19 @@ void FormatterPluginManager::loadPlugins(const std::string& plugin_path) {
 std::unique_ptr<IMonthReportFormatter> FormatterPluginManager::createFormatter(const std::string& format_name) {
     auto it = m_factories.find(format_name);
     if (it != m_factories.end()) {
-        // 如果找到了，调用存储的函数指针来创建对象
         return std::unique_ptr<IMonthReportFormatter>(it->second.second());
     }
-    // 未找到支持的格式
     return nullptr;
 }
 
 
-// --- 辅助函数：从文件名提取格式名 ---
+// --- 辅助函数：从dll提取格式名 ---
+// 这个函数无需修改。它仍然正确地从 "md_month_formatter" 中提取 "md"。
 std::string FormatterPluginManager::getFormatNameFromFile(const std::filesystem::path& file_path) {
-    std::string filename = file_path.stem().string(); // 获取文件名（不含扩展名）
-    // 我们的插件命名可能是 "md_formatter.dll"，需要去掉 "_formatter"
-    const std::string suffix = "_formatter";
-    if (filename.size() > suffix.size() && filename.substr(filename.size() - suffix.size()) == suffix) {
-        return filename.substr(0, filename.size() - suffix.size());
+    std::string filename = file_path.stem().string(); 
+    size_t first_underscore_pos = filename.find('_');
+    if (first_underscore_pos != std::string::npos) {
+        return filename.substr(0, first_underscore_pos);
     }
-    return filename; // 如果命名不规范，直接返回文件名作为格式名
+    return filename;
 }

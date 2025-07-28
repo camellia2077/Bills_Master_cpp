@@ -133,7 +133,7 @@ extern "C" {
      * 来获取一个格式化器对象，而无需知道具体的实现类。
      * 因为 MonthTexFormat 的构造函数有默认参数，所以可以直接调用。
      */
-    PLUGIN_API IMonthReportFormatter* create_formatter() {
+    PLUGIN_API IMonthReportFormatter* create_tex_month_formatter() {
         // 创建并返回一个新的格式化器实例
         return new MonthTexFormat();
     }
