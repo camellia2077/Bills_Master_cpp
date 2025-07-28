@@ -73,7 +73,7 @@ std::string YearTexFormat::format_report(const YearlyReportData& data) const{
         double month_total = pair.second;
         ss << "    \\item " << data.year << escape_latex(m_config.year_month_separator) 
            << std::setfill('0') << std::setw(2) << month_val
-           << "：CNY" << month_total << "\n";
+           << ":CNY" << month_total << "\n";
     }
     ss << "\\end{itemize}\n\n";
 

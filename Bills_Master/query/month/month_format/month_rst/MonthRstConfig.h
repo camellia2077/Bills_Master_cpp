@@ -4,7 +4,7 @@
 
 #include <string>
 
-// 结构体：用于存储reStructuredText格式化报告的所有内容标签和格式设置
+// 结构体:用于存储reStructuredText格式化报告的所有内容标签和格式设置
 struct MonthRstConfig {
     // --- 报告元数据 ---
     std::string report_title_suffix = "月 消费报告";

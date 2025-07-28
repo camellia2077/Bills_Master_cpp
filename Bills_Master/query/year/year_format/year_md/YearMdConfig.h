@@ -4,7 +4,7 @@
 
 #include <string>
 
-// 结构体：用于存储年度Markdown报告的所有内容标签和格式设置
+// 结构体:用于存储年度Markdown报告的所有内容标签和格式设置
 struct YearMdConfig {
     // --- 文本标签 ---
     std::string not_found_msg_part1 = "\n未找到 ";

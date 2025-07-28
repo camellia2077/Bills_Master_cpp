@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <vector>
 
-// 构造函数实现：初始化配置成员
+// 构造函数实现:初始化配置成员
 MonthRstFormat::MonthRstFormat(const MonthRstConfig& config) : config(config) {}
 
 // format_report 方法现在组合硬编码的RST语法和来自配置的标签
