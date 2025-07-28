@@ -13,7 +13,8 @@
  */
 class AppController {
 public:
-    AppController();
+   // 构造函数，可以接受配置路径，或使用默认值
+    explicit AppController(const std::string& db_path = "bills.sqlite3", const std::string& plugin_path = "plugins");
 
     /**
      * @brief 处理一个或多个账单文件的验证。
@@ -51,6 +52,10 @@ public:
      * @brief 显示应用程序的版本信息。
      */
     void display_version();
+
+private:
+    std::string m_db_path;
+    std::string m_plugin_path;
 };
 
 #endif // APP_CONTROLLER_H
