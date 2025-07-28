@@ -69,7 +69,7 @@ std::string QueryFacade::get_monthly_details_report(int year, int month, const s
 // --- 数据查询方法 (无变化) ---
 std::vector<std::string> QueryFacade::get_all_bill_dates() {
     std::vector<std::string> dates;
-    const char* sql = "SELECT DISTINCT year, month FROM transactions ORDER BY year, month;";
+    const char* sql = "SELECT DISTINCT year, month FROM bills ORDER BY year, month;";
     
     sqlite3_stmt* stmt = nullptr;
     if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
