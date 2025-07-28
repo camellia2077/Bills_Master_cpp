@@ -1,43 +1,60 @@
-# CMakeLists.txt 
+# Minimum CMake version requirement. 3.12 is a good baseline for C++17 projects. 
+cmake_minimum_required(VERSION 3.12)
 
-# 最小CMake版本要求 
-cmake_minimum_required(VERSION 3.10) 
-
-# 定义项目名称 
+# Define the project name and specify CXX (C++) as the language.
 project(BillGenerator CXX) 
 
-# 设置C++标准为C++17，因为你使用了<filesystem> 
+# --- Standard and Compiler Settings ---
+# Set the C++ standard to C++17, which is required for std::filesystem.
 set(CMAKE_CXX_STANDARD 17) 
-set(CMAKE_CXX_STANDARD_REQUIRED ON) 
-set(CMAKE_CXX_EXTENSIONS OFF) 
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-# --- Release Build Optimizations (GCC/Clang) ---
-# The following flags are applied only for Release builds
-# (e.g., when running `cmake .. -DCMAKE_BUILD_TYPE=Release`)
-# and only for GCC and Clang compilers.
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    # -O3: The highest level of optimization. Note: This is a capital 'O', not a zero.
-    # -march=native: Optimizes the code for the specific CPU architecture of the machine you are compiling on.
-    # -flto: Enables Link-Time Optimization, allowing for optimizations across different source files.
+# --- Find Dependencies ---
+# Find the nlohmann_json library using its modern CMake config-file package.
+find_package(nlohmann_json 3.2.0 CONFIG REQUIRED) 
+
+# --- Add Executable Target ---
+# Create an executable named 'generator' from the specified source files.
+# Absolute paths are used via the ${CMAKE_CURRENT_SOURCE_DIR} variable.
+add_executable(generator
+    "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/_internal/BillGenerator.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/_internal/arg_parser.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/_internal/utils.cpp"
+)
+
+# --- Include Directories ---
+# Add the '_internal' directory to the include path for the 'generator' target.
+# This allows files like main.cpp to find headers (e.g., #include "BillGenerator.h")
+# that are located in the subdirectory.
+target_include_directories(generator PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/_internal")
+
+# --- Link Libraries ---
+# Link the nlohmann_json library to our 'generator' executable. 
+target_link_libraries(generator PRIVATE nlohmann_json::nlohmann_json)
+
+# --- Optional: Add Release Build Optimizations for GCC/Clang ---
+# These flags improve performance and reduce the size of the release build.
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang") 
+    # -O3: High-level optimization. 
+    # -march=native: Optimize for the CPU architecture of the build machine. 
+    # -flto: Enable Link-Time Optimization for cross-file optimizations.
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native -flto")
 
-    # -s: Strips the executable of symbol information, significantly reducing its file size.
-    # This is a linker flag.
+    # -s: Strip the executable of symbol information to reduce file size.
     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -s")
 
-    message(STATUS "Enabled GCC/Clang specific release optimizations: -O3, -march=native, -flto, -s")
+    message(STATUS "GCC/Clang specific release optimizations enabled (-O3, -march=native, -flto, -s)")
 endif()
 
+# --- Installation (Optional) ---
+# Defines a simple way to install the executable.
+install(TARGETS generator
+    DESTINATION bin
+)
 
-# 查找 nlohmann/json 库 
-# 使用 CONFIG 模式查找，这是查找通过包管理器安装的库的推荐方式 
-# nlohmann_json 的 CMake 配置通常允许直接找到它 
-find_package(nlohmann_json CONFIG REQUIRED) 
-
-# 添加可执行文件 
-# generator.cpp 是你的源文件 
-add_executable(generator generator.cpp) 
-
-# 将 nlohmann_json 库链接到你的可执行文件 
-# nlohmann_json::nlohmann_json 是 nlohmann/json 提供的目标名称 
-target_link_libraries(generator PRIVATE nlohmann_json::nlohmann_json) 
+# --- User Feedback ---
+message(STATUS "Project configured successfully. Executable will be named 'generator'.")
+message(STATUS "To build, run: cmake --build .")
+message(STATUS "To build for release with optimizations, run: cmake .. -DCMAKE_BUILD_TYPE=Release && cmake --build .")
