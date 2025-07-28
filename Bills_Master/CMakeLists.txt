@@ -59,6 +59,7 @@ file(GLOB DB_INSERT_SOURCES
 )
 file(GLOB QUERY_SOURCES
     "${QUERY_DIR}/*.cpp" 
+    "${QUERY_DIR}/metadata_reader/*.cpp" 
     "${QUERY_DIR}/export_bills/*.cpp" 
     "${QUERY_DIR}/month/*.cpp" 
     "${QUERY_DIR}/month/_month_data/*.cpp" 

@@ -37,58 +37,70 @@ Bills_Master/
 │   └── FileHandler.h                     # FileHandler 类的头文件 
 │
 ├── query
-│   ├── export_bills
+│   ├── export_bills/
 │   │   ├── ReportExporter.cpp
 │   │   └── ReportExporter.h
-│   ├── month
-│   │   ├── _month_data
+│   ├── metadata_reader/
+│   │   ├── BillMetadataReader.cpp #获取所有日期
+│   │   └── BillMetadataReader.h
+│   ├── month/
+│   │   ├── _month_data/
 │   │   │   └── ReportData.h
-│   │   ├── month_format
+│   │   ├── month_format/
 │   │   │   ├── IMonthReportFormatter.h
-│   │   │   ├── month_md
-│   │   │   │   ├── MonthMdFormat.cpp
+│   │   │   ├── month_md/ # md格式的月查询输出模板
+│   │   │   │   ├── CMakeLists.txt # 动态库的配置
+│   │   │   │   ├── MonthMdConfig.h # md的格式配置
+│   │   │   │   ├── MonthMdFormat.cpp 
 │   │   │   │   └── MonthMdFormat.h
-│   │   │   ├── month_rst
+│   │   │   ├── month_rst/ # rst格式的月查询输出模板
+│   │   │   │   ├── CMakeLists.txt # 动态库的配置
+│   │   │   │   ├── MonthRstConfig.h
 │   │   │   │   ├── MonthRstFormat.cpp
 │   │   │   │   └── MonthRstFormat.h
-│   │   │   ├── month_tex
+│   │   │   ├── month_tex/
+│   │   │   │   ├── CMakeLists.txt 
 │   │   │   │   ├── MonthTexFormat.cpp
 │   │   │   │   ├── MonthTexFormat.h
-│       │   │   └── MonthTexReport.h # 格式的结构体
-│   │   │   ├── month_typ
+│       │   │   └── MonthTexReport.h 
+│   │   │   ├── month_typ/
+│   │   │   │   ├── CMakeLists.txt 
+│   │   │   │   ├── MonthTypConfig.cpp
 │   │   │   │   ├── MonthTypFormat.cpp
 │   │   │   │   └── MonthTypFormat.h
-│   │   │   ├── ReportFormatterFactory.cpp 
-│   │   │   └── ReportFormatterFactory.h
-│   │   ├── month_query
+│   │   │   ├── FormatterPluginManager.cpp 
+│   │   │   └── FormatterPluginManager.h
+│   │   ├── month_query/ # 月查询语句
 │   │   │   ├── MonthQuery.cpp
 │   │   │   └── MonthQuery.h
 │   │   ├── MonthlyReportGenerator.cpp
 │   │   └── MonthlyReportGenerator.h
 │   ├── QueryDb.cpp
 │   ├── QueryDb.h
-│   ├── ReportFormat.h
+│   ├── ReportFormat.h # 导出类型的枚举
 │   └── year/
 │       ├── _year_data/
 │       │   └── YearlyReportData.h
 │       ├── year_format/
 │       │   ├── IYearlyReportFormatter.h
-│       │   ├── year_md/ # Markdown格式
+│       │   ├── year_md/
+│       │   │   ├── YearMdConfig.h
 │       │   │   ├── YearMdFormat.cpp
 │       │   │   └── YearMdFormat.h
-│       │   ├── year_rst/ # reST格式
+│       │   ├── year_rst/ 
 │       │   │   ├── YearRstFormat.cpp
 │       │   │   └── YearRstFormat.h
-│       │   ├── year_tex/ # LaTeX格式
+│       │   ├── year_tex/ 
+│       │   │   ├── YearTexConfig.h
 │       │   │   ├── YearTexFormat.cpp
-│       │   │   ├── YearTexFormat.h
-│       │   │   └── YearTexReport.h # 格式的结构体
-│       │   ├── year_typ/ # typst格式
+│       │   │   └── YearTexFormat.h
+│       │   ├── year_typ/ 
+│       │   │   ├── YearTypConfig.h
 │       │   │   ├── YearTypFormat.cpp
 │       │   │   └── YearTypFormat.h
 │       │   ├── YearlyReportFormatterFactory.cpp
 │       │   └── YearlyReportFormatterFactory.h
-│       ├── year_query/
+│       ├── year_query/ # 年查询语句
 │       │   ├── YearlyDataReader.cpp
 │       │   └── YearlyDataReader.h
 │       ├── YearlyReportGenerator.cpp

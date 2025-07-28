@@ -1,6 +1,7 @@
 #include "QueryDb.h"
 #include "query/year/YearlyReportGenerator.h"
 #include "query/month/MonthlyReportGenerator.h"
+#include "query/metadata_reader/BillMetadataReader.h" // 获取所有日期
 #include "app_controller/ProcessStats.h"
 #include "common/common_utils.h"
 #include <stdexcept>
@@ -64,29 +65,6 @@ std::string QueryFacade::get_monthly_details_report(int year, int month, const s
     MonthlyReportGenerator generator(m_db);
     // 直接将 format_name 字符串传递给新的、基于插件的生成器
     return generator.generate(year, month, format_name);
-}
-
-// --- 数据查询方法 (无变化) ---
-std::vector<std::string> QueryFacade::get_all_bill_dates() {
-    std::vector<std::string> dates;
-    const char* sql = "SELECT DISTINCT year, month FROM bills ORDER BY year, month;";
-    
-    sqlite3_stmt* stmt = nullptr;
-    if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
-        throw std::runtime_error("Failed to prepare SQL statement to get all dates: " + std::string(sqlite3_errmsg(m_db)));
-    }
-
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int year = sqlite3_column_int(stmt, 0);
-        int month = sqlite3_column_int(stmt, 1);
-        
-        std::stringstream ss;
-        ss << year << std::setfill('0') << std::setw(2) << month;
-        dates.push_back(ss.str());
-    }
-
-    sqlite3_finalize(stmt);
-    return dates;
 }
 
 
@@ -177,7 +155,9 @@ bool QueryFacade::export_all_reports(const std::string& format_name) {
     std::cout << "\n--- Starting Full Report Export (" << format_name << " format) ---\n";
 
     try {
-        std::vector<std::string> all_months = get_all_bill_dates();
+        // 使用新的 BillMetadataReader 来获取日期
+        BillMetadataReader metadata_reader(m_db);
+        std::vector<std::string> all_months = metadata_reader.get_all_bill_dates();
 
         if (all_months.empty()) {
             std::cout << YELLOW_COLOR << "Warning: " << RESET_COLOR << "No data found in the database. Nothing to export.\n";
