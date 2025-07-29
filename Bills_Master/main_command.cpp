@@ -70,6 +70,11 @@ void print_help(const char* program_name) {
     std::println("  Exports all available reports from the database.");
     std::println("  Use optional --type <month|year> to export only one type of report.");
     std::println("  Example: {} -e a --type month --format tex\n", program_name);
+    
+    std::println("--export date, -e d <date>");
+    std::println("  Exports reports based on a date string.");
+    std::println("  <date> format: YYYY (exports all months in that year), YYYYMM (exports a single month).");
+    std::println("  Example: {} -e d 2024 -f tex\n", program_name);
 
     // --- Options ---
     std::cout << GREEN_COLOR << "--- Options ---\n" << RESET_COLOR;
@@ -235,6 +240,16 @@ int main(int argc, char* argv[]) {
            if (path_or_value.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing <month> for 'query month' command.\n"; return 1; }
            if (!controller.handle_export("month", path_or_value, format_str)) operation_successful = false;
        }
+       // --- 新增: 处理 --export date 命令 ---
+       else if (command == "--export date" || command == "-e d") {
+        if (path_or_value.empty()) { 
+            std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing <date> value for 'export date' command.\n"; 
+            return 1; 
+        }
+        if (!controller.handle_export("date", path_or_value, format_str)) {
+            operation_successful = false;
+        }
+        }
         else {
             std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Unknown or incomplete command '" << command << "'\n\n";
             print_help(argv[0]);

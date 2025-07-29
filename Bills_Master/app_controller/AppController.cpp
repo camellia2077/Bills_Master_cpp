@@ -201,14 +201,22 @@ bool AppController::handle_export(const std::string& type, const std::string& va
     try {
         QueryFacade facade(m_db_path, m_plugin_files, m_export_base_dir, m_format_folder_names);
 
-        // --- 修改：增加新的处理分支 ---
         if (type == "all") {
             success = facade.export_all_reports(format_str);
         } else if (type == "all_months") {
             success = facade.export_all_monthly_reports(format_str);
         } else if (type == "all_years") {
             success = facade.export_all_yearly_reports(format_str);
-        } else if (type == "year") {
+        }
+        // --- 新增：处理 "date" 类型的逻辑 ---
+        else if (type == "date") {
+            if (value.empty()) {
+                throw std::runtime_error("A date string (YYYY or YYYYMM) must be provided for 'date' export.");
+            }
+            success = facade.export_by_date(value, format_str);
+        }
+        // --- 修改结束 ---
+        else if (type == "year") {
             if (value.empty()) {
                 throw std::runtime_error("A year must be provided to export a yearly report.");
             }
@@ -219,7 +227,7 @@ bool AppController::handle_export(const std::string& type, const std::string& va
             }
             success = facade.export_monthly_report(value, format_str);
         } else {
-            throw std::runtime_error("Unknown export type: " + type + ". Please use 'all', 'year', or 'month'.");
+            throw std::runtime_error("Unknown export type: " + type);
         }
     } catch (const std::exception& e) {
         std::cerr << RED_COLOR << "Export failed: " << RESET_COLOR << e.what() << std::endl;
