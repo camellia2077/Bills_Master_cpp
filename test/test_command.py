@@ -206,7 +206,11 @@ class ExportTasks:
         self.export_path = export_path
     def run(self):
         print(f"{CYAN}--- 5. Running Export Tasks ---{RESET}")
-        if not self.executor.run("Export All", ["--export", "all", self.export_path], "6_export_all.log"): return False
+        # 执行四个导出操作，并将日志分别保存
+        if not self.executor.run("Export Tex", ["--export", "all", self.export_path, "--format", "tex"], "6_export_all_tex.log"): return False
+        if not self.executor.run("Export Md", ["--export", "all", self.export_path, "--format", "md"], "7_export_all_md.log"): return False
+        if not self.executor.run("Export Rst", ["--export", "all", self.export_path, "--format", "rst"], "8_export_all_rst.log"): return False
+        if not self.executor.run("Export Typ", ["--export", "all", self.export_path, "--format", "typ"], "9_export_all_typ.log"): return False
         return True
 
 def main():
