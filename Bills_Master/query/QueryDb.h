@@ -34,7 +34,10 @@ public:
     bool export_yearly_report(const std::string& year_str, const std::string& format_name, bool suppress_output = false);
     bool export_monthly_report(const std::string& month_str, const std::string& format_name, bool suppress_output = false);
     
-    // --- 修改：拆分导出功能 ---
+    // --- 新增: 统一的日期导出接口 ---
+    bool export_by_date(const std::string& date_str, const std::string& format_name);
+
+    // 批量导出函数
     bool export_all_reports(const std::string& format_name);
     bool export_all_monthly_reports(const std::string& format_name);
     bool export_all_yearly_reports(const std::string& format_name);

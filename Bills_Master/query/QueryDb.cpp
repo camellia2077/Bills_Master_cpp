@@ -173,6 +173,88 @@ bool QueryFacade::export_yearly_report(const std::string& year_str, const std::s
     }
 }
 
+// 导出独立的日期
+bool QueryFacade::export_by_date(const std::string& date_str, const std::string& format_name) {
+    // 情况1: 导出某一年份的所有月度报告 (例如 "2024") - 逻辑不变
+    if (date_str.length() == 4) {
+        std::cout << "\n--- Exporting all monthly reports for " << date_str << " (" << format_name << " format) ---\n";
+        
+        if (!m_month_manager.isFormatAvailable(format_name)) {
+            std::cerr << RED_COLOR << "Error:" << RESET_COLOR << " Monthly formatter for '" << format_name << "' not loaded.\n";
+            return false;
+        }
+
+        BillMetadataReader metadata_reader(m_db);
+        std::vector<std::string> all_months = metadata_reader.get_all_bill_dates();
+        std::vector<std::string> year_months;
+        for (const auto& month : all_months) {
+            if (month.rfind(date_str, 0) == 0) year_months.push_back(month);
+        }
+
+        if (year_months.empty()) {
+            std::cout << YELLOW_COLOR << "Warning:" << RESET_COLOR << " No data found for year " << date_str << ".\n";
+            return true;
+        }
+
+        ProcessStats stats;
+        std::cout << "Found " << year_months.size() << " months to export for year " << date_str << ".\n";
+        for (const auto& month : year_months) {
+            std::cout << "Exporting report for " << month << "...";
+            // 这里调用 export_monthly_report 并抑制输出是正确的
+            if (export_monthly_report(month, format_name, true)) {
+                stats.success++;
+                std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
+            } else {
+                stats.failure++;
+                std::cout << RED_COLOR << " FAILED\n" << RESET_COLOR;
+            }
+        }
+        stats.print_summary("Yearly Batch Export");
+        return stats.failure == 0;
+    } 
+    // 情况2: 导出单个指定的月份报告 (例如 "202401")
+    else if (date_str.length() == 6) {
+        // 不再调用 export_monthly_report(..., false)，而是亲自处理逻辑
+        try {
+            int year = std::stoi(date_str.substr(0, 4));
+            int month = std::stoi(date_str.substr(4, 2));
+            // 1. 获取报告内容
+            std::string report = get_monthly_details_report(year, month, format_name);
+
+            // 2. 不打印报告内容到控制台
+
+            // 3. 检查并保存文件
+            if (report.find("未找到") == std::string::npos) {
+                std::string extension = "." + format_name;
+                std::string format_folder;
+                auto it = m_format_folder_names.find(format_name);
+                format_folder = (it != m_format_folder_names.end()) ? it->second : get_display_format_name(format_name) + "_bills";
+                
+                fs::path base_dir = fs::path(m_export_base_dir) / format_folder;
+                fs::path target_dir = base_dir / "months" / date_str.substr(0, 4);
+                fs::path output_path = target_dir / (date_str + extension);
+                
+                save_report(report, output_path.string());
+
+                // 4. 始终打印成功保存的消息
+                std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Report saved to " << output_path.string() << "\n";
+            } else {
+                // 如果没找到数据，只打印报告的提示信息
+                std::cout << report << std::endl;
+            }
+            return true;
+        } catch (const std::exception& e) {
+            std::cerr << RED_COLOR << "Export failed: " << RESET_COLOR << e.what() << std::endl;
+            return false;
+        }
+    } 
+    // 其他无效格式 - 逻辑不变
+    else {
+        std::cerr << RED_COLOR << "Error:" << RESET_COLOR << " Invalid date format for export: '" << date_str << "'. Please use YYYY or YYYYMM.\n";
+        return false;
+    }
+}
+
 // --- 新增：导出所有月度报告的实现 ---
 bool QueryFacade::export_all_monthly_reports(const std::string& format_name) {
     if (!m_month_manager.isFormatAvailable(format_name)) {
