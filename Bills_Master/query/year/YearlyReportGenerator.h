@@ -7,7 +7,7 @@
 #include <sqlite3.h>
 #include "query/year/year_query/YearlyDataReader.h"
 // 2. 替换: 从旧的静态工厂替换为新的插件管理器
-#include "query/year/year_format/YearlyReportFormatterPluginManager.h" 
+#include "query/year/year_format/YearPluginLoader.h" 
 
 /**
  * @class YearlyReportGenerator
@@ -41,7 +41,7 @@ public:
 
 private:
     YearlyDataReader m_reader; // 4. 保留: 数据读取器仍然需要 
-    YearlyReportFormatterPluginManager m_plugin_manager; // 3. 替换: 使用新的插件管理器作为成员
+    YearPluginLoader m_plugin_manager; // 3. 替换: 使用新的插件管理器作为成员
 };
 
 #endif // YEARLY_REPORT_GENERATOR_H
