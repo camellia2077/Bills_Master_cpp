@@ -17,8 +17,9 @@
 namespace fs = std::filesystem;
 
 
-AppController::AppController(const std::string& db_path)
-    : m_db_path(db_path) {
+AppController::AppController(const std::string& db_path,const std::string& config_path)
+    : m_db_path(db_path),
+    m_config_path(config_path){
     // 定义动态库列表
     m_plugin_files = {
         "plugins/md_month_formatter.dll",
@@ -44,12 +45,11 @@ AppController::AppController(const std::string& db_path)
     };
 }
 
-// ... handle_validation, handle_modification, handle_import, handle_full_workflow 方法保持不变 ...
 bool AppController::handle_validation(const std::string& path) {
     ProcessStats stats;
     try {
         FileHandler file_handler;
-        Reprocessor reprocessor("./config");
+        Reprocessor reprocessor(m_config_path);
         std::vector<fs::path> files = file_handler.find_txt_files(path);
         for (const auto& file : files) {
             std::cout << "\n--- Validating: " << file.string() << " ---\n";
@@ -71,7 +71,7 @@ bool AppController::handle_modification(const std::string& path) {
     ProcessStats stats;
     try {
         FileHandler file_handler;
-        Reprocessor reprocessor("./config");
+        Reprocessor reprocessor(m_config_path);
         std::vector<fs::path> files = file_handler.find_txt_files(path);
         for (const auto& file : files) {
             std::string filename_stem = file.stem().string();
@@ -133,7 +133,7 @@ bool AppController::handle_full_workflow(const std::string& path) {
     std::cout << "--- Automatic processing workflow started ---\n";
     try {
         FileHandler file_handler;
-        Reprocessor reprocessor("./config");
+        Reprocessor reprocessor(m_config_path);
         DataProcessor data_processor;
 
         std::vector<fs::path> files = file_handler.find_txt_files(path);
