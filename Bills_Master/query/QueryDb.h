@@ -4,13 +4,26 @@
 
 #include <string>
 #include <vector>
+#include <map> // 新增: 用于存储格式化目录名的映射
 #include <sqlite3.h>
 
 class QueryFacade {
 public:
-    // Constructors remain the same
-    explicit QueryFacade(const std::string& db_path, const std::string& plugin_directory_path);
-    explicit QueryFacade(const std::string& db_path, const std::vector<std::string>& plugin_paths);
+    // --- 修改: 构造函数增加了 export_base_dir 和 format_folder_names 参数 ---
+    // 为新参数提供了默认值，以保持向后兼容。
+    // 使用 C++11 的列表初始化 {} 为 map 提供默认空值。
+    explicit QueryFacade(
+        const std::string& db_path, 
+        const std::string& plugin_directory_path,
+        const std::string& export_base_dir = "exported_files",
+        const std::map<std::string, std::string>& format_folder_names = {}
+    );
+    explicit QueryFacade(
+        const std::string& db_path, 
+        const std::vector<std::string>& plugin_paths,
+        const std::string& export_base_dir = "exported_files",
+        const std::map<std::string, std::string>& format_folder_names = {}
+    );
     ~QueryFacade();
 
     QueryFacade(const QueryFacade&) = delete;
@@ -20,7 +33,6 @@ public:
     std::string get_yearly_summary_report(int year, const std::string& format_name);
     std::string get_monthly_details_report(int year, int month, const std::string& format_name);
 
-    // [FIXED] Add the missing method back to the public interface
     std::vector<std::string> get_all_bill_dates();
 
     // Export methods remain the same
@@ -33,6 +45,10 @@ private:
     std::string m_plugin_directory_path;
     std::vector<std::string> m_plugin_paths;
     bool m_use_plugin_list;
+
+    // --- 新增: 用于存储导出配置的成员变量 ---
+    std::string m_export_base_dir;
+    std::map<std::string, std::string> m_format_folder_names;
 
     void save_report(const std::string& report_content, const std::string& file_path_str);
     std::string get_display_format_name(const std::string& short_name) const;

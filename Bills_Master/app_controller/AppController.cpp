@@ -5,6 +5,7 @@
 #include <vector>
 #include <stdexcept>
 #include <string>
+#include <map> // [修改] 确保包含 map 头文件
 
 #include "reprocessing/Reprocessor.h"
 #include "db_insert/DataProcessor.h"
@@ -15,10 +16,10 @@
 
 namespace fs = std::filesystem;
 
-// The constructor signature now matches the header.
+
 AppController::AppController(const std::string& db_path)
     : m_db_path(db_path) {
-    // Defines the exact list of plugin DLL/SO files to be used.
+    // 定义动态库列表
     m_plugin_files = {
         "plugins/md_month_formatter.dll",
         "plugins/md_year_formatter.dll",
@@ -31,12 +32,19 @@ AppController::AppController(const std::string& db_path)
 
         "plugins/typ_month_formatter.dll", 
         "plugins/typ_year_formatter.dll"
-        // On Linux/macOS, the filenames should end in .so
-        // e.g., "plugins/md_month_formatter.so", 
+    };
+
+    // 配置导出目录
+    m_export_base_dir = "exported_files";
+    m_format_folder_names = {
+        {"md", "Markdown_bills"}, // md格式的报告放在这个文件夹
+        {"tex", "LaTeX_bills"},     // tex格式的报告放在这个文件夹
+        {"rst", "reST_bills"},      // rst格式的报告放在这个文件夹
+        {"typ", "typst_bills"}      // typ格式的报告放在这个文件夹
     };
 }
 
-// ... handle_validation, handle_modification, handle_import, and handle_full_workflow methods remain unchanged ...
+// ... handle_validation, handle_modification, handle_import, handle_full_workflow 方法保持不变 ...
 bool AppController::handle_validation(const std::string& path) {
     ProcessStats stats;
     try {
@@ -188,11 +196,12 @@ bool AppController::handle_full_workflow(const std::string& path) {
 }
 
 
+// [修改] handle_export 现在使用新的构造函数来初始化 QueryFacade
 bool AppController::handle_export(const std::string& type, const std::string& value, const std::string& format_str) {
     bool success = false;
     try {
-        // [FIXED] Use the new m_plugin_files member to initialize QueryFacade.
-        QueryFacade facade(m_db_path, m_plugin_files);
+        // 使用新的构造函数，传入数据库路径、插件列表和导出目录配置
+        QueryFacade facade(m_db_path, m_plugin_files, m_export_base_dir, m_format_folder_names);
 
         if (type == "all") {
             success = facade.export_all_reports(format_str);
