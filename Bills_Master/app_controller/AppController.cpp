@@ -195,8 +195,7 @@ bool AppController::handle_full_workflow(const std::string& path) {
     return stats.failure == 0;
 }
 
-// 添加对 "all_months" 和 "all_years" 的处理
-bool AppController::handle_export(const std::string& type, const std::string& value, const std::string& format_str) {
+bool AppController::handle_export(const std::string& type, const std::vector<std::string>& values, const std::string& format_str) {
     bool success = false;
     try {
         QueryFacade facade(m_db_path, m_plugin_files, m_export_base_dir, m_format_folder_names);
@@ -207,25 +206,27 @@ bool AppController::handle_export(const std::string& type, const std::string& va
             success = facade.export_all_monthly_reports(format_str);
         } else if (type == "all_years") {
             success = facade.export_all_yearly_reports(format_str);
-        }
-        // --- 新增：处理 "date" 类型的逻辑 ---
-        else if (type == "date") {
-            if (value.empty()) {
-                throw std::runtime_error("A date string (YYYY or YYYYMM) must be provided for 'date' export.");
+        } else if (type == "date") {
+            if (values.empty()) {
+                throw std::runtime_error("At least one date string must be provided for 'date' export.");
             }
-            success = facade.export_by_date(value, format_str);
-        }
-        // --- 修改结束 ---
-        else if (type == "year") {
-            if (value.empty()) {
+            if (values.size() == 1) { // 单个日期
+                success = facade.export_by_date(values[0], format_str);
+            } else if (values.size() == 2) { // 日期区间
+                success = facade.export_by_date_range(values[0], values[1], format_str);
+            } else {
+                throw std::runtime_error("For 'date' export, please provide one (YYYY or YYYYMM) or two (YYYYMM YYYYMM) date values.");
+            }
+        } else if (type == "year") {
+            if (values.empty() || values[0].empty()) {
                 throw std::runtime_error("A year must be provided to export a yearly report.");
             }
-            success = facade.export_yearly_report(value, format_str);
+            success = facade.export_yearly_report(values[0], format_str);
         } else if (type == "month") {
-            if (value.empty()) {
+            if (values.empty() || values[0].empty()) {
                 throw std::runtime_error("A month (YYYYMM) must be provided to export a monthly report.");
             }
-            success = facade.export_monthly_report(value, format_str);
+            success = facade.export_monthly_report(values[0], format_str);
         } else {
             throw std::runtime_error("Unknown export type: " + type);
         }

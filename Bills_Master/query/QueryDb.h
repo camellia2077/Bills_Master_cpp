@@ -28,16 +28,24 @@ public:
     QueryFacade(const QueryFacade&) = delete;
     QueryFacade& operator=(const QueryFacade&) = delete;
 
+    // Report Generation API
     std::string get_yearly_summary_report(int year, const std::string& format_name);
     std::string get_monthly_details_report(int year, int month, const std::string& format_name);
+
+    // Metadata API
     std::vector<std::string> get_all_bill_dates();
+
+    // Report Export API
     bool export_yearly_report(const std::string& year_str, const std::string& format_name, bool suppress_output = false);
     bool export_monthly_report(const std::string& month_str, const std::string& format_name, bool suppress_output = false);
     
-    // --- 新增: 统一的日期导出接口 ---
+    // Unified Date Export API
     bool export_by_date(const std::string& date_str, const std::string& format_name);
 
-    // 批量导出函数
+    // --- 新增: 用于处理日期区间的导出接口 ---
+    bool export_by_date_range(const std::string& start_date, const std::string& end_date, const std::string& format_name);
+
+    // Batch Export API
     bool export_all_reports(const std::string& format_name);
     bool export_all_monthly_reports(const std::string& format_name);
     bool export_all_yearly_reports(const std::string& format_name);

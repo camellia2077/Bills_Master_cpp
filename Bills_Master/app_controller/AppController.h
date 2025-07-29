@@ -42,12 +42,12 @@ public:
     bool handle_full_workflow(const std::string& path);
 
     /**
-     * @brief Handles the exporting of reports.
-     * @param type The type of export ("year", "month", "all").
-     * @param value The specific value to export (e.g., year or month string), ignored for "all".
-     * @param format_str The format to export in ("md", "tex", "typ"), defaults to "md".
+     * @brief Handles the exporting of reports based on type and values.
+     * @param type The type of export ("all", "all_months", "all_years", "year", "month", "date").
+     * @param values A vector of string values (e.g., year, month, start/end dates).
+     * @param format_str The format to export in ("md", "tex", etc.).
      */
-    bool handle_export(const std::string& type, const std::string& value = "", const std::string& format_str = "md");
+    bool handle_export(const std::string& type, const std::vector<std::string>& values, const std::string& format_str = "md");
 
     /**
      * @brief Displays the application's version information.
@@ -57,9 +57,7 @@ public:
 private:
     std::string m_db_path;
     std::vector<std::string> m_plugin_files;
-
-    // [修改] 新增成员用于保存导出目录配置
-    std::string m_export_base_dir;
+    std::string m_export_base_dir;// 成员用于保存导出目录配置
     std::map<std::string, std::string> m_format_folder_names;
 };
 
