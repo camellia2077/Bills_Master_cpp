@@ -3,7 +3,8 @@
 
 #include "ProcessStats.h"
 #include <string>
-#include <vector> // [FIXED] Added the missing <vector> header
+#include <vector>
+#include <map> // [修改] 新增头文件以支持 std::map
 
 /**
  * @class AppController
@@ -14,7 +15,6 @@
  */
 class AppController {
 public:
-   // [FIXED] Constructor now correctly takes only the database path.
    explicit AppController(const std::string& db_path = "bills.sqlite3");
 
     /**
@@ -56,8 +56,11 @@ public:
 
 private:
     std::string m_db_path;
-    // This member now correctly declared thanks to the included <vector> header.
     std::vector<std::string> m_plugin_files;
+
+    // [修改] 新增成员用于保存导出目录配置
+    std::string m_export_base_dir;
+    std::map<std::string, std::string> m_format_folder_names;
 };
 
 #endif // APP_CONTROLLER_H
