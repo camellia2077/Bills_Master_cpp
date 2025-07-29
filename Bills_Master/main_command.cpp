@@ -68,7 +68,8 @@ void print_help(const char* program_name) {
 
     std::println("--export all, -e a");
     std::println("  Exports all available reports from the database.");
-    std::println("  Example: {} -e a\n", program_name);
+    std::println("  Use optional --type <month|year> to export only one type of report.");
+    std::println("  Example: {} -e a --type month --format tex\n", program_name);
 
     // --- Options ---
     std::cout << GREEN_COLOR << "--- Options ---\n" << RESET_COLOR;
@@ -90,33 +91,33 @@ void print_help(const char* program_name) {
 }
 int main(int argc, char* argv[]) {
     setup_console();
-
     if (argc < 2) {
         print_help(argv[0]);
         return 1;
     }
 
     AppController controller;
-    bool operation_successful = true; // **修改点1: 引入成功标志**
+    bool operation_successful = true;
     
     std::vector<std::string> args;
     std::string command;
     std::string path_or_value;
-    std::string format_str = "md"; // 默认格式
+    std::string format_str = "md";
+    std::string export_type_filter; // --- 新增：用于存储 --type 参数 ---
     bool format_specified = false;
 
     // --- 参数解析逻辑 (保持不变) ---
+    // --- 修改：参数解析逻辑，增加对 --type 的支持 ---
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--format" || arg == "-f") {
-            if (i + 1 < argc) {
-                format_str = argv[++i];
-                format_specified = true;
-            } else {
-                std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing value for format flag.\n";
-                return 1;
-            }
-        } else {
+            if (i + 1 < argc) format_str = argv[++i], format_specified = true;
+            else { std::cerr << "Error: Missing value for format flag.\n"; return 1; }
+        } else if (arg == "--type" || arg == "-t") { // 新增
+            if (i + 1 < argc) export_type_filter = argv[++i];
+            else { std::cerr << "Error: Missing value for --type flag (should be 'month' or 'year').\n"; return 1; }
+        }
+        else {
             args.push_back(arg);
         }
     }
@@ -181,23 +182,35 @@ int main(int argc, char* argv[]) {
             }
         }
         else if (command == "--export all" || command == "-e a") {
+            
+            std::string export_target = "all";
+            if (export_type_filter == "month" || export_type_filter == "m") {
+                export_target = "all_months";
+            } else if (export_type_filter == "year" || export_type_filter == "y") {
+                export_target = "all_years";
+            } else if (!export_type_filter.empty()) { // --type 传入类型检查
+                std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Unknown value for --type or -t: '" << export_type_filter << "'.\n";
+                std::cerr << "Please use 'month', 'm', 'year', or 'y'.\n";
+                return 1; // 打印错误后，直接退出程序
+            }
+
             if (format_specified) {
-                std::cout << "Exporting all reports in " << format_str << " format...\n";
-                if (!controller.handle_export("all", "", format_str)) {
+                std::cout << "Exporting reports in " << format_str << " format...\n";
+                if (!controller.handle_export(export_target, "", format_str)) {
                     operation_successful = false;
                 }
             } else {
-                std::cout << "Exporting all reports in Markdown, LaTeX, Typst, and reST formats...\n";
-                bool md_ok = controller.handle_export("all", "", "md");
-                bool tex_ok = controller.handle_export("all", "", "tex");
-                bool typ_ok = controller.handle_export("all", "", "typ");
-                bool rst_ok = controller.handle_export("all", "", "rst");
+                std::cout << "Exporting reports in Markdown, LaTeX, Typst, and reST formats...\n";
+                bool md_ok = controller.handle_export(export_target, "", "md");
+                bool tex_ok = controller.handle_export(export_target, "", "tex");
+                bool typ_ok = controller.handle_export(export_target, "", "typ");
+                bool rst_ok = controller.handle_export(export_target, "", "rst");
                 if (!md_ok || !tex_ok || !typ_ok || !rst_ok) {
                     operation_successful = false;
                 }
             }
         }
-        // **修改点4: 修改所有对 controller 方法的调用，以捕获其返回值**
+
         else if (command == "--all process" || command == "-a p") {
             if (path_or_value.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path for 'all process' command.\n"; return 1; }
             if (!controller.handle_full_workflow(path_or_value)) operation_successful = false;
