@@ -11,8 +11,6 @@ bills_output_from_config/
 # 忽略所有 .exe 可执行文件
 *.exe
 
-# 忽略所有 Markdown 文件
-*.md
 
 # 忽略所有 .tex 可执行文件
 *.tex
