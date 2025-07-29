@@ -15,9 +15,9 @@
  */
 class AppController {
 public:
-   // 增加 config_path 参数，并提供一个默认值
    explicit AppController(const std::string& db_path = "bills.sqlite3", 
-    const std::string& config_path = "./config"); // 预处理的json文件夹
+                          const std::string& config_path = "./config",// 预处理的json文件夹
+                          const std::string& modified_output_dir = "txt_raw"); // 处理后存储的txt的文件夹
 
     /**
      * @brief Handles validation for one or more bill files.
@@ -59,6 +59,7 @@ public:
 private:
     std::string m_db_path;
     std::string m_config_path; // 用于存放预处理json config文件夹的路径
+    std::string m_modified_output_dir; // <-- 新增：用于存放预处理后的文件目录
     std::vector<std::string> m_plugin_files;
     std::string m_export_base_dir;// 成员用于保存导出目录配置
     std::map<std::string, std::string> m_format_folder_names;

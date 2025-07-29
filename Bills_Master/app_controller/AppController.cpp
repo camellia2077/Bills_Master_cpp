@@ -17,10 +17,14 @@
 namespace fs = std::filesystem;
 
 
-AppController::AppController(const std::string& db_path,const std::string& config_path)
+// 构造函数的定义现在接收全部三个参数
+AppController::AppController(const std::string& db_path, 
+    const std::string& config_path, 
+    const std::string& modified_output_dir)
+    // 使用传入的参数来初始化对应的成员变量
     : m_db_path(db_path),
-    m_config_path(config_path){
-    // 定义动态库列表
+    m_config_path(config_path),
+    m_modified_output_dir(modified_output_dir) {
     m_plugin_files = {
         "plugins/md_month_formatter.dll",
         "plugins/md_year_formatter.dll",
@@ -78,12 +82,13 @@ bool AppController::handle_modification(const std::string& path) {
             fs::path modified_path;
             if (filename_stem.length() >= 4) {
                 std::string year = filename_stem.substr(0, 4);
-                fs::path target_dir = fs::path("txt_raw") / year;
-                fs::create_directories(target_dir);
-                modified_path = target_dir / file.filename();
+            // --> 这里定义了 "txt_raw"
+            fs::path target_dir = fs::path(m_modified_output_dir) / year;
+            fs::create_directories(target_dir);
+            modified_path = target_dir / file.filename();
             } else {
                 std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Could not determine year from filename '" << file.filename().string() << "'. Saving in root txt_raw directory.\n";
-                fs::path target_dir("txt_raw");
+                fs::path target_dir(m_modified_output_dir);
                 fs::create_directory(target_dir);
                 modified_path = target_dir / file.filename();
             }
@@ -160,11 +165,11 @@ bool AppController::handle_full_workflow(const std::string& path) {
             fs::path modified_path;
             if (filename_stem.length() >= 4) {
                 std::string year = filename_stem.substr(0, 4);
-                fs::path target_dir = fs::path("txt_raw") / year;
+                fs::path target_dir = fs::path(m_modified_output_dir) / year;
                 fs::create_directories(target_dir);
                 modified_path = target_dir / file_path.filename();
             } else {
-                fs::path target_dir = fs::path("txt_raw");
+                fs::path target_dir(m_modified_output_dir);
                 fs::create_directory(target_dir);
                 modified_path = target_dir / file_path.filename();
             }
