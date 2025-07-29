@@ -195,16 +195,19 @@ bool AppController::handle_full_workflow(const std::string& path) {
     return stats.failure == 0;
 }
 
-
-// [修改] handle_export 现在使用新的构造函数来初始化 QueryFacade
+// 添加对 "all_months" 和 "all_years" 的处理
 bool AppController::handle_export(const std::string& type, const std::string& value, const std::string& format_str) {
     bool success = false;
     try {
-        // 使用新的构造函数，传入数据库路径、插件列表和导出目录配置
         QueryFacade facade(m_db_path, m_plugin_files, m_export_base_dir, m_format_folder_names);
 
+        // --- 修改：增加新的处理分支 ---
         if (type == "all") {
             success = facade.export_all_reports(format_str);
+        } else if (type == "all_months") {
+            success = facade.export_all_monthly_reports(format_str);
+        } else if (type == "all_years") {
+            success = facade.export_all_yearly_reports(format_str);
         } else if (type == "year") {
             if (value.empty()) {
                 throw std::runtime_error("A year must be provided to export a yearly report.");

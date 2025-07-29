@@ -25,7 +25,8 @@ QueryFacade::QueryFacade(const std::string& db_path, const std::string& plugin_d
       m_year_manager(plugin_directory_path)    //
 {
     if (sqlite3_open_v2(db_path.c_str(), &m_db, SQLITE_OPEN_READWRITE, nullptr) != SQLITE_OK) {
-        throw std::runtime_error("Cannot open database: " + std::string(sqlite3_errmsg(m_db)));
+        throw std::runtime_error("Cannot open database: " + std::string(sqlite3_errmsg(m_db)) +
+        "\nMake sure bills.sqlite3 and the exe file are in the same folder.");
     }
 }
 
@@ -37,7 +38,8 @@ QueryFacade::QueryFacade(const std::string& db_path, const std::vector<std::stri
       m_year_manager(plugin_paths)    //
 {
     if (sqlite3_open_v2(db_path.c_str(), &m_db, SQLITE_OPEN_READWRITE, nullptr) != SQLITE_OK) {
-        throw std::runtime_error("Cannot open database: " + std::string(sqlite3_errmsg(m_db)));
+        throw std::runtime_error("Cannot open database: " + std::string(sqlite3_errmsg(m_db)) +
+        "\nMake sure bills.sqlite3 and the exe file are in the same folder.");
     }
 }
 
@@ -171,96 +173,117 @@ bool QueryFacade::export_yearly_report(const std::string& year_str, const std::s
     }
 }
 
-
-bool QueryFacade::export_all_reports(const std::string& format_name) {
-    // --- 新增：在执行任何操作前，先检查所需插件是否都已成功加载 ---
-    const bool month_plugin_loaded = m_month_manager.isFormatAvailable(format_name);
-    const bool year_plugin_loaded = m_year_manager.isFormatAvailable(format_name);
-
-    // 如果月度或年度插件有任何一个未加载，则中止导出
-    if (!month_plugin_loaded || !year_plugin_loaded) {
-        // 打印缺失的dll
-        std::cerr << "\n" << RED_COLOR << "Export Aborted:" << RESET_COLOR
-                  << " The required format plugin '" << format_name << "' could not be loaded." << std::endl;
-        
-        // 分别给出具体的缺失插件提示
-        if (!month_plugin_loaded) {
-             std::cerr << " -> Please ensure the monthly formatter plugin (e.g., '" 
-                       << format_name << "_month_formatter.dll') is available and correct." << std::endl;
-        }
-        if (!year_plugin_loaded) {
-             std::cerr << " -> Please ensure the yearly formatter plugin (e.g., '" 
-                       << format_name << "_year_formatter.dll') is available and correct." << std::endl;
-        }
-        return false; // 中止操作
+// --- 新增：导出所有月度报告的实现 ---
+bool QueryFacade::export_all_monthly_reports(const std::string& format_name) {
+    if (!m_month_manager.isFormatAvailable(format_name)) {
+        std::cerr << "\n" << RED_COLOR << "Export Aborted:" << RESET_COLOR 
+                  << " Monthly formatter for '" << format_name << "' not loaded." << std::endl;
+        return false;
     }
-    // --- 检查结束 ---
 
-    ProcessStats monthly_stats, yearly_stats;
-    bool overall_success = true; 
-    
-    std::cout << "\n--- Starting Full Report Export (" << format_name << " format) ---\n";
+    ProcessStats monthly_stats;
+    std::cout << "\n--- Starting Monthly Report Export (" << format_name << " format) ---\n";
 
     try {
         BillMetadataReader metadata_reader(m_db);
         std::vector<std::string> all_months = metadata_reader.get_all_bill_dates();
-
         if (all_months.empty()) {
-            std::cout << YELLOW_COLOR << "Warning: " << RESET_COLOR << "No data found in the database. Nothing to export.\n";
+            std::cout << YELLOW_COLOR << "Warning: " << RESET_COLOR << "No data found." << std::endl;
             return true;
         }
 
         std::cout << "Found " << all_months.size() << " unique months to process.\n";
-        
-        std::cout << "\n--- Exporting Monthly Reports ---\n";
         for (const auto& month : all_months) {
             std::cout << "Exporting report for " << month << "...";
             if (export_monthly_report(month, format_name, true)) {
                 std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
                 monthly_stats.success++;
             } else {
-                // 在抑制模式下，打印简要错误
-                std::cerr << RED_COLOR << " FAILED" << RESET_COLOR << " (see details above if any)";
+                std::cerr << RED_COLOR << " FAILED\n" << RESET_COLOR;
                 monthly_stats.failure++;
-                overall_success = false;
             }
+        }
+    } catch (const std::runtime_error& e) {
+        std::cerr << RED_COLOR << "\nAn unexpected error occurred: " << RESET_COLOR << e.what() << std::endl;
+        return false;
+    }
+
+    std::cout << "\n";
+    monthly_stats.print_summary("Monthly Export");
+    return monthly_stats.failure == 0;
+}
+
+// --- 新增：导出所有年度报告的实现 ---
+bool QueryFacade::export_all_yearly_reports(const std::string& format_name) {
+    if (!m_year_manager.isFormatAvailable(format_name)) {
+        std::cerr << "\n" << RED_COLOR << "Export Aborted:" << RESET_COLOR 
+                  << " Yearly formatter for '" << format_name << "' not loaded." << std::endl;
+        return false;
+    }
+
+    ProcessStats yearly_stats;
+    std::cout << "\n--- Starting Yearly Report Export (" << format_name << " format) ---\n";
+
+    try {
+        BillMetadataReader metadata_reader(m_db);
+        std::vector<std::string> all_months = metadata_reader.get_all_bill_dates();
+        if (all_months.empty()) {
+            std::cout << YELLOW_COLOR << "Warning: " << RESET_COLOR << "No data found." << std::endl;
+            return true;
         }
 
-        std::cout << "\n\n--- Exporting Yearly Reports ---\n";
         std::set<std::string> unique_years;
         for (const auto& month : all_months) {
-            if (month.length() >= 4) {
-                unique_years.insert(month.substr(0, 4));
-            }
+            if (month.length() >= 4) unique_years.insert(month.substr(0, 4));
         }
+
+        std::cout << "Found " << unique_years.size() << " unique years to process.\n";
         for (const auto& year : unique_years) {
             std::cout << "Exporting summary for " << year << "...";
             if (export_yearly_report(year, format_name, true)) {
                 std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
                 yearly_stats.success++;
             } else {
-                 // 在抑制模式下，打印简要错误
-                std::cerr << RED_COLOR << " FAILED" << RESET_COLOR << " (see details above if any)";
+                std::cerr << RED_COLOR << " FAILED\n" << RESET_COLOR;
                 yearly_stats.failure++;
-                overall_success = false;
             }
         }
-
     } catch (const std::runtime_error& e) {
-        std::cerr << RED_COLOR << "\nAn unexpected error occurred during export: " << RESET_COLOR << e.what() << std::endl;
-        yearly_stats.failure++; //
-        overall_success = false;
+        std::cerr << RED_COLOR << "\nAn unexpected error occurred: " << RESET_COLOR << e.what() << std::endl;
+        return false;
     }
 
     std::cout << "\n";
-    monthly_stats.print_summary("Monthly Export");
     yearly_stats.print_summary("Yearly Export");
+    return yearly_stats.failure == 0;
+}
+
+
+bool QueryFacade::export_all_reports(const std::string& format_name) {
+    std::cout << "\n--- Starting Full Report Export (" << format_name << " format) ---\n";
+    
+    // 先做统一的插件检查
+    const bool month_plugin_loaded = m_month_manager.isFormatAvailable(format_name);
+    const bool year_plugin_loaded = m_year_manager.isFormatAvailable(format_name);
+
+    if (!month_plugin_loaded || !year_plugin_loaded) {
+        std::cerr << "\n" << RED_COLOR << "Export Aborted:" << RESET_COLOR 
+                  << " A required format plugin '" << format_name << "' could not be loaded." << std::endl;
+        if (!month_plugin_loaded) std::cerr << " -> Missing monthly formatter.\n";
+        if (!year_plugin_loaded) std::cerr << " -> Missing yearly formatter.\n";
+        return false;
+    }
+
+    bool monthly_ok = export_all_monthly_reports(format_name);
+    bool yearly_ok = export_all_yearly_reports(format_name);
+
+    bool overall_success = monthly_ok && yearly_ok;
     
     if(overall_success) {
         std::cout << "\n" << GREEN_COLOR << "Success: " << RESET_COLOR << "Full report export completed.\n";
     } else {
         std::cout << "\n" << RED_COLOR << "Failed: " << RESET_COLOR << "Full report export completed with errors.\n";
     }
-
+    
     return overall_success;
 }

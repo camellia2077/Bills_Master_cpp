@@ -33,15 +33,18 @@ public:
     std::vector<std::string> get_all_bill_dates();
     bool export_yearly_report(const std::string& year_str, const std::string& format_name, bool suppress_output = false);
     bool export_monthly_report(const std::string& month_str, const std::string& format_name, bool suppress_output = false);
+    
+    // --- 修改：拆分导出功能 ---
     bool export_all_reports(const std::string& format_name);
+    bool export_all_monthly_reports(const std::string& format_name);
+    bool export_all_yearly_reports(const std::string& format_name);
 
 private:
     sqlite3* m_db;
     std::string m_export_base_dir;
     std::map<std::string, std::string> m_format_folder_names;
 
-    // --- 修改: 直接持有插件加载器实例 ---
-    MonthPluginLoader m_month_manager; // <-- 已更正类型
+    MonthPluginLoader m_month_manager;
     YearPluginLoader m_year_manager;
 
     void save_report(const std::string& report_content, const std::string& file_path_str);
