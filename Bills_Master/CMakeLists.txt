@@ -25,12 +25,14 @@ find_package(SQLite3 REQUIRED)
 
 
 
-# --- 宏观路径定义 (无变化) ---
+# --- 宏观路径定义 ---
 set(REPROCESSING_DIR "reprocessing")
 set(DB_INSERT_DIR    "db_insert")
 set(QUERY_DIR        "query")
 set(FILEHANDLER_DIR  "file_handler")
 set(APPCONTROLLER_DIR "app_controller")
+# 新增: 为 command_line 帮助文档定义路径
+set(USAGE_HELP_DIR   "usage_help")
 
 
 # ==============================================================================
@@ -46,8 +48,8 @@ file(GLOB REPROCESSING_SOURCES
     "${REPROCESSING_DIR}/validator/verifier/*.cpp"
     "${REPROCESSING_DIR}/modifier/*.cpp"
     "${REPROCESSING_DIR}/modifier/config_loader/*.cpp"
-    "${REPROCESSING_DIR}/modifier/processor/*.cpp"
-    "${REPROCESSING_DIR}/modifier/raw_format/*.cpp"
+    "${REPROCESSING_DIR}/modifier/processor/*.cpp" 
+    "${REPROCESSING_DIR}/modifier/raw_format/*.cpp" 
 )
 
 
@@ -72,10 +74,10 @@ file(GLOB QUERY_SOURCES
     # "${QUERY_DIR}/month/month_format/month_tex/*.cpp"
     # "${QUERY_DIR}/month/month_format/month_typ/*.cpp"
     # "${QUERY_DIR}/month/month_format/month_rst/*.cpp"
-    "${QUERY_DIR}/month/month_query/*.cpp" 
-    "${QUERY_DIR}/year/*.cpp" 
-    "${QUERY_DIR}/year/_year_data/*.cpp" 
-    "${QUERY_DIR}/year/year_format/*.cpp" 
+    "${QUERY_DIR}/month/month_query/*.cpp"
+    "${QUERY_DIR}/year/*.cpp"
+    "${QUERY_DIR}/year/_year_data/*.cpp"
+    "${QUERY_DIR}/year/year_format/*.cpp"
     # ==========================================================
     # ==      核心修改点 1: 移除年度报告插件的源文件        ==
     # ==========================================================
@@ -83,10 +85,13 @@ file(GLOB QUERY_SOURCES
     # "${QUERY_DIR}/year/year_format/year_tex/*.cpp" 
     # "${QUERY_DIR}/year/year_format/year_typ/*.cpp" 
     # "${QUERY_DIR}/year/year_format/year_rst/*.cpp" 
-    "${QUERY_DIR}/year/year_query/*.cpp" 
+    "${QUERY_DIR}/year/year_query/*.cpp"
 )
 file(GLOB FILEHANDLER_SOURCES "${FILEHANDLER_DIR}/*.cpp")
 file(GLOB APPCONTROLLER_SOURCES "${APPCONTROLLER_DIR}/*.cpp")
+
+# 新增: 收集 usage_help 目录下的源文件
+file(GLOB USAGE_HELP_SOURCES "${USAGE_HELP_DIR}/*.cpp")
 
 # 将所有找到的、用于主程序的源文件合并到一个列表中
 set(SHARED_SOURCES
@@ -105,10 +110,13 @@ list(REMOVE_ITEM SHARED_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${REPROCESSING_DIR}
 
 
 # ==============================================================================
-#  可执行文件目标定义 (无变化)
+#  可执行文件目标定义
 # ==============================================================================
+# GUI/TUI 版本，使用共享源文件
 add_executable(bill_matser_app main.cpp ${SHARED_SOURCES})
-add_executable(bill_master_cli main_command.cpp ${SHARED_SOURCES})
+
+# CLI 版本，使用共享源文件和独立的帮助文档源文件
+add_executable(bill_master_cli main_command.cpp ${SHARED_SOURCES} ${USAGE_HELP_SOURCES})
 
 foreach(target bill_matser_app bill_master_cli)
     # 添加包含目录
@@ -153,9 +161,9 @@ add_subdirectory(query/year/year_format/year_typ)
 message(STATUS "All plugins configured.")
 
 # ==============================================================================
-# ==           核心修改点 3: 移除整个 Python 模块编译部分                 ==
+# ==           核心修改点 3: 移除整个 Python 模块编译部分          ==
 # ==============================================================================
-# 以下所有与 pybind11_add_module 和 reprocessing_engine 相关的代码块已被完全删除。
+# 以下所有与 pybind11_add_module 和 reprocessing_engine 相关的代码块已被完全删除。 
 
 
 # --- 自动复制第三方 DLL (无变化) ---
@@ -166,7 +174,7 @@ if(WIN32 AND SQLite3_LIBRARIES)
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${SQLite3_LIBRARIES}"
             $<TARGET_FILE_DIR:${target}>
-            COMMENT "Copying SQLite3 DLL to output directory for ${target}"
+            COMMENT "Copying SQLite3 DLL to output directory for ${target}" 
         )
     endforeach()
 endif()

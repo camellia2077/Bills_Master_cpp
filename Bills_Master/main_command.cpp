@@ -5,7 +5,7 @@
 
 #include "app_controller/AppController.h"
 #include "common/common_utils.h" // for colors
-
+#include "usage_help/usage_help.h" //
 // For UTF-8 output on Windows
 #ifdef _WIN32
 #include <windows.h>
@@ -19,54 +19,7 @@ void setup_console() {
 #endif
 }
 
-// --- ** 修改：更新帮助文档以包含日期区间导出 ** ---
-void print_help(const char* program_name) {
-    std::string command_color = CYAN_COLOR, tile_color = GREEN_COLOR;
-
-    std::println("Bill Master - A command-line tool for processing bill files.\n");
-    std::println("Usage: {} <command> [arguments] [--format <format>] [--type <type>]\n", program_name);
-    
-    // ... (其他帮助信息保持不变) ...
-    std::cout << GREEN_COLOR << "--- Query & Export ---\n" << RESET_COLOR;
-
-    std::println("{}--query year, -q y{} <year>", command_color, RESET_COLOR);
-    std::println("  Queries and exports the annual summary.");
-    std::println("  Example: {} -q y 2024 --format tex\n", program_name);
-
-    std::println("{}--query month, -q m{} <month>", command_color, RESET_COLOR);
-    std::println("  Queries and exports the monthly details (format: YYYYMM).");
-    std::println("  Example: {} -q m 202407\n", program_name);
-
-    std::println("{}--export all, -e a{}", command_color, RESET_COLOR);
-    std::println("  Exports all reports. Use optional --type <month|year> to filter.");
-    std::println("  Example: {} -e a --type month --format tex\n", program_name);
-    
-    std::println("{}--export date, -e d{} <date1> [date2]", command_color, RESET_COLOR);
-    std::println("  Exports reports for a specific date or date range.");
-    std::println("  - Single date: YYYY (all months in year), YYYYMM (single month).");
-    std::println("  - Date range: YYYYMM YYYYMM (all months between start and end, inclusive).");
-    std::println("  Example (single): {} -e d 2024 -f tex", program_name);
-    std::println("  Example (range):  {} -e d 202404 202407 -f md\n", program_name);
-
-    // ... (其他帮助信息保持不变) ...
-    std::cout << GREEN_COLOR << "--- Options ---\n" << RESET_COLOR;
-    
-    std::println("  --format, -f <format>");
-    std::println("    Specify output format ('md', 'tex', 'typ' , 'rst'). Defaults to 'md'.");
-    std::println("    Example: --format md\n");
-    
-    std::println("  --type, -t <type>");
-    std::println("    For '--export all', filters by type ('month'/'m' or 'year'/'y').");
-    std::println("    Example: --type year\n");
-
-    std::cout << GREEN_COLOR << "--- General ---\n" << RESET_COLOR;
-    
-    std::println("  -h, --help");
-    std::println("    Shows this help message.");
-    
-    std::println("  -V, --version");
-    std::println("    Shows the program version.");
-}
+// The print_help function has been moved to usage_help.cpp
 
 int main(int argc, char* argv[]) {
     setup_console();
