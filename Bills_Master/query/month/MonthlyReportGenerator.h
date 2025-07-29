@@ -6,7 +6,7 @@
 #include <vector> // CHANGED: Add include for vector
 #include <sqlite3.h>
 // CHANGED: Include the new specific plugin manager header
-#include "query/month/month_format/MonthlyReportFormatterPluginManager.h" 
+#include "query/month/month_format/MonthPluginLoader.h" 
 #include "query/month/month_query/MonthQuery.h"
 
 class MonthlyReportGenerator {
@@ -22,7 +22,7 @@ public:
 private:
     MonthQuery m_reader;
     // CHANGED: Use the new specific plugin manager class
-    MonthlyReportFormatterPluginManager m_plugin_manager;
+    MonthPluginLoader m_plugin_manager;
 };
 
 #endif // MONTHLY_REPORT_GENERATOR_H
