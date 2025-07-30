@@ -112,31 +112,35 @@ def handle_auto(args):
     for subdir_name in os.listdir(parent_dir):
         full_subdir_path = os.path.join(parent_dir, subdir_name)
         if os.path.isdir(full_subdir_path):
-            sub_dir_lower = subdir_name.lower()
+            # --- MODIFIED LOGIC START ---
+            # 修改匹配逻辑：只匹配目录名中“_”之前的部分（并转为小写）以进行精确匹配。
+            # 这样可以避免当目录名包含多个关键字时（如 'typst_project_for_latex'）发生混淆。
+            # 现在，'LaTeX_log' 会被正确识别为 'latex'。
+            base_name_to_match = subdir_name.split('_')[0].lower()
+            
             matched = False
             for keywords, (log_name, handler_func) in compiler_map.items():
-                for keyword in keywords:
-                    if keyword in sub_dir_lower:
-                        found_dirs_count += 1
-                        print(f"\n\n>>> 自动检测到 '{subdir_name}' -> 使用 {log_name} 编译器...")
-                        mock_args = argparse.Namespace(
-                            source_dir=full_subdir_path,
-                            font=args.font,
-                            output_dir=args.output_dir,
-                            jobs=args.jobs
-                        )
-                        
-                        format_start_time = time.perf_counter()
-                        file_count = handler_func(mock_args)
-                        format_end_time = time.perf_counter()
-                        
-                        timing_summary[log_name] = (format_end_time - format_start_time, file_count)
-                        
-                        matched = True
-                        break
-                if matched:
+                if base_name_to_match in keywords:
+                    found_dirs_count += 1
+                    print(f"\n\n>>> 自动检测到 '{subdir_name}' -> 使用 {log_name} 编译器...")
+                    mock_args = argparse.Namespace(
+                        source_dir=full_subdir_path,
+                        font=args.font,
+                        output_dir=args.output_dir,
+                        jobs=args.jobs
+                    )
+                    
+                    format_start_time = time.perf_counter()
+                    file_count = handler_func(mock_args)
+                    format_end_time = time.perf_counter()
+                    
+                    timing_summary[log_name] = (format_end_time - format_start_time, file_count)
+                    
+                    matched = True
+                    # 找到匹配项后，中断对其他编译器的检查
                     break
-    
+            # --- MODIFIED LOGIC END ---
+
     if found_dirs_count == 0:
         print(f"\n在 '{parent_dir}' 中没有找到任何可识别的编译子目录。")
         print("请确保子目录名称包含关键字: latex, tex, markdown, md, rst, rest, typst, typ")
