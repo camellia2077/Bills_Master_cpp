@@ -5,6 +5,7 @@
 #include <vector>
 #include <stdexcept>
 #include <string>
+#include <map> // [修改] 确保包含 map 头文件
 
 #include "reprocessing/Reprocessor.h"
 #include "db_insert/DataProcessor.h"
@@ -15,10 +16,15 @@
 
 namespace fs = std::filesystem;
 
-// The constructor signature now matches the header.
-AppController::AppController(const std::string& db_path)
-    : m_db_path(db_path) {
-    // Defines the exact list of plugin DLL/SO files to be used.
+
+// 构造函数的定义现在接收全部三个参数
+AppController::AppController(const std::string& db_path, 
+    const std::string& config_path, 
+    const std::string& modified_output_dir)
+    // 使用传入的参数来初始化对应的成员变量
+    : m_db_path(db_path),
+    m_config_path(config_path),
+    m_modified_output_dir(modified_output_dir) {
     m_plugin_files = {
         "plugins/md_month_formatter.dll",
         "plugins/md_year_formatter.dll",
@@ -31,17 +37,23 @@ AppController::AppController(const std::string& db_path)
 
         "plugins/typ_month_formatter.dll", 
         "plugins/typ_year_formatter.dll"
-        // On Linux/macOS, the filenames should end in .so
-        // e.g., "plugins/md_month_formatter.so", 
+    };
+
+    // 配置导出目录
+    m_export_base_dir = "exported_files";
+    m_format_folder_names = {
+        {"md", "Markdown_bills"}, // md格式的报告放在这个文件夹
+        {"tex", "LaTeX_bills"},     // tex格式的报告放在这个文件夹
+        {"rst", "reST_bills"},      // rst格式的报告放在这个文件夹
+        {"typ", "typst_bills"}      // typ格式的报告放在这个文件夹
     };
 }
 
-// ... handle_validation, handle_modification, handle_import, and handle_full_workflow methods remain unchanged ...
 bool AppController::handle_validation(const std::string& path) {
     ProcessStats stats;
     try {
         FileHandler file_handler;
-        Reprocessor reprocessor("./config");
+        Reprocessor reprocessor(m_config_path);
         std::vector<fs::path> files = file_handler.find_txt_files(path);
         for (const auto& file : files) {
             std::cout << "\n--- Validating: " << file.string() << " ---\n";
@@ -63,19 +75,20 @@ bool AppController::handle_modification(const std::string& path) {
     ProcessStats stats;
     try {
         FileHandler file_handler;
-        Reprocessor reprocessor("./config");
+        Reprocessor reprocessor(m_config_path);
         std::vector<fs::path> files = file_handler.find_txt_files(path);
         for (const auto& file : files) {
             std::string filename_stem = file.stem().string();
             fs::path modified_path;
             if (filename_stem.length() >= 4) {
                 std::string year = filename_stem.substr(0, 4);
-                fs::path target_dir = fs::path("txt_raw") / year;
-                fs::create_directories(target_dir);
-                modified_path = target_dir / file.filename();
+            // --> 这里定义了 "txt_raw"
+            fs::path target_dir = fs::path(m_modified_output_dir) / year;
+            fs::create_directories(target_dir);
+            modified_path = target_dir / file.filename();
             } else {
                 std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Could not determine year from filename '" << file.filename().string() << "'. Saving in root txt_raw directory.\n";
-                fs::path target_dir("txt_raw");
+                fs::path target_dir(m_modified_output_dir);
                 fs::create_directory(target_dir);
                 modified_path = target_dir / file.filename();
             }
@@ -125,7 +138,7 @@ bool AppController::handle_full_workflow(const std::string& path) {
     std::cout << "--- Automatic processing workflow started ---\n";
     try {
         FileHandler file_handler;
-        Reprocessor reprocessor("./config");
+        Reprocessor reprocessor(m_config_path);
         DataProcessor data_processor;
 
         std::vector<fs::path> files = file_handler.find_txt_files(path);
@@ -152,11 +165,11 @@ bool AppController::handle_full_workflow(const std::string& path) {
             fs::path modified_path;
             if (filename_stem.length() >= 4) {
                 std::string year = filename_stem.substr(0, 4);
-                fs::path target_dir = fs::path("txt_raw") / year;
+                fs::path target_dir = fs::path(m_modified_output_dir) / year;
                 fs::create_directories(target_dir);
                 modified_path = target_dir / file_path.filename();
             } else {
-                fs::path target_dir = fs::path("txt_raw");
+                fs::path target_dir(m_modified_output_dir);
                 fs::create_directory(target_dir);
                 modified_path = target_dir / file_path.filename();
             }
@@ -187,27 +200,40 @@ bool AppController::handle_full_workflow(const std::string& path) {
     return stats.failure == 0;
 }
 
-
-bool AppController::handle_export(const std::string& type, const std::string& value, const std::string& format_str) {
+bool AppController::handle_export(const std::string& type, const std::vector<std::string>& values, const std::string& format_str) {
     bool success = false;
     try {
-        // [FIXED] Use the new m_plugin_files member to initialize QueryFacade.
-        QueryFacade facade(m_db_path, m_plugin_files);
+        QueryFacade facade(m_db_path, m_plugin_files, m_export_base_dir, m_format_folder_names);
 
         if (type == "all") {
             success = facade.export_all_reports(format_str);
+        } else if (type == "all_months") {
+            success = facade.export_all_monthly_reports(format_str);
+        } else if (type == "all_years") {
+            success = facade.export_all_yearly_reports(format_str);
+        } else if (type == "date") {
+            if (values.empty()) {
+                throw std::runtime_error("At least one date string must be provided for 'date' export.");
+            }
+            if (values.size() == 1) { // 单个日期
+                success = facade.export_by_date(values[0], format_str);
+            } else if (values.size() == 2) { // 日期区间
+                success = facade.export_by_date_range(values[0], values[1], format_str);
+            } else {
+                throw std::runtime_error("For 'date' export, please provide one (YYYY or YYYYMM) or two (YYYYMM YYYYMM) date values.");
+            }
         } else if (type == "year") {
-            if (value.empty()) {
+            if (values.empty() || values[0].empty()) {
                 throw std::runtime_error("A year must be provided to export a yearly report.");
             }
-            success = facade.export_yearly_report(value, format_str);
+            success = facade.export_yearly_report(values[0], format_str);
         } else if (type == "month") {
-            if (value.empty()) {
+            if (values.empty() || values[0].empty()) {
                 throw std::runtime_error("A month (YYYYMM) must be provided to export a monthly report.");
             }
-            success = facade.export_monthly_report(value, format_str);
+            success = facade.export_monthly_report(values[0], format_str);
         } else {
-            throw std::runtime_error("Unknown export type: " + type + ". Please use 'all', 'year', or 'month'.");
+            throw std::runtime_error("Unknown export type: " + type);
         }
     } catch (const std::exception& e) {
         std::cerr << RED_COLOR << "Export failed: " << RESET_COLOR << e.what() << std::endl;
