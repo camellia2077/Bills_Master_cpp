@@ -2,7 +2,7 @@
 import os
 import time
 import argparse
-from typing import Callable, Tuple
+from typing import Callable, List, Tuple, Dict, Any
 
 # 使用相对导入，从同一个包内的其他模块导入
 from .core import process_directory
@@ -94,13 +94,87 @@ def handle_typ(args):
     print(f"===== Typst 文件处理完成 (共 {file_count} 个文件，总耗时: {end_time - start_time:.2f}秒) =====")
     return file_count
 
-def handle_auto(args):
+def _discover_tasks(source_dir: str, compiler_map: Dict, types_to_compile: List[str]) -> List[Dict[str, Any]]:
+    """
+    扫描源目录，根据规则和配置发现并筛选需要编译的任务。
+    :return: 一个包含待执行任务信息的列表。
+    """
+    tasks = []
+    types_to_process_lower = [t.lower() for t in types_to_compile]
+    print(f"注意：根据配置，将只编译以下类型 -> {types_to_compile}")
+
+    for subdir_name in os.listdir(source_dir):
+        full_subdir_path = os.path.join(source_dir, subdir_name)
+        if not os.path.isdir(full_subdir_path):
+            continue
+
+        base_name_to_match = subdir_name.split('_')[0].lower()
+        
+        for keywords, (log_name, handler_func) in compiler_map.items():
+            if base_name_to_match in keywords:
+                if log_name.lower() not in types_to_process_lower:
+                    print(f"\n>>> 检测到 '{subdir_name}' -> 类型 '{log_name}' 不在编译列表中，已跳过。")
+                else:
+                    print(f"\n>>> 检测到 '{subdir_name}' -> 将使用 {log_name} 编译器...")
+                    tasks.append({
+                        'log_name': log_name,
+                        'handler_func': handler_func,
+                        'source_path': full_subdir_path
+                    })
+                break  # 找到匹配，处理或跳过后，继续检查下一个文件夹
+    return tasks
+
+def _execute_tasks(tasks: List[Dict[str, Any]], args: argparse.Namespace) -> Dict:
+    """
+    执行所有已发现的任务，并返回计时摘要。
+    :param tasks: 从 _discover_tasks 返回的任务列表。
+    :param args: 主程序传入的参数。
+    :return: 一个包含编译时间和文件数量的字典。
+    """
+    timing_summary = {}
+    for task in tasks:
+        print(f"\n--- 开始编译 {task['log_name']} ---")
+        mock_args = argparse.Namespace(
+            source_dir=task['source_path'],
+            font=args.font,
+            output_dir=args.output_dir,
+            jobs=args.jobs,
+        )
+        
+        format_start_time = time.perf_counter()
+        file_count = task['handler_func'](mock_args)
+        format_end_time = time.perf_counter()
+        
+        if file_count > 0:
+            timing_summary[task['log_name']] = (format_end_time - format_start_time, file_count)
+    return timing_summary
+
+def _print_summary(timing_summary: Dict):
+    """
+    打印格式化的编译时间摘要。
+    """
+    if not timing_summary:
+        return
+
+    print("\n\n" + "="*35)
+    print("     自动模式编译时间摘要")
+    print("="*35)
+    for format_name, (duration, count) in timing_summary.items():
+        avg_time_str = f"平均: {(duration / count):.2f} 秒/文件" if count > 0 else "无文件编译"
+        print(f"- {format_name:<10} | 总耗时: {duration:>7.2f} 秒 | {avg_time_str}")
+    print("="*35)
+
+# --- 重构点 2: `handle_auto` 现在是干净的协调者 ---
+
+def handle_auto(args: argparse.Namespace):
+    """
+    自动编译模式的主入口点，负责协调任务发现、执行和报告。
+    """
     parent_dir = args.source_dir
     print(f"===== 启动自动编译模式 =====")
     print(f"扫描父目录: '{parent_dir}'")
-    
-    timing_summary = {}
-    
+
+    # 编译器映射关系，也可以考虑移到更全局的配置中
     compiler_map: dict[Tuple[str, ...], Tuple[str, Callable]] = {
         ('latex', 'tex'): ('TeX', handle_tex),
         ('markdown', 'md'): ('Markdown', handle_md),
@@ -108,47 +182,16 @@ def handle_auto(args):
         ('typst', 'typ'): ('Typst', handle_typ)
     }
 
-    found_dirs_count = 0
-    for subdir_name in os.listdir(parent_dir):
-        full_subdir_path = os.path.join(parent_dir, subdir_name)
-        if os.path.isdir(full_subdir_path):
-            # --- MODIFIED LOGIC START ---
-            # 修改匹配逻辑：只匹配目录名中“_”之前的部分（并转为小写）以进行精确匹配。
-            # 这样可以避免当目录名包含多个关键字时（如 'typst_project_for_latex'）发生混淆。
-            # 现在，'LaTeX_log' 会被正确识别为 'latex'。
-            base_name_to_match = subdir_name.split('_')[0].lower()
-            
-            matched = False
-            for keywords, (log_name, handler_func) in compiler_map.items():
-                if base_name_to_match in keywords:
-                    found_dirs_count += 1
-                    print(f"\n\n>>> 自动检测到 '{subdir_name}' -> 使用 {log_name} 编译器...")
-                    mock_args = argparse.Namespace(
-                        source_dir=full_subdir_path,
-                        font=args.font,
-                        output_dir=args.output_dir,
-                        jobs=args.jobs
-                    )
-                    
-                    format_start_time = time.perf_counter()
-                    file_count = handler_func(mock_args)
-                    format_end_time = time.perf_counter()
-                    
-                    timing_summary[log_name] = (format_end_time - format_start_time, file_count)
-                    
-                    matched = True
-                    # 找到匹配项后，中断对其他编译器的检查
-                    break
-            # --- MODIFIED LOGIC END ---
+    # 1. 发现并筛选任务
+    tasks_to_run = _discover_tasks(parent_dir, compiler_map, args.compile_types)
 
-    if found_dirs_count == 0:
-        print(f"\n在 '{parent_dir}' 中没有找到任何可识别的编译子目录。")
-        print("请确保子目录名称包含关键字: latex, tex, markdown, md, rst, rest, typst, typ")
-    else:
-        print("\n\n" + "="*35)
-        print("     自动模式编译时间摘要")
-        print("="*35)
-        for format_name, (duration, count) in timing_summary.items():
-            avg_time_str = f"平均: {(duration / count):.2f} 秒/文件" if count > 0 else "无文件编译"
-            print(f"- {format_name:<10} | 总耗时: {duration:>7.2f} 秒 | {avg_time_str}")
-        print("="*35)
+    if not tasks_to_run:
+        print(f"\n在 '{parent_dir}' 中没有找到任何需要编译的目录。")
+        print(f"(当前配置编译类型: {args.compile_types})")
+        return
+
+    # 2. 执行任务
+    summary = _execute_tasks(tasks_to_run, args)
+
+    # 3. 打印总结报告
+    _print_summary(summary)

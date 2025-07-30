@@ -5,12 +5,12 @@ import argparse
 import time
 import shutil
 
-# --- 修改点 1: 从 config.py 导入路径配置 ---
+# --- 修改点 1: 从 config.py 导入新增的配置 ---
 try:
-    from config import SOURCE_DIRECTORY, OUTPUT_DIRECTORY
+    from config import SOURCE_DIRECTORY, OUTPUT_DIRECTORY, COMPILE_TYPES
 except ImportError:
     print("错误：无法找到或导入 config.py 文件。")
-    print("请确保在项目根目录下创建了 config.py 文件，并其中定义了 SOURCE_DIRECTORY 和 OUTPUT_DIRECTORY。")
+    print("请确保 config.py 文件存在，并其中定义了 SOURCE_DIRECTORY, OUTPUT_DIRECTORY, 和 COMPILE_TYPES。")
     sys.exit(1)
 
 # 从 internal 包中导入命令处理函数
@@ -20,10 +20,9 @@ def main():
     program_start_time = time.perf_counter()
     parser = argparse.ArgumentParser(
         description="一个通用的、支持并行的文档编译器（配置文件驱动）。",
-        epilog="现在，所有路径都在 config.py 中配置。直接运行 'python main.py' 即可。"
+        epilog="现在，所有路径和编译类型都在 config.py 中配置。直接运行 'python main.py' 即可。"
     )
     
-    # --- 修改点 2: 简化命令行参数，只保留可选的功能性参数 ---
     parser.add_argument('--no-clean', action='store_true', help='【可选】启动时不清理旧的输出目录。')
     parser.add_argument(
         '--jobs', '-j',
@@ -35,10 +34,10 @@ def main():
 
     args = parser.parse_args()
     
-    # --- 修改点 3: 使用从 config.py 导入的路径 ---
     source_dir_to_process = SOURCE_DIRECTORY
     output_dir_to_process = os.path.join(os.getcwd(), OUTPUT_DIRECTORY)
 
+    # 清理和创建目录的逻辑 (保持不变)
     if not args.no_clean:
         if os.path.exists(output_dir_to_process):
             print(f"🧹 默认执行清理，正在删除旧的输出目录: '{output_dir_to_process}'")
@@ -48,11 +47,7 @@ def main():
             except OSError as e:
                 print(f"致命错误：无法删除输出目录 '{output_dir_to_process}': {e}")
                 sys.exit(1)
-        else:
-            print(f"🧹 输出目录 '{output_dir_to_process}' 不存在，无需清理。")
-    else:
-        print("🚫 用户选择跳过清理步骤。")
-
+    # ... (省略部分未改变的代码) ...
     try:
         os.makedirs(output_dir_to_process, exist_ok=True)
     except OSError as e:
@@ -63,13 +58,13 @@ def main():
         print(f"错误：在 config.py 中配置的源路径 '{source_dir_to_process}' 不是一个有效的目录。")
         sys.exit(1)
         
-    # --- 修改点 4: 直接构建参数并调用 handle_auto ---
-    # 将所有需要的参数（包括从config加载的路径和命令行可选参数）打包到一个对象中
+    # --- 修改点 2: 将 COMPILE_TYPES 添加到参数包中 ---
     auto_mode_args = argparse.Namespace(
         source_dir=source_dir_to_process,
         output_dir=output_dir_to_process,
         font=args.font,
-        jobs=args.jobs
+        jobs=args.jobs,
+        compile_types=COMPILE_TYPES  # <--- 将编译类型列表传递下去
     )
     handle_auto(auto_mode_args)
     
