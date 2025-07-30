@@ -9,7 +9,7 @@
 
 #include "reprocessing/Reprocessor.h"
 #include "db_insert/DataProcessor.h"
-#include "query/QueryDb.h"
+#include "query/core/QueryDb.h"
 #include "file_handler/FileHandler.h"
 #include "common/version.h"
 #include "common/common_utils.h"

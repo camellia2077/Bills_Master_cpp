@@ -61,31 +61,31 @@ file(GLOB DB_INSERT_SOURCES
 )
 file(GLOB QUERY_SOURCES
     "${QUERY_DIR}/*.cpp" 
-    "${QUERY_DIR}/metadata_reader/*.cpp" 
-    "${QUERY_DIR}/export_bills/*.cpp" 
-    "${QUERY_DIR}/month/*.cpp" 
-    "${QUERY_DIR}/month/_month_data/*.cpp" 
-    "${QUERY_DIR}/month/common/*.cpp" 
-    "${QUERY_DIR}/month/month_format/*.cpp" 
+    
+    "${QUERY_DIR}/components/*.cpp" 
+    "${QUERY_DIR}/components/monthly_report/*.cpp" 
+    "${QUERY_DIR}/components/yearly_report/*.cpp" 
+
+    "${QUERY_DIR}/core/*.cpp" 
+
+    "${QUERY_DIR}/plugins/*.cpp" 
+    "${QUERY_DIR}/plugins/month_formatters/*.cpp" 
     # 移除插件源文件
     # 以下各行注释掉，因为这些格式化器现在将作为独立的动态库被编译。
     # 将它们包含在这里会导致“重复定义”的链接错误。
-    # "${QUERY_DIR}/month/month_format/month_md/*.cpp"
-    # "${QUERY_DIR}/month/month_format/month_tex/*.cpp"
-    # "${QUERY_DIR}/month/month_format/month_typ/*.cpp"
-    # "${QUERY_DIR}/month/month_format/month_rst/*.cpp"
-    "${QUERY_DIR}/month/month_query/*.cpp"
-    "${QUERY_DIR}/year/*.cpp"
-    "${QUERY_DIR}/year/_year_data/*.cpp"
-    "${QUERY_DIR}/year/year_format/*.cpp"
-    # ==========================================================
-    # ==      核心修改点 1: 移除年度报告插件的源文件        ==
-    # ==========================================================
-    # "${QUERY_DIR}/year/year_format/year_md/*.cpp" 
-    # "${QUERY_DIR}/year/year_format/year_tex/*.cpp" 
-    # "${QUERY_DIR}/year/year_format/year_typ/*.cpp" 
-    # "${QUERY_DIR}/year/year_format/year_rst/*.cpp" 
-    "${QUERY_DIR}/year/year_query/*.cpp"
+    #"${QUERY_DIR}/plugins/month_formatters/month_md/*.cpp" 
+    #"${QUERY_DIR}/plugins/month_formatters/month_rst/*.cpp" 
+    #"${QUERY_DIR}/plugins/month_formatters/month_tex/*.cpp" 
+    #"${QUERY_DIR}/plugins/month_formatters/month_typ/*.cpp" 
+
+    "${QUERY_DIR}/plugins/year_formatters/*.cpp" 
+    # 移除插件源文件
+    # 以下各行注释掉，因为这些格式化器现在将作为独立的动态库被编译。
+    # 将它们包含在这里会导致“重复定义”的链接错误。
+    #"${QUERY_DIR}/plugins/year_formatters/year_md/*.cpp" 
+    #"${QUERY_DIR}/plugins/year_formatters/year_rst/*.cpp" 
+    #"${QUERY_DIR}/plugins/year_formatters/year_tex/*.cpp" 
+    #"${QUERY_DIR}/plugins/year_formatters/year_typ/*.cpp" 
 )
 file(GLOB FILEHANDLER_SOURCES "${FILEHANDLER_DIR}/*.cpp")
 file(GLOB APPCONTROLLER_SOURCES "${APPCONTROLLER_DIR}/*.cpp")
@@ -139,30 +139,27 @@ foreach(target bill_matser_app bill_master_cli)
 endforeach()
 
 
-# ==============================================================================
+
 #  加载插件模块
-# ==============================================================================
 message(STATUS "Loading report formatter plugins...")
 # --- 月度报告插件 ---
-add_subdirectory(query/month/month_format/month_md)
-add_subdirectory(query/month/month_format/month_rst)
-add_subdirectory(query/month/month_format/month_tex)
-add_subdirectory(query/month/month_format/month_typ)
+add_subdirectory(query/plugins/month_formatters/month_md)
+add_subdirectory(query/plugins/month_formatters/month_rst)
+add_subdirectory(query/plugins/month_formatters/month_tex)
+add_subdirectory(query/plugins/month_formatters/month_typ)
 
-# ==========================================================
-# ==      核心修改点 2: 添加年度报告插件的子目录        ==
-# ==========================================================
+
+# 添加年度报告插件的子目录
 # --- 年度报告插件 ---
-add_subdirectory(query/year/year_format/year_md)
-add_subdirectory(query/year/year_format/year_tex)
-add_subdirectory(query/year/year_format/year_rst)
-add_subdirectory(query/year/year_format/year_typ)
+add_subdirectory(query/plugins/year_formatters/year_md/)
+add_subdirectory(query/plugins/year_formatters/year_tex)
+add_subdirectory(query/plugins/year_formatters/year_rst)
+add_subdirectory(query/plugins/year_formatters/year_typ)
 
 message(STATUS "All plugins configured.")
 
-# ==============================================================================
-# ==           核心修改点 3: 移除整个 Python 模块编译部分          ==
-# ==============================================================================
+
+# 移除整个 Python 模块编译部分(因为这个是主程序不是封装python模块的程序)
 # 以下所有与 pybind11_add_module 和 reprocessing_engine 相关的代码块已被完全删除。 
 
 
