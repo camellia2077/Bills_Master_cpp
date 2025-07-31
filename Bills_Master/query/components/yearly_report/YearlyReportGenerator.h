@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <sqlite3.h>
-#include "YearlyDataReader.h"
+#include "YearQuery.h"
 #include "query/plugins/common/PluginLoader.h" // 1. 包含新的通用加载器
 #include "query/plugins/year_formatters/IYearlyReportFormatter.h" // 2. 包含接口
 
@@ -17,7 +17,7 @@ public:
     std::string generate(int year, const std::string& format_name);
 
 private:
-    YearlyDataReader m_reader;
+    YearQuery m_reader;
     // 3. 使用模板类实例化年度插件加载器
     PluginLoader<IYearlyReportFormatter> m_plugin_manager;
 };

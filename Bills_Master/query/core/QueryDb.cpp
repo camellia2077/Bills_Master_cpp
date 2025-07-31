@@ -5,7 +5,7 @@
 #include "BillMetadataReader.h"
 
 #include "query/components/monthly_report/MonthQuery.h"
-#include "query/components/yearly_report/YearlyDataReader.h"
+#include "query/components/yearly_report/YearQuery.h"
 
 #include <stdexcept>
 #include <vector>
@@ -63,7 +63,7 @@ std::vector<std::string> QueryFacade::get_all_bill_dates() {
     return reader.get_all_bill_dates();
 }
 std::string QueryFacade::get_yearly_summary_report(int year, const std::string& format_name) {
-    YearlyDataReader reader(m_db);
+    YearQuery reader(m_db);
     YearlyReportData data = reader.read_yearly_data(year);
     auto formatter = m_year_manager.createFormatter(format_name);
     if (!formatter) {

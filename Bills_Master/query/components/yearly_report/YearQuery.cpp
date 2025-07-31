@@ -1,11 +1,11 @@
-// YearlyDataReader.cpp
-#include "YearlyDataReader.h"
+// YearQuery.cpp
+#include "YearQuery.h"
 #include <stdexcept>
 #include <string>
 
-YearlyDataReader::YearlyDataReader(sqlite3* db_connection) : m_db(db_connection) {}
+YearQuery::YearQuery(sqlite3* db_connection) : m_db(db_connection) {}
 
-YearlyReportData YearlyDataReader::read_yearly_data(int year) {
+YearlyReportData YearQuery::read_yearly_data(int year) {
     YearlyReportData data;
     data.year = year;
 
