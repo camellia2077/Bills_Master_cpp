@@ -1,3 +1,4 @@
+#include "common/pch.h"
 // MonthlyReportGenerator.cpp
 #include "MonthlyReportGenerator.h"
 #include <stdexcept>

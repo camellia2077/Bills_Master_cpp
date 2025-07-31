@@ -1,3 +1,4 @@
+#include "common/pch.h"
 #include "BillContentTransformer.h"
 #include <sstream>
 #include <regex>

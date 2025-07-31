@@ -121,21 +121,21 @@ add_executable(bill_master_cli main_command.cpp ${SHARED_SOURCES} ${USAGE_HELP_S
 
 foreach(target bill_matser_app bill_master_cli)
     # 添加包含目录
-    # 我们只需要提供一个路径：项目的根目录。
-    # CMAKE_CURRENT_SOURCE_DIR 在根 CMakeLists.txt 中就代表项目根目录。
-    # PRIVATE 表示这个设置只对当前目标生效，不会传递给依赖它的其他目标。
     target_include_directories(${target} PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}"
     )
-
-    # 链接外部库 (无变化)
+    # 以启用预编译头文件
+    target_precompile_headers(${target} PRIVATE
+        "${CMAKE_SOURCE_DIR}/common/pch.h"
+    )
+    # 链接外部库
     target_link_libraries(${target} PRIVATE
         nlohmann_json::nlohmann_json
         SQLite::SQLite3
         stdc++exp
     )
 
-    # 设置编译选项 (无变化)
+    # 设置编译选项
     target_compile_options(${target} PRIVATE -Wall -fdiagnostics-color=always)
 endforeach()
 

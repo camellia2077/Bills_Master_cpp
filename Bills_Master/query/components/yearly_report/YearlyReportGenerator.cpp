@@ -1,3 +1,4 @@
+#include "common/pch.h"
 // YearlyReportGenerator.cpp
 #include "YearlyReportGenerator.h"
 #include <stdexcept>

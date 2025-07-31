@@ -10,48 +10,49 @@ from pathlib import Path
 def main():
     """
     Navigates to the project root, sets up a debug build directory,
-    and runs CMake to build the project.
+    and runs CMake to build the project. Supports a 'clean' argument.
     """
-    # --- Script Configuration ---
-    # Record the start time (monotonic clock is best for measuring duration)
+    # 检查命令行是否传入了 'clean' 参数
+    should_clean_first = len(sys.argv) > 1 and sys.argv[1].lower() == 'clean'
+
     start_time = time.monotonic()
     
-    # --- Main Logic ---
     try:
-        # Get the directory of the current script and switch to it.
-        # This is the Python equivalent of the SCRIPT_DIR logic in the bash script.
         project_dir = Path(__file__).resolve().parent
         os.chdir(project_dir)
         print(f"==> Switched to project directory: {os.getcwd()}")
 
         build_dir = "build_debug"
+        build_dir_path = Path(build_dir)
 
-        # If the build directory exists, remove it.
-        if os.path.isdir(build_dir):
-            print("==> Found existing debug build directory. Removing it...")
-            shutil.rmtree(build_dir)
-            print("==> Old debug build directory removed.")
+        # ✅ --- 新增的清理逻辑 ---
+        if should_clean_first and build_dir_path.is_dir():
+            print(f"==> 'clean' option provided. Cleaning existing debug build directory...")
+            os.chdir(build_dir)
+            subprocess.run(["ninja", "clean"], check=True)
+            print("==> Debug build directory cleaned.")
+            os.chdir(project_dir)
 
-        # Create the new build directory and enter it.
-        print("==> Creating new debug build directory...")
-        os.makedirs(build_dir)
-        os.chdir(build_dir)
-        print(f"==> Entered debug build directory: {os.getcwd()}")
+        # --- 后续逻辑与之前保持一致 ---
+        is_first_build = not build_dir_path.is_dir()
 
-        # Run CMake to configure the project. The `check=True` argument will
-        # cause the script to exit if the command fails (like `set -e`).
-        print("==> Running CMake to configure the project for DEBUG...")
-        subprocess.run(
-            ["cmake", "-DCMAKE_BUILD_TYPE=Debug", ".."],
-            check=True
-        )
+        if is_first_build:
+            print(f"==> Build directory '{build_dir}' not found. Creating and configuring...")
+            os.makedirs(build_dir)
+            os.chdir(build_dir)
+            
+            cmake_command = [
+                "cmake", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Debug",
+                "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
+                "-DCMAKE_C_COMPILER_LAUNCHER=ccache", ".."
+            ]
+            subprocess.run(cmake_command, check=True)
+        else:
+            os.chdir(build_dir)
+            print(f"==> Entered existing build directory: {os.getcwd()}")
 
-        # Compile the project.
-        print("==> Compiling the project (Debug Mode)...")
-        subprocess.run(
-            ["cmake", "--build", "."],
-            check=True
-        )
+        print("==> Compiling the project (Debug Mode, incremental build)...")
+        subprocess.run(["cmake", "--build", "."], check=True)
 
     except subprocess.CalledProcessError as e:
         print(f"\n!!! A build step failed with exit code {e.returncode}.")
@@ -60,19 +61,15 @@ def main():
         print(f"\n!!! An unexpected error occurred: {e}")
         sys.exit(1)
 
-    # --- Completion Message ---
-    print("")
-    print("================================================================")
+    # --- 结束信息 ---
+    print("\n================================================================")
     print("Debug build complete!")
     print(f"Executables are located in the '{build_dir}/bin' directory.")
-    print(f"You can run it from the project root with: ./{build_dir}/bin/bill_master_cli")
     print("================================================================")
 
-    # --- Calculate and print the total duration ---
     end_time = time.monotonic()
     duration = int(end_time - start_time)
     minutes, seconds = divmod(duration, 60)
-
     print(f"Total build time: {minutes}m {seconds}s")
     print("================================================================")
 

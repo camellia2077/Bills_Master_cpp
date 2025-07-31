@@ -1,3 +1,4 @@
+#include "common/pch.h"
 #include "usage_help.h"
 #include <iostream>
 #include <string>

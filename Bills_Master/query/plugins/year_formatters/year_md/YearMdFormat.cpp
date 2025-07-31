@@ -1,3 +1,4 @@
+#include "common/pch.h"
 // YearMdFormat.cpp
 #include "YearMdFormat.h"
 #include <sstream>

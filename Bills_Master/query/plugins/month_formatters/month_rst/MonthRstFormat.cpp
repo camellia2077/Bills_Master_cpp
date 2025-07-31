@@ -1,3 +1,4 @@
+#include "common/pch.h"
 // MonthRstFormat.cpp
 #include "MonthRstFormat.h"
 #include "query/components/monthly_report/ReportSorter.h" // 排序器头文件

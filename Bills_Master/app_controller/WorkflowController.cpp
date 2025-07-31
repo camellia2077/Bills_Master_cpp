@@ -1,3 +1,4 @@
+#include "common/pch.h"
 #include "WorkflowController.h"
 #include "reprocessing/Reprocessor.h"
 #include "db_insert/DataProcessor.h"
