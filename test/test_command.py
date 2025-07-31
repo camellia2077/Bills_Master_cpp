@@ -12,6 +12,9 @@ import re
 # *** 重要: 这是您项目中所有产物 (exe, dll) 所在的目录 ***
 BUILD_DIR = "C:/Computer/my_github/github_cpp/bill_master/Bills_Master_cpp/Bills_Master/build/bin"  
 
+# *** 重要: 这是您存放账单文件的目录 ***
+BILLS_DIR = "C:/path/to/your/bills_folder" # <--- 请将这里修改为您账单文件夹的实际路径
+
 # <--- 新增: 定义所有需要复制的插件 DLL 名称 --->
 PLUGIN_DLLS = [
     "md_month_formatter.dll",
@@ -25,9 +28,9 @@ PLUGIN_DLLS = [
     "typ_year_formatter.dll"
 ]
 
-# 定义需要清理的文件和文件夹
+# 定义需要清理的文件
 FILES_TO_DELETE = [
-    "bills.db"
+    "bills.sqlite3"
 ]
 DIRS_TO_DELETE = [
     "txt_raw",
@@ -229,13 +232,21 @@ def main():
     # --- 2. 设置路径和执行器 ---
     # 可执行文件现在位于脚本所在的目录中
     exe_path = os.path.join(script_dir, preparer.exe_name)
-    bills_path = os.path.join(script_dir, "bills")
+    
+    # ⭐️⭐️⭐️ 修改点: 直接从全局变量获取账单路径 ⭐️⭐️⭐️
+    bills_path = BILLS_DIR 
+    
     export_path = os.path.join(script_dir, "exported_files")
     output_dir = os.path.join(script_dir, "output")
     
+    # 检查全局变量是否已正确设置
+    if "C:/path/to/your/bills_folder" in bills_path:
+        print(f"\n{RED}错误: 请先在脚本顶部的 'BILLS_DIR' 变量中设置您的账单文件夹路径。{RESET}")
+        sys.exit(1)
+    
     if not os.path.exists(bills_path):
-        print(f"\n{RED}错误: 'bills' 文件夹不存在，无法执行测试。{RESET}")
-        print(f"{YELLOW}请在脚本所在目录创建 'bills' 文件夹并放入您的账单文件。{RESET}")
+        print(f"\n{RED}错误: 'bills' 文件夹不存在: '{bills_path}'{RESET}")
+        print(f"{YELLOW}请检查脚本顶部的 'BILLS_DIR' 变量是否指向了正确的路径。{RESET}")
         sys.exit(1)
 
     executor = CommandExecutor(exe_path, output_dir)
