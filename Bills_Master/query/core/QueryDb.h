@@ -7,8 +7,9 @@
 #include <map>
 #include <sqlite3.h>
 
-#include "query/plugins/month_formatters/MonthPluginLoader.h"
-#include "query/plugins/year_formatters/YearPluginLoader.h"
+#include "query/plugins/common/PluginLoader.h" // 1. 包含新的通用加载器头文件
+#include "query/plugins/month_formatters/IMonthReportFormatter.h" // 2. 包含接口定义
+#include "query/plugins/year_formatters/IYearlyReportFormatter.h"  // 2. 包含接口定义
 
 class QueryFacade {
 public:
@@ -56,11 +57,13 @@ private:
     std::string m_export_base_dir;
     std::map<std::string, std::string> m_format_folder_names;
 
-    MonthPluginLoader m_month_manager;
-    YearPluginLoader m_year_manager;
-
     void save_report(const std::string& report_content, const std::string& file_path_str);
     std::string get_display_format_name(const std::string& short_name) const;
+
+
+    // 用模板类实例化月度和年度插件加载器
+    PluginLoader<IMonthReportFormatter> m_month_manager;
+    PluginLoader<IYearlyReportFormatter> m_year_manager;
 };
 
 #endif // QUERY_FACADE_H
