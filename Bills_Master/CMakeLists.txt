@@ -63,6 +63,7 @@ file(GLOB QUERY_SOURCES
     "${QUERY_DIR}/*.cpp" 
     
     "${QUERY_DIR}/components/*.cpp" 
+    "${QUERY_DIR}/components/common/*.cpp" 
     "${QUERY_DIR}/components/monthly_report/*.cpp" 
     "${QUERY_DIR}/components/yearly_report/*.cpp" 
 

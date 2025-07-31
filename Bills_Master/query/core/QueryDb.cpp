@@ -19,33 +19,43 @@
 
 namespace fs = std::filesystem;
 
-// --- 构造函数, 析构函数, 和其他 get/export 函数保持不变 ---
-
+// 构造函数1: 从目录加载
 QueryFacade::QueryFacade(const std::string& db_path, const std::string& plugin_directory_path, const std::string& export_base_dir, const std::map<std::string, std::string>& format_folder_names)
     : m_db(nullptr), 
       m_export_base_dir(export_base_dir),
       m_format_folder_names(format_folder_names),
-      m_month_manager(plugin_directory_path),
-      m_year_manager(plugin_directory_path)
+      // 初始化列表现在调用 PluginLoader<T> 的构造函数，并传入后缀
+      m_month_manager("_month_formatter"), 
+      m_year_manager("_year_formatter")
 {
     if (sqlite3_open_v2(db_path.c_str(), &m_db, SQLITE_OPEN_READWRITE, nullptr) != SQLITE_OK) {
         throw std::runtime_error("Cannot open database: " + std::string(sqlite3_errmsg(m_db)) +
         "\nMake sure bills.sqlite3 and the exe file are in the same folder.");
     }
+    // 在构造函数体中调用加载方法
+    m_month_manager.loadPluginsFromDirectory(plugin_directory_path);
+    m_year_manager.loadPluginsFromDirectory(plugin_directory_path);
 }
 
+// 构造函数2: 从文件列表加载
 QueryFacade::QueryFacade(const std::string& db_path, const std::vector<std::string>& plugin_paths, const std::string& export_base_dir, const std::map<std::string, std::string>& format_folder_names)
     : m_db(nullptr), 
       m_export_base_dir(export_base_dir),
       m_format_folder_names(format_folder_names),
-      m_month_manager(plugin_paths),
-      m_year_manager(plugin_paths)
+      // 这里的初始化方式应该和第一个构造函数保持一致
+      m_month_manager("_month_formatter"), 
+      m_year_manager("_year_formatter")
 {
     if (sqlite3_open_v2(db_path.c_str(), &m_db, SQLITE_OPEN_READWRITE, nullptr) != SQLITE_OK) {
         throw std::runtime_error("Cannot open database: " + std::string(sqlite3_errmsg(m_db)) +
         "\nMake sure bills.sqlite3 and the exe file are in the same folder.");
     }
+    // 在构造函数体中调用加载方法
+    m_month_manager.loadPluginsFromFiles(plugin_paths);
+    m_year_manager.loadPluginsFromFiles(plugin_paths);
 }
+
+
 QueryFacade::~QueryFacade() { if (m_db) sqlite3_close(m_db); }
 
 std::vector<std::string> QueryFacade::get_all_bill_dates() {

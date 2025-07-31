@@ -3,27 +3,28 @@
 #include <stdexcept>
 #include <iostream>
 
-// --- Constructor 1  ---
+// 构造函数1: 从目录扫描
 YearlyReportGenerator::YearlyReportGenerator(sqlite3* db_connection, const std::string& plugin_directory_path)
     : m_reader(db_connection),
-      m_plugin_manager(plugin_directory_path)
+      // 1. 在初始化列表中传入年度插件的后缀
+      m_plugin_manager("_year_formatter")
 {
     std::cout << "YearlyReportGenerator initialized by scanning directory." << std::endl;
+    // 2. 在函数体中调用加载方法
+    m_plugin_manager.loadPluginsFromDirectory(plugin_directory_path);
 }
 
-// --- Constructor 2 ---
+// 构造函数2: 从文件列表加载
 YearlyReportGenerator::YearlyReportGenerator(sqlite3* db_connection, const std::vector<std::string>& plugin_file_paths)
     : m_reader(db_connection),
-      m_plugin_manager() // Now correctly calls the new default constructor
+      // 1. 在初始化列表中传入年度插件的后缀
+      m_plugin_manager("_year_formatter")
 {
     std::cout << "YearlyReportGenerator initialized with specific plugins." << std::endl;
-    for (const auto& path : plugin_file_paths) {
-        m_plugin_manager.loadPlugin(path); // Now correctly calls the new public method
-    }
+    // 2. 在函数体中调用加载方法
+    m_plugin_manager.loadPluginsFromFiles(plugin_file_paths);
 }
 
-// --- [FIXED] `generate` method implementation ---
-// The signature now matches the header file: it takes a const std::string&
 std::string YearlyReportGenerator::generate(int year, const std::string& format_name) {
     YearlyReportData data = m_reader.read_yearly_data(year);
 
