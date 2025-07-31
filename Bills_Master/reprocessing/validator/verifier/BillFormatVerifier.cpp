@@ -1,3 +1,4 @@
+#include "common/pch.h"
 #include "BillFormatVerifier.h"
 
 #include "reprocessing/validator/config/BillConfig.h"

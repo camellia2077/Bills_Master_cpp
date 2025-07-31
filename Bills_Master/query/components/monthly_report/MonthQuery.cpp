@@ -1,3 +1,4 @@
+#include "common/pch.h"
 // MonthQuery.cpp
 #include "MonthQuery.h"
 #include <stdexcept>

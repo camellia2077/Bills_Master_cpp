@@ -1,3 +1,4 @@
+#include "common/pch.h"
 // ReportSorter.cpp
 #include "ReportSorter.h"
 #include <algorithm> // for std::sort

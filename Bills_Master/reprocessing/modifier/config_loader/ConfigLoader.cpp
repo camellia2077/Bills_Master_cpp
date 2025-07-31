@@ -1,3 +1,4 @@
+#include "common/pch.h"
 #include "ConfigLoader.h"
 
 Config ConfigLoader::load(const nlohmann::json& config_json) {

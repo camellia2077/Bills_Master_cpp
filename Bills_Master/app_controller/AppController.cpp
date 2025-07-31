@@ -1,3 +1,4 @@
+#include "common/pch.h"
 #include "AppController.h"
 #include "WorkflowController.h"
 #include "ExportController.h"

@@ -1,3 +1,4 @@
+#include "common/pch.h"
 #include "QueryDb.h"
 #include "app_controller/ProcessStats.h"
 #include "common/common_utils.h"
@@ -374,4 +375,8 @@ bool QueryFacade::export_all_reports(const std::string& format_name) {
         std::cout << "\n" << RED_COLOR << "Failed: " << RESET_COLOR << "Full report export completed with errors.\n";
     }
     return overall_success;
+}
+
+void QueryFacade::test_recompile() {
+    std::cout << "Recompile test successful!Recompile test successful!Recompile test successful!Recompile test successful!Recompile test successful!Recompile test successful!Recompile test successful!Recompile test successful!" << std::endl;
 }

@@ -1,3 +1,4 @@
+#include "common/pch.h"
 #include "BillConfig.h"
 
 BillConfig::BillConfig(const std::string& config_path) {

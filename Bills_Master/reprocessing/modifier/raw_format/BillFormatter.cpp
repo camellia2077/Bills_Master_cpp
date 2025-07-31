@@ -1,3 +1,4 @@
+#include "common/pch.h"
 #include "BillFormatter.h"
 #include <sstream>
 #include <iomanip>

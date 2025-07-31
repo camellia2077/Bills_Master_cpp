@@ -52,6 +52,8 @@ public:
     bool export_all_monthly_reports(const std::string& format_name);
     bool export_all_yearly_reports(const std::string& format_name);
 
+    void test_recompile(); // A dummy function to test incremental builds.
+
 private:
     sqlite3* m_db;
     std::string m_export_base_dir;
