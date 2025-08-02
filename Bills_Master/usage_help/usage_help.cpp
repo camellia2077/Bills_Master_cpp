@@ -47,8 +47,9 @@ void print_help(const char* program_name) {
     std::cout << GREEN_COLOR << "--- Options ---\n" << RESET_COLOR;
     
     std::println("  --format, -f <format>");
-    std::println("    Specify output format ('md', 'tex', 'typ' , 'rst'). Defaults to 'md'.");
-    std::println("    Example: --format md\n");
+    std::println("    Specify output format ('md', 'tex', 'typ', 'rst', 'all', 'a'). Defaults to 'md'.");
+    std::println("    Use 'all' or 'a' to export in all available formats.");
+    std::println("    Example: --format tex");
     
     std::println("  --type, -t <type>");
     std::println("    For '--export all', filters by type ('month'/'m' or 'year'/'y').");

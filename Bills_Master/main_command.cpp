@@ -32,7 +32,6 @@ int main(int argc, char* argv[]) {
     AppController controller;
     bool operation_successful = true;
     
-    // --- ** 修改：采用新的参数解析逻辑 ** ---
     std::vector<std::string> command_parts;
     std::string format_str = "md";
     std::string export_type_filter;
@@ -58,7 +57,6 @@ int main(int argc, char* argv[]) {
     std::string command = command_parts[0];
     std::vector<std::string> values;
 
-    // 组合主命令和子命令 (e.g., "-e" + "d" -> "-e d")
     if (command_parts.size() > 1 && (command == "-q" || command == "--query" || command == "-e" || command == "--export" || command == "-a" || command == "--all")) {
         command += " " + command_parts[1];
         values.assign(command_parts.begin() + 2, command_parts.end());
@@ -74,24 +72,43 @@ int main(int argc, char* argv[]) {
             controller.display_version();
         }
         else if (command == "--export all" || command == "-e a") {
-            std::string export_target = "all";
-            if (export_type_filter == "month" || export_type_filter == "m") {
-                export_target = "all_months";
-            } else if (export_type_filter == "year" || export_type_filter == "y") {
-                export_target = "all_years";
-            } else if (!export_type_filter.empty()) {
-                std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Unknown value for --type: '" << export_type_filter << "'. Use 'month'/'m' or 'year'/'y'.\n";
-                return 1;
+            // --- FIX START: 实现 -f all 功能 ---
+            std::vector<std::string> formats_to_process;
+            if (format_str == "all" || format_str == "a") {
+                formats_to_process = {"md", "tex", "rst", "typ"};
+                std::println("\n--- Batch export for all formats requested ---");
+            } else {
+                formats_to_process.push_back(format_str);
             }
-            if (!controller.handle_export(export_target, {}, format_str)) operation_successful = false;
+
+            for (const auto& current_format : formats_to_process) {
+                std::string export_target = "all";
+                if (export_type_filter == "month" || export_type_filter == "m") {
+                    export_target = "all_months";
+                } else if (export_type_filter == "year" || export_type_filter == "y") {
+                    export_target = "all_years";
+                } else if (!export_type_filter.empty()) {
+                    std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Unknown value for --type: '" << export_type_filter << "'. Use 'month'/'m' or 'year'/'y'.\n";
+                    return 1;
+                }
+
+                if (formats_to_process.size() > 1) {
+                    std::println("\n-> Processing format: {}", current_format);
+                }
+
+                // 在循环中调用 handle_export
+                if (!controller.handle_export(export_target, {}, current_format)) {
+                    // 如果任何一个格式导出失败，则将最终结果标记为失败
+                    operation_successful = false; 
+                }
+            }
+            // --- FIX END ---
         }
-        // --- ** 修改：处理 --export date 及其多值参数 ** ---
         else if (command == "--export date" || command == "-e d") {
             if (values.empty()) { 
                 std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing date value(s) for 'export date' command.\n"; 
                 return 1; 
             }
-            // `values` 向量已包含所有日期参数，直接传递给 controller
             if (!controller.handle_export("date", values, format_str)) {
                 operation_successful = false;
             }
