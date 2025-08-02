@@ -158,39 +158,14 @@ bool QueryFacade::export_monthly_report(const std::string& month_str, const std:
 
 bool QueryFacade::export_by_date(const std::string& date_str, const std::string& format_name) {
     if (date_str.length() == 4) {
-        // ... (内容不变) ...
-        std::cout << "\n--- Exporting all monthly reports for " << date_str << " (" << format_name << " format) ---\n";
-        if (!m_month_manager.isFormatAvailable(format_name)) {
-            std::cerr << RED_COLOR << "Error:" << RESET_COLOR << " Monthly formatter for '" << format_name << "' not loaded.\n";
-            return false;
-        }
-        BillMetadataReader metadata_reader(m_db);
-        std::vector<std::string> all_months = metadata_reader.get_all_bill_dates();
-        std::vector<std::string> year_months;
-        for (const auto& month : all_months) {
-            if (month.rfind(date_str, 0) == 0) year_months.push_back(month);
-        }
-        if (year_months.empty()) {
-            std::cout << YELLOW_COLOR << "Warning:" << RESET_COLOR << " No data found for year " << date_str << ".\n";
-            return true;
-        }
-        ProcessStats stats;
-        std::cout << "Found " << year_months.size() << " months to export for year " << date_str << ".\n";
-        for (const auto& month : year_months) {
-            std::cout << "Exporting report for " << month << "...";
-            if (export_monthly_report(month, format_name, true)) {
-                stats.success++;
-                std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
-            } else {
-                stats.failure++;
-                std::cout << RED_COLOR << " FAILED\n" << RESET_COLOR;
-            }
-        }
-        stats.print_summary("Yearly Batch Export");
-        return stats.failure == 0;
-    } 
-    else if (date_str.length() == 6) {
-        // ... (内容不变) ...
+        // --- FIX START ---
+        // 修复：当输入为年份时，直接调用年度报告导出逻辑
+        std::cout << "\n--- Exporting yearly report for " << date_str << " (" << format_name << " format) ---\n";
+        return export_yearly_report(date_str, format_name, false);
+        // --- FIX END ---
+
+    } else if (date_str.length() == 6) {
+        // 月度报告的逻辑保持不变
         try {
             int year = std::stoi(date_str.substr(0, 4));
             int month = std::stoi(date_str.substr(4, 2));
@@ -216,8 +191,8 @@ bool QueryFacade::export_by_date(const std::string& date_str, const std::string&
             std::cerr << RED_COLOR << "Export failed: " << RESET_COLOR << e.what() << std::endl;
             return false;
         }
-    } 
-    else {
+    } else {
+        // 错误处理逻辑保持不变
         std::cerr << RED_COLOR << "Error:" << RESET_COLOR << " Invalid date format for export: '" << date_str << "'. Please use YYYY or YYYYMM.\n";
         return false;
     }

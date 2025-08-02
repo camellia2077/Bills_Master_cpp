@@ -2,7 +2,7 @@
 # 在这里配置你所有的路径和选项
 
 # 1. 源文件夹的父目录
-SOURCE_DIRECTORY = "C:/Computer/my_github/github_cpp/New_time_master/my_test/exported_files"
+SOURCE_DIRECTORY = r"C:\Computer\my_github\github_cpp\bill_master\Bills_Master_cpp\my_test\exported_files"
 
 # 2. 统一的输出目录
 OUTPUT_DIRECTORY = "output_pdf"
@@ -11,7 +11,7 @@ OUTPUT_DIRECTORY = "output_pdf"
 # 可选值: 'TeX', 'Markdown', 'RST', 'Typst'
 # time_master暂时还没有实现rst，只有'TeX', 'Markdown', 'Typst'
 # bill_master 'TeX', 'Markdown', 'RST', 'Typst'都实现了
-COMPILE_TYPES = ['TeX', 'Markdown', 'Typst']
+COMPILE_TYPES = ['TeX', 'Markdown', 'RST', 'Typst']
 
 # --- 以下为 Markdown 基准测试配置 ---
 
