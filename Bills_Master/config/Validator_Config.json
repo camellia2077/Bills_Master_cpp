@@ -8,6 +8,7 @@
         "meal_high",
         "meal_snacks",
         "meal_fruits",
+        "meal_takeouts",
         "meal_drinks"
       ]
     },
