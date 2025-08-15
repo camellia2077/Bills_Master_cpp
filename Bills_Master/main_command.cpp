@@ -1,18 +1,19 @@
 #include "common/pch.h"
-#include <iostream>
 #include <string>
 #include <vector>
 #include <print>
+#include <cstdio> // 需要包含 <cstdio> 来获取 stderr
 
 #include "app_controller/AppController.h"
 #include "common/common_utils.h" // for colors
-#include "usage_help/usage_help.h" //
-// For UTF-8 output on Windows
+#include "usage_help/usage_help.h" // for help
+
+// Add to the top of main.cpp
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
-// Sets up the console for proper UTF-8 character display.
+// Add this helper function before main()
 void setup_console() { 
 #ifdef _WIN32
     SetConsoleOutputCP(CP_UTF8);
@@ -40,10 +41,12 @@ int main(int argc, char* argv[]) {
         std::string arg = argv[i];
         if (arg == "--format" || arg == "-f") {
             if (i + 1 < argc) { format_str = argv[++i]; }
-            else { std::cerr << "Error: Missing value for format flag.\n"; return 1; }
+            // 修正：修复了拼写错误、多余的分号和换行符
+            else { std::println(stderr, "{}Error{}: Missing value for format flag", RED_COLOR, RESET_COLOR); return 1; }
         } else if (arg == "--type" || arg == "-t") {
             if (i + 1 < argc) { export_type_filter = argv[++i]; }
-            else { std::cerr << "Error: Missing value for --type flag.\n"; return 1; }
+            // 修改：将 std::cerr 替换为 std::println
+            else { std::println(stderr, "Error: Missing value for --type flag."); return 1; }
         } else {
             command_parts.push_back(arg);
         }
@@ -72,7 +75,6 @@ int main(int argc, char* argv[]) {
             controller.display_version();
         }
         else if (command == "--export all" || command == "-e a") {
-            // --- FIX START: 实现 -f all 功能 ---
             std::vector<std::string> formats_to_process;
             if (format_str == "all" || format_str == "a") {
                 formats_to_process = {"md", "tex", "rst", "typ"};
@@ -88,7 +90,8 @@ int main(int argc, char* argv[]) {
                 } else if (export_type_filter == "year" || export_type_filter == "y") {
                     export_target = "all_years";
                 } else if (!export_type_filter.empty()) {
-                    std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Unknown value for --type: '" << export_type_filter << "'. Use 'month'/'m' or 'year'/'y'.\n";
+                    // 修正：修复了格式字符串中的错误和多余的换行符
+                    std::println(stderr, "{}Error{}: Unknown value for --type: '{}'. Use 'month'/'m' or 'year'/'y'.", RED_COLOR, RESET_COLOR, export_type_filter);
                     return 1;
                 }
 
@@ -96,17 +99,14 @@ int main(int argc, char* argv[]) {
                     std::println("\n-> Processing format: {}", current_format);
                 }
 
-                // 在循环中调用 handle_export
                 if (!controller.handle_export(export_target, {}, current_format)) {
-                    // 如果任何一个格式导出失败，则将最终结果标记为失败
                     operation_successful = false; 
                 }
             }
-            // --- FIX END ---
         }
         else if (command == "--export date" || command == "-e d") {
             if (values.empty()) { 
-                std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing date value(s) for 'export date' command.\n"; 
+                std::println(stderr, "{}Error{}: Missing date value(s) for 'export date' command.", RED_COLOR, RESET_COLOR);
                 return 1; 
             }
             if (!controller.handle_export("date", values, format_str)) {
@@ -114,32 +114,39 @@ int main(int argc, char* argv[]) {
             }
         }
         else if (command == "--validate" || command == "-v") {
-            if (values.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path for 'validate' command.\n"; return 1; }
+            // 修改：将 std::cerr 替换为 std::println
+            if (values.empty()) { std::println(stderr, "{}Error: {}Missing path for 'validate' command.", RED_COLOR, RESET_COLOR); return 1; }
             if (!controller.handle_validation(values[0])) operation_successful = false;
         }
         else if (command == "--modify" || command == "-m") {
-            if (values.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path for 'modify' command.\n"; return 1; }
+            // 修改：将 std::cerr 替换为 std::println
+            if (values.empty()) { std::println(stderr, "{}Error: {}Missing path for 'modify' command.", RED_COLOR, RESET_COLOR); return 1; }
             if (!controller.handle_modification(values[0])) operation_successful = false;
         }
         else if (command == "--import" || command == "-i") {
-            if (values.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing path for 'import' command.\n"; return 1; }
+            // 修改：将 std::cerr 替换为 std::println
+            if (values.empty()) { std::println(stderr, "{}Error: {}Missing path for 'import' command.", RED_COLOR, RESET_COLOR); return 1; }
             if (!controller.handle_import(values[0])) operation_successful = false;
         }
         else if (command == "--query year" || command == "-q y") {
-            if (values.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing <year> for 'query year' command.\n"; return 1; }
+            // 修改：将 std::cerr 替换为 std::println
+            if (values.empty()) { std::println(stderr, "{}Error: {}Missing <year> for 'query year' command.", RED_COLOR, RESET_COLOR); return 1; }
             if (!controller.handle_export("year", values, format_str)) operation_successful = false;
         }
         else if (command == "--query month" || command == "-q m") {
-           if (values.empty()) { std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Missing <month> for 'query month' command.\n"; return 1; }
+            // 修改：将 std::cerr 替换为 std::println
+           if (values.empty()) { std::println(stderr, "{}Error: {}Missing <month> for 'query month' command.", RED_COLOR, RESET_COLOR); return 1; }
            if (!controller.handle_export("month", values, format_str)) operation_successful = false;
         }
         else {
-            std::cerr << RED_COLOR << "Error: " << RESET_COLOR << "Unknown or incomplete command.\n\n";
+            // 修改：将 std::cerr 替换为 std::println，并保留一个换行符
+            std::println(stderr, "{}Error: {}Unknown or incomplete command.\n", RED_COLOR, RESET_COLOR);
             print_help(argv[0]);
             return 1;
         }
     } catch (const std::exception& e) {
-        std::cerr << "\n" << RED_COLOR << "Critical Error: " << RESET_COLOR << e.what() << std::endl; 
+        // 修改：将 std::cerr 替换为 std::println
+        std::println(stderr, "\n{}Critical Error: {}{}", RED_COLOR, RESET_COLOR, e.what()); 
         return 1;
     }
 
