@@ -1,5 +1,4 @@
 #include "common/pch.h"
-#include <iostream>
 #include <string>
 #include <limits>
 #include <vector>
@@ -7,16 +6,16 @@
 #include <sstream>
 #include <algorithm>
 #include <print>
+#include <cstdio> // For stderr
 
 #include "app_controller/AppController.h"
 #include "common/common_utils.h" // for colors
-
-// For UTF-8 output on Windows
+// Add to the top of main.cpp
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
-// Sets up the console for proper UTF-8 character display.
+// Add this helper function before main()
 void setup_console() { 
 #ifdef _WIN32
     SetConsoleOutputCP(CP_UTF8);
@@ -24,19 +23,20 @@ void setup_console() {
 #endif
 }
 
+
 // --- ** 修改：更新菜单选项 ** ---
 void print_menu() {
-    std::println("--- {}Menu{} ---",GREEN_COLOR,RESET_COLOR);
-    std::cout << "1. Validate Bill File(s)\n"; 
-    std::cout << "2. Modify Bill File(s)\n"; 
-    std::cout << "3. Parse and Insert Bill(s) to Database\n"; 
-    std::cout << "4. Query & Export Yearly Report\n"; 
-    std::cout << "5. Query & Export Monthly Report\n"; 
-    std::cout << "6. Auto-Process Full Workflow (File or Directory)\n";
-    std::cout << "7. Export All Reports from Database\n"; 
-    std::cout << "8. Export by Date or Date Range\n"; // 新增选项
-    std::cout << "9. Version\n";                     // 原选项 8
-    std::cout << "10. Exit\n";                       // 原选项 9
+    std::println("--- {}菜单Menu{} ---",GREEN_COLOR,RESET_COLOR);
+    std::println("1. Validate Bill File(s)"); 
+    std::println("2. Modify Bill File(s)"); 
+    std::println("3. Parse and Insert Bill(s) to Database"); 
+    std::println("4. Query & Export Yearly Report"); 
+    std::println("5. Query & Export Monthly Report"); 
+    std::println("6. Auto-Process Full Workflow (File or Directory)");
+    std::println("7. Export All Reports from Database"); 
+    std::println("8. Export by Date or Date Range"); 
+    std::println("9. Version");                     
+    std::println("10. Exit");                       
 
     std::string line(10,'-');
     std::println("{}", line);
@@ -54,8 +54,9 @@ std::string trim(const std::string& str) {
 }
 
 int main() {
-    setup_console(); 
-    std::println("Welcome to the bill_master\n"); 
+    setup_console();
+    std::println("Welcome to the bill_master"); 
+    std::println(""); // For the extra newline
 
     AppController controller; 
 
@@ -63,13 +64,13 @@ int main() {
     // --- ** 修改：更新退出条件 ** ---
     while (choice != 10) { 
         print_menu();
-        std::cout << "\nEnter your choice: ";
+        std::print("\nEnter your choice: ");
         std::cin >> choice;
 
         if (std::cin.fail()) { 
             std::cin.clear(); 
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
-            std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Invalid input. Please enter a number." << "\n\n"; 
+            std::println(stderr, "{}Warning: {}Invalid input. Please enter a number.\n", YELLOW_COLOR, RESET_COLOR); 
             choice = 0; 
             continue; 
         }
@@ -80,39 +81,39 @@ int main() {
         try {
             switch (choice) {
                 case 1:
-                    std::cout << "Enter path for validation: ";
+                    std::print("Enter path for validation: ");
                     std::getline(std::cin, input_str);
                     if (!input_str.empty()) {
                         if (!controller.handle_validation(input_str)) {
-                            std::println(RED_COLOR, "\nValidation failed. Please check the output above.", RESET_COLOR);
+                            std::println("{}\nValidation failed. Please check the output above.{}", RED_COLOR, RESET_COLOR);
                         }
                     }
                     break; 
                 case 2:
-                    std::cout << "Enter path for modification: ";
+                    std::print("Enter path for modification: ");
                     std::getline(std::cin, input_str);
                     if (!input_str.empty()) {
                         if (!controller.handle_modification(input_str)) {
-                            std::println(RED_COLOR, "\nModification failed. Please check the output above.", RESET_COLOR);
+                            std::println("{}\nModification failed. Please check the output above.{}", RED_COLOR, RESET_COLOR);
                         }
                     }
                     break; 
                 case 3:
-                    std::cout << "Enter path to import to database: ";
+                    std::print("Enter path to import to database: ");
                     std::getline(std::cin, input_str);
                     if (!input_str.empty()) {
                         if (!controller.handle_import(input_str)) {
-                            std::println(RED_COLOR, "\nImport failed. Please check the output above.", RESET_COLOR);
+                            std::println("{}\nImport failed. Please check the output above.{}", RED_COLOR, RESET_COLOR);
                         }
                     }
                     break; 
                 case 4:
                     { 
-                        std::cout << "Enter year to query (e.g., 2025): ";
+                        std::print("Enter year to query (e.g., 2025): ");
                         std::getline(std::cin, input_str);
                         if (input_str.empty()) break;
 
-                        std::cout << "Enter format (md/tex/typ/rst) [default: md]: ";
+                        std::print("Enter format (md/tex/typ/rst) [default: md]: ");
                         std::string format_input;
                         std::getline(std::cin, format_input);
                         std::string format_str = trim(format_input);
@@ -120,17 +121,17 @@ int main() {
                         
                         // --- ** 修改：使用新的 vector 接口 ** ---
                         if (!controller.handle_export("year", {input_str}, format_str)) {
-                            std::println(RED_COLOR, "\nYearly report export failed.", RESET_COLOR);
+                            std::println("{}\nYearly report export failed.{}", RED_COLOR, RESET_COLOR);
                         }
                     }
                     break;
                 case 5:
                     {
-                        std::cout << "Enter month to query (YYYYMM): ";
+                        std::print("Enter month to query (YYYYMM): ");
                         std::getline(std::cin, input_str);
                         if (input_str.empty()) break;
 
-                        std::cout << "Enter format (md/tex/typ/rst) [default: md]: ";
+                        std::print("Enter format (md/tex/typ/rst) [default: md]: ");
                         std::string format_input;
                         std::getline(std::cin, format_input);
                         std::string format_str = trim(format_input);
@@ -138,22 +139,22 @@ int main() {
 
                         // --- ** 修改：使用新的 vector 接口 ** ---
                         if (!controller.handle_export("month", {input_str}, format_str)) {
-                             std::println(RED_COLOR, "\nMonthly report export failed.", RESET_COLOR);
+                             std::println("{}\nMonthly report export failed.{}", RED_COLOR, RESET_COLOR);
                         }
                     }
                     break;
                 case 6:
-                    std::cout << "Enter path for the full workflow: ";
+                    std::print("Enter path for the full workflow: ");
                     std::getline(std::cin, input_str);
                     if (!input_str.empty()) {
                         if (!controller.handle_full_workflow(input_str)) {
-                            std::println(RED_COLOR, "\nFull workflow failed.", RESET_COLOR);
+                            std::println("{}\nFull workflow failed.{}", RED_COLOR, RESET_COLOR);
                         }
                     }
                     break;
                 case 7:
                     {
-                        std::cout << "Enter format(s) separated by commas (md, tex, etc.) [default: all]: ";
+                        std::print("Enter format(s) separated by commas (md, tex, etc.) [default: all]: ");
                         std::string format_input;
                         std::getline(std::cin, format_input);
 
@@ -179,16 +180,16 @@ int main() {
                         }
 
                         if (all_succeeded) {
-                            std::println(GREEN_COLOR, "\nAll specified formats exported successfully.", RESET_COLOR);
+                            std::println("{}\nAll specified formats exported successfully.{}", GREEN_COLOR, RESET_COLOR);
                         } else {
-                            std::println(RED_COLOR, "\nOne or more export operations failed.", RESET_COLOR);
+                            std::println("{}\nOne or more export operations failed.{}", RED_COLOR, RESET_COLOR);
                         }
                     }
                     break;
                 // --- ** 新增：处理日期区间导出的 case ** ---
                 case 8:
                     {
-                        std::cout << "Enter date (YYYY or YYYYMM) or date range (YYYYMM YYYYMM): ";
+                        std::print("Enter date (YYYY or YYYYMM) or date range (YYYYMM YYYYMM): ");
                         std::string line_input;
                         std::getline(std::cin, line_input);
                         if (trim(line_input).empty()) break;
@@ -202,11 +203,11 @@ int main() {
                         }
 
                         if (values.empty()) {
-                            std::cerr << "No date provided.\n";
+                            std::println(stderr, "No date provided.");
                             break;
                         }
 
-                        std::cout << "Enter format (md/tex/typ/rst) [default: md]: ";
+                        std::print("Enter format (md/tex/typ/rst) [default: md]: ");
                         std::string format_input;
                         std::getline(std::cin, format_input);
                         std::string format_str = trim(format_input);
@@ -214,7 +215,7 @@ int main() {
                         
                         // 调用统一的 handle_export 接口
                         if (!controller.handle_export("date", values, format_str)) {
-                            std::println(RED_COLOR, "\nDate-based export failed. Please check logs.", RESET_COLOR);
+                            std::println("{}\nDate-based export failed. Please check logs.{}", RED_COLOR, RESET_COLOR);
                         }
                     }
                     break;
@@ -223,16 +224,16 @@ int main() {
                     controller.display_version();
                     break;
                 case 10: 
-                    std::cout << "Exiting program. Goodbye!\n";
+                    std::println("Exiting program. Goodbye!");
                     break;
                 default:
-                    std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Invalid choice. Please select from the menu." << "\n"; 
+                    std::println(stderr, "{}Warning: {}Invalid choice. Please select from the menu.", YELLOW_COLOR, RESET_COLOR); 
                     break;
             }
         } catch (const std::exception& e) {
-            std::cerr << "\n" << RED_COLOR << "An unexpected error occurred: " << RESET_COLOR << e.what() << std::endl;
+            std::println(stderr, "\n{}An unexpected error occurred: {}{}", RED_COLOR, RESET_COLOR, e.what());
         }
-        std::cout << "\n"; 
+        std::println(""); // For the extra newline at the end of the loop
     }
     return 0; 
 }
