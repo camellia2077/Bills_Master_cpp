@@ -39,6 +39,7 @@
 // --- 插件系统的核心接口 (非常稳定) ---
 #include "query/plugins/month_formatters/IMonthReportFormatter.h" // 使用次数: 7
 #include "query/plugins/year_formatters/IYearlyReportFormatter.h"  // 使用次数: 7
+#include "query/plugins/year_formatters/BaseYearlyReportFormatter.h" // 使用次数: 4
 
 // --- 共享的数据结构 (相对稳定) ---
 #include "reprocessing/modifier/_shared_structures/BillDataStructures.h" // 使用次数: 4
