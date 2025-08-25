@@ -1,4 +1,4 @@
-#include "common/pch.h"
+
 #include "YearRstFormat.h"
 #include <sstream>
 #include <iomanip>

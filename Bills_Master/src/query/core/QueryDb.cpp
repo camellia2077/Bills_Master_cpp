@@ -1,4 +1,4 @@
-#include "common/pch.h"
+
 #include "QueryDb.h"
 #include "app_controller/ProcessStats.h"
 #include "common/common_utils.h"

@@ -1,4 +1,4 @@
-#include "common/pch.h"
+
 #include "ExportController.h"
 #include "query/core/QueryDb.h"
 #include "common/common_utils.h" // 确保包含颜色定义

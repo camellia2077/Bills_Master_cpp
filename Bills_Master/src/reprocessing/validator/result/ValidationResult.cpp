@@ -1,4 +1,4 @@
-#include "common/pch.h"
+
 #include "ValidationResult.h"
 
 void ValidationResult::add_error(const std::string& message) {
