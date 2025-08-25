@@ -1,4 +1,4 @@
-#include "common/pch.h"
+
 // MonthTypFormat.cpp
 #include "MonthTypFormat.h"
 #include "query/components/monthly_report/ReportSorter.h"

@@ -34,13 +34,13 @@ def add_pch_include_to_files(directory):
                 content = f.readlines() # 按行读取文件内容
 
             # 检查第一行是否已经是 #include "pch.h"
-            if content and content[0].strip() == '#include "common/pch.h"':
+            if content and content[0].strip() == '':
                 print(f"🟡 已跳过 (已存在): {file_path}")
                 skipped_count += 1
                 continue
 
             # 在内容列表的开头插入新的 include 指令
-            content.insert(0, '#include "common/pch.h"\n')
+            content.insert(0, '\n')
             
             # 将修改后的内容写回文件
             with open(file_path, 'w', encoding='utf-8') as f:

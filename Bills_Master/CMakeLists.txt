@@ -98,10 +98,18 @@ set(SHARED_SOURCES
 )
 
 # ==============================================================================
-# 确保 wrapper.cpp 不被包含
+#  (最终修正) 定义自动包含的 PCH 编译选项
 # ==============================================================================
-# 由于我们是手动列出文件，只要不把 wrapper.cpp 添加到 REPROCESSING_SOURCES 列表中，
-# 它就不会被编译，因此不再需要 list(REMOVE_ITEM)。
+set(PCH_HEADER "${CMAKE_SOURCE_DIR}/${SOURCE_ROOT}/pch.h")
+
+# 为 MSVC 定义一个包含文件路径的单参数
+set(PCH_FLAG_MSVC "/FI${PCH_HEADER}")
+
+# 为 GCC/Clang 定义一个包含两个参数的 CMake 列表 (用分号分隔)
+set(PCH_FLAG_GCC_CLANG "-include;${PCH_HEADER}")
+
+# 使用生成器表达式，根据编译器选择正确的变量
+set(FORCE_INCLUDE_PCH "$<IF:$<CXX_COMPILER_ID:MSVC>,${PCH_FLAG_MSVC},${PCH_FLAG_GCC_CLANG}>")
 
 
 # ==============================================================================
@@ -125,10 +133,6 @@ foreach(target bill_matser_app bill_master_cli)
     target_include_directories(${target} PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE_ROOT}"
     )
-    # 以启用预编译头文件
-    target_precompile_headers(${target} PRIVATE
-        "${CMAKE_SOURCE_DIR}/${SOURCE_ROOT}/common/pch.h"
-    )
     # 链接外部库
     target_link_libraries(${target} PRIVATE
         nlohmann_json::nlohmann_json
@@ -136,7 +140,11 @@ foreach(target bill_matser_app bill_master_cli)
         stdc++exp
     )
     # 设置编译选项
-    target_compile_options(${target} PRIVATE -Wall -fdiagnostics-color=always)
+    target_compile_options(${target} PRIVATE
+        -Wall
+        -fdiagnostics-color=always
+        ${FORCE_INCLUDE_PCH} # 应用自动包含 PCH 的选项
+    )
 endforeach()
 
 
@@ -151,6 +159,7 @@ function(create_formatter_plugin name)
     )
     target_compile_options(${name} PRIVATE
         $<$<CONFIG:Release>:-Os -flto -fvisibility=hidden -ffunction-sections -fdata-sections>
+        ${FORCE_INCLUDE_PCH} # 应用自动包含 PCH 的选项
     )
     target_link_options(${name} PRIVATE
         $<$<CONFIG:Release>:-Wl,--gc-sections -s>

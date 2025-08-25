@@ -1,4 +1,4 @@
-#include "common/pch.h"
+
 #include "ReportExporter.h"
 #include <iostream>
 #include <fstream>

@@ -1,4 +1,4 @@
-#include "common/pch.h"
+
 // YearQuery.cpp
 #include "YearQuery.h"
 #include <stdexcept>
