@@ -2,18 +2,33 @@
 # 在这里配置你所有的路径和选项
 
 # 1. 源文件夹的父目录
-#    程序将扫描这个文件夹下的所有子目录（如 'LaTeX_bills', 'Markdown_bills' 等）。
-SOURCE_DIRECTORY = "./exported_files"  # <--- 修改这里：指向包含各类bills文件夹的父目录
+SOURCE_DIRECTORY = r"C:\Computer\my_github\github_cpp\New_time_master\my_test\exported_files"
 
 # 2. 统一的输出目录
-#    所有编译好的文件，都会保持其原始目录结构，并存放在这里。
-OUTPUT_DIRECTORY = "output_pdf"  # <--- 修改这里：指定你想要的输出文件夹名称
+OUTPUT_DIRECTORY = "output_pdf"
 
-# 3. (新增) 指定要编译的文档类型
-#    这是一个列表，只编译列表中指定的类型。
-#    可选值: 'TeX', 'Markdown', 'RST', 'Typst'
-#    - 如果要编译所有类型，请保留全部: ['TeX', 'Markdown', 'RST', 'Typst']
-#    - 如果只想编译 Typst，就改成: ['Typst']
-#    - 如果只想编译 Markdown 和 TeX，就改成: ['Markdown', 'TeX']
-#    (注意：大小写不敏感，'typst' 和 'Typst' 效果一样)
-COMPILE_TYPES = ['Typst']  # <--- 修改这里：指定你想要编译的类型
+# 3. 指定要编译的文档类型
+# bill_master可选值: 'TeX', 'Markdown', 'RST', 'Typst'
+# time_master可选值: 'TeX', 'Markdown', 'Typst'
+COMPILE_TYPES = ['TeX', 'Markdown', 'RST', 'Typst']
+
+
+# === 增量编译设置 ===
+# True:  启用增量编译 (推荐)。只编译有变动的文件。
+# False: 禁用增量编译。每次都重新编译所有文件。
+INCREMENTAL_COMPILE = True
+# ========================
+
+
+# === 新增: 清理设置 ===
+# True:  每次启动时，默认清理 output_pdf 目录。
+# False: 每次启动时，默认不清理。(推荐，以便使用增量编译)
+# 这个设置可以被命令行的 --clean 参数覆盖。
+CLEAN_OUTPUT_DEFAULT = False
+# ========================
+
+
+# --- 以下为 Markdown 基准测试配置 ---
+# ... (后续内容保持不变) ...
+MARKDOWN_COMPILERS = ['typst']
+BENCHMARK_LOOPS = 3
