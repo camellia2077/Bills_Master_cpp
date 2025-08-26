@@ -100,7 +100,7 @@ set(SHARED_SOURCES
 # ==============================================================================
 #  (最终修正) 定义自动包含的 PCH 编译选项
 # ==============================================================================
-set(PCH_HEADER "${CMAKE_SOURCE_DIR}/${SOURCE_ROOT}/pch.h")
+set(PCH_HEADER "${CMAKE_SOURCE_DIR}/${SOURCE_ROOT}/pch.hpp")
 
 # 为 MSVC 定义一个包含文件路径的单参数
 set(PCH_FLAG_MSVC "/FI${PCH_HEADER}")
