@@ -1,5 +1,5 @@
 
-#include "ConfigLoader.h"
+#include "ConfigLoader.hpp"
 
 Config ConfigLoader::load(const nlohmann::json& config_json) {
     Config config_to_populate;

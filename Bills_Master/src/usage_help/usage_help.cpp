@@ -1,10 +1,10 @@
 
-#include "usage_help.h"
+#include "usage_help.hpp"
 #include <iostream>
 #include <string>
 #include <print>
 
-#include "common/common_utils.h" // Required for color codes
+#include "common/common_utils.hpp" // Required for color codes
 
 void print_help(const char* program_name) {
     std::string command_color = CYAN_COLOR, tile_color = GREEN_COLOR;

@@ -33,17 +33,17 @@
 //  3. 项目内全局通用且稳定的头文件
 //  这些是项目的基础设施，一旦成型，很少改动。
 // ===================================================================
-#include "common/common_utils.h" // 使用次数: 10
-#include "app_controller/ProcessStats.h" // 使用次数: 3
+#include "common/common_utils.hpp" // 使用次数: 10
+#include "app_controller/ProcessStats.hpp" // 使用次数: 3
 
 // --- 插件系统的核心接口 (非常稳定) ---
-#include "query/plugins/month_formatters/IMonthReportFormatter.h" // 使用次数: 7
-#include "query/plugins/year_formatters/IYearlyReportFormatter.h"  // 使用次数: 7
-#include "query/plugins/year_formatters/BaseYearlyReportFormatter.h" // 使用次数: 4
+#include "query/plugins/month_formatters/IMonthReportFormatter.hpp" // 使用次数: 7
+#include "query/plugins/year_formatters/IYearlyReportFormatter.hpp"  // 使用次数: 7
+#include "query/plugins/year_formatters/BaseYearlyReportFormatter.hpp" // 使用次数: 4
 
 // --- 共享的数据结构 (相对稳定) ---
-#include "reprocessing/modifier/_shared_structures/BillDataStructures.h" // 使用次数: 4
-#include "query/components/monthly_report/ReportData.h" // 使用次数: 2
-#include "query/components/yearly_report/YearlyReportData.h" // 使用次数: 2
+#include "reprocessing/modifier/_shared_structures/BillDataStructures.hpp" // 使用次数: 4
+#include "query/components/monthly_report/ReportData.hpp" // 使用次数: 2
+#include "query/components/yearly_report/YearlyReportData.hpp" // 使用次数: 2
 
 #endif //PCH_H

@@ -1,5 +1,5 @@
 
-#include "BillFormatter.h"
+#include "BillFormatter.hpp"
 #include <sstream>
 #include <iomanip>
 

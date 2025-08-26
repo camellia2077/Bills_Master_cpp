@@ -1,12 +1,10 @@
 
 // ReportSorter.cpp
-#include "ReportSorter.h"
+#include "ReportSorter.hpp"
 #include <algorithm> // for std::sort
 
 // 实现静态方法
 std::vector<std::pair<std::string, ParentCategoryData>> ReportSorter::sort_report_data(const MonthlyReportData& data) {
-    // --- 排序逻辑（从格式化器中原封不动地移过来）---
-
     // 1. 内部交易按金额排序
     auto sorted_data = data.aggregated_data; // 创建一个副本以进行排序
     for (auto& parent_pair : sorted_data) {

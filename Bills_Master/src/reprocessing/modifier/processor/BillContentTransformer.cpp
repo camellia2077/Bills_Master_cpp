@@ -1,5 +1,6 @@
 
-#include "BillContentTransformer.h"
+#include "BillContentTransformer.hpp"
+
 #include <sstream>
 #include <regex>
 #include <algorithm>

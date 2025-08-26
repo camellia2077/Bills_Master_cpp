@@ -1,6 +1,6 @@
 
 // MonthQuery.cpp
-#include "MonthQuery.h"
+#include "MonthQuery.hpp"
 #include <stdexcept>
 #include <string>
 

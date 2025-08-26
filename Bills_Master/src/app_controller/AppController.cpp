@@ -1,9 +1,9 @@
 
-#include "AppController.h"
-#include "WorkflowController.h"
-#include "ExportController.h"
-#include "common/version.h"
-#include "common/common_utils.h"
+#include "AppController.hpp"
+#include "WorkflowController.hpp"
+#include "ExportController.hpp"
+#include "common/version.hpp"
+#include "common/common_utils.hpp"
 #include <iostream>
 
 // 在构造函数中恢复对插件文件列表的初始化

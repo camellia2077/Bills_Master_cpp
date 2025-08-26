@@ -1,6 +1,6 @@
 
 // YearQuery.cpp
-#include "YearQuery.h"
+#include "YearQuery.hpp"
 #include <stdexcept>
 #include <string>
 

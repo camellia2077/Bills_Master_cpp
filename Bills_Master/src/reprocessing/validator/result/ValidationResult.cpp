@@ -1,5 +1,5 @@
 
-#include "ValidationResult.h"
+#include "ValidationResult.hpp"
 
 void ValidationResult::add_error(const std::string& message) {
     errors.push_back(message);

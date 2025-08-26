@@ -1,6 +1,6 @@
 
 // YearlyReportGenerator.cpp
-#include "YearlyReportGenerator.h"
+#include "YearlyReportGenerator.hpp"
 #include <stdexcept>
 #include <iostream>
 

@@ -1,5 +1,5 @@
 
-#include "BillInserter.h"
+#include "BillInserter.hpp"
 #include <iostream>
 
 BillInserter::BillInserter(const std::string& db_path) : m_db(nullptr) {

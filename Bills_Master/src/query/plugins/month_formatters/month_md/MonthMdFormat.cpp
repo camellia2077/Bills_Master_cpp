@@ -1,7 +1,7 @@
 
 // MonthMdFormat.cpp
-#include "MonthMdFormat.h"
-#include "query/components/monthly_report/ReportSorter.h" // 排序器头文件
+#include "MonthMdFormat.hpp"
+#include "query/components/monthly_report/ReportSorter.hpp" // 排序器头文件
 #include <sstream>
 #include <iomanip>
 #include <vector>
