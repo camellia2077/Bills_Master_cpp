@@ -4,9 +4,9 @@
 #include <print>
 #include <cstdio> // 需要包含 <cstdio> 来获取 stderr
 
-#include "app_controller/AppController.h"
-#include "common/common_utils.h" // for colors
-#include "usage_help/usage_help.h" // for help
+#include "app_controller/AppController.hpp"
+#include "common/common_utils.hpp" // for colors
+#include "usage_help/usage_help.hpp" // for help
 
 // Add to the top of main.cpp
 #ifdef _WIN32
@@ -114,38 +114,32 @@ int main(int argc, char* argv[]) {
             }
         }
         else if (command == "--validate" || command == "-v") {
-            // 修改：将 std::cerr 替换为 std::println
             if (values.empty()) { std::println(stderr, "{}Error: {}Missing path for 'validate' command.", RED_COLOR, RESET_COLOR); return 1; }
             if (!controller.handle_validation(values[0])) operation_successful = false;
         }
         else if (command == "--modify" || command == "-m") {
-            // 修改：将 std::cerr 替换为 std::println
             if (values.empty()) { std::println(stderr, "{}Error: {}Missing path for 'modify' command.", RED_COLOR, RESET_COLOR); return 1; }
             if (!controller.handle_modification(values[0])) operation_successful = false;
         }
         else if (command == "--import" || command == "-i") {
-            // 修改：将 std::cerr 替换为 std::println
             if (values.empty()) { std::println(stderr, "{}Error: {}Missing path for 'import' command.", RED_COLOR, RESET_COLOR); return 1; }
             if (!controller.handle_import(values[0])) operation_successful = false;
         }
         else if (command == "--query year" || command == "-q y") {
-            // 修改：将 std::cerr 替换为 std::println
             if (values.empty()) { std::println(stderr, "{}Error: {}Missing <year> for 'query year' command.", RED_COLOR, RESET_COLOR); return 1; }
             if (!controller.handle_export("year", values, format_str)) operation_successful = false;
         }
         else if (command == "--query month" || command == "-q m") {
-            // 修改：将 std::cerr 替换为 std::println
+
            if (values.empty()) { std::println(stderr, "{}Error: {}Missing <month> for 'query month' command.", RED_COLOR, RESET_COLOR); return 1; }
            if (!controller.handle_export("month", values, format_str)) operation_successful = false;
         }
         else {
-            // 修改：将 std::cerr 替换为 std::println，并保留一个换行符
             std::println(stderr, "{}Error: {}Unknown or incomplete command.\n", RED_COLOR, RESET_COLOR);
             print_help(argv[0]);
             return 1;
         }
     } catch (const std::exception& e) {
-        // 修改：将 std::cerr 替换为 std::println
         std::println(stderr, "\n{}Critical Error: {}{}", RED_COLOR, RESET_COLOR, e.what()); 
         return 1;
     }

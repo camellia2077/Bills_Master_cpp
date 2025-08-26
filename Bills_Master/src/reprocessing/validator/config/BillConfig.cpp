@@ -1,5 +1,5 @@
 
-#include "BillConfig.h"
+#include "BillConfig.hpp"
 
 BillConfig::BillConfig(const std::string& config_path) {
     _load_and_parse(config_path);

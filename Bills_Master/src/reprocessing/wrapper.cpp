@@ -2,7 +2,7 @@
 // reprocessing/wrapper.cpp
 
 #include <pybind11/pybind11.h>
-#include "Reprocessor.h" // 包含我们想要绑定的核心类
+#include "Reprocessor.hpp" // 包含我们想要绑定的核心类
 
 // pybind11 的命名空间别名，方便使用
 namespace py = pybind11;

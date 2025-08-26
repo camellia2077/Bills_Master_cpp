@@ -1,11 +1,11 @@
 
-#include "ReportExporter.h"
+#include "ReportExporter.hpp"
 #include <iostream>
 #include <fstream>
 #include <filesystem>
 #include <set>
 #include <vector>
-#include "common/common_utils.h"
+#include "common/common_utils.hpp"
 
 namespace fs = std::filesystem;
 

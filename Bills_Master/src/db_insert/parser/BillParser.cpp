@@ -1,5 +1,5 @@
 
-#include "BillParser.h"
+#include "BillParser.hpp"
 #include <fstream>
 #include <sstream>
 #include <cctype>

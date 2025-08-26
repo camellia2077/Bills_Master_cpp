@@ -1,7 +1,7 @@
 
 // MonthTypFormat.cpp
-#include "MonthTypFormat.h"
-#include "query/components/monthly_report/ReportSorter.h"
+#include "MonthTypFormat.hpp"
+#include "query/components/monthly_report/ReportSorter.hpp"
 #include <sstream>
 #include <iomanip>
 #include <vector>

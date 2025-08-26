@@ -1,12 +1,11 @@
 
-#include "QueryDb.h"
-#include "app_controller/ProcessStats.h"
-#include "common/common_utils.h"
+#include "QueryDb.hpp"
+#include "BillMetadataReader.hpp"
 
-#include "BillMetadataReader.h"
-
-#include "query/components/monthly_report/MonthQuery.h"
-#include "query/components/yearly_report/YearQuery.h"
+#include "app_controller/ProcessStats.hpp"
+#include "common/common_utils.hpp"
+#include "query/components/monthly_report/MonthQuery.hpp"
+#include "query/components/yearly_report/YearQuery.hpp"
 
 #include <stdexcept>
 #include <vector>

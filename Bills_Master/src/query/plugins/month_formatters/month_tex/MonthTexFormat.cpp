@@ -1,8 +1,8 @@
 
 // MonthTexFormat.cpp
 
-#include "MonthTexFormat.h"
-#include "query/components/monthly_report/ReportSorter.h"
+#include "MonthTexFormat.hpp"
+#include "query/components/monthly_report/ReportSorter.hpp"
 #include <sstream>
 #include <iomanip>
 #include <string>

@@ -1,7 +1,7 @@
 
-#include "ExportController.h"
-#include "query/core/QueryDb.h"
-#include "common/common_utils.h" // 确保包含颜色定义
+#include "ExportController.hpp"
+#include "query/core/QueryDb.hpp"
+#include "common/common_utils.hpp" // 确保包含颜色定义
 
 #include <iostream>
 #include <stdexcept>

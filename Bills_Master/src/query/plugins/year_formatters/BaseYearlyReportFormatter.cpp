@@ -1,5 +1,5 @@
 // query/plugins/year_formatters/BaseYearlyReportFormatter.cpp
-#include "BaseYearlyReportFormatter.h"
+#include "BaseYearlyReportFormatter.hpp"
 // 先检查数据是否存在，然后依次调用各个虚函数来生成报告的头部、摘要和每月明细等部分
 std::string BaseYearlyReportFormatter::format_report(const YearlyReportData& data) const {
     if (!data.data_found) {

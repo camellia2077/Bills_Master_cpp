@@ -1,10 +1,10 @@
 
-#include "WorkflowController.h"
-#include "reprocessing/Reprocessor.h"
-#include "db_insert/DataProcessor.h"
-#include "file_handler/FileHandler.h"
-#include "ProcessStats.h"
-#include "common/common_utils.h"
+#include "WorkflowController.hpp"
+#include "reprocessing/Reprocessor.hpp"
+#include "db_insert/DataProcessor.hpp"
+#include "file_handler/FileHandler.hpp"
+#include "ProcessStats.hpp"
+#include "common/common_utils.hpp"
 
 #include <iostream>
 #include <filesystem>

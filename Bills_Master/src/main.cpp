@@ -8,8 +8,8 @@
 #include <print>
 #include <cstdio> // For stderr
 
-#include "app_controller/AppController.h"
-#include "common/common_utils.h" // for colors
+#include "app_controller/AppController.hpp"
+#include "common/common_utils.hpp" // for colors
 // Add to the top of main.cpp
 #ifdef _WIN32
 #include <windows.h>
