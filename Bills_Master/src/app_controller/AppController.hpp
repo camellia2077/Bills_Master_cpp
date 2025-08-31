@@ -11,7 +11,7 @@ class AppController {
 public:
    explicit AppController(const std::string& db_path = "bills.sqlite3", 
                           const std::string& config_path = "./config",
-                          const std::string& modified_output_dir = "txt_raw");
+                          const std::string& modified_output_dir = "txt2josn");
 
     // 函数签名保持不变，但实现会变得非常简单
     bool handle_validation(const std::string& path);

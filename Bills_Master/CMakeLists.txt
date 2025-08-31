@@ -41,10 +41,12 @@ set(USAGE_HELP_DIR   "${SOURCE_ROOT}/usage_help")
 # 1. reprocessing 模块源文件
 set(REPROCESSING_SOURCES
     "${REPROCESSING_DIR}/Reprocessor.cpp"
+
     "${REPROCESSING_DIR}/modifier/BillModifier.cpp"
     "${REPROCESSING_DIR}/modifier/config_loader/ConfigLoader.cpp"
     "${REPROCESSING_DIR}/modifier/processor/BillContentTransformer.cpp"
-    "${REPROCESSING_DIR}/modifier/raw_format/BillFormatter.cpp"
+    "${REPROCESSING_DIR}/modifier/raw_format/BillJsonFormatter.cpp"
+
     "${REPROCESSING_DIR}/validator/BillValidator.cpp"
     "${REPROCESSING_DIR}/validator/config/BillConfig.cpp"
     "${REPROCESSING_DIR}/validator/result/ValidationResult.cpp"
@@ -54,8 +56,10 @@ set(REPROCESSING_SOURCES
 # 2. db_insert 模块源文件
 set(DB_INSERT_SOURCES
     "${DB_INSERT_DIR}/DataProcessor.cpp"
+
     "${DB_INSERT_DIR}/insertor/BillInserter.cpp"
-    "${DB_INSERT_DIR}/parser/BillParser.cpp"
+    
+    "${DB_INSERT_DIR}/parser/BillJsonParser.cpp"
 )
 
 # 3. query 模块源文件 (不包含插件, 插件由 add_subdirectory 处理)

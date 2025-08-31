@@ -63,7 +63,7 @@ bool Reprocessor::modify_bill(const std::string& input_bill_path, const std::str
         std::string bill_content = buffer.str();
         input_file.close();
 
-        // 2. Create a modifier with the just-loaded JSON config and modify the content.
+        // 2. 创建一个 modifier 并修改内容
         BillModifier modifier(modifier_json);
         std::cout << "\n--- Starting Modification using '" << modifier_config_path << "' ---\n";
         std::string modified_content = modifier.modify(bill_content);

@@ -1,3 +1,4 @@
+// WorkflowController.cpp
 
 #include "WorkflowController.hpp"
 #include "reprocessing/Reprocessor.hpp"
@@ -16,13 +17,13 @@ namespace fs = std::filesystem;
 WorkflowController::WorkflowController(const std::string& config_path, const std::string& modified_output_dir)
     : m_config_path(config_path), m_modified_output_dir(modified_output_dir) {}
 
-// Corrected: Belongs to WorkflowController
 bool WorkflowController::handle_validation(const std::string& path) {
     ProcessStats stats;
     try {
         FileHandler file_handler;
         Reprocessor reprocessor(m_config_path);
-        std::vector<fs::path> files = file_handler.find_txt_files(path);
+        // 验证流程仍然是针对原始的 .txt 文件
+        std::vector<fs::path> files = file_handler.find_files_by_extension(path, ".txt");
         for (const auto& file : files) {
             std::cout << "\n--- Validating: " << file.string() << " ---\n";
             if (reprocessor.validate_bill(file.string())) {
@@ -39,30 +40,35 @@ bool WorkflowController::handle_validation(const std::string& path) {
     return stats.failure == 0;
 }
 
-// Corrected: Belongs to WorkflowController
 bool WorkflowController::handle_modification(const std::string& path) {
     ProcessStats stats;
     try {
         FileHandler file_handler;
         Reprocessor reprocessor(m_config_path);
-        std::vector<fs::path> files = file_handler.find_txt_files(path);
+        // 修改流程的输入仍然是 .txt 文件
+        std::vector<fs::path> files = file_handler.find_files_by_extension(path, ".txt");
         for (const auto& file : files) {
-            std::string filename_stem = file.stem().string();
-            fs::path modified_path;
+            fs::path modified_path = file;
+            // *** 核心修复 1: 将输出文件的后缀名替换为 .json ***
+            modified_path.replace_extension(".json");
+
+            std::string filename_stem = modified_path.stem().string();
+            fs::path final_output_path;
+
             if (filename_stem.length() >= 4) {
                 std::string year = filename_stem.substr(0, 4);
                 fs::path target_dir = fs::path(m_modified_output_dir) / year;
                 fs::create_directories(target_dir);
-                modified_path = target_dir / file.filename();
+                final_output_path = target_dir / modified_path.filename();
             } else {
-                std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Could not determine year from filename '" << file.filename().string() << "'. Saving in root txt_raw directory.\n";
+                std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR << "Could not determine year from filename '" << modified_path.filename().string() << "'. Saving in root output directory.\n";
                 fs::path target_dir(m_modified_output_dir);
                 fs::create_directory(target_dir);
-                modified_path = target_dir / file.filename();
+                final_output_path = target_dir / modified_path.filename();
             }
             
-            std::cout << "\n--- Modifying: " << file.string() << " -> " << modified_path.string() << " ---\n";
-            if(reprocessor.modify_bill(file.string(), modified_path.string())) {
+            std::cout << "\n--- Modifying: " << file.string() << " -> " << final_output_path.string() << " ---\n";
+            if(reprocessor.modify_bill(file.string(), final_output_path.string())) {
                 stats.success++;
             } else {
                 stats.failure++;
@@ -76,7 +82,6 @@ bool WorkflowController::handle_modification(const std::string& path) {
     return stats.failure == 0;
 }
 
-// Corrected: Belongs to WorkflowController
 bool WorkflowController::handle_import(const std::string& path) {
     ProcessStats stats;
     const std::string db_path = "bills.sqlite3";
@@ -85,7 +90,8 @@ bool WorkflowController::handle_import(const std::string& path) {
     try {
         FileHandler file_handler;
         DataProcessor data_processor;
-        std::vector<fs::path> files = file_handler.find_txt_files(path);
+        // *** 核心修复 2: 现在查找 .json 文件进行导入 ***
+        std::vector<fs::path> files = file_handler.find_files_by_extension(path, ".json");
         for (const auto& file : files) {
             std::cout << "\n--- Processing for database: " << file.string() << " ---\n";
             if (data_processor.process_and_insert(file.string(), db_path)) {
@@ -102,7 +108,6 @@ bool WorkflowController::handle_import(const std::string& path) {
     return stats.failure == 0;
 }
 
-// Corrected: Belongs to WorkflowController
 bool WorkflowController::handle_full_workflow(const std::string& path) {
     ProcessStats stats;
     std::cout << "--- Automatic processing workflow started ---\n";
@@ -111,9 +116,10 @@ bool WorkflowController::handle_full_workflow(const std::string& path) {
         Reprocessor reprocessor(m_config_path);
         DataProcessor data_processor;
 
-        std::vector<fs::path> files = file_handler.find_txt_files(path);
+        // 完整工作流从查找原始 .txt 文件开始
+        std::vector<fs::path> files = file_handler.find_files_by_extension(path, ".txt");
         if (files.empty()) {
-            std::cout << "No files found to process.\n";
+            std::cout << "No .txt files found to process.\n";
             stats.print_summary("Full Workflow");
             return true;
         }
@@ -131,17 +137,22 @@ bool WorkflowController::handle_full_workflow(const std::string& path) {
             }
             std::cout << GREEN_COLOR << "Success: " << RESET_COLOR << "Validation complete." << "\n";
             
-            std::string filename_stem = file_path.stem().string();
-            fs::path modified_path;
+            fs::path temp_path = file_path;
+            // *** 核心修复 3: 在完整工作流中也替换后缀名 ***
+            temp_path.replace_extension(".json");
+            
+            std::string filename_stem = temp_path.stem().string();
+            fs::path modified_path; // 最终的 .json 文件输出路径
+
             if (filename_stem.length() >= 4) {
                 std::string year = filename_stem.substr(0, 4);
                 fs::path target_dir = fs::path(m_modified_output_dir) / year;
                 fs::create_directories(target_dir);
-                modified_path = target_dir / file_path.filename();
+                modified_path = target_dir / temp_path.filename();
             } else {
                 fs::path target_dir(m_modified_output_dir);
                 fs::create_directory(target_dir);
-                modified_path = target_dir / file_path.filename();
+                modified_path = target_dir / temp_path.filename();
             }
 
             std::cout << "\n[Step 2/3] Modifying bill file...\n";
@@ -154,6 +165,7 @@ bool WorkflowController::handle_full_workflow(const std::string& path) {
             
             std::cout << "\n[Step 3/3] Parsing and inserting into database...\n";
             const std::string db_path = "bills.sqlite3";
+            // *** 核心修复 4: 确保将 .json 文件路径传递给数据库处理器 ***
             if (data_processor.process_and_insert(modified_path.string(), db_path)) {
                 std::cout << GREEN_COLOR << "Success: " << RESET_COLOR << "Database import for this file is complete." << "\n";
                 stats.success++;
