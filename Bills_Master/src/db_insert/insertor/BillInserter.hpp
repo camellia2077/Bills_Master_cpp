@@ -1,6 +1,6 @@
 #ifndef INSERT_H
 #define INSERT_H
-#include "db_insert/bill_structures/BillStructures.hpp"
+#include "common_structures/CommonData.hpp" // <--- 指向新的头文件
 #include <sqlite3.h>
 #include <string>
 #include <stdexcept>
@@ -11,7 +11,7 @@ public:
     explicit BillInserter(const std::string& db_path);
     ~BillInserter();
 
-    void insert_bill(const ParsedBill& bill_data);
+    void insert_bill(const ParsedBill& bill_data); // <--- ParsedBill 的定义来自 CommonData.hpp
 
 private:
     sqlite3* m_db; // SQLite 数据库连接句柄
