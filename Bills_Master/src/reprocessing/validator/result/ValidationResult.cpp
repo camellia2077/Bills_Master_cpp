@@ -1,5 +1,5 @@
-
 #include "ValidationResult.hpp"
+#include "common/common_utils.hpp" // For using color macros
 
 void ValidationResult::add_error(const std::string& message) {
     errors.push_back(message);
@@ -13,6 +13,7 @@ bool ValidationResult::has_errors() const {
     return !errors.empty();
 }
 
+// MODIFIED print_report method: Added colors for errors and warnings
 void ValidationResult::print_report() const {
     std::cout << "\n--- Validation Report ---\n";
     if (errors.empty() && warnings.empty()) {
@@ -21,14 +22,16 @@ void ValidationResult::print_report() const {
     }
 
     if (!errors.empty()) {
-        std::cerr << "Found " << errors.size() << " errors:\n";
+        // Errors are now printed in red
+        std::cerr << RED_COLOR << "Found " << errors.size() << " error(s):\n" << RESET_COLOR;
         for (const auto& err : errors) {
             std::cerr << "- " << err << std::endl;
         }
     }
 
     if (!warnings.empty()) {
-        std::cerr << "Found " << errors.size() << " warnings:\n";
+        // Warnings are now printed in yellow
+        std::cout << YELLOW_COLOR << "Found " << warnings.size() << " warning(s):\n" << RESET_COLOR;
         for (const auto& warn : warnings) {
             std::cout << "- " << warn << std::endl;
         }
