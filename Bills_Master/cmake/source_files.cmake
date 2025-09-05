@@ -13,8 +13,13 @@ set(REPROCESSING_SOURCES
     "${REPROCESSING_DIR}/Reprocessor.cpp"
     "${REPROCESSING_DIR}/modifier/BillModifier.cpp"
     "${REPROCESSING_DIR}/modifier/config_loader/ConfigLoader.cpp"
+
     "${REPROCESSING_DIR}/modifier/processor/BillContentTransformer.cpp"
+    "${REPROCESSING_DIR}/modifier/processor/BillParser.cpp"
+    "${REPROCESSING_DIR}/modifier/processor/BillProcessor.cpp"
+
     "${REPROCESSING_DIR}/modifier/raw_format/BillJsonFormatter.cpp"
+
     "${REPROCESSING_DIR}/validator/BillValidator.cpp"
     "${REPROCESSING_DIR}/validator/config/BillConfig.cpp"
     "${REPROCESSING_DIR}/validator/result/ValidationResult.cpp"
