@@ -1,11 +1,4 @@
 {
-  "modification_flags": {
-    "enable_summing": true,
-    "enable_autorenewal": true,
-    "enable_cleanup": true,
-    "enable_sorting": true,
-    "preserve_metadata_lines": true
-  },
   "auto_renewal_rules": {
     "web_service": [
       {

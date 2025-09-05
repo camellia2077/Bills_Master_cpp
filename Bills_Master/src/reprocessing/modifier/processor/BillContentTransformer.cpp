@@ -1,3 +1,4 @@
+// reprocessing/modifier/processor/BillContentTransformer.cpp
 
 #include "BillContentTransformer.hpp"
 
@@ -14,12 +15,10 @@ std::vector<ParentItem> BillContentTransformer::process(const std::string& bill_
     _perform_initial_modifications(lines);
     std::vector<ParentItem> bill_structure = _parse_into_structure(lines, out_metadata_lines);
 
-    if (m_config.flags.enable_sorting) {
-        _sort_bill_structure(bill_structure);
-    }
-    if (m_config.flags.enable_cleanup) {
-        _cleanup_bill_structure(bill_structure);
-    }
+    // MODIFICATION: Hardcoded the sorting and cleanup logic to always be true.
+    _sort_bill_structure(bill_structure);
+    _cleanup_bill_structure(bill_structure);
+    
     return bill_structure;
 }
 
@@ -28,11 +27,11 @@ std::vector<ParentItem> BillContentTransformer::process(const std::string& bill_
 // ===================================================================
 
 void BillContentTransformer::_perform_initial_modifications(std::vector<std::string>& lines) {
-    if (m_config.flags.enable_summing) {
-        for (std::string& line : lines) {
-            _sum_up_line(line);
-        }
+    // MODIFICATION: Hardcoded summing to always be true.
+    for (std::string& line : lines) {
+        _sum_up_line(line);
     }
+
     if (m_config.auto_renewal.enabled) {
         for (const auto& pair : m_config.auto_renewal.rules) {
             const std::string& category_title = pair.first;
@@ -100,7 +99,8 @@ std::vector<ParentItem> BillContentTransformer::_parse_into_structure(const std:
 
     std::vector<std::string> temp_lines;
     for(const auto& line : lines) {
-        if (m_config.flags.preserve_metadata_lines && _is_metadata_line(line)) {
+        // MODIFICATION: Hardcoded metadata preservation to always be true.
+        if (_is_metadata_line(line)) {
             metadata_lines.push_back(line);
             continue;
         }
