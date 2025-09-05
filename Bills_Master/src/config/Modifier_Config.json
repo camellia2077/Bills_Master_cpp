@@ -6,11 +6,6 @@
     "enable_sorting": true,
     "preserve_metadata_lines": true
   },
-  "formatting_rules": {
-    "lines_after_parent_section": 4,
-    "lines_after_parent_title": 1,
-    "lines_between_sub_items": 1
-  },
   "auto_renewal_rules": {
     "web_service": [
       {
