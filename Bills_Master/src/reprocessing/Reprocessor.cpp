@@ -1,61 +1,56 @@
-
 #include "Reprocessor.hpp"
 #include <fstream>
 #include <sstream>
 #include <iostream>
-#include "nlohmann/json.hpp" // Included here for use in modify_bill
+#include "nlohmann/json.hpp" // 为修改器加载JSON所需
 
-// --- Constructor ---
+// --- 构造函数 ---
+// **修改**: 构造函数现在负责加载所有配置并创建验证器和修改器
+Reprocessor::Reprocessor(const std::string& config_dir_path) {
+    try {
+        // 1. 构建验证器
+        const std::string validator_config_path = config_dir_path + "/Validator_Config.json";
+        m_validator = std::make_unique<BillValidator>(validator_config_path);
 
-// The constructor now simply stores the directory path.
-Reprocessor::Reprocessor(const std::string& config_dir_path) : m_config_dir_path(config_dir_path) {
-    // No config loading is done at construction time.
+        // 2. 构建修改器
+        const std::string modifier_config_path = config_dir_path + "/Modifier_Config.json";
+        std::ifstream config_file(modifier_config_path);
+        if (!config_file.is_open()) {
+            throw std::runtime_error("错误: 无法打开修改器配置文件 '" + modifier_config_path + "'");
+        }
+        
+        nlohmann::json modifier_json;
+        config_file >> modifier_json;
+        m_modifier = std::make_unique<BillModifier>(modifier_json);
+
+    } catch (const std::exception& e) {
+        // 如果在构造过程中发生任何错误，立即报告并重新抛出异常
+        std::cerr << "在 Reprocessor 初始化过程中发生严重错误: " << e.what() << std::endl;
+        throw;
+    }
 }
 
-// --- Public Methods ---
+// --- 公共方法 ---
 
 bool Reprocessor::validate_bill(const std::string& bill_path) {
+    // **修改**: 直接使用成员变量 m_validator，不再每次都创建新实例
     try {
-        // Note: Using '/' as a path separator works on Windows, Linux, and macOS.
-        const std::string validator_config_path = m_config_dir_path + "/Validator_Config.json";
-        
-        BillValidator validator(validator_config_path); 
-        
-        std::cout << "\n--- Starting Validation using '" << validator_config_path << "' ---\n";
-        bool result = validator.validate(bill_path);
-        if (result) {
-            std::cout << "Validation successful: No errors found. (Warnings may still be present)\n";
-        } else {
-            std::cerr << "Validation failed: Errors were found.\n";
-        }
-        std::cout << "--- Validation Finished ---\n";
-        return result;
-
+        // 简化日志: BillValidator::validate 方法本身会打印详细的验证报告
+        // 所以这里不再需要额外的 "Starting/Finished" 日志
+        return m_validator->validate(bill_path);
     } catch (const std::runtime_error& e) {
-        std::cerr << "A critical error occurred during validation setup: " << e.what() << std::endl;
+        std::cerr << "在验证过程中发生严重错误: " << e.what() << std::endl;
         return false;
     }
 }
 
 bool Reprocessor::modify_bill(const std::string& input_bill_path, const std::string& output_bill_path) {
+    // **修改**: 直接使用成员变量 m_modifier
     try {
-        const std::string modifier_config_path = m_config_dir_path + "/Modifier_Config.json";
-        std::ifstream config_file(modifier_config_path);
-        if (!config_file.is_open()) {
-            throw std::runtime_error("Error: Could not open modifier config file '" + modifier_config_path + "'");
-        }
-        
-        nlohmann::json modifier_json;
-        try {
-            config_file >> modifier_json;
-        } catch (nlohmann::json::parse_error& e) {
-            throw std::runtime_error("Error: Failed to parse JSON from '" + modifier_config_path + "': " + std::string(e.what()));
-        }
-        config_file.close();
-        // 1. Read the input bill file.
+        // 1. 读取输入文件
         std::ifstream input_file(input_bill_path);
         if (!input_file.is_open()) {
-            std::cerr << "Error: Could not open input bill file '" << input_bill_path << "'\n";
+            std::cerr << "错误: 无法打开输入账单文件 '" << input_bill_path << "'\n";
             return false;
         }
         std::stringstream buffer;
@@ -63,25 +58,24 @@ bool Reprocessor::modify_bill(const std::string& input_bill_path, const std::str
         std::string bill_content = buffer.str();
         input_file.close();
 
-        // 2. 创建一个 modifier 并修改内容
-        BillModifier modifier(modifier_json);
-        std::cout << "\n--- Starting Modification using '" << modifier_config_path << "' ---\n";
-        std::string modified_content = modifier.modify(bill_content);
+        // 2. 使用已创建的修改器来修改内容
+        std::cout << "\n--- 正在修改: " << input_bill_path << " -> " << output_bill_path << " ---\n";
+        std::string modified_content = m_modifier->modify(bill_content);
 
-        // 3. Write the modified content to the output file.
+        // 3. 将修改后的内容写入输出文件
         std::ofstream output_file(output_bill_path);
         if (!output_file.is_open()) {
-            std::cerr << "Error: Could not open output bill file '" << output_bill_path << "' for writing.\n";
+            std::cerr << "错误: 无法打开输出账单文件 '" << output_bill_path << "' 进行写入。\n";
             return false;
         }
         output_file << modified_content;
         output_file.close();
         
-        std::cout << "--- Modification successful. Output saved to '" << output_bill_path << "' ---\n";
+        std::cout << "--- 修改成功。输出已保存至 '" << output_bill_path << "' ---\n";
         return true;
 
     } catch (const std::exception& e) {
-        std::cerr << "An error occurred during modification: " << e.what() << std::endl;
+        std::cerr << "在修改过程中发生错误: " << e.what() << std::endl;
         return false;
     }
 }

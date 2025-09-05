@@ -10,13 +10,13 @@ import re
 # ===================================================================
 
 # *** 重要: 这是您项目中所有产物 (exe, dll) 所在的目录 ***
-BUILD_DIR = r"C:\Computer\my_github\github_cpp\bill_master\Bills_Master_cpp\Bills_Master\build\bin"  
+BUILD_DIR = r"C:\Computer\my_github\github_cpp\bills_master\Bills_Master_cpp\Bills_Master\build\bin"  
 
 # *** 重要: 这是您存放原始 .txt 账单文件的目录 ***
-BILLS_DIR = r"C:\Computer\my_github\github_cpp\bill_master\my_test\bills_test"
+BILLS_DIR = r"C:\Computer\my_github\github_cpp\bills_master\my_test\bills_test"
 
 # *** _MODIFIED_: 新增一个变量，指向预处理后 .json 文件所在的目录 ***
-IMPORT_DIR = r"C:\Computer\my_github\github_cpp\bill_master\my_test\txt_raw"
+IMPORT_DIR = r"C:\Computer\my_github\github_cpp\bills_master\my_test\txt2josn"
 
 # <--- 定义所有需要复制的插件 DLL 名称 --->
 PLUGIN_DLLS = [
@@ -247,8 +247,8 @@ def main():
 
     exe_path = os.path.join(script_dir, preparer.exe_name)
     bills_path = BILLS_DIR 
-    # *** _MODIFIED_: 定义导入目录的路径 ***
-    import_path = os.path.join(script_dir, "txt_raw")
+    # 处理后的json文件路径
+    import_path = IMPORT_DIR
     output_dir = os.path.join(script_dir, "output")
     
     if "C:/path/to/your/bills_folder" in bills_path:

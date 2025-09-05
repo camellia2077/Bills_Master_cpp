@@ -2,7 +2,7 @@
 # 在这里配置你所有的路径和选项
 
 # 1. 源文件夹的父目录
-SOURCE_DIRECTORY = r"C:\Computer\my_github\github_cpp\New_time_master\my_test\exported_files"
+SOURCE_DIRECTORY = r"C:\Computer\my_github\github_cpp\bills_master\my_test\exported_files"
 
 # 2. 统一的输出目录
 OUTPUT_DIRECTORY = "output_pdf"
@@ -10,7 +10,7 @@ OUTPUT_DIRECTORY = "output_pdf"
 # 3. 指定要编译的文档类型
 # bill_master可选值: 'TeX', 'Markdown', 'RST', 'Typst'
 # time_master可选值: 'TeX', 'Markdown', 'Typst'
-COMPILE_TYPES = ['TeX', 'Markdown', 'RST', 'Typst']
+COMPILE_TYPES = ['TeX', 'Typst']
 
 
 # === 增量编译设置 ===
@@ -29,6 +29,5 @@ CLEAN_OUTPUT_DEFAULT = False
 
 
 # --- 以下为 Markdown 基准测试配置 ---
-# ... (后续内容保持不变) ...
 MARKDOWN_COMPILERS = ['typst']
 BENCHMARK_LOOPS = 3
