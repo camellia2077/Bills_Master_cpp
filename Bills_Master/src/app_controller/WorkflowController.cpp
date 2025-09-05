@@ -25,7 +25,7 @@ bool WorkflowController::handle_validation(const std::string& path) {
         // 验证流程仍然是针对原始的 .txt 文件
         std::vector<fs::path> files = file_handler.find_files_by_extension(path, ".txt");
         for (const auto& file : files) {
-            std::cout << "\n--- Validating: " << file.string() << " ---\n";
+            // **修改点**: 移除了这里的 `std::cout` 日志，现在由 BillValidator::validate 控制所有输出
             if (reprocessor.validate_bill(file.string())) {
                 stats.success++;
             } else {
