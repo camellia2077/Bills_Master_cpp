@@ -5,35 +5,26 @@
 Config ConfigLoader::load(const nlohmann::json& config_json) {
     Config config_to_populate;
 
-    // 解析 formatting_rules
-    if (config_json.contains("formatting_rules")) {
-        const auto& formatting = config_json["formatting_rules"];
-        config_to_populate.formatting.lines_after_parent_section = formatting.value("lines_after_parent_section", 1);
-        config_to_populate.formatting.lines_after_parent_title = formatting.value("lines_after_parent_title", 1);
-        config_to_populate.formatting.lines_between_sub_items = formatting.value("lines_between_sub_items", 1);
-    }
-
-    // 解析 auto_renewal_rules
+    // --- 修改：重写对 auto_renewal_rules 的解析逻辑 ---
     if (config_json.contains("auto_renewal_rules")) {
         const auto& renewal_config = config_json["auto_renewal_rules"];
         config_to_populate.auto_renewal.enabled = renewal_config.value("enabled", false);
 
-        if (config_to_populate.auto_renewal.enabled && renewal_config.contains("rules")) {
-            const auto& renewal_rules = renewal_config["rules"];
-            for (auto it = renewal_rules.begin(); it != renewal_rules.end(); ++it) {
-                const std::string& category = it.key();
-                const nlohmann::json& items = it.value();
-                for (const auto& item_json : items) {
-                    config_to_populate.auto_renewal.rules[category].push_back({
-                        item_json.value("amount", 0.0),
-                        item_json.value("description", "")
-                    });
-                }
+        // 检查 "rules" 是否存在并且是一个数组
+        if (config_to_populate.auto_renewal.enabled && renewal_config.contains("rules") && renewal_config["rules"].is_array()) {
+            // 遍历JSON数组中的每一个对象
+            for (const auto& rule_json : renewal_config["rules"]) {
+                // 将解析出的数据填充到新的 AutoRenewalRule 结构体中
+                config_to_populate.auto_renewal.rules.push_back({
+                    rule_json.value("header_location", ""),
+                    rule_json.value("amount", 0.0),
+                    rule_json.value("description", "")
+                });
             }
         }
     }
 
-    // 解析 metadata_prefixes
+    // 解析 metadata_prefixes (保持不变)
     if (config_json.contains("metadata_prefixes") && config_json["metadata_prefixes"].is_array()) {
         for (const auto& prefix_json : config_json["metadata_prefixes"]) {
             if (prefix_json.is_string()) {

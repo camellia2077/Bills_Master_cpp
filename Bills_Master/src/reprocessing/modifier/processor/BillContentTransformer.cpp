@@ -15,7 +15,6 @@ std::vector<ParentItem> BillContentTransformer::process(const std::string& bill_
     _perform_initial_modifications(lines);
     std::vector<ParentItem> bill_structure = _parse_into_structure(lines, out_metadata_lines);
 
-    // MODIFICATION: Hardcoded the sorting and cleanup logic to always be true.
     _sort_bill_structure(bill_structure);
     _cleanup_bill_structure(bill_structure);
     
@@ -27,15 +26,16 @@ std::vector<ParentItem> BillContentTransformer::process(const std::string& bill_
 // ===================================================================
 
 void BillContentTransformer::_perform_initial_modifications(std::vector<std::string>& lines) {
-    // MODIFICATION: Hardcoded summing to always be true.
     for (std::string& line : lines) {
         _sum_up_line(line);
     }
 
+    // --- 修改：更新自动续费逻辑以使用新的数据结构 ---
     if (m_config.auto_renewal.enabled) {
-        for (const auto& pair : m_config.auto_renewal.rules) {
-            const std::string& category_title = pair.first;
-            const auto& items_to_add = pair.second;
+        // 现在直接遍历规则的 vector
+        for (const auto& rule : m_config.auto_renewal.rules) {
+            const std::string& category_title = rule.header_location;
+            
             auto category_it = std::find(lines.begin(), lines.end(), category_title);
             if (category_it == lines.end()) continue;
 
@@ -44,26 +44,20 @@ void BillContentTransformer::_perform_initial_modifications(std::vector<std::str
             while (content_end_it != lines.end() && !_is_title(*content_end_it) && !content_end_it->empty()) {
                 ++content_end_it;
             }
-            for (const auto& item_to_add : items_to_add) {
-                bool found = false;
-                for (auto it = content_start_it; it != content_end_it; ++it) {
-                    if (it->find(item_to_add.description) != std::string::npos) {
-                        found = true;
-                        break;
-                    }
+            
+            bool found = false;
+            for (auto it = content_start_it; it != content_end_it; ++it) {
+                if (it->find(rule.description) != std::string::npos) {
+                    found = true;
+                    break;
                 }
-                if (!found) {
-                    std::stringstream ss;
-                    ss << std::fixed << std::setprecision(2) << item_to_add.amount
-                       << " " << item_to_add.description << "(auto-renewal)";
-                    lines.insert(content_end_it, ss.str());
-                    
-                    // After insertion, iterators can be invalidated. Re-find the end of the content section.
-                    content_end_it = content_start_it;
-                    while (content_end_it != lines.end() && !_is_title(*content_end_it) && !content_end_it->empty()) {
-                        ++content_end_it;
-                    }
-                }
+            }
+            
+            if (!found) {
+                std::stringstream ss;
+                ss << std::fixed << std::setprecision(2) << rule.amount
+                   << " " << rule.description << "(auto-renewal)";
+                lines.insert(content_end_it, ss.str());
             }
         }
     }
@@ -99,7 +93,6 @@ std::vector<ParentItem> BillContentTransformer::_parse_into_structure(const std:
 
     std::vector<std::string> temp_lines;
     for(const auto& line : lines) {
-        // MODIFICATION: Hardcoded metadata preservation to always be true.
         if (_is_metadata_line(line)) {
             metadata_lines.push_back(line);
             continue;
