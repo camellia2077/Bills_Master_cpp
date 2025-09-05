@@ -6,36 +6,26 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "nlohmann/json.hpp" // nlohmann/json is used by ConfigLoader but its data types are here
+#include "nlohmann/json.hpp"
 
 // --- Data Structures ---
 
 struct Config {
-    // MODIFICATION: Removed the ModificationFlags struct.
-    // struct ModificationFlags {
-    //     bool enable_summing = false;
-    //     bool enable_cleanup = false;
-    //     bool enable_sorting = false;
-    //     bool preserve_metadata_lines = false;
-    // } flags;
-
-    struct FormattingRules {
-        int lines_after_parent_section = 1;
-        int lines_after_parent_title = 1;
-        int lines_between_sub_items = 0;
-    } formatting;
-
-    struct AutoRenewalItem {
+    // --- 新增：为自动续费规则定义一个清晰的结构体 ---
+    struct AutoRenewalRule {
+        std::string header_location;
         double amount;
         std::string description;
     };
 
+    // --- 修改：更新 AutoRenewalConfig 结构体 ---
     struct AutoRenewalConfig {
         bool enabled = false;
-        std::map<std::string, std::vector<AutoRenewalItem>> rules;
+        // 将原来的 map 结构改为新结构体的 vector，以匹配JSON数组
+        std::vector<AutoRenewalRule> rules;
     };
+    
     AutoRenewalConfig auto_renewal;
-
     std::vector<std::string> metadata_prefixes;
 };
 
