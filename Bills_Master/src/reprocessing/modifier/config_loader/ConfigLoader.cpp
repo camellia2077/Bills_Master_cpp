@@ -1,17 +1,9 @@
+// reprocessing/modifier/config_loader/ConfigLoader.cpp
 
 #include "ConfigLoader.hpp"
 
 Config ConfigLoader::load(const nlohmann::json& config_json) {
     Config config_to_populate;
-
-    // 解析 modification_flags
-    if (config_json.contains("modification_flags")) {
-        const auto& flags = config_json["modification_flags"];
-        config_to_populate.flags.enable_summing = flags.value("enable_summing", false);
-        config_to_populate.flags.enable_cleanup = flags.value("enable_cleanup", false);
-        config_to_populate.flags.enable_sorting = flags.value("enable_sorting", false);
-        config_to_populate.flags.preserve_metadata_lines = flags.value("preserve_metadata_lines", false);
-    }
 
     // 解析 formatting_rules
     if (config_json.contains("formatting_rules")) {

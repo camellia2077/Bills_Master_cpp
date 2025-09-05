@@ -1,3 +1,5 @@
+// reprocessing/modifier/_shared_structures/BillDataStructures.hpp
+
 #ifndef BILL_DATA_STRUCTURES_H
 #define BILL_DATA_STRUCTURES_H
 
@@ -9,12 +11,13 @@
 // --- Data Structures ---
 
 struct Config {
-    struct ModificationFlags {
-        bool enable_summing = false;
-        bool enable_cleanup = false;
-        bool enable_sorting = false;
-        bool preserve_metadata_lines = false;
-    } flags;
+    // MODIFICATION: Removed the ModificationFlags struct.
+    // struct ModificationFlags {
+    //     bool enable_summing = false;
+    //     bool enable_cleanup = false;
+    //     bool enable_sorting = false;
+    //     bool preserve_metadata_lines = false;
+    // } flags;
 
     struct FormattingRules {
         int lines_after_parent_section = 1;
