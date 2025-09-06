@@ -1,4 +1,4 @@
-// common_structures/CommonData.hpp
+// src/common_structures/CommonData.hpp
 
 #ifndef COMMON_DATA_H
 #define COMMON_DATA_H
@@ -14,6 +14,7 @@ struct Transaction {
     std::string sub_category;
     double amount;
     std::string description;
+    std::string source; // 在这里添加 source 字段
 };
 
 // 代表整个解析后的账单文件

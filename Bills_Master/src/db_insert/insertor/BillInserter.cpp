@@ -1,4 +1,3 @@
-
 #include "BillInserter.hpp"
 #include <iostream>
 
@@ -21,7 +20,6 @@ BillInserter::~BillInserter() {
 }
 
 void BillInserter::initialize_database() {
-    // ... 此方法的实现保持不变 ...
     char* errmsg = nullptr;
     const char* create_bills_sql =
         "CREATE TABLE IF NOT EXISTS bills ("
@@ -36,6 +34,8 @@ void BillInserter::initialize_database() {
         sqlite3_free(errmsg);
         throw std::runtime_error("无法创建 bills 表: " + error_str);
     }
+    
+    // --- 修改：在 transactions 表中添加 source 字段 ---
     const char* create_transactions_sql =
         "CREATE TABLE IF NOT EXISTS transactions ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -44,6 +44,7 @@ void BillInserter::initialize_database() {
         " sub_category TEXT NOT NULL,"
         " amount REAL NOT NULL,"
         " description TEXT,"
+        " source TEXT NOT NULL DEFAULT 'manually_add'," // 新增 source 字段
         " FOREIGN KEY (bill_id) REFERENCES bills(id) ON DELETE CASCADE"
         ");";
     if (sqlite3_exec(m_db, create_transactions_sql, 0, 0, &errmsg) != SQLITE_OK) {
@@ -53,42 +54,25 @@ void BillInserter::initialize_database() {
     }
 }
 
-// --- 方法已被重构 ---
-// 公共方法现在是一个高层次的协调者，负责事务和调用辅助方法。
 void BillInserter::insert_bill(const ParsedBill& bill_data) {
     if (bill_data.date.empty()) {
         throw std::runtime_error("无法插入日期为空的账单。");
     }
-
-    // 开始事务，保证所有操作的原子性
     if (sqlite3_exec(m_db, "BEGIN TRANSACTION;", 0, 0, 0) != SQLITE_OK) {
         throw std::runtime_error("无法开始事务: " + std::string(sqlite3_errmsg(m_db)));
     }
-
     try {
-        // 步骤 1: 删除旧记录 (单一职责)
         delete_bill_by_date(bill_data.date);
-
-        // 步骤 2: 插入新的父记录并获取ID (单一职责)
         sqlite3_int64 bill_id = insert_bill_record(bill_data);
-
-        // 步骤 3: 插入所有子记录 (单一职责)
         insert_transactions_for_bill(bill_id, bill_data.transactions);
-
-        // 步骤 4: 提交事务
         if (sqlite3_exec(m_db, "COMMIT;", 0, 0, 0) != SQLITE_OK) {
             throw std::runtime_error("提交事务失败: " + std::string(sqlite3_errmsg(m_db)));
         }
-
     } catch (const std::exception& e) {
-        // 如果在 try 块中发生任何错误，回滚事务
         sqlite3_exec(m_db, "ROLLBACK;", 0, 0, 0);
-        // 将异常重新抛出，以便上层调用者知道操作失败
         throw;
     }
 }
-
-// --- 新的私有辅助方法 ---
 
 void BillInserter::delete_bill_by_date(const std::string& date) {
     sqlite3_stmt* delete_stmt = nullptr;
@@ -124,9 +108,10 @@ sqlite3_int64 BillInserter::insert_bill_record(const ParsedBill& bill_data) {
 
 void BillInserter::insert_transactions_for_bill(sqlite3_int64 bill_id, const std::vector<Transaction>& transactions) {
     sqlite3_stmt* insert_stmt = nullptr;
+    // --- 修改：更新 INSERT 语句以包含 source ---
     const char* insert_sql =
-        "INSERT INTO transactions (bill_id, parent_category, sub_category, amount, description) "
-        "VALUES (?, ?, ?, ?, ?);";
+        "INSERT INTO transactions (bill_id, parent_category, sub_category, amount, description, source) "
+        "VALUES (?, ?, ?, ?, ?, ?);";
     if (sqlite3_prepare_v2(m_db, insert_sql, -1, &insert_stmt, nullptr) != SQLITE_OK) {
         throw std::runtime_error("准备 INSERT transaction 语句失败: " + std::string(sqlite3_errmsg(m_db)));
     }
@@ -137,6 +122,8 @@ void BillInserter::insert_transactions_for_bill(sqlite3_int64 bill_id, const std
         sqlite3_bind_text(insert_stmt, 3, transaction.sub_category.c_str(), -1, SQLITE_STATIC);
         sqlite3_bind_double(insert_stmt, 4, transaction.amount);
         sqlite3_bind_text(insert_stmt, 5, transaction.description.c_str(), -1, SQLITE_STATIC);
+        // --- 新增：绑定 source 的值 ---
+        sqlite3_bind_text(insert_stmt, 6, transaction.source.c_str(), -1, SQLITE_STATIC);
         
         if (sqlite3_step(insert_stmt) != SQLITE_DONE) {
             sqlite3_finalize(insert_stmt);

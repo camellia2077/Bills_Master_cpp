@@ -1,4 +1,4 @@
-// db_insert/parser/BillJsonParser.cpp
+// src/db_insert/parser/BillJsonParser.cpp
 
 #include "BillJsonParser.hpp"
 #include <fstream>
@@ -53,6 +53,8 @@ ParsedBill BillJsonParser::parse(const std::string& file_path) {
                     t.sub_category = sub_category;
                     t.amount = item.at("amount").get<double>();
                     t.description = item.at("description").get<std::string>();
+                    // --- 新增：解析 source 字段 ---
+                    t.source = item.value("source", "manually_add"); // 使用 value 以提供默认值
                     bill_data.transactions.push_back(t);
                 }
             }
