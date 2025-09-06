@@ -53,8 +53,14 @@ ParsedBill BillJsonParser::parse(const std::string& file_path) {
                 t.description = item.at("description").get<std::string>();
                 t.amount = item.at("amount").get<double>();
                 t.source = item.value("source", "manually_add");
-                t.comment = item.value("comment", ""); 
+                t.comment = item.value("comment", "");
                 
+                // ===================================================================
+                //  **修改：解析 transaction_type 字段**
+                // ===================================================================
+                t.transaction_type = item.value("transaction_type", "Expense"); // 默认为 "Expense"
+                // ===================================================================
+
                 bill_data.transactions.push_back(t);
             }
         }
