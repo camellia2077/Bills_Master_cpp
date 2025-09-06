@@ -1,3 +1,4 @@
+// query/core/QueryDb.cpp
 
 #include "QueryDb.hpp"
 #include "BillMetadataReader.hpp"
@@ -67,7 +68,13 @@ std::string QueryFacade::get_yearly_summary_report(int year, const std::string& 
     YearlyReportData data = reader.read_yearly_data(year);
     auto formatter = m_year_manager.createFormatter(format_name);
     if (!formatter) {
-        throw std::runtime_error("Yearly formatter for '" + format_name + "' is not available or failed to load.");
+        std::string expected_dll_name = format_name + "_year_formatter";
+        #ifdef _WIN32
+            expected_dll_name += ".dll";
+        #else
+            expected_dll_name += ".so";
+        #endif
+        throw std::runtime_error("Yearly formatter for '" + format_name + "' is not available. Please ensure that the plugin file '" + expected_dll_name + "' exists in the plugins directory.");
     }
     return formatter->format_report(data);
 }
@@ -76,7 +83,13 @@ std::string QueryFacade::get_monthly_details_report(int year, int month, const s
     MonthlyReportData data = reader.read_monthly_data(year, month);
     auto formatter = m_month_manager.createFormatter(format_name);
     if (!formatter) {
-        throw std::runtime_error("Monthly formatter for '" + format_name + "' is not available or failed to load.");
+        std::string expected_dll_name = format_name + "_month_formatter";
+        #ifdef _WIN32
+            expected_dll_name += ".dll";
+        #else
+            expected_dll_name += ".so";
+        #endif
+        throw std::runtime_error("Monthly formatter for '" + format_name + "' is not available. Please ensure that the plugin file '" + expected_dll_name + "' exists in the plugins directory.");
     }
     return formatter->format_report(data);
 }
@@ -211,8 +224,14 @@ bool QueryFacade::export_by_date_range(const std::string& start_date, const std:
 
     // 2. 验证所需插件是否已加载
     if (!m_month_manager.isFormatAvailable(format_name)) {
+        std::string expected_dll_name = format_name + "_month_formatter";
+        #ifdef _WIN32
+            expected_dll_name += ".dll";
+        #else
+            expected_dll_name += ".so";
+        #endif
         std::cerr << "\n" << RED_COLOR << "Export Aborted:" << RESET_COLOR
-                  << " Monthly formatter for '" << format_name << "' not loaded.\n";
+                  << " Monthly formatter for '" << format_name << "' not loaded. Expected file: " << expected_dll_name << "\n";
         return false;
     }
 
@@ -257,8 +276,14 @@ bool QueryFacade::export_by_date_range(const std::string& start_date, const std:
 // ... (export_all_reports, export_all_monthly_reports, export_all_yearly_reports) ...
 bool QueryFacade::export_all_monthly_reports(const std::string& format_name) {
     if (!m_month_manager.isFormatAvailable(format_name)) {
+        std::string expected_dll_name = format_name + "_month_formatter";
+        #ifdef _WIN32
+            expected_dll_name += ".dll";
+        #else
+            expected_dll_name += ".so";
+        #endif
         std::cerr << "\n" << RED_COLOR << "Export Aborted:" << RESET_COLOR 
-                  << " Monthly formatter for '" << format_name << "' not loaded." << std::endl;
+                  << " Monthly formatter for '" << format_name << "' not loaded. Expected file: " << expected_dll_name << std::endl;
         return false;
     }
     ProcessStats monthly_stats;
@@ -292,8 +317,14 @@ bool QueryFacade::export_all_monthly_reports(const std::string& format_name) {
 
 bool QueryFacade::export_all_yearly_reports(const std::string& format_name) {
     if (!m_year_manager.isFormatAvailable(format_name)) {
+        std::string expected_dll_name = format_name + "_year_formatter";
+        #ifdef _WIN32
+            expected_dll_name += ".dll";
+        #else
+            expected_dll_name += ".so";
+        #endif
         std::cerr << "\n" << RED_COLOR << "Export Aborted:" << RESET_COLOR 
-                  << " Yearly formatter for '" << format_name << "' not loaded." << std::endl;
+                  << " Yearly formatter for '" << format_name << "' not loaded. Expected file: " << expected_dll_name << std::endl;
         return false;
     }
     ProcessStats yearly_stats;
@@ -336,8 +367,24 @@ bool QueryFacade::export_all_reports(const std::string& format_name) {
     if (!month_plugin_loaded || !year_plugin_loaded) {
         std::cerr << "\n" << RED_COLOR << "Export Aborted:" << RESET_COLOR 
                   << " A required format plugin '" << format_name << "' could not be loaded." << std::endl;
-        if (!month_plugin_loaded) std::cerr << " -> Missing monthly formatter.\n";
-        if (!year_plugin_loaded) std::cerr << " -> Missing yearly formatter.\n";
+        if (!month_plugin_loaded) {
+            std::string expected_dll_name = format_name + "_month_formatter";
+            #ifdef _WIN32
+                expected_dll_name += ".dll";
+            #else
+                expected_dll_name += ".so";
+            #endif
+            std::cerr << " -> Missing monthly formatter. Expected file: " << expected_dll_name << "\n";
+        }
+        if (!year_plugin_loaded) {
+            std::string expected_dll_name = format_name + "_year_formatter";
+            #ifdef _WIN32
+                expected_dll_name += ".dll";
+            #else
+                expected_dll_name += ".so";
+            #endif
+            std::cerr << " -> Missing yearly formatter. Expected file: " << expected_dll_name << "\n";
+        }
         return false;
     }
     bool monthly_ok = export_all_monthly_reports(format_name);
