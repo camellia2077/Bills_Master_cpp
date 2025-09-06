@@ -1,37 +1,81 @@
 # bills_master
 
 对账单文件进行预处理、验证、分析和入数据库，并且导出多种格式(md、tex、typ、rst)。主要使用c++开发。
+本程序并非意在取代任何支付软件的记账功能，而是作为现有账单查询功能的一个重要补充，专注于解决跨平台数据汇总的难题。
 
 ## ✨ 主要功能
 
-* **账单预处理**: 对txt内容进行验证和修改,可使用json传入合法性验证和修改的配置
-* **数据库集成**: 解析账单数据并将其导入 SQLite 数据库。
-* **报告生成**: 查询数据库，以 Markdown、LaTeX 和 Typst 等多种格式生成详细的月度和年度报告。
-* **数据可视化**: 查询数据库，生成分析图表。
+  * **账单预处理**: 对txt内容进行验证和修改,可使用json传入合法性验证和修改的配置。
+  * **数据库集成**: 解析账单数据并将其导入 SQLite 数据库。
+  * **报告生成**: 查询数据库，以 Markdown、LaTeX 和 Typst 等多种格式生成详细的月度和年度报告。
+  * **数据可视化**: 查询数据库，生成分析图表。
 
 ## 🚀 快速开始
 
 1.  **克隆仓库:**
+
     ```bash
     git clone git@github.com:camellia2077/Bills_Master_cpp.git
     cd Bills_Master
     ```
 
 2.  **编译项目:**
+
     ```bash
     ./build.sh
     ```
 
 3.  **运行程序:**
-    * **交互式菜单**: `./build/bin/bill_matser_app`
-    * **命令行界面**: `./build/bin/bill_master_cli`
+
+      * **交互式菜单**: `./build/bin/bill_matser_app`
+      * **命令行界面**: `./build/bin/bill_master_cli`
 
 ## 📚 文档
 
 更详细的文档信息，请参阅 `docs` 目录：
 
-* **[依赖项 (Dependencies)](docs/DEPENDENCIES.md)**: 项目使用的开源库。
-* **[架构设计 (Architecture)](docs/ARCHITECTURE.md)**: 项目的整体架构图
-* **[目录结构 (Directory Structure)](docs/DATABASE_SCHEMA.md)**: 数据库表结构
-* **[目录结构 (Directory Structure)](docs/DIRECTORY_STRUCTURE.md)**: 项目源代码的详细目录结构。
-* **[图表配置 (Graph Configuration)](docs/GRAPH_CONFIGURATION.md)**: 关于图表生成脚本的指令说明。
+  * **[依赖项 (Dependencies)](https://www.google.com/search?q=docs/DEPENDENCIES.md)**: 项目使用的开源库。
+  * **[架构设计 (Architecture)](https://www.google.com/search?q=docs/ARCHITECTURE.md)**: 项目的整体架构图。
+  * **[目录结构 (Directory Structure)](https://www.google.com/search?q=docs/DATABASE_SCHEMA.md)**: 数据库表结构。
+  * **[目录结构 (Directory Structure)](https://www.google.com/search?q=docs/DIRECTORY_STRUCTURE.md)**: 项目源代码的详细目录结构。
+  * **[图表配置 (Graph Configuration)](https://www.google.com/search?q=docs/GRAPH_CONFIGURATION.md)**: 关于图表生成脚本的指令说明。
+
+## 设计理念 🎯
+
+### 为什么要开发 BillsMaster：在一个数字化时代，为何还需要手动记账？
+
+许多人可能会有疑问：在如今这个网络支付极其便利的时代，无论是支付宝、还是Apple Pay，每一笔交易的金额、商家和订单号都清晰可查。在这样的背景下，再开发一个手动记账程序，岂不是在“重复造轮子”吗?
+
+这个问题的答案，恰恰是开发本项目的核心动机。
+
+#### 核心痛点：支付渠道碎片化与数据孤岛
+
+我们日常的消费途径远比想象的要复杂和分散。今天我可能使用PayPal在线购物，明天在便利店用Apple Pay付款，后天和朋友聚餐选择现金支付。这就导致了几个关键问题：
+
+1.  **数据无法共通**：PayPal的账单和Apple Pay的账单是两个独立的数据孤岛。我们无法通过任何单一的App，一键查询到“本月我在所有平台总共消费了多少钱”。
+2.  **线下支付的记录缺失**：现金支付根本不会产生任何电子记录。如果没有手动记账的习惯，这部分支出就会成为财务管理的“黑洞”，被彻底遗忘。
+
+#### BillsMaster的解决方案：跨平台、统一、快速、
+
+本程序正是为了解决多媒介、多平台支付记录的整合难题而生。它提供了一个简单而强大的解决方案：
+
+  * **统一记录入口**：通过最基础、最通用的`.txt`纯文本文件进行记账。这意味着您可以用任何设备、任何操作系统（Windows, macOS, Linux, 甚至手机），随时随地打开一个记事本就能快速记录开销。
+  * **快速标记语法**：我们设计了一套极其简洁的标记语法，让您能以最少的输入，快速标记金额、分类和备注，最大化记账效率。
+  * **强大的后端处理**：您只需负责最简单的记录工作，剩下的数据验证、解析、计算、入库和多格式报告生成（如Markdown, LaTeX, Typst）等所有繁重任务，都由BillsMaster在后端自动完成。
+
+#### 局限性
+
+当然，作为一个依赖手动录入的系统，BillsMaster也存在一些固有的局限性：
+
+1.  **无法自动同步**：本程序无法像某些商业记账软件那样，通过API自动从各大支付渠道同步账单。所有数据都需要用户手动录入。
+2.  **缺乏交易详情**：系统记录的是您认为重要的核心信息（金额、分类、描述），但无法自动关联到具体的电子消费订单号或发票详情。
+3.  **潜在的录入负担**：由于需要手动记录每一条消费，对于日常交易频繁的用户来说，大量重复的录入工作可能会变得枯燥乏味，并增加时间成本。
+
+总而言之，BillsMaster并非要替代支付软件的账单查询功能，而是旨在成为您个人财务的**最终数据聚合中心**。它通过拥抱最简单的手动录入方式，赋予了您整合所有线上、线下、跨平台消费记录的能力，让您对自己的财务状况有更全面、更统一的掌控。
+
+## 🙏 致谢
+
+本项目的诞生离不开以下贡献者的努力：
+
+* **[@camellia2077](https://github.com/camellia2077)**: 项目的发起者与核心开发者。
+* **Google Gemini 2.5 Pro**: 提供了贯穿项目开发全流程的 AI 辅助。
