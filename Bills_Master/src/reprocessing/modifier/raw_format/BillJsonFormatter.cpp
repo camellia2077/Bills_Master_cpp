@@ -6,7 +6,13 @@
 #include <iomanip>
 #include <sstream>
 
-std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_structure, const std::vector<std::string>& metadata_lines, const std::map<std::string, std::string>& display_names) const {
+// **修改**: 更新 format 函数以处理多语言逻辑
+std::string BillJsonFormatter::format(
+    const std::vector<ParentItem>& bill_structure, 
+    const std::vector<std::string>& metadata_lines, 
+    const std::map<std::string, std::map<std::string, std::string>>& display_name_maps,
+    const std::vector<std::string>& languages) const 
+{
     nlohmann::ordered_json root;
 
     for (const auto& meta_line : metadata_lines) {
@@ -40,9 +46,25 @@ std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_struct
                 parent_sub_total += amount;
             }
         }
+        
+        // ===================================================================
+        //  **核心修改: 创建一个 display_names 对象来存储所有语言的翻译**
+        // ===================================================================
+        nlohmann::ordered_json display_names_obj = nlohmann::ordered_json::object();
+        auto parent_it = display_name_maps.find(parent.title);
 
-        auto it = display_names.find(parent.title);
-        parent_node["parent_cn"] = (it != display_names.end()) ? it->second : parent.title;
+        for (const auto& lang : languages) {
+            std::string display_name = parent.title; // 默认使用ID作为备用值
+            if (parent_it != display_name_maps.end()) {
+                auto lang_it = parent_it->second.find(lang);
+                if (lang_it != parent_it->second.end()) {
+                    display_name = lang_it->second; // 找到指定语言的翻译
+                }
+            }
+            display_names_obj[lang] = display_name;
+        }
+        parent_node["display_names"] = display_names_obj;
+        // ===================================================================
         
         std::stringstream ss_sub_total;
         ss_sub_total << std::fixed << std::setprecision(2) << parent_sub_total;
@@ -88,6 +110,7 @@ void BillJsonFormatter::_parse_content_line(const std::string& line, double& amo
         comment = "";
     }
     
+    // Trim trailing whitespace from description and leading from comment
     description.erase(description.find_last_not_of(" \t\n\r") + 1);
     comment.erase(0, comment.find_first_not_of(" \t\n\r"));
 }

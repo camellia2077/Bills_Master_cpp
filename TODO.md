@@ -27,13 +27,14 @@
   * **[ ] 改进错误处理：明确报告缺失的插件文件**
 
       * **问题**: 当导出报告时，如果所需的 `.dll` 或 `.so` 插件文件不存在，程序可能会异常退出或仅报一个通用错误，用户难以定位问题。
+* **[ ] 给Modifier_Config配置文件进行合法性验证，确保给出要添加的语言，其对应的映射必须不为空**
 -----
 
 ## P2: 中优先级 (New Features & Improvements)
 
-  * **[ ] 功能开发: 在导出报告中增加 `source`, `comment`, `transaction_type` 字段是否输出的json选项**
+  * **[ ] 功能开发: 在导出报告中增加 `source`, `comment`, `transaction_type`,  `display_names` 字段是否输出的json选项**
 
-      * **描述**: 目前这三个字段已成功存入数据库，但尚未在最终报告中展示。应该给导出模块增加json配置，因为用户有时候只想看到最简洁的导出，不需要`source`, `comment`, `transaction_type`这些字段。
+      * **描述**: 目前这三个字段已成功存入数据库，但尚未在最终报告中展示。应该给导出模块增加json配置，因为用户有时候只想看到最简洁的导出，不需要`source`, `comment`, `transaction_type` ,  `display_names` 这些字段。
 
 
   * **[ ] 功能增强：为年度报告增加月度平均值和差异分析**
