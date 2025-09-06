@@ -1,153 +1,44 @@
 // src/db_insert/insertor/BillInserter.cpp
 
 #include "BillInserter.hpp"
+#include "DatabaseManager.hpp" // 包含新的数据访问层头文件
+#include <stdexcept>
 #include <iostream>
 
-// ... (构造函数和析构函数不变) ...
-BillInserter::BillInserter(const std::string& db_path) : m_db(nullptr) {
-    if (sqlite3_open(db_path.c_str(), &m_db) != SQLITE_OK) {
-        std::string errmsg = sqlite3_errmsg(m_db);
-        sqlite3_close(m_db);
-        throw std::runtime_error("无法打开数据库: " + errmsg);
-    }
-    if (sqlite3_exec(m_db, "PRAGMA foreign_keys = ON;", 0, 0, 0) != SQLITE_OK) {
-         throw std::runtime_error("无法启用外键支持: " + std::string(sqlite3_errmsg(m_db)));
-    }
-    initialize_database();
-}
+BillInserter::BillInserter(const std::string& db_path) : m_db_path(db_path) {}
 
-BillInserter::~BillInserter() {
-    if (m_db) {
-        sqlite3_close(m_db);
-    }
-}
-
-
-void BillInserter::initialize_database() {
-    char* errmsg = nullptr;
-    // --- 修改：在 bills 表中添加 total_amount 字段 ---
-    const char* create_bills_sql =
-        "CREATE TABLE IF NOT EXISTS bills ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " bill_date TEXT NOT NULL UNIQUE,"
-        " year INTEGER NOT NULL,"
-        " month INTEGER NOT NULL,"
-        " remark TEXT,"
-        " total_amount REAL NOT NULL DEFAULT 0" // <--- 新增 total_amount 字段
-        ");";
-    if (sqlite3_exec(m_db, create_bills_sql, 0, 0, &errmsg) != SQLITE_OK) {
-        std::string error_str = errmsg;
-        sqlite3_free(errmsg);
-        throw std::runtime_error("无法创建 bills 表: " + error_str);
-    }
-    
-    // transactions 表的创建逻辑保持不变
-    const char* create_transactions_sql =
-        "CREATE TABLE IF NOT EXISTS transactions ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " bill_id INTEGER NOT NULL,"
-        " parent_category TEXT NOT NULL,"
-        " sub_category TEXT NOT NULL,"
-        " description TEXT,"
-        " amount REAL NOT NULL,"
-        " source TEXT NOT NULL DEFAULT 'manually_add',"
-        " comment TEXT,"
-        " FOREIGN KEY (bill_id) REFERENCES bills(id) ON DELETE CASCADE"
-        ");";
-    if (sqlite3_exec(m_db, create_transactions_sql, 0, 0, &errmsg) != SQLITE_OK) {
-        std::string error_str = errmsg;
-        sqlite3_free(errmsg);
-        throw std::runtime_error("无法创建 transactions 表: " + error_str);
-    }
-}
-
-// ... (insert_bill 和 delete_bill_by_date 函数不变) ...
 void BillInserter::insert_bill(const ParsedBill& bill_data) {
     if (bill_data.date.empty()) {
         throw std::runtime_error("无法插入日期为空的账单。");
     }
-    if (sqlite3_exec(m_db, "BEGIN TRANSACTION;", 0, 0, 0) != SQLITE_OK) {
-        throw std::runtime_error("无法开始事务: " + std::string(sqlite3_errmsg(m_db)));
-    }
+
+    // 在方法内部创建DatabaseManager实例，确保其生命周期覆盖整个操作
+    DatabaseManager db_manager(m_db_path);
+
+    // 在第一次使用数据库时，确保表已创建
+    // 注意：在实际应用中，这通常在程序启动时执行一次即可
+    db_manager.initialize_database();
+
     try {
-        delete_bill_by_date(bill_data.date);
-        sqlite3_int64 bill_id = insert_bill_record(bill_data);
-        insert_transactions_for_bill(bill_id, bill_data.transactions);
-        if (sqlite3_exec(m_db, "COMMIT;", 0, 0, 0) != SQLITE_OK) {
-            throw std::runtime_error("提交事务失败: " + std::string(sqlite3_errmsg(m_db)));
-        }
+        // 业务流程步骤 1: 开始事务
+        db_manager.begin_transaction();
+
+        // 业务流程步骤 2: 删除可能存在的旧账单
+        db_manager.delete_bill_by_date(bill_data.date);
+
+        // 业务流程步骤 3: 插入新的账单记录并获取ID
+        sqlite3_int64 bill_id = db_manager.insert_bill_record(bill_data);
+
+        // 业务流程步骤 4: 插入所有关联的交易记录
+        db_manager.insert_transactions_for_bill(bill_id, bill_data.transactions);
+
+        // 业务流程步骤 5: 提交事务
+        db_manager.commit_transaction();
+
     } catch (const std::exception& e) {
-        sqlite3_exec(m_db, "ROLLBACK;", 0, 0, 0);
+        // 如果任何步骤失败，回滚事务并重新抛出异常
+        std::cerr << "数据库操作失败，正在回滚事务..." << std::endl;
+        db_manager.rollback_transaction();
         throw;
     }
-}
-
-void BillInserter::delete_bill_by_date(const std::string& date) {
-    sqlite3_stmt* delete_stmt = nullptr;
-    const char* delete_sql = "DELETE FROM bills WHERE bill_date = ?;";
-    if (sqlite3_prepare_v2(m_db, delete_sql, -1, &delete_stmt, nullptr) != SQLITE_OK) {
-        throw std::runtime_error("准备 DELETE 语句失败: " + std::string(sqlite3_errmsg(m_db)));
-    }
-    sqlite3_bind_text(delete_stmt, 1, date.c_str(), -1, SQLITE_STATIC);
-    if (sqlite3_step(delete_stmt) != SQLITE_DONE) {
-        sqlite3_finalize(delete_stmt);
-        throw std::runtime_error("执行 DELETE 语句失败: " + std::string(sqlite3_errmsg(m_db)));
-    }
-    sqlite3_finalize(delete_stmt);
-}
-
-
-sqlite3_int64 BillInserter::insert_bill_record(const ParsedBill& bill_data) {
-    sqlite3_stmt* insert_stmt = nullptr;
-    // --- 修改：更新 INSERT 语句以包含 total_amount ---
-    const char* insert_sql = "INSERT INTO bills (bill_date, year, month, remark, total_amount) VALUES (?, ?, ?, ?, ?);"; // <--- 增加 total_amount
-    if (sqlite3_prepare_v2(m_db, insert_sql, -1, &insert_stmt, nullptr) != SQLITE_OK) {
-        throw std::runtime_error("准备 INSERT bill 语句失败: " + std::string(sqlite3_errmsg(m_db)));
-    }
-
-    // --- 修改：绑定新的 total_amount 值 ---
-    sqlite3_bind_text(insert_stmt, 1, bill_data.date.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_int(insert_stmt, 2, bill_data.year);
-    sqlite3_bind_int(insert_stmt, 3, bill_data.month);
-    sqlite3_bind_text(insert_stmt, 4, bill_data.remark.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_double(insert_stmt, 5, bill_data.total_amount); // <--- 绑定第5个参数
-
-    if (sqlite3_step(insert_stmt) != SQLITE_DONE) {
-        sqlite3_finalize(insert_stmt);
-        throw std::runtime_error("插入 bill 数据失败: " + std::string(sqlite3_errmsg(m_db)));
-    }
-    sqlite3_finalize(insert_stmt);
-    return sqlite3_last_insert_rowid(m_db);
-}
-
-// ... (insert_transactions_for_bill 函数不变) ...
-void BillInserter::insert_transactions_for_bill(sqlite3_int64 bill_id, const std::vector<Transaction>& transactions) {
-    sqlite3_stmt* insert_stmt = nullptr;
-    const char* insert_sql =
-        "INSERT INTO transactions (bill_id, parent_category, sub_category, description, amount, source, comment) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?);";
-    if (sqlite3_prepare_v2(m_db, insert_sql, -1, &insert_stmt, nullptr) != SQLITE_OK) {
-        throw std::runtime_error("准备 INSERT transaction 语句失败: " + std::string(sqlite3_errmsg(m_db)));
-    }
-
-    for (const auto& transaction : transactions) {
-        sqlite3_bind_int64(insert_stmt, 1, bill_id);
-        sqlite3_bind_text(insert_stmt, 2, transaction.parent_category.c_str(), -1, SQLITE_STATIC);
-        sqlite3_bind_text(insert_stmt, 3, transaction.sub_category.c_str(), -1, SQLITE_STATIC);
-        sqlite3_bind_text(insert_stmt, 4, transaction.description.c_str(), -1, SQLITE_STATIC);
-        sqlite3_bind_double(insert_stmt, 5, transaction.amount);
-        sqlite3_bind_text(insert_stmt, 6, transaction.source.c_str(), -1, SQLITE_STATIC);
-        if (transaction.comment.empty()) {
-            sqlite3_bind_null(insert_stmt, 7);
-        } else {
-            sqlite3_bind_text(insert_stmt, 7, transaction.comment.c_str(), -1, SQLITE_STATIC);
-        }
-        
-        if (sqlite3_step(insert_stmt) != SQLITE_DONE) {
-            sqlite3_finalize(insert_stmt);
-            throw std::runtime_error("插入 transaction 数据失败: " + std::string(sqlite3_errmsg(m_db)));
-        }
-        sqlite3_reset(insert_stmt);
-    }
-    sqlite3_finalize(insert_stmt);
 }

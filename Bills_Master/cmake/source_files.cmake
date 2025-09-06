@@ -29,7 +29,10 @@ set(REPROCESSING_SOURCES
 # 2. db_insert 模块源文件
 set(DB_INSERT_SOURCES
     "${DB_INSERT_DIR}/DataProcessor.cpp"
+
     "${DB_INSERT_DIR}/insertor/BillInserter.cpp"
+    "${DB_INSERT_DIR}/insertor/DatabaseManager.cpp"
+
     "${DB_INSERT_DIR}/parser/BillJsonParser.cpp"
 )
 
