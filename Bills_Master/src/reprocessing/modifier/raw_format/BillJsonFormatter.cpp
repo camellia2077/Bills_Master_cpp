@@ -20,7 +20,9 @@ std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_struct
     for (const auto& parent : bill_structure) {
         nlohmann::ordered_json sub_items_obj = nlohmann::ordered_json::object();
         for (const auto& sub : parent.sub_items) {
-            nlohmann::json contents = nlohmann::json::array();
+            // --- 核心修改：将 contents 的类型也改为 ordered_json ---
+            nlohmann::ordered_json contents = nlohmann::ordered_json::array(); 
+            
             for (const auto& content_line : sub.contents) {
                 nlohmann::ordered_json content_node;
                 double amount = 0.0;
@@ -47,8 +49,8 @@ std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_struct
                     content_node["comment"] = comment;
                 }
                 
-                // --- CORE FIX: Explicitly cast to nlohmann::json ---
-                contents.push_back(static_cast<nlohmann::json>(content_node));
+                // --- 核心修改：现在可以直接 push_back，不再需要 static_cast ---
+                contents.push_back(content_node);
             }
             sub_items_obj[sub.title] = contents;
         }
@@ -59,7 +61,7 @@ std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_struct
     return root.dump(4);
 }
 
-// _parse_content_line function remains the same
+// _parse_content_line 辅助函数保持不变
 void BillJsonFormatter::_parse_content_line(const std::string& line, double& amount, std::string& description, std::string& comment) const {
     std::smatch match;
     std::regex re(R"(^(\d+(?:\.\d+)?)\s*(.*))");
