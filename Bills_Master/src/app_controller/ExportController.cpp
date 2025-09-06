@@ -1,6 +1,6 @@
 
 #include "ExportController.hpp"
-#include "query/core/QueryDb.hpp"
+#include "query/core/QueryFacade.hpp"
 #include "common/common_utils.hpp" // 确保包含颜色定义
 
 #include <iostream>

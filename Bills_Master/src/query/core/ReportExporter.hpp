@@ -1,28 +1,28 @@
 #ifndef REPORT_EXPORTER_H
 #define REPORT_EXPORTER_H
 
-
-#include "QueryDb.hpp"
-#include "app_controller/ProcessStats.hpp"
-
 #include <string>
+#include <map>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 class ReportExporter {
 public:
-    // Update constructor to accept the plugin directory path
-    explicit ReportExporter(const std::string& db_path, const std::string& plugin_path);
+    explicit ReportExporter(
+        const std::string& export_base_dir = "exported_files",
+        const std::map<std::string, std::string>& format_folder_names = {}
+    );
 
-
-    //为所有公共接口添加 format_name 参数，并提供默认值 "md"            
-    bool export_all_reports(const std::string& format_name = "md"); // 将 void 修改为 bool
-    bool export_yearly_report(const std::string& year_str, const std::string& format_name = "md", bool suppress_output = false);
-    bool export_monthly_report(const std::string& month_str, const std::string& format_name = "md", bool suppress_output = false);
+    void export_yearly(const std::string& report_content, const std::string& year_str, const std::string& format_name);
+    void export_monthly(const std::string& report_content, const std::string& month_str, const std::string& format_name);
 
 private:
-    QueryFacade m_query_facade;
-    std::string m_db_path;
+    fs::path m_export_base_dir;
+    std::map<std::string, std::string> m_format_folder_names;
 
-    void save_report(const std::string& report_content, const std::string& file_path);
+    void save_report(const std::string& report_content, const fs::path& file_path);
+    std::string get_display_format_name(const std::string& short_name) const;
 };
 
-#endif // REPORT_EXPORTER_H 
+#endif // REPORT_EXPORTER_H
