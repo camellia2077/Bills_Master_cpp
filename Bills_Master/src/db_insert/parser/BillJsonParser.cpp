@@ -27,10 +27,8 @@ ParsedBill BillJsonParser::parse(const std::string& file_path) {
         bill_data.date = date_str;
         bill_data.remark = data.at("remark").get<std::string>();
         
-        // --- 新增：从JSON读取总金额 ---
-        bill_data.total_amount = data.at("total_amount").get<double>(); // <--- 读取 total_amount
+        bill_data.total_amount = data.at("total_amount").get<double>();
 
-        // 从日期字符串中提取年和月
         if (date_str.length() == 6) {
             bill_data.year = std::stoi(date_str.substr(0, 4));
             bill_data.month = std::stoi(date_str.substr(4, 2));
@@ -53,13 +51,15 @@ ParsedBill BillJsonParser::parse(const std::string& file_path) {
                 t.description = item.at("description").get<std::string>();
                 t.amount = item.at("amount").get<double>();
                 t.source = item.value("source", "manually_add");
-                t.comment = item.value("comment", "");
                 
-                // ===================================================================
-                //  **修改：解析 transaction_type 字段**
-                // ===================================================================
-                t.transaction_type = item.value("transaction_type", "Expense"); // 默认为 "Expense"
-                // ===================================================================
+                //  解析 comment 字段，兼容 null 值
+                if (item.contains("comment") && !item.at("comment").is_null()) {
+                    t.comment = item.at("comment").get<std::string>();
+                } else {
+                    t.comment = ""; // 如果 comment 字段不存在或其值为 null，则置为空字符串
+                }
+                
+                t.transaction_type = item.value("transaction_type", "Expense");
 
                 bill_data.transactions.push_back(t);
             }
