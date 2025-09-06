@@ -110,6 +110,17 @@
             }
         ]
     },
+        {
+        "name": "INCOME收入",
+        "sub_items": [
+          {
+          "name": "income_salary",
+          "details": [
+              {"description": "工资", "min_cost": 8000.0, "max_cost": 15000.0}
+            ]
+          }
+        ]
+    },
     {
         "name": "WEB网络",
         "sub_items": [

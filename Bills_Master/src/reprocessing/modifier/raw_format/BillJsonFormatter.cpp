@@ -45,6 +45,16 @@ std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_struct
                 transaction_node["amount"] = amount;
                 transaction_node["source"] = "manually_add";
 
+                // ===================================================================
+                //  **新增功能：根据父分类添加 type 字段**
+                // ===================================================================
+                if (parent.title == "INCOME收入") {
+                    transaction_node["type"] = "Income";
+                } else {
+                    transaction_node["type"] = "Expense";
+                }
+                // ===================================================================
+
                 if (!comment.empty()) {
                     transaction_node["comment"] = comment;
                 }
@@ -87,6 +97,9 @@ void BillJsonFormatter::_parse_content_line(const std::string& line, double& amo
     std::regex re(R"(^(\d+(?:\.\d+)?)\s*(.*))");
     std::string full_description_part;
 
+    // ===================================================================
+    //  **FIX: 修正了 regex_match 的参数错误**
+    // ===================================================================
     if (std::regex_match(line, match, re) && match.size() == 3) {
         try {
             amount = std::stod(match[1].str());
