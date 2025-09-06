@@ -18,10 +18,11 @@ struct Transaction {
 
 // 代表整个解析后的账单文件
 struct ParsedBill {
-    std::string date; 
-    int year = 0;
-    int month = 0;
+    std::string date;
     std::string remark;
+    int year;
+    int month;
+    double total_amount; // 从json中读取各部分的金额
     std::vector<Transaction> transactions;
 };
 
