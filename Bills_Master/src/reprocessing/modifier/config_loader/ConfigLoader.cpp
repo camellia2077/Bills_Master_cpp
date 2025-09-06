@@ -44,21 +44,6 @@ Config ConfigLoader::load(const nlohmann::json& config_json) {
             }
         }
     }
-
-    // --- **修改**: 解析 language_setting 字段为一个字符串向量 ---
-    if (config_json.contains("language_setting") && config_json["language_setting"].is_array()) {
-        for (const auto& lang_json : config_json["language_setting"]) {
-            if (lang_json.is_string()) {
-                config_to_populate.language_setting.push_back(lang_json.get<std::string>());
-            }
-        }
-    }
-    
-    // 如果 language_setting 数组为空 (例如，配置文件中没有这个字段或字段为空数组)，
-    // 添加一个默认值以确保程序不会出错。
-    if (config_to_populate.language_setting.empty()) {
-        config_to_populate.language_setting.push_back("simplified_chinese"); 
-    }
     
     return config_to_populate;
 }

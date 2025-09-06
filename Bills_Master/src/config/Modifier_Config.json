@@ -1,12 +1,4 @@
 {
-  "language_setting": [
-    "simplified_chinese", 
-    "traditional_chinese", 
-    "japanese",
-    "french",
-    "russian",
-    "spanish"
-  ],
   "metadata_prefixes": [
     "DATE:",
     "REMARK:"
@@ -20,95 +12,5 @@
         "description": "迅雷超级会员"
       }
     ]
-  },
-  "display_name_maps": {
-    "meal": {
-      "simplified_chinese": "吃饭",
-      "traditional_chinese": "吃飯",
-      "japanese": "しょくじ",
-      "french": "Repas",
-      "russian": "Еда",
-      "spanish": "Comida"
-    },
-    "fitness": {
-      "simplified_chinese": "健身",
-      "traditional_chinese": "健身",
-      "japanese": "フィットネス",
-      "french": "Fitness",
-      "russian": "Фитнес",
-      "spanish": "Fitness"
-    },
-    "web": {
-      "simplified_chinese": "网络",
-      "traditional_chinese": "網路",
-      "japanese": "インターネット",
-      "french": "Internet",
-      "russian": "Интернет",
-      "spanish": "Internet"
-    },
-    "purchase": {
-      "simplified_chinese": "购物",
-      "traditional_chinese": "購物",
-      "japanese": "かいもの",
-      "french": "Achats",
-      "russian": "Покупки",
-      "spanish": "Compras"
-    },
-    "daily": {
-      "simplified_chinese": "日常",
-      "traditional_chinese": "日常",
-      "japanese": "にちじょう",
-      "french": "Quotidien",
-      "russian": "Повседневное",
-      "spanish": "Diario"
-    },
-    "pet": {
-      "simplified_chinese": "宠物",
-      "traditional_chinese": "寵物",
-      "japanese": "ペット",
-      "french": "Animal de compagnie",
-      "russian": "Домашнее животное",
-      "spanish": "Mascota"
-    },
-    "trip": {
-      "simplified_chinese": "出行",
-      "traditional_chinese": "出行",
-      "japanese": "こうつう",
-      "french": "Voyage",
-      "russian": "Поездки",
-      "spanish": "Viaje"
-    },
-    "dress": {
-      "simplified_chinese": "女装",
-      "traditional_chinese": "女裝",
-      "japanese": "ふじんふく",
-      "french": "Vêtements pour femmes",
-      "russian": "Женская одежда",
-      "spanish": "Ropa de mujer"
-    },
-    "other": {
-      "simplified_chinese": "其他",
-      "traditional_chinese": "其他",
-      "japanese": "そのた",
-      "french": "Autre",
-      "russian": "Другое",
-      "spanish": "Otro"
-    },
-    "income": {
-      "simplified_chinese": "收入",
-      "traditional_chinese": "收入",
-      "japanese": "しゅうにゅう",
-      "french": "Revenu",
-      "russian": "Доход",
-      "spanish": "Ingresos"
-    },
-    "hospital": {
-      "simplified_chinese": "医院",
-      "traditional_chinese": "醫院",
-      "japanese": "びょういん",
-      "french": "Hôpital",
-      "russian": "Больница",
-      "spanish": "Hospital"
-    }
   }
 }
