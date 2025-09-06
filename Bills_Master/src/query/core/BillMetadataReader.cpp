@@ -6,7 +6,7 @@
 
 BillMetadataReader::BillMetadataReader(sqlite3* db_connection) : m_db(db_connection) {}
 
-// 这是从 QueryDb.cpp 中完整迁移过来的代码
+// 这是从 QueryFacade.cpp 中完整迁移过来的代码
 std::vector<std::string> BillMetadataReader::get_all_bill_dates() {
     std::vector<std::string> dates;
     const char* sql = "SELECT DISTINCT year, month FROM bills ORDER BY year, month;";

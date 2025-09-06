@@ -42,8 +42,13 @@ set(QUERY_SOURCES
     "${QUERY_DIR}/components/monthly_report/ReportSorter.cpp"
     "${QUERY_DIR}/components/yearly_report/YearQuery.cpp"
     "${QUERY_DIR}/core/BillMetadataReader.cpp"
-    "${QUERY_DIR}/core/QueryDb.cpp"
+    "${QUERY_DIR}/core/QueryFacade.cpp"
     "${QUERY_DIR}/plugins/year_formatters/BaseYearlyReportFormatter.cpp"
+    
+    # --- 新增的源文件 ---
+    "${QUERY_DIR}/components/monthly_report/MonthlyReportGenerator.cpp"
+    "${QUERY_DIR}/components/yearly_report/YearlyReportGenerator.cpp"
+    "${QUERY_DIR}/core/ReportExporter.cpp"
 )
 
 # 4. file_handler 模块源文件

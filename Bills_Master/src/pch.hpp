@@ -43,7 +43,6 @@
 #include "common/common_utils.hpp"            // 使用次数: 12
 #include "query/plugins/month_formatters/IMonthReportFormatter.hpp" // 使用次数: 7
 #include "query/plugins/year_formatters/IYearlyReportFormatter.hpp" // 使用次数: 3
-#include "query/components/monthly_report/ReportSorter.hpp" // 使用次数: 4
 #include "query/plugins/common/PluginLoader.hpp" // 使用次数: 3
 
 

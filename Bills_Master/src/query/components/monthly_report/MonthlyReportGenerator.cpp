@@ -1,4 +1,3 @@
-
 // MonthlyReportGenerator.cpp
 #include "MonthlyReportGenerator.hpp"
 #include <stdexcept>
@@ -6,20 +5,20 @@
 // 构造函数1: 从目录扫描
 MonthlyReportGenerator::MonthlyReportGenerator(sqlite3* db_connection, const std::string& plugin_path)
     : m_reader(db_connection), 
-      // 1. 在初始化列表中传入月度插件的后缀
+      // 在初始化列表中传入月度插件的后缀
       m_plugin_manager("_month_formatter") 
 {
-    // 2. 在函数体中调用加载方法
+    // 在函数体中调用加载方法
     m_plugin_manager.loadPluginsFromDirectory(plugin_path);
 }
 
 // 构造函数2: 从文件列表加载
 MonthlyReportGenerator::MonthlyReportGenerator(sqlite3* db_connection, const std::vector<std::string>& plugin_file_paths)
     : m_reader(db_connection), 
-      // 1. 同样，在初始化列表中传入月度插件的后缀
+      // 同样，在初始化列表中传入月度插件的后缀
       m_plugin_manager("_month_formatter") 
 {
-    // 2. 在函数体中调用加载方法
+    // 在函数体中调用加载方法
     m_plugin_manager.loadPluginsFromFiles(plugin_file_paths);
 }
 
@@ -28,7 +27,13 @@ std::string MonthlyReportGenerator::generate(int year, int month, const std::str
     auto formatter = m_plugin_manager.createFormatter(format_name);
 
     if (!formatter) {
-        throw std::runtime_error("Unsupported or unloaded report format specified: " + format_name);
+        std::string expected_dll_name = format_name + "_month_formatter";
+        #ifdef _WIN32
+            expected_dll_name += ".dll";
+        #else
+            expected_dll_name += ".so";
+        #endif
+        throw std::runtime_error("Monthly formatter for '" + format_name + "' is not available. Please ensure that the plugin file '" + expected_dll_name + "' exists in the plugins directory.");
     }
 
     return formatter->format_report(data);

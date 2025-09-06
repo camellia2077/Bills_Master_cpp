@@ -10,7 +10,7 @@ class BillMetadataReader {
 public:
     explicit BillMetadataReader(sqlite3* db_connection);
 
-    // 从 QueryDb 移动过来的函数
+    // 从 QueryFacade 移动过来的函数
     std::vector<std::string> get_all_bill_dates();
 
 private:
