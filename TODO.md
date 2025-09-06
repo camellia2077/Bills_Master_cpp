@@ -9,6 +9,7 @@
   * *(暂无)*
 
 ## P1: 高优先级 (High Priority)
+  * **[ ] 给parent_item加入注释字段**
 
   * **[ ] 架构改进：分离分类的内部标识与显示名称**
 
@@ -29,11 +30,6 @@
 -----
 
 ## P2: 中优先级 (New Features & Improvements)
-
-  * **[ ] API一致性：为缺失的 `comment` 字段显式生成 `null`**
-
-      * **问题**: 当前如果一条记录没有备注，在生成的JSON中会直接缺少 `comment` 字段。
-      * **目标**: 为了API的严格一致性，修改 `BillJsonFormatter.cpp`。当 `comment` 字符串为空时，在JSON中生成 `"comment": null`，而不是省略该字段。这有助于客户端进行更严格的数据校验。
 
   * **[ ] 功能开发: 在导出报告中增加 `source`, `comment`, `transaction_type` 字段是否输出的json选项**
 

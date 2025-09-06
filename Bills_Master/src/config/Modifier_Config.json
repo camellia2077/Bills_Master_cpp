@@ -1,16 +1,29 @@
 {
-    "metadata_prefixes": [
+  "metadata_prefixes": [
     "DATE:",
     "REMARK:"
   ],
-"auto_renewal_rules": {
+  "auto_renewal_rules": {
     "enabled": true,
-    "rules": [ 
+    "rules": [
       {
-        "header_location" : "web_service",
+        "header_location": "web_service",
         "amount": 25.0,
         "description": "迅雷超级会员"
       }
     ]
-}
+  },
+  "parent_item_display_names": {
+    "meal": "吃饭",
+    "fitness": "健身",
+    "web": "网络",
+    "purchase": "购物",
+    "daily": "日常",
+    "pet": "宠物",
+    "trip": "出行",
+    "dress": "女装",
+    "other": "其他",
+    "income": "收入",
+    "hospital": "医院"
+  }
 }
