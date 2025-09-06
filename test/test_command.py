@@ -45,7 +45,9 @@ TEST_DATES = {
 
 # 定义需要清理的文件和目录
 FILES_TO_DELETE = ["bills.sqlite3"]
-DIRS_TO_DELETE = ["txt_raw", "exported_files", "output", "build", "plugins"]
+# *** 修改 ***：将 "config" 添加到需要清理的目录列表中
+DIRS_TO_DELETE = ["txt_raw", "exported_files", "output", "build", "plugins", "config"]
+
 
 # 定义常量和颜色
 GREEN = '\033[92m'
@@ -113,7 +115,7 @@ class TestPreparer:
         self.local_plugins_dir = os.path.join(self.base_dir, "plugins")
 
     def prepare_runtime_env(self):
-        """准备完整的运行时环境，包括可执行文件和所有插件。"""
+        """准备完整的运行时环境，包括可执行文件、配置文件和所有插件。"""
         print(f"{CYAN}--- 1. Preparing Runtime Environment ---{RESET}")
         
         if "C:/path/to/your/project/build/Debug" in BUILD_DIR:
@@ -123,18 +125,28 @@ class TestPreparer:
             print(f"  {RED}错误: 构建目录未找到 '{BUILD_DIR}'.{RESET}")
             return False
 
+        # --- 步骤1: 复制可执行文件 ---
         source_exe_path = os.path.join(BUILD_DIR, self.exe_name)
         dest_exe_path = os.path.join(self.base_dir, self.exe_name)
-
         if not os.path.exists(source_exe_path):
             print(f"  {RED}错误: 源可执行文件未找到 '{source_exe_path}'.{RESET}")
             return False
-            
         shutil.copy(source_exe_path, dest_exe_path)
-        print(f"  {GREEN}已复制可执行文件到脚本目录: {self.exe_name}{RESET}")
+        print(f"  {GREEN}已复制可执行文件: {self.exe_name}{RESET}")
 
-        os.makedirs(self.local_plugins_dir, exist_ok=True)
+        # --- 步骤2: 复制 config 文件夹 (新添加的逻辑) ---
+        source_config_dir = os.path.join(BUILD_DIR, "config")
+        dest_config_dir = os.path.join(self.base_dir, "config")
+        if not os.path.exists(source_config_dir):
+            print(f"  {RED}错误: 'config' 文件夹在构建目录中未找到 '{source_config_dir}'.{RESET}")
+            return False
         
+        # 使用 shutil.copytree 递归复制整个文件夹
+        shutil.copytree(source_config_dir, dest_config_dir)
+        print(f"  {GREEN}已复制配置文件夹: config{RESET}")
+
+        # --- 步骤3: 复制插件 DLLs ---
+        os.makedirs(self.local_plugins_dir, exist_ok=True)
         all_plugins_found = True
         for dll_name in PLUGIN_DLLS:
             source_dll_path = os.path.join(BUILD_DIR, dll_name)
