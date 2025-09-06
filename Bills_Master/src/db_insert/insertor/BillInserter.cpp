@@ -3,6 +3,7 @@
 #include "BillInserter.hpp"
 #include <iostream>
 
+// ... (构造函数和析构函数不变) ...
 BillInserter::BillInserter(const std::string& db_path) : m_db(nullptr) {
     if (sqlite3_open(db_path.c_str(), &m_db) != SQLITE_OK) {
         std::string errmsg = sqlite3_errmsg(m_db);
@@ -21,15 +22,18 @@ BillInserter::~BillInserter() {
     }
 }
 
+
 void BillInserter::initialize_database() {
     char* errmsg = nullptr;
+    // --- 修改：在 bills 表中添加 total_amount 字段 ---
     const char* create_bills_sql =
         "CREATE TABLE IF NOT EXISTS bills ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " bill_date TEXT NOT NULL UNIQUE,"
         " year INTEGER NOT NULL,"
         " month INTEGER NOT NULL,"
-        " remark TEXT"
+        " remark TEXT,"
+        " total_amount REAL NOT NULL DEFAULT 0" // <--- 新增 total_amount 字段
         ");";
     if (sqlite3_exec(m_db, create_bills_sql, 0, 0, &errmsg) != SQLITE_OK) {
         std::string error_str = errmsg;
@@ -37,7 +41,7 @@ void BillInserter::initialize_database() {
         throw std::runtime_error("无法创建 bills 表: " + error_str);
     }
     
-    // --- 修改：在 transactions 表中添加 comment 字段 ---
+    // transactions 表的创建逻辑保持不变
     const char* create_transactions_sql =
         "CREATE TABLE IF NOT EXISTS transactions ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -47,7 +51,7 @@ void BillInserter::initialize_database() {
         " description TEXT,"
         " amount REAL NOT NULL,"
         " source TEXT NOT NULL DEFAULT 'manually_add',"
-        " comment TEXT," // 新增 comment 字段，允许为 NULL
+        " comment TEXT,"
         " FOREIGN KEY (bill_id) REFERENCES bills(id) ON DELETE CASCADE"
         ");";
     if (sqlite3_exec(m_db, create_transactions_sql, 0, 0, &errmsg) != SQLITE_OK) {
@@ -57,6 +61,7 @@ void BillInserter::initialize_database() {
     }
 }
 
+// ... (insert_bill 和 delete_bill_by_date 函数不变) ...
 void BillInserter::insert_bill(const ParsedBill& bill_data) {
     if (bill_data.date.empty()) {
         throw std::runtime_error("无法插入日期为空的账单。");
@@ -91,16 +96,22 @@ void BillInserter::delete_bill_by_date(const std::string& date) {
     sqlite3_finalize(delete_stmt);
 }
 
+
 sqlite3_int64 BillInserter::insert_bill_record(const ParsedBill& bill_data) {
     sqlite3_stmt* insert_stmt = nullptr;
-    const char* insert_sql = "INSERT INTO bills (bill_date, year, month, remark) VALUES (?, ?, ?, ?);";
+    // --- 修改：更新 INSERT 语句以包含 total_amount ---
+    const char* insert_sql = "INSERT INTO bills (bill_date, year, month, remark, total_amount) VALUES (?, ?, ?, ?, ?);"; // <--- 增加 total_amount
     if (sqlite3_prepare_v2(m_db, insert_sql, -1, &insert_stmt, nullptr) != SQLITE_OK) {
         throw std::runtime_error("准备 INSERT bill 语句失败: " + std::string(sqlite3_errmsg(m_db)));
     }
+
+    // --- 修改：绑定新的 total_amount 值 ---
     sqlite3_bind_text(insert_stmt, 1, bill_data.date.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_int(insert_stmt, 2, bill_data.year);
     sqlite3_bind_int(insert_stmt, 3, bill_data.month);
     sqlite3_bind_text(insert_stmt, 4, bill_data.remark.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_double(insert_stmt, 5, bill_data.total_amount); // <--- 绑定第5个参数
+
     if (sqlite3_step(insert_stmt) != SQLITE_DONE) {
         sqlite3_finalize(insert_stmt);
         throw std::runtime_error("插入 bill 数据失败: " + std::string(sqlite3_errmsg(m_db)));
@@ -109,9 +120,9 @@ sqlite3_int64 BillInserter::insert_bill_record(const ParsedBill& bill_data) {
     return sqlite3_last_insert_rowid(m_db);
 }
 
+// ... (insert_transactions_for_bill 函数不变) ...
 void BillInserter::insert_transactions_for_bill(sqlite3_int64 bill_id, const std::vector<Transaction>& transactions) {
     sqlite3_stmt* insert_stmt = nullptr;
-    // --- 修改：更新 INSERT 语句以包含 comment ---
     const char* insert_sql =
         "INSERT INTO transactions (bill_id, parent_category, sub_category, description, amount, source, comment) "
         "VALUES (?, ?, ?, ?, ?, ?, ?);";
@@ -126,8 +137,6 @@ void BillInserter::insert_transactions_for_bill(sqlite3_int64 bill_id, const std
         sqlite3_bind_text(insert_stmt, 4, transaction.description.c_str(), -1, SQLITE_STATIC);
         sqlite3_bind_double(insert_stmt, 5, transaction.amount);
         sqlite3_bind_text(insert_stmt, 6, transaction.source.c_str(), -1, SQLITE_STATIC);
-        // --- 新增：绑定 comment 的值 ---
-        // 如果 comment 为空，则插入 NULL，否则插入其值
         if (transaction.comment.empty()) {
             sqlite3_bind_null(insert_stmt, 7);
         } else {
