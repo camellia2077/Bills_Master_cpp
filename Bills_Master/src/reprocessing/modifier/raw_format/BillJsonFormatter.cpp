@@ -1,9 +1,10 @@
-// modifier/raw_format/BillJsonFormatter.cpp
+// reprocessing/modifier/raw_format/BillJsonFormatter.cpp
 
 #include "BillJsonFormatter.hpp"
 #include <regex>
 #include <string>
 
+// format 函数保持不变
 std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_structure, const std::vector<std::string>& metadata_lines) const {
     nlohmann::ordered_json root;
 
@@ -20,7 +21,6 @@ std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_struct
     for (const auto& parent : bill_structure) {
         nlohmann::ordered_json sub_items_obj = nlohmann::ordered_json::object();
         for (const auto& sub : parent.sub_items) {
-            // --- 核心修改：将 contents 的类型也改为 ordered_json ---
             nlohmann::ordered_json contents = nlohmann::ordered_json::array(); 
             
             for (const auto& content_line : sub.contents) {
@@ -35,13 +35,14 @@ std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_struct
                 content_node["amount"] = amount;
 
                 std::string source = "manually_add";
-                size_t pos = description.find("(auto-renewal)");
-                if (pos != std::string::npos) {
-                    source = "auto_renewal";
-                    description.erase(pos);
-                    description.erase(description.find_last_not_of(" \t") + 1);
-                    content_node["description"] = description;
-                }
+                // 移除对 (auto-renewal) 的检查，因为它现在也应该被当作普通注释
+                // size_t pos = description.find("(auto-renewal)"); 
+                // if (pos != std::string::npos) {
+                //     source = "auto_renewal";
+                //     description.erase(pos);
+                //     description.erase(description.find_last_not_of(" \t") + 1);
+                //     content_node["description"] = description;
+                // }
                 
                 content_node["source"] = source;
 
@@ -49,7 +50,6 @@ std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_struct
                     content_node["comment"] = comment;
                 }
                 
-                // --- 核心修改：现在可以直接 push_back，不再需要 static_cast ---
                 contents.push_back(content_node);
             }
             sub_items_obj[sub.title] = contents;
@@ -61,7 +61,7 @@ std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_struct
     return root.dump(4);
 }
 
-// _parse_content_line 辅助函数保持不变
+// --- 核心修改：更新 _parse_content_line 以使用 // 作为分隔符 ---
 void BillJsonFormatter::_parse_content_line(const std::string& line, double& amount, std::string& description, std::string& comment) const {
     std::smatch match;
     std::regex re(R"(^(\d+(?:\.\d+)?)\s*(.*))");
@@ -80,16 +80,20 @@ void BillJsonFormatter::_parse_content_line(const std::string& line, double& amo
         full_description_part = line;
     }
 
-    size_t start_paren = full_description_part.find('(');
-    size_t end_paren = full_description_part.find(')');
+    // --- 新的解析逻辑 ---
+    size_t comment_pos = full_description_part.find("//");
 
-    if (start_paren != std::string::npos && end_paren != std::string::npos && start_paren < end_paren) {
-        comment = full_description_part.substr(start_paren + 1, end_paren - start_paren - 1);
-        description = full_description_part.substr(0, start_paren);
+    if (comment_pos != std::string::npos) {
+        // 提取 // 后面的内容作为 comment
+        comment = full_description_part.substr(comment_pos + 2);
+        // 提取 // 前面的内容作为 description
+        description = full_description_part.substr(0, comment_pos);
     } else {
         description = full_description_part;
-        comment = "";
+        comment = ""; // 确保 comment 为空
     }
     
+    // 清理 description 和 comment 两端的空白字符
     description.erase(description.find_last_not_of(" \t\n\r") + 1);
+    comment.erase(0, comment.find_first_not_of(" \t\n\r"));
 }

@@ -142,11 +142,24 @@ void BillFormatVerifier::_handle_content_state(const std::string& line, int line
         return;
     }
 
-    std::regex content_regex(R"(^\d+(?:\.\d+)?(?:[^\d\s].*)$)");
+    // --- 核心修改：更新内容行的正则表达式 ---
+    // 新的正则表达式确保：
+    // 1. 行必须以数字开头。
+    // 2. 如果存在 "//"，它不能是行的开头（由 \s* 保证前面有内容）。
+    std::regex content_regex(R"(^\d+(\.\d+)?\s*.*?(?://.*)?$)");
+    
+    // 检查是否只包含注释
+    std::string trimmed_line = line;
+    trimmed_line.erase(0, trimmed_line.find_first_not_of(" \t\n\r"));
+    if (trimmed_line.rfind("//", 0) == 0) {
+        result.add_error("Error (Line " + std::to_string(line_num) + "): Comment line '//' cannot appear on its own. It must follow an item on the same line. Found: '" + line + "'");
+        return; // 直接返回，不再进行后续检查
+    }
+
     if (std::regex_match(line, content_regex)) {
         bill_structure[current_parent][current_sub]++;
     } else {
-        result.add_error("Error (Line " + std::to_string(line_num) + "): Expected content line, new sub-title, or new parent title, but found invalid content: '" + line + "'"); // 翻译: 错误 (行 ...): 期望内容行、新子标题或新父标题, 但找到无效内容: '...'
+        result.add_error("Error (Line " + std::to_string(line_num) + "): Expected content line, new sub-title, or new parent title, but found invalid content: '" + line + "'");
     }
 }
 

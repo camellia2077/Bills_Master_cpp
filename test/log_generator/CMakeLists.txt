@@ -40,7 +40,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # -O3: High-level optimization. 
     # -march=native: Optimize for the CPU architecture of the build machine. 
     # -flto: Enable Link-Time Optimization for cross-file optimizations.
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native -flto")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Os -march=native -flto")
 
     # -s: Strip the executable of symbol information to reduce file size.
     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -s")
