@@ -49,9 +49,9 @@ std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_struct
                 //  **新增功能：根据父分类添加 type 字段**
                 // ===================================================================
                 if (parent.title == "INCOME收入") {
-                    transaction_node["type"] = "Income";
+                    transaction_node["transaction_type"] = "Income";// 支出类型
                 } else {
-                    transaction_node["type"] = "Expense";
+                    transaction_node["transaction_type"] = "Expense";
                 }
                 // ===================================================================
 
