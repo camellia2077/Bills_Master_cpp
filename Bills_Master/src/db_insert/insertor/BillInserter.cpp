@@ -1,3 +1,5 @@
+// src/db_insert/insertor/BillInserter.cpp
+
 #include "BillInserter.hpp"
 #include <iostream>
 
@@ -35,16 +37,17 @@ void BillInserter::initialize_database() {
         throw std::runtime_error("无法创建 bills 表: " + error_str);
     }
     
-    // --- 修改：在 transactions 表中添加 source 字段 ---
+    // --- 修改：在 transactions 表中添加 comment 字段 ---
     const char* create_transactions_sql =
         "CREATE TABLE IF NOT EXISTS transactions ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " bill_id INTEGER NOT NULL,"
         " parent_category TEXT NOT NULL,"
         " sub_category TEXT NOT NULL,"
-        " amount REAL NOT NULL,"
         " description TEXT,"
-        " source TEXT NOT NULL DEFAULT 'manually_add'," // 新增 source 字段
+        " amount REAL NOT NULL,"
+        " source TEXT NOT NULL DEFAULT 'manually_add',"
+        " comment TEXT," // 新增 comment 字段，允许为 NULL
         " FOREIGN KEY (bill_id) REFERENCES bills(id) ON DELETE CASCADE"
         ");";
     if (sqlite3_exec(m_db, create_transactions_sql, 0, 0, &errmsg) != SQLITE_OK) {
@@ -108,10 +111,10 @@ sqlite3_int64 BillInserter::insert_bill_record(const ParsedBill& bill_data) {
 
 void BillInserter::insert_transactions_for_bill(sqlite3_int64 bill_id, const std::vector<Transaction>& transactions) {
     sqlite3_stmt* insert_stmt = nullptr;
-    // --- 修改：更新 INSERT 语句以包含 source ---
+    // --- 修改：更新 INSERT 语句以包含 comment ---
     const char* insert_sql =
-        "INSERT INTO transactions (bill_id, parent_category, sub_category, amount, description, source) "
-        "VALUES (?, ?, ?, ?, ?, ?);";
+        "INSERT INTO transactions (bill_id, parent_category, sub_category, description, amount, source, comment) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?);";
     if (sqlite3_prepare_v2(m_db, insert_sql, -1, &insert_stmt, nullptr) != SQLITE_OK) {
         throw std::runtime_error("准备 INSERT transaction 语句失败: " + std::string(sqlite3_errmsg(m_db)));
     }
@@ -120,10 +123,16 @@ void BillInserter::insert_transactions_for_bill(sqlite3_int64 bill_id, const std
         sqlite3_bind_int64(insert_stmt, 1, bill_id);
         sqlite3_bind_text(insert_stmt, 2, transaction.parent_category.c_str(), -1, SQLITE_STATIC);
         sqlite3_bind_text(insert_stmt, 3, transaction.sub_category.c_str(), -1, SQLITE_STATIC);
-        sqlite3_bind_double(insert_stmt, 4, transaction.amount);
-        sqlite3_bind_text(insert_stmt, 5, transaction.description.c_str(), -1, SQLITE_STATIC);
-        // --- 新增：绑定 source 的值 ---
+        sqlite3_bind_text(insert_stmt, 4, transaction.description.c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_double(insert_stmt, 5, transaction.amount);
         sqlite3_bind_text(insert_stmt, 6, transaction.source.c_str(), -1, SQLITE_STATIC);
+        // --- 新增：绑定 comment 的值 ---
+        // 如果 comment 为空，则插入 NULL，否则插入其值
+        if (transaction.comment.empty()) {
+            sqlite3_bind_null(insert_stmt, 7);
+        } else {
+            sqlite3_bind_text(insert_stmt, 7, transaction.comment.c_str(), -1, SQLITE_STATIC);
+        }
         
         if (sqlite3_step(insert_stmt) != SQLITE_DONE) {
             sqlite3_finalize(insert_stmt);

@@ -5,20 +5,18 @@
 
 #include <string>
 #include <vector>
-// 账单的具体结构
 
 // 代表一笔具体的交易记录
-// 这个结构体现在被 query 和 db_insert 模块共享
 struct Transaction {
     std::string parent_category;
     std::string sub_category;
-    double amount;
-    std::string description;
-    std::string source; // 在这里添加 source 字段
+    double amount; // 金额
+    std::string description; // 描述物品名称
+    std::string source; // source 字段,用于表示来源于自动添加还是手动添加
+    std::string comment; // comment 字段,用于表示备注内容
 };
 
 // 代表整个解析后的账单文件
-// 这个结构体主要由 db_insert 模块使用
 struct ParsedBill {
     std::string date; 
     int year = 0;
