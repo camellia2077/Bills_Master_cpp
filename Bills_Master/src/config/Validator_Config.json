@@ -1,7 +1,7 @@
 {
   "categories": [
     {
-      "parent_item": "MEAL吃饭",
+      "parent_item": "meal",
       "description": "与餐饮相关的消费",
       "sub_items": [
         "meal_low",
@@ -13,7 +13,7 @@
       ]
     },
     {
-      "parent_item": "FITNESS健身",
+      "parent_item": "fitness",
       "description": "与健身相关的消费",
       "sub_items": [
         "fitness_supplies",
@@ -22,7 +22,7 @@
       ]
     },
     {
-      "parent_item": "WEB网络",
+      "parent_item": "web",
       "description": "与互联网服务和内容相关的消费",
       "sub_items": [
         "web_game",
@@ -32,7 +32,7 @@
       ]
     },
     {
-      "parent_item": "PURCHASE购物",
+      "parent_item": "purchase",
       "description": "日常购物开销",
       "sub_items": [
         "purchase_toys",
@@ -43,7 +43,7 @@
       ]
     },
     {
-      "parent_item": "DAILY日常",
+      "parent_item": "daily",
       "description": "日常杂项和固定费用",
       "sub_items": [
         "daily_consumables",
@@ -52,7 +52,7 @@
       ]
     },
     {
-      "parent_item": "PET宠物",
+      "parent_item": "pet",
       "description": "与宠物相关的开销",
       "sub_items": [
         "pet_fish",
@@ -65,7 +65,7 @@
       ]
     },
     {
-      "parent_item": "TRIP出行",
+      "parent_item": "trip",
       "description": "交通和出行费用",
       "sub_items": [
         "trip_bus",
@@ -74,7 +74,7 @@
       ]
     },
     {
-      "parent_item": "DRESS女装",
+      "parent_item": "dress",
       "description": "服饰和个人装扮",
       "sub_items": [
         "dress_enamel",
@@ -85,7 +85,7 @@
       ]
     },
     {
-      "parent_item": "OTHER其他",
+      "parent_item": "other",
       "description": "其他无法明确分类的开销",
       "sub_items": [
         "other_travels",
@@ -94,7 +94,7 @@
       ]
     },
         {
-      "parent_item": "INCOME收入",
+      "parent_item": "income",
       "description": "收入",
       "sub_items": [
         "income_salary",
@@ -102,7 +102,7 @@
       ]
     },
     {
-      "parent_item": "HOSPITAL医院",
+      "parent_item": "hospital",
       "description": "医疗和药品开销",
       "sub_items": [
         "hospital_tooth",
