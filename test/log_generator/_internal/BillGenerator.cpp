@@ -18,11 +18,8 @@ bool BillGenerator::load_config(const std::string& config_path) {
         std::cerr << "Error: Could not find or open configuration file '" << config_path << "'." << std::endl;
         return false;
     }
-
     try {
         json raw_config = json::parse(config_file);
-
-        // --- 新增：解析 comment_options ---
         if (raw_config.contains("comment_options")) {
             const auto& comment_opts = raw_config["comment_options"];
             comment_probability_ = comment_opts.value("probability", 0.3);
@@ -30,15 +27,11 @@ bool BillGenerator::load_config(const std::string& config_path) {
                 comments_ = comment_opts["comments"].get<std::vector<std::string>>();
             }
         }
-        
-        // --- 修改：将 categories 存储到成员变量中 ---
         if (raw_config.contains("categories")) {
             config_ = raw_config["categories"];
         } else {
-            // 如果顶层不是一个包含 categories 的对象，则假定它本身就是 categories 数组
             config_ = raw_config;
         }
-
     } catch (json::parse_error& e) {
         std::cerr << "Error: Failed to parse " << config_path << ".\n" << e.what() << std::endl;
         return false;
@@ -88,17 +81,16 @@ void BillGenerator::generate_bill_file(int year, int month, const std::filesyste
                 double cost = random_double(item["min_cost"], item["max_cost"]);
                 outfile << std::fixed << std::setprecision(2) << cost << item["description"].get<std::string>();
 
-                // --- 新增：根据概率随机添加注释 ---
+                // --- 核心修改：使用 // 添加注释 ---
                 std::uniform_real_distribution<> prob_dist(0.0, 1.0);
                 if (!comments_.empty() && prob_dist(random_engine_) < comment_probability_) {
                     int comment_index = random_int(0, comments_.size() - 1);
-                    outfile << "(" << comments_[comment_index] << ")";
+                    outfile << "//" << comments_[comment_index];
                 }
 
                 outfile << std::endl;
             }
         }
-
         if (std::next(parent_it) != config_.end()) {
             outfile << std::endl;
             outfile << std::endl;
