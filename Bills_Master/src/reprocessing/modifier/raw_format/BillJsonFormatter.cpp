@@ -34,7 +34,19 @@ std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_struct
                 _parse_content_line(content_line, amount, description);
                 
                 content_node["amount"] = amount;
+
+                // --- 新增逻辑：检查是否为自动续费项 ---
+                std::string source = "manually_add";
+                size_t pos = description.find("(auto-renewal)");
+                if (pos != std::string::npos) {
+                    source = "auto_renewal";
+                    // 从描述中移除 "(auto-renewal)" 标记和末尾的空格
+                    description.erase(pos);
+                    description.erase(description.find_last_not_of(" \t") + 1);
+                }
+                
                 content_node["description"] = description;
+                content_node["source"] = source; // 添加 source 字段
                 contents.push_back(content_node);
             }
             sub_items_obj[sub.title] = contents;
