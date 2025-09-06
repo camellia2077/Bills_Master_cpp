@@ -1,14 +1,16 @@
+// BillGenerator.cpp
+
 #include "BillGenerator.h"
 #include <iostream>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <vector>
-#include <algorithm> // For std::shuffle
+#include <algorithm>
 
 using json = nlohmann::json;
 
-BillGenerator::BillGenerator() : random_engine_(0) {} // Fixed seed for reproducibility 
+BillGenerator::BillGenerator() : random_engine_(0) {}
 
 bool BillGenerator::load_config(const std::string& config_path) {
     std::ifstream config_file(config_path);
@@ -18,7 +20,25 @@ bool BillGenerator::load_config(const std::string& config_path) {
     }
 
     try {
-        config_ = json::parse(config_file);
+        json raw_config = json::parse(config_file);
+
+        // --- 新增：解析 comment_options ---
+        if (raw_config.contains("comment_options")) {
+            const auto& comment_opts = raw_config["comment_options"];
+            comment_probability_ = comment_opts.value("probability", 0.3);
+            if (comment_opts.contains("comments") && comment_opts["comments"].is_array()) {
+                comments_ = comment_opts["comments"].get<std::vector<std::string>>();
+            }
+        }
+        
+        // --- 修改：将 categories 存储到成员变量中 ---
+        if (raw_config.contains("categories")) {
+            config_ = raw_config["categories"];
+        } else {
+            // 如果顶层不是一个包含 categories 的对象，则假定它本身就是 categories 数组
+            config_ = raw_config;
+        }
+
     } catch (json::parse_error& e) {
         std::cerr << "Error: Failed to parse " << config_path << ".\n" << e.what() << std::endl;
         return false;
@@ -41,19 +61,14 @@ void BillGenerator::generate_bill_file(int year, int month, const std::filesyste
 
     outfile << "DATE:" << year_month << std::endl;
     outfile << "REMARK:" << std::endl;
-    
-    // Add two blank lines after the REMARK line
     outfile << std::endl;
     outfile << std::endl;
 
-    // Use an iterator-based loop to check if we are on the last parent category
     for (auto parent_it = config_.begin(); parent_it != config_.end(); ++parent_it) {
-        // Print the parent category name
         outfile << (*parent_it)["name"].get<std::string>() << std::endl;
 
         const auto& sub_items = (*parent_it)["sub_items"];
         for (const auto& sub_config : sub_items) {
-            // Add a blank line before each sub-category block
             outfile << std::endl;
             outfile << sub_config["name"].get<std::string>() << std::endl;
 
@@ -71,12 +86,19 @@ void BillGenerator::generate_bill_file(int year, int month, const std::filesyste
             for (int i = 0; i < num_to_gen; ++i) {
                 const auto& item = details_vector[i];
                 double cost = random_double(item["min_cost"], item["max_cost"]);
-                outfile << std::fixed << std::setprecision(2) << cost << item["description"].get<std::string>() << std::endl;
+                outfile << std::fixed << std::setprecision(2) << cost << item["description"].get<std::string>();
+
+                // --- 新增：根据概率随机添加注释 ---
+                std::uniform_real_distribution<> prob_dist(0.0, 1.0);
+                if (!comments_.empty() && prob_dist(random_engine_) < comment_probability_) {
+                    int comment_index = random_int(0, comments_.size() - 1);
+                    outfile << "(" << comments_[comment_index] << ")";
+                }
+
+                outfile << std::endl;
             }
         }
 
-        // After all sub-categories of a parent are done, add two blank lines,
-        // but only if it's not the very last parent category in the file.
         if (std::next(parent_it) != config_.end()) {
             outfile << std::endl;
             outfile << std::endl;
