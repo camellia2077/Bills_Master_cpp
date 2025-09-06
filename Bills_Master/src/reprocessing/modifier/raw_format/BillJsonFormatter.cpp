@@ -1,13 +1,13 @@
-// modifier/raw_format/BillJsonFormatter.cpp
+// reprocessing/modifier/raw_format/BillJsonFormatter.cpp
 
 #include "BillJsonFormatter.hpp"
 #include <regex>
 #include <string>
 
+// format 函数保持不变
 std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_structure, const std::vector<std::string>& metadata_lines) const {
-    nlohmann::json root;
+    nlohmann::ordered_json root;
 
-    // 1. 处理元数据 (DATE, REMARK 等)
     for (const auto& meta_line : metadata_lines) {
         if (meta_line.rfind("DATE:", 0) == 0) {
             root["date"] = meta_line.substr(5);
@@ -16,56 +16,84 @@ std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_struct
         }
     }
 
-    // 2. 创建一个名为 "categories" 的 JSON 对象 (而不是数组)
-    nlohmann::json categories = nlohmann::json::object();
+    nlohmann::ordered_json categories = nlohmann::ordered_json::object();
 
-    // 3. 遍历 C++ 的数据结构，用标题作为 Key 来构建 JSON 对象
     for (const auto& parent : bill_structure) {
-        nlohmann::json sub_items_obj = nlohmann::json::object();
+        nlohmann::ordered_json sub_items_obj = nlohmann::ordered_json::object();
         for (const auto& sub : parent.sub_items) {
-            nlohmann::json contents = nlohmann::json::array();
+            nlohmann::ordered_json contents = nlohmann::ordered_json::array(); 
+            
             for (const auto& content_line : sub.contents) {
-                nlohmann::json content_node;
+                nlohmann::ordered_json content_node;
                 double amount = 0.0;
                 std::string description;
+                std::string comment;
 
-                // 解析每一行内容，分离金额和描述
-                _parse_content_line(content_line, amount, description);
+                _parse_content_line(content_line, amount, description, comment);
                 
-                content_node["amount"] = amount;
                 content_node["description"] = description;
+                content_node["amount"] = amount;
+
+                std::string source = "manually_add";
+                // 移除对 (auto-renewal) 的检查，因为它现在也应该被当作普通注释
+                // size_t pos = description.find("(auto-renewal)"); 
+                // if (pos != std::string::npos) {
+                //     source = "auto_renewal";
+                //     description.erase(pos);
+                //     description.erase(description.find_last_not_of(" \t") + 1);
+                //     content_node["description"] = description;
+                // }
+                
+                content_node["source"] = source;
+
+                if (!comment.empty()) {
+                    content_node["comment"] = comment;
+                }
+                
                 contents.push_back(content_node);
             }
-            // 使用子标题 (e.g., "meal_low") 作为 Key
             sub_items_obj[sub.title] = contents;
         }
-        // 使用父标题 (e.g., "MEAL吃饭") 作为 Key
         categories[parent.title] = sub_items_obj;
     }
 
     root["categories"] = categories;
-
-    // 4. 将构建好的 JSON 对象序列化为字符串，并美化格式 (4个空格缩进)
     return root.dump(4);
 }
 
-// 辅助函数：解析内容行
-void BillJsonFormatter::_parse_content_line(const std::string& line, double& amount, std::string& description) const {
+// --- 核心修改：更新 _parse_content_line 以使用 // 作为分隔符 ---
+void BillJsonFormatter::_parse_content_line(const std::string& line, double& amount, std::string& description, std::string& comment) const {
     std::smatch match;
-    // 使用正则表达式匹配 "数字" 和 "后面的所有文本"
     std::regex re(R"(^(\d+(?:\.\d+)?)\s*(.*))");
+    std::string full_description_part;
+
     if (std::regex_match(line, match, re) && match.size() == 3) {
         try {
             amount = std::stod(match[1].str());
-            description = match[2].str();
+            full_description_part = match[2].str();
         } catch (const std::exception&) {
-            // 如果转换失败 (虽然不太可能)，则将整行作为描述
             amount = 0.0;
-            description = line;
+            full_description_part = line;
         }
     } else {
-        // 如果不匹配，也把整行作为描述
         amount = 0.0;
-        description = line;
+        full_description_part = line;
     }
+
+    // --- 新的解析逻辑 ---
+    size_t comment_pos = full_description_part.find("//");
+
+    if (comment_pos != std::string::npos) {
+        // 提取 // 后面的内容作为 comment
+        comment = full_description_part.substr(comment_pos + 2);
+        // 提取 // 前面的内容作为 description
+        description = full_description_part.substr(0, comment_pos);
+    } else {
+        description = full_description_part;
+        comment = ""; // 确保 comment 为空
+    }
+    
+    // 清理 description 和 comment 两端的空白字符
+    description.erase(description.find_last_not_of(" \t\n\r") + 1);
+    comment.erase(0, comment.find_first_not_of(" \t\n\r"));
 }

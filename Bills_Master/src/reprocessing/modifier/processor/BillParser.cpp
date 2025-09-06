@@ -1,0 +1,76 @@
+// reprocessing/modifier/processor/BillParser.cpp
+
+#include "BillParser.hpp"
+#include <algorithm>
+
+BillParser::BillParser(const Config& config) : m_config(config) {}
+
+std::vector<ParentItem> BillParser::parse(const std::vector<std::string>& lines, std::vector<std::string>& out_metadata_lines) const {
+    std::vector<ParentItem> structure;
+    ParentItem* current_parent = nullptr;
+    SubItem* current_sub_item = nullptr;
+
+    std::vector<std::string> temp_lines;
+    for(const auto& line : lines) {
+        if (_is_metadata_line(line)) {
+            out_metadata_lines.push_back(line);
+            continue;
+        }
+        
+        std::string temp = line;
+        if(!_trim(temp).empty()){
+            temp_lines.push_back(temp);
+        }
+    }
+
+    for (const std::string& line : temp_lines) {
+        if (_is_parent_title(line)) {
+            structure.emplace_back();
+            current_parent = &structure.back();
+            current_parent->title = line;
+            current_sub_item = nullptr;
+        } else if (_is_title(line)) {
+            if (!current_parent) {
+                structure.emplace_back();
+                current_parent = &structure.back();
+                current_parent->title = "Default Parent"; 
+            }
+            current_parent->sub_items.emplace_back();
+            current_sub_item = &current_parent->sub_items.back();
+            current_sub_item->title = line;
+        } else {
+            if (current_sub_item) {
+                current_sub_item->contents.push_back(line);
+            }
+        }
+    }
+    return structure;
+}
+
+bool BillParser::_is_metadata_line(const std::string& line) const {
+    for (const auto& prefix : m_config.metadata_prefixes) {
+        if (line.rfind(prefix, 0) == 0) return true;
+    }
+    return false;
+}
+
+bool BillParser::_is_parent_title(const std::string& line) {
+    for (char c : line) {
+        if (std::isupper(static_cast<unsigned char>(c))) return true;
+    }
+    return false;
+}
+
+bool BillParser::_is_title(const std::string& line) {
+    if (line.empty()) return false;
+    for(char c : line) {
+        if(!isspace(c)) return !isdigit(c);
+    }
+    return false;
+}
+
+std::string& BillParser::_trim(std::string& s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return !std::isspace(ch); }));
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end());
+    return s;
+}
