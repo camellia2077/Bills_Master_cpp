@@ -1,3 +1,4 @@
+// year_md/YearMdFormat.cpp
 
 #include "YearMdFormat.hpp"
 #include <sstream>
@@ -23,18 +24,23 @@ std::string YearMdFormat::generate_summary(const YearlyReportData& data) const {
     return ss.str();
 }
 
+// --- 核心修改：生成 Markdown 表格头部 ---
 std::string YearMdFormat::generate_monthly_breakdown_header() const {
     std::stringstream ss;
-    ss << "\n## " << config.monthly_breakdown_title << "\n";
+    ss << "\n## " << config.monthly_breakdown_title << "\n\n"
+       << "| " << config.monthly_table_header_month << " | " 
+       << config.monthly_table_header_amount << " (" << config.currency_name << ") |\n"
+       << "| :--- | :--- |\n";
     return ss.str();
 }
 
+// --- 核心修改：生成 Markdown 表格的一行 ---
 std::string YearMdFormat::generate_monthly_item(int year, int month, double total) const {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(config.precision);
-    ss << " - " << year << config.monthly_item_date_separator
+    ss << "| " << year << config.monthly_item_date_separator
        << std::setfill(config.fill_char) << std::setw(config.month_width) << month
-       << config.monthly_item_value_separator << total << " " << config.currency_name << "\n";
+       << " | " << total << " |\n";
     return ss.str();
 }
 

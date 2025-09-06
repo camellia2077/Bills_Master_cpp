@@ -93,6 +93,14 @@
         "other_accidents"
       ]
     },
+        {
+      "parent_item": "INCOME收入",
+      "description": "收入",
+      "sub_items": [
+        "income_salary",
+        "imcone_gift-money"
+      ]
+    },
     {
       "parent_item": "HOSPITAL医院",
       "description": "医疗和药品开销",

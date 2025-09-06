@@ -3,6 +3,8 @@
 #include "BillJsonFormatter.hpp"
 #include <regex>
 #include <string>
+#include <iomanip>
+#include <sstream>
 
 // --- 核心修改：重写 format 函数以生成下游模块期望的、按 parent_category 分组的结构 ---
 std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_structure, const std::vector<std::string>& metadata_lines) const {
@@ -43,6 +45,16 @@ std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_struct
                 transaction_node["amount"] = amount;
                 transaction_node["source"] = "manually_add";
 
+                // ===================================================================
+                //  **新增功能：根据父分类添加 type 字段**
+                // ===================================================================
+                if (parent.title == "INCOME收入") {
+                    transaction_node["type"] = "Income";
+                } else {
+                    transaction_node["type"] = "Expense";
+                }
+                // ===================================================================
+
                 if (!comment.empty()) {
                     transaction_node["comment"] = comment;
                 }
@@ -55,8 +67,11 @@ std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_struct
             }
         }
 
+        std::stringstream ss_sub_total;
+        ss_sub_total << std::fixed << std::setprecision(2) << parent_sub_total;
+        
         // 将该父分类的小计和扁平化的交易列表存入节点
-        parent_node["sub_total"] = parent_sub_total;
+        parent_node["sub_total"] = nlohmann::json::parse(ss_sub_total.str());
         parent_node["transactions"] = transactions_array; // <--- 这是解析器期望的键
         
         // 将父分类节点添加到 categories 对象中
@@ -66,8 +81,11 @@ std::string BillJsonFormatter::format(const std::vector<ParentItem>& bill_struct
         total_amount += parent_sub_total;
     }
 
+    std::stringstream ss_total_amount;
+    ss_total_amount << std::fixed << std::setprecision(2) << total_amount;
+
     // 3. 将总金额和 categories 对象添加到根节点
-    root["total_amount"] = total_amount;
+    root["total_amount"] = nlohmann::json::parse(ss_total_amount.str());
     root["categories"] = categories_obj;
 
     return root.dump(4);
@@ -79,6 +97,9 @@ void BillJsonFormatter::_parse_content_line(const std::string& line, double& amo
     std::regex re(R"(^(\d+(?:\.\d+)?)\s*(.*))");
     std::string full_description_part;
 
+    // ===================================================================
+    //  **FIX: 修正了 regex_match 的参数错误**
+    // ===================================================================
     if (std::regex_match(line, match, re) && match.size() == 3) {
         try {
             amount = std::stod(match[1].str());
