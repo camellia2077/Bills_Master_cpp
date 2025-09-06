@@ -25,9 +25,6 @@ struct Config {
     AutoRenewalConfig auto_renewal;
     std::vector<std::string> metadata_prefixes;
     std::map<std::string, std::map<std::string, std::string>> display_name_maps;
-    
-    // **修改**: 从单个字符串改为字符串向量，以支持多种语言
-    std::vector<std::string> language_setting; 
 };
 
 using ContentItem = std::string;

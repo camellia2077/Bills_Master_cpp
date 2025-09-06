@@ -6,12 +6,9 @@
 #include <iomanip>
 #include <sstream>
 
-// **修改**: 更新 format 函数以处理多语言逻辑
 std::string BillJsonFormatter::format(
     const std::vector<ParentItem>& bill_structure, 
-    const std::vector<std::string>& metadata_lines, 
-    const std::map<std::string, std::map<std::string, std::string>>& display_name_maps,
-    const std::vector<std::string>& languages) const 
+    const std::vector<std::string>& metadata_lines) const 
 {
     nlohmann::ordered_json root;
 
@@ -47,24 +44,7 @@ std::string BillJsonFormatter::format(
             }
         }
         
-        // ===================================================================
-        //  **核心修改: 创建一个 display_names 对象来存储所有语言的翻译**
-        // ===================================================================
-        nlohmann::ordered_json display_names_obj = nlohmann::ordered_json::object();
-        auto parent_it = display_name_maps.find(parent.title);
-
-        for (const auto& lang : languages) {
-            std::string display_name = parent.title; // 默认使用ID作为备用值
-            if (parent_it != display_name_maps.end()) {
-                auto lang_it = parent_it->second.find(lang);
-                if (lang_it != parent_it->second.end()) {
-                    display_name = lang_it->second; // 找到指定语言的翻译
-                }
-            }
-            display_names_obj[lang] = display_name;
-        }
-        parent_node["display_names"] = display_names_obj;
-        // ===================================================================
+        parent_node["display_name"] = parent.title;
         
         std::stringstream ss_sub_total;
         ss_sub_total << std::fixed << std::setprecision(2) << parent_sub_total;
