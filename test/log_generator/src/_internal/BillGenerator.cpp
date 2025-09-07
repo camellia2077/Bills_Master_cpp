@@ -62,13 +62,9 @@ void BillGenerator::generate_bill_file(int year, int month, const std::filesyste
         std::cerr << "Cannot generate file: " << file_path << std::endl;
         return;
     }
-
-    outfile << "DATE:" << year_month << std::endl;
-    outfile << "REMARK:" << std::endl << std::endl;
-
-    // ===================================================================
-    //  **核心修改: 重构文件生成逻辑以适应扁平化配置**
-    // ===================================================================
+    // 标题行的date和remark
+    outfile << "date:" << year_month << std::endl;
+    outfile << "remark:" << std::endl << std::endl;
 
     // 1. 将扁平化的子分类按 parent_category 分组
     std::map<std::string, std::vector<json>> grouped_by_parent;
