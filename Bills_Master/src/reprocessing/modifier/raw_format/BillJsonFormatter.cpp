@@ -13,8 +13,9 @@ std::string BillJsonFormatter::format(
     nlohmann::ordered_json root;
 
     for (const auto& meta_line : metadata_lines) {
-        if (meta_line.rfind("DATE:", 0) == 0) root["date"] = meta_line.substr(5);
-        else if (meta_line.rfind("REMARK:", 0) == 0) root["remark"] = meta_line.substr(7);
+        // 日期行和备注行
+        if (meta_line.rfind("date:", 0) == 0) root["date"] = meta_line.substr(5);
+        else if (meta_line.rfind("remark:", 0) == 0) root["remark"] = meta_line.substr(7);
     }
 
     nlohmann::ordered_json categories_obj = nlohmann::ordered_json::object();

@@ -1,7 +1,7 @@
 {
   "metadata_prefixes": [
-    "DATE:",
-    "REMARK:"
+    "date:",
+    "remark:"
   ],
   "auto_renewal_rules": {
     "enabled": true,

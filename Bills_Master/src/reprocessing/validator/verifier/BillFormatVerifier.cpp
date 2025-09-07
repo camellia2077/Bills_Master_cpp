@@ -41,10 +41,10 @@ void BillFormatVerifier::_initialize_validation(const BillConfig& config, Valida
 bool BillFormatVerifier::_process_file_header(std::ifstream& file) {
     std::string line;
     
-    // 验证 DATE
+    // 验证 date
     if (std::getline(file, line)) {
         m_line_num++;
-        if (!std::regex_match(line, std::regex(R"(^DATE:\d{6}$)"))) {
+        if (!std::regex_match(line, std::regex(R"(^date:\d{6}$)"))) {
             m_result->add_error("Error (Line " + std::to_string(m_line_num) + "): The first line must be 'DATE:YYYYMM'. Found: '" + line + "'");
             return false;
         }
@@ -53,10 +53,10 @@ bool BillFormatVerifier::_process_file_header(std::ifstream& file) {
         return false;
     }
 
-    // 验证 REMARK
+    // 验证 remark
     if (std::getline(file, line)) {
         m_line_num++;
-        if (!std::regex_match(line, std::regex(R"(^REMARK:.*)"))) {
+        if (!std::regex_match(line, std::regex(R"(^remark:.*)"))) {
             m_result->add_error("Error (Line " + std::to_string(m_line_num) + "): The second line must start with 'REMARK:'. Found: '" + line + "'");
             return false;
         }
