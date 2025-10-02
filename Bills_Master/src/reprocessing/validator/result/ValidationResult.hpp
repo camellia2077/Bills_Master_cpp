@@ -1,5 +1,6 @@
-#ifndef VALIDATION_RESULT_H
-#define VALIDATION_RESULT_H
+// reprocessing/validator/result/ValidationResult.hpp
+#ifndef VALIDATION_RESULT_HPP
+#define VALIDATION_RESULT_HPP
 
 #include <string>
 #include <vector>
@@ -45,4 +46,4 @@ private:
     std::vector<std::string> warnings;
 };
 
-#endif // VALIDATION_RESULT_H
+#endif // VALIDATION_RESULT_HPP

@@ -1,4 +1,4 @@
-// src/reprocessing/modifier/raw_format/BillJsonFormatter.cpp
+// reprocessing/modifier/raw_format/BillJsonFormatter.cpp
 
 #include "BillJsonFormatter.hpp"
 #include <regex>

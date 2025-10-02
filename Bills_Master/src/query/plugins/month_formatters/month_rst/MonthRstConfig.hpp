@@ -1,6 +1,6 @@
-// MonthRstConfig.hpp
-#ifndef MONTH_RST_FORMAT_CONFIG_H
-#define MONTH_RST_FORMAT_CONFIG_H
+// query/plugins/month_formatters/month_rst/MonthRstConfig.hpp
+#ifndef MONTH_RST_CONFIG_HPP
+#define MONTH_RST_CONFIG_HPP
 
 #include <string>
 
@@ -33,4 +33,4 @@ struct MonthRstConfig {
     int precision = 2;
 };
 
-#endif // MONTH_RST_FORMAT_CONFIG_H
+#endif // MONTH_RST_CONFIG_HPP

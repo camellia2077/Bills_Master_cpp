@@ -1,7 +1,7 @@
-// FileHandler.hpp
+// file_handler/FileHandler.hpp
 
-#ifndef FILE_HANDLER_H
-#define FILE_HANDLER_H
+#ifndef FILE_HANDLER_HPP
+#define FILE_HANDLER_HPP
 
 #include <string>
 #include <vector>
@@ -31,4 +31,4 @@ public:
     std::vector<fs::path> find_files_by_extension(const std::string& input_path_str, const std::string& extension);
 };
 
-#endif // FILE_HANDLER_H
+#endif // FILE_HANDLER_HPP

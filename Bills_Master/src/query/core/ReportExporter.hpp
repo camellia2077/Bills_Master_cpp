@@ -1,5 +1,6 @@
-#ifndef REPORT_EXPORTER_H
-#define REPORT_EXPORTER_H
+// query/core/ReportExporter.hpp
+#ifndef REPORT_EXPORTER_HPP
+#define REPORT_EXPORTER_HPP
 
 #include <string>
 #include <map>
@@ -25,4 +26,4 @@ private:
     std::string get_display_format_name(const std::string& short_name) const;
 };
 
-#endif // REPORT_EXPORTER_H
+#endif // REPORT_EXPORTER_HPP

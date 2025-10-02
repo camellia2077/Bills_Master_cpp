@@ -1,7 +1,7 @@
-// modifier/raw_format/BillJsonFormatter.hpp
+// reprocessing/modifier/raw_format/BillJsonFormatter.hpp
 
-#ifndef BILL_JSON_FORMATTER_H
-#define BILL_JSON_FORMATTER_H
+#ifndef BILL_JSON_FORMATTER_HPP
+#define BILL_JSON_FORMATTER_HPP
 
 #include "reprocessing/modifier/_shared_structures/BillDataStructures.hpp"
 #include "nlohmann/json.hpp"
@@ -21,4 +21,4 @@ private:
     void _parse_content_line(const std::string& line, double& amount, std::string& description, std::string& comment) const;
 };
 
-#endif // BILL_JSON_FORMATTER_H
+#endif // BILL_JSON_FORMATTER_HPP

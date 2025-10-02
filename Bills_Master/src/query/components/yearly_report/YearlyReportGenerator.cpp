@@ -1,4 +1,4 @@
-// YearlyReportGenerator.cpp
+// query/components/yearly_report/YearlyReportGenerator.cpp
 #include "YearlyReportGenerator.hpp"
 #include <stdexcept>
 #include <iostream>

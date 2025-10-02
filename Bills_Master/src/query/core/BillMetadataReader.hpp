@@ -1,5 +1,6 @@
-#ifndef BILL_METADATA_READER_H
-#define BILL_METADATA_READER_H
+// query/core/BillMetadataReader.hpp
+#ifndef BILL_METADATA_READER_HPP
+#define BILL_METADATA_READER_HPP
 
 #include <sqlite3.h>
 #include <string>
@@ -17,4 +18,4 @@ private:
     sqlite3* m_db;
 };
 
-#endif // BILL_METADATA_READER_H
+#endif // BILL_METADATA_READER_HPP

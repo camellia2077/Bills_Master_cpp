@@ -1,5 +1,6 @@
-#ifndef BILL_VALIDATOR_H
-#define BILL_VALIDATOR_H
+// reprocessing/validator/BillValidator.hpp
+#ifndef BILL_VALIDATOR_HPP
+#define BILL_VALIDATOR_HPP
 
 #include "reprocessing/validator/config/BillConfig.hpp"
 #include "reprocessing/validator/verifier/BillFormatVerifier.hpp"
@@ -39,4 +40,4 @@ private:
     ValidationResult result;
 };
 
-#endif // BILL_VALIDATOR_H
+#endif // BILL_VALIDATOR_HPP

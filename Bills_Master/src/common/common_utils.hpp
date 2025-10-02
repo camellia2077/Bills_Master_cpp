@@ -1,5 +1,6 @@
-#ifndef COMMON_UTILS_H
-#define COMMON_UTILS_H
+// common/common_utils.hpp
+#ifndef COMMON_UTILS_HPP
+#define COMMON_UTILS_HPP
 
 // --- ANSI Color Code Definitions (using macros for simplicity) ---
 
@@ -56,4 +57,4 @@
 #define BG_BRIGHT_CYAN_COLOR    "\033[106m"
 #define BG_BRIGHT_WHITE_COLOR   "\033[107m"
 
-#endif // COMMON_UTILS_H
+#endif // COMMON_UTILS_HPP

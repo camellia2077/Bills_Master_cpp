@@ -1,5 +1,6 @@
-#ifndef YEAR_RST_FORMAT_H
-#define YEAR_RST_FORMAT_H
+// query/plugins/year_formatters/year_rst/YearRstFormat.hpp
+#ifndef YEAR_RST_FORMAT_HPP
+#define YEAR_RST_FORMAT_HPP
 
 #include "query/plugins/year_formatters/BaseYearlyReportFormatter.hpp" // 变更了 include
 
@@ -13,4 +14,4 @@ protected:
     std::string generate_footer(const YearlyReportData& data) const override;
 };
 
-#endif // YEAR_RST_FORMAT_H
+#endif // YEAR_RST_FORMAT_HPP

@@ -1,6 +1,6 @@
-// 这个类将封装所有与原始文件处理和数据入库相关的功能。
-#ifndef WORKFLOW_CONTROLLER_H
-#define WORKFLOW_CONTROLLER_H
+// app_controller/WorkflowController.hpp
+#ifndef WORKFLOW_CONTROLLER_HPP
+#define WORKFLOW_CONTROLLER_HPP
 
 #include <string>
 
@@ -22,4 +22,4 @@ private:
     std::string m_modified_output_dir;
 };
 
-#endif // WORKFLOW_CONTROLLER_H
+#endif // WORKFLOW_CONTROLLER_HPP

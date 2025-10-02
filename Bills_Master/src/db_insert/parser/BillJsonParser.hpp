@@ -1,7 +1,7 @@
 // db_insert/parser/BillJsonParser.hpp
 
-#ifndef BILL_JSON_PARSER_H
-#define BILL_JSON_PARSER_H
+#ifndef BILL_JSON_PARSER_HPP
+#define BILL_JSON_PARSER_HPP
 
 #include "common_structures/CommonData.hpp"
 #include <string>
@@ -25,4 +25,4 @@ public:
     ParsedBill parse(const std::string& file_path);
 };
 
-#endif // BILL_JSON_PARSER_H
+#endif // BILL_JSON_PARSER_HPP

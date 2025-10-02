@@ -1,7 +1,7 @@
 // reprocessing/modifier/_shared_structures/BillDataStructures.hpp
 
-#ifndef BILL_DATA_STRUCTURES_H
-#define BILL_DATA_STRUCTURES_H
+#ifndef BILL_DATA_STRUCTURES_HPP
+#define BILL_DATA_STRUCTURES_HPP
 
 #include <string>
 #include <vector>
@@ -39,4 +39,4 @@ struct ParentItem {
     std::vector<SubItem> sub_items;
 };
 
-#endif // BILL_DATA_STRUCTURES_H
+#endif // BILL_DATA_STRUCTURES_HPP

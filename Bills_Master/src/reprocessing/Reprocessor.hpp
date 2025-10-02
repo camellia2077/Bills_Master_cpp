@@ -1,5 +1,6 @@
-#ifndef REPROCESSOR_H
-#define REPROCESSOR_H
+// reprocessing/Reprocessor.hpp
+#ifndef REPROCESSOR_HPP
+#define REPROCESSOR_HPP
 
 #include <string>
 #include <memory> // 为 std::unique_ptr 添加
@@ -35,4 +36,4 @@ private:
     std::unique_ptr<BillModifier> m_modifier;
 };
 
-#endif // REPROCESSOR_H
+#endif // REPROCESSOR_HPP

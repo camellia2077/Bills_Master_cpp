@@ -1,6 +1,6 @@
-// IMonthReportFormatter.hpp
-#ifndef I_MONTH_REPORT_FORMATTER_H
-#define I_MONTH_REPORT_FORMATTER_H
+// query/plugins/month_formatters/IMonthReportFormatter.hpp
+#ifndef I_MONTH_REPORT_FORMATTER_HPP
+#define I_MONTH_REPORT_FORMATTER_HPP
 
 #include <string>
 
@@ -25,4 +25,4 @@ public:
     virtual std::string format_report(const MonthlyReportData& data) const = 0; // 纯虚函数
 };
 
-#endif // I_MONTH_REPORT_FORMATTER_H
+#endif // I_MONTH_REPORT_FORMATTER_HPP

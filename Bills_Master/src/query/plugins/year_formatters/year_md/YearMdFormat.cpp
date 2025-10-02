@@ -1,4 +1,4 @@
-// year_md/YearMdFormat.cpp
+// query/plugins/year_formatters/year_md/YearMdFormat.cpp
 
 #include "YearMdFormat.hpp"
 #include <sstream>

@@ -1,7 +1,7 @@
-// src/db_insert/insertor/DatabaseManager.hpp
+// db_insert/insertor/DatabaseManager.hpp
 
-#ifndef DATABASE_MANAGER_H
-#define DATABASE_MANAGER_H
+#ifndef DATABASE_MANAGER_HPP
+#define DATABASE_MANAGER_HPP
 
 #include "common_structures/CommonData.hpp"
 #include <sqlite3.h>
@@ -39,4 +39,4 @@ private:
     sqlite3* m_db; // SQLite 数据库连接句柄
 };
 
-#endif // DATABASE_MANAGER_H
+#endif // DATABASE_MANAGER_HPP

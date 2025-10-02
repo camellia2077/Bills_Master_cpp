@@ -1,4 +1,4 @@
-// modifier/BillModifier.cpp
+// reprocessing/modifier/BillModifier.cpp
 
 #include "BillModifier.hpp"
 #include "reprocessing/modifier/config_loader/ConfigLoader.hpp"

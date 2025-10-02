@@ -1,6 +1,6 @@
-// 这个类将专门负责所有与查询和导出报告相关的功能。
-#ifndef EXPORT_CONTROLLER_H
-#define EXPORT_CONTROLLER_H
+// app_controller/ExportController.hpp
+#ifndef EXPORT_CONTROLLER_HPP
+#define EXPORT_CONTROLLER_HPP
 
 #include <string>
 #include <vector>
@@ -26,4 +26,4 @@ private:
     std::map<std::string, std::string> m_format_folder_names;
 };
 
-#endif // EXPORT_CONTROLLER_H
+#endif // EXPORT_CONTROLLER_HPP

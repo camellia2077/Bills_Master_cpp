@@ -1,4 +1,4 @@
-// src/reprocessing/validator/verifier/BillFormatVerifier.cpp (重构后)
+// reprocessing/validator/verifier/BillFormatVerifier.cpp
 
 #include "BillFormatVerifier.hpp"
 #include "reprocessing/validator/config/BillConfig.hpp"
@@ -44,8 +44,9 @@ bool BillFormatVerifier::_process_file_header(std::ifstream& file) {
     // 验证 date
     if (std::getline(file, line)) {
         m_line_num++;
+        // [修改] 正则表达式和错误提示都要求 'date:' 为小写
         if (!std::regex_match(line, std::regex(R"(^date:\d{6}$)"))) {
-            m_result->add_error("Error (Line " + std::to_string(m_line_num) + "): The first line must be 'DATE:YYYYMM'. Found: '" + line + "'");
+            m_result->add_error("Error (Line " + std::to_string(m_line_num) + "): The first line must be 'date:YYYYMM'. Found: '" + line + "'");
             return false;
         }
     } else {
@@ -56,8 +57,9 @@ bool BillFormatVerifier::_process_file_header(std::ifstream& file) {
     // 验证 remark
     if (std::getline(file, line)) {
         m_line_num++;
+        // [修改] 正则表达式和错误提示都要求 'remark:' 为小写
         if (!std::regex_match(line, std::regex(R"(^remark:.*)"))) {
-            m_result->add_error("Error (Line " + std::to_string(m_line_num) + "): The second line must start with 'REMARK:'. Found: '" + line + "'");
+            m_result->add_error("Error (Line " + std::to_string(m_line_num) + "): The second line must start with 'remark:'. Found: '" + line + "'");
             return false;
         }
     } else {

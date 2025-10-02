@@ -1,6 +1,6 @@
-// MonthTypFormat.hpp
-#ifndef MONTH_TYP_FORMAT_H
-#define MONTH_TYP_FORMAT_H
+// query/plugins/month_formatters/month_typ/MonthTypFormat.hpp
+#ifndef MONTH_TYP_FORMAT_HPP
+#define MONTH_TYP_FORMAT_HPP
 
 #include "query/plugins/month_formatters/IMonthReportFormatter.hpp"
 #include "MonthTypConfig.hpp" // 包含新的配置头文件
@@ -21,4 +21,4 @@ private:
     MonthTypConfig config_;
 };
 
-#endif // MONTH_TYP_FORMAT_H
+#endif // MONTH_TYP_FORMAT_HPP
