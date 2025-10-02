@@ -1,5 +1,6 @@
-#ifndef YEARLY_TEX_REPORT_CONFIG_H
-#define YEARLY_TEX_REPORT_CONFIG_H
+// query/plugins/year_formatters/year_tex/YearlyTexConfig.hpp
+#ifndef YEARLY_TEX_CONFIG_HPP
+#define YEARLY_TEX_CONFIG_HPP
 
 #include <string>
 
@@ -40,4 +41,4 @@ struct YearlyTexConfig {
     std::string year_month_separator = "-";
 };
 
-#endif // YEARLY_TEX_REPORT_CONFIG_H
+#endif // YEARLY_TEX_CONFIG_HPP

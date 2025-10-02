@@ -1,5 +1,6 @@
-#ifndef MD_FORMATT_H
-#define MD_FORMATT_H
+// query/plugins/month_formatters/month_md/MonthMdFormat.hpp
+#ifndef MONTH_MD_FORMAT_HPP
+#define MONTH_MD_FORMAT_HPP
 
 #include "query/plugins/month_formatters/IMonthReportFormatter.hpp" // 包含接口头文件
 #include "MonthMdConfig.hpp" // 包含新的配置文件
@@ -17,4 +18,4 @@ public:
     std::string format_report(const MonthlyReportData& data) const override;
 };
 
-#endif // MD_FORMATT_H
+#endif // MONTH_MD_FORMAT_HPP

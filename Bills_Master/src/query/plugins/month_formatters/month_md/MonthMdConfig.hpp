@@ -1,6 +1,6 @@
-// MonthMdConfig.hpp
-#ifndef MONTH_MD_FORMAT_CONFIG_H
-#define MONTH_MD_FORMAT_CONFIG_H
+// query/plugins/month_formatters/month_md/MonthMdConfig.hpp
+#ifndef MONTH_MD_CONFIG_HPP
+#define MONTH_MD_CONFIG_HPP
 
 #include <string>
 
@@ -31,4 +31,4 @@ struct MonthMdConfig {
     char fill_char = '0';
 };
 
-#endif // MONTH_MD_FORMAT_CONFIG_H
+#endif // MONTH_MD_CONFIG_HPP

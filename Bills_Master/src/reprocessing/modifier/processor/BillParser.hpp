@@ -1,7 +1,7 @@
 // reprocessing/modifier/processor/BillParser.hpp
 
-#ifndef BILL_PARSER_H
-#define BILL_PARSER_H
+#ifndef BILL_PARSER_HPP
+#define BILL_PARSER_HPP
 
 #include "reprocessing/modifier/_shared_structures/BillDataStructures.hpp"
 #include <vector>
@@ -32,4 +32,4 @@ private:
     static std::string& _trim(std::string& s);
 };
 
-#endif // BILL_PARSER_H
+#endif // BILL_PARSER_HPP

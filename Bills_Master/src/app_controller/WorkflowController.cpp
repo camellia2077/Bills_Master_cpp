@@ -1,4 +1,4 @@
-// WorkflowController.cpp
+// app_controller/WorkflowController.cpp
 
 #include "WorkflowController.hpp"
 #include "reprocessing/Reprocessor.hpp"

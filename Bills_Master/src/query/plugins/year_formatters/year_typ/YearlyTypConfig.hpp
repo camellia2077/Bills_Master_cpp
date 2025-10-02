@@ -1,6 +1,6 @@
-// YearlyTypConfig.hpp
-#ifndef YEARLY_TYP_CONFIG_H
-#define YEARLY_TYP_CONFIG_H
+// query/plugins/year_formatters/year_typ/YearlyTypConfig.hpp
+#ifndef YEARLY_TYP_CONFIG_HPP
+#define YEARLY_TYP_CONFIG_HPP
 
 #include <string>
 #include <cstdint>
@@ -31,4 +31,4 @@ struct YearlyTypConfig {
     YearlyTypLabels labels;
 };
 
-#endif // YEARLY_TYP_CONFIG_H
+#endif // YEARLY_TYP_CONFIG_HPP

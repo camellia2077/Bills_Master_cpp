@@ -1,6 +1,6 @@
-// ReportSorter.hpp
-#ifndef REPORT_SORTER_H
-#define REPORT_SORTER_H
+// query/components/monthly_report/ReportSorter.hpp
+#ifndef REPORT_SORTER_HPP
+#define REPORT_SORTER_HPP
 
 #include "ReportData.hpp"
 #include <vector>
@@ -29,4 +29,4 @@ public:
     static std::vector<std::pair<std::string, ParentCategoryData>> sort_report_data(const MonthlyReportData& data);
 };
 
-#endif // REPORT_SORTER_H
+#endif // REPORT_SORTER_HPP

@@ -29,3 +29,14 @@ BUILD_GENERATOR = "Ninja"
 
 # 如果你想使用 Make，请注释掉上面的 "Ninja" 并取消下面一行的注释
 # BUILD_GENERATOR = "Unix Makefiles"
+
+# ------------------------------------------------------------------------------
+# CMake 源码目录 (CMake Source Directory)
+# ------------------------------------------------------------------------------
+# 指定包含顶层 CMakeLists.txt 文件的目录的绝对路径。
+# 注意：路径应该是包含 CMakeLists.txt 的文件夹，而不是文件本身。
+#
+# 示例 (Windows): r"C:\path\to\your\project"
+# 示例 (Linux/macOS): "/path/to/your/project"
+# ------------------------------------------------------------------------------
+CMAKELIST_SOURCE_DIR = r"C:\Computer\my_github\github_cpp\bills_master\Bills_Master_cpp\Bills_Master"

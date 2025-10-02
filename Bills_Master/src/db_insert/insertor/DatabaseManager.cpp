@@ -1,4 +1,4 @@
-// src/db_insert/insertor/DatabaseManager.cpp
+// db_insert/insertor/DatabaseManager.cpp
 
 #include "DatabaseManager.hpp"
 #include <iostream>

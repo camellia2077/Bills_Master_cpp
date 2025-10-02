@@ -4,7 +4,7 @@
     "remark:"
   ],
   "auto_renewal_rules": {
-    "enabled": true,
+    "enabled": false,
     "rules": [
       {
         "header_location": "web_service",

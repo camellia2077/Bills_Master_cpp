@@ -1,5 +1,6 @@
-#ifndef PROCESS_STATS_H
-#define PROCESS_STATS_H
+// app_controller/ProcessStats.hpp
+#ifndef PROCESS_STATS_HPP
+#define PROCESS_STATS_HPP
 
 #include <iostream>
 #include <string>
@@ -25,4 +26,4 @@ struct ProcessStats {
     }
 };
 
-#endif // PROCESS_STATS_H
+#endif // PROCESS_STATS_HPP

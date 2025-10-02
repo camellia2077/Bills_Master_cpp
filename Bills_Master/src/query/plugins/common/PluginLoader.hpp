@@ -1,6 +1,6 @@
-// query/plugins/common/PluginLoader.h
-#ifndef PLUGIN_LOADER_H
-#define PLUGIN_LOADER_H
+// query/plugins/common/PluginLoader.hpp
+#ifndef PLUGIN_LOADER_HPP
+#define PLUGIN_LOADER_HPP
 
 #include <memory>
 #include <string>
@@ -148,4 +148,4 @@ private:
     }
 };
 
-#endif // PLUGIN_LOADER_H
+#endif // PLUGIN_LOADER_HPP

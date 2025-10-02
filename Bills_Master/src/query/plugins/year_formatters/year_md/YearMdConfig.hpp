@@ -1,6 +1,6 @@
-// year_md/YearMdConfig.hpp
-#ifndef YEAR_MD_CONFIG_H
-#define YEAR_MD_CONFIG_H
+// query/plugins/year_formatters/year_md/YearMdConfig.hpp
+#ifndef YEAR_MD_CONFIG_HPP
+#define YEAR_MD_CONFIG_HPP
 
 #include <string>
 
@@ -31,4 +31,4 @@ struct YearMdConfig {
     char fill_char = '0';
 };
 
-#endif // YEAR_MD_CONFIG_H
+#endif // YEAR_MD_CONFIG_HPP

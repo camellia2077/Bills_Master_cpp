@@ -1,6 +1,6 @@
-// MonthQuery.hpp
-#ifndef MONTH_QUERY_H
-#define MONTH_QUERY_H
+// query/components/monthly_report/MonthQuery.hpp
+#ifndef MONTH_QUERY_HPP
+#define MONTH_QUERY_HPP
 
 
 #include "ReportData.hpp"

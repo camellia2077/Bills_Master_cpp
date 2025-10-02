@@ -1,6 +1,6 @@
 // query/components/yearly_report/YearlyReportGenerator.hpp
-#ifndef YEARLY_REPORT_GENERATOR_H
-#define YEARLY_REPORT_GENERATOR_H
+#ifndef YEARLY_REPORT_GENERATOR_HPP
+#define YEARLY_REPORT_GENERATOR_HPP
 
 #include <string>
 #include <vector>
@@ -22,4 +22,4 @@ private:
     PluginLoader<IYearlyReportFormatter> m_plugin_manager;
 };
 
-#endif // YEARLY_REPORT_GENERATOR_H
+#endif // YEARLY_REPORT_GENERATOR_HPP

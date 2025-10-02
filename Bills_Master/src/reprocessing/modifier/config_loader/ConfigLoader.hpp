@@ -1,5 +1,6 @@
-#ifndef CONFIG_LOADER_H
-#define CONFIG_LOADER_H
+// reprocessing/modifier/config_loader/ConfigLoader.hpp
+#ifndef CONFIG_LOADER_HPP
+#define CONFIG_LOADER_HPP
 
 #include "reprocessing/modifier/_shared_structures/BillDataStructures.hpp"
 #include "nlohmann/json.hpp"
@@ -15,4 +16,4 @@ public:
     static Config load(const nlohmann::json& config_json);
 };
 
-#endif // CONFIG_LOADER_H
+#endif // CONFIG_LOADER_HPP

@@ -1,7 +1,7 @@
-// MonthTexFormat.hpp
+// query/plugins/month_formatters/month_tex/MonthTexFormat.hpp
 
-#ifndef TEX_FORMAT_H
-#define TEX_FORMAT_H
+#ifndef MONTH_TEX_FORMAT_HPP
+#define MONTH_TEX_FORMAT_HPP
 
 #include "query/plugins/month_formatters/IMonthReportFormatter.hpp"
 #include "MonthTexReport.hpp" // 包含新的配置头文件
@@ -24,4 +24,4 @@ private:
     MonthTexReport m_config; 
 };
 
-#endif // TEX_FORMAT_H
+#endif // MONTH_TEX_FORMAT_HPP

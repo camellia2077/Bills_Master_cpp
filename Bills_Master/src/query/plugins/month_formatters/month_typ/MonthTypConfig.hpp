@@ -1,6 +1,6 @@
-// MonthTypConfig.hpp
-#ifndef MONTH_TYP_CONFIG_H
-#define MONTH_TYP_CONFIG_H
+// query/plugins/month_formatters/month_typ/MonthTypConfig.hpp
+#ifndef MONTH_TYP_CONFIG_HPP
+#define MONTH_TYP_CONFIG_HPP
 
 #include <string>
 #include <cstdint>
@@ -37,4 +37,4 @@ struct MonthTypConfig {
     MonthTypLabels labels;
 };
 
-#endif // MONTH_TYP_CONFIG_H
+#endif // MONTH_TYP_CONFIG_HPP

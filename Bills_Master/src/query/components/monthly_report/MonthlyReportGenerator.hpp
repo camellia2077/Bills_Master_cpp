@@ -1,6 +1,6 @@
-// MonthlyReportGenerator.hpp
-#ifndef MONTHLY_REPORT_GENERATOR_H
-#define MONTHLY_REPORT_GENERATOR_H
+// query/components/monthly_report/MonthlyReportGenerator.hpp
+#ifndef MONTHLY_REPORT_GENERATOR_HPP
+#define MONTHLY_REPORT_GENERATOR_HPP
 
 #include <string>
 #include <vector>
@@ -22,4 +22,4 @@ private:
     PluginLoader<IMonthReportFormatter> m_plugin_manager;
 };
 
-#endif // MONTHLY_REPORT_GENERATOR_H
+#endif // MONTHLY_REPORT_GENERATOR_HPP

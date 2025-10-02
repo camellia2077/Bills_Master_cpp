@@ -1,7 +1,7 @@
-// src/common_structures/CommonData.hpp
+// common_structures/CommonData.hpp
 
-#ifndef COMMON_DATA_H
-#define COMMON_DATA_H
+#ifndef COMMON_DATA_HPP
+#define COMMON_DATA_HPP
 
 #include <string>
 #include <vector>
@@ -27,4 +27,4 @@ struct ParsedBill {
     std::vector<Transaction> transactions;
 };
 
-#endif // COMMON_DATA_H
+#endif // COMMON_DATA_HPP

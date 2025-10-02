@@ -1,6 +1,6 @@
-// YearlyReportData.hpp
-#ifndef YEARLY_REPORT_DATA_H
-#define YEARLY_REPORT_DATA_H
+// query/components/yearly_report/YearlyReportData.hpp
+#ifndef YEARLY_REPORT_DATA_HPP
+#define YEARLY_REPORT_DATA_HPP
 
 #include <map>
 
@@ -12,4 +12,4 @@ struct YearlyReportData {
     bool data_found = false;
 };
 
-#endif // YEARLY_REPORT_DATA_H
+#endif // YEARLY_REPORT_DATA_HPP

@@ -1,5 +1,6 @@
-#ifndef QUERY_FACADE_H
-#define QUERY_FACADE_H
+// query/core/QueryFacade.hpp
+#ifndef QUERY_FACADE_HPP
+#define QUERY_FACADE_HPP
 
 #include "query/components/monthly_report/MonthlyReportGenerator.hpp"
 #include "query/components/yearly_report/YearlyReportGenerator.hpp"
@@ -54,4 +55,4 @@ private:
     std::unique_ptr<BillMetadataReader> m_metadata_reader;
 };
 
-#endif // QUERY_FACADE_H
+#endif // QUERY_FACADE_HPP

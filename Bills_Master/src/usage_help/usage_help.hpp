@@ -1,5 +1,6 @@
-#ifndef USAGE_HELP_H
-#define USAGE_HELP_H
+// usage_help/usage_help.hpp
+#ifndef USAGE_HELP_HPP
+#define USAGE_HELP_HPP
 
 /**
  * @brief Prints the command-line help message.
@@ -7,4 +8,4 @@
  */
 void print_help(const char* program_name);
 
-#endif // USAGE_HELP_H
+#endif // USAGE_HELP_HPP

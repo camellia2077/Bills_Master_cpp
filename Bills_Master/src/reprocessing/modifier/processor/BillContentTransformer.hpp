@@ -1,7 +1,7 @@
 // reprocessing/modifier/processor/BillContentTransformer.hpp
 
-#ifndef BILL_CONTENT_TRANSFORMER_H
-#define BILL_CONTENT_TRANSFORMER_H
+#ifndef BILL_CONTENT_TRANSFORMER_HPP
+#define BILL_CONTENT_TRANSFORMER_HPP
 
 #include "reprocessing/modifier/_shared_structures/BillDataStructures.hpp"
 #include <vector>
@@ -35,4 +35,4 @@ private:
     static double _get_numeric_value_from_content(const std::string& content_line);
 };
 
-#endif // BILL_CONTENT_TRANSFORMER_H
+#endif // BILL_CONTENT_TRANSFORMER_HPP

@@ -45,8 +45,8 @@ TEST_DATES = {
 
 # 定义需要清理的文件和目录
 FILES_TO_DELETE = ["bills.sqlite3"]
-# *** 修改 ***：将 "config" 添加到需要清理的目录列表中
-DIRS_TO_DELETE = ["txt_raw", "exported_files", "output", "build", "plugins", "config"]
+# *** [修改] ***：将 "output" 修改为 "py_output"
+DIRS_TO_DELETE = ["txt_raw", "exported_files", "py_output", "build", "plugins", "config"]
 
 
 # 定义常量和颜色
@@ -174,8 +174,9 @@ class TestPreparer:
             file_path = os.path.join(self.base_dir, file_name)
             if os.path.exists(file_path): os.remove(file_path)
         
-        os.makedirs(os.path.join(self.base_dir, "output"))
-        print(f"  {GREEN}清理完成, 已创建 'output' 日志目录。{RESET}")
+        # *** [修改] ***：将 "output" 修改为 "py_output"
+        os.makedirs(os.path.join(self.base_dir, "py_output"))
+        print(f"  {GREEN}清理完成, 已创建 'py_output' 日志目录。{RESET}")
         return True
 
 class ImportTasks:
@@ -261,7 +262,8 @@ def main():
     bills_path = BILLS_DIR 
     # 处理后的json文件路径
     import_path = IMPORT_DIR
-    output_dir = os.path.join(script_dir, "output")
+    # *** [修改] ***：将 "output" 修改为 "py_output"
+    output_dir = os.path.join(script_dir, "py_output")
     
     if "C:/path/to/your/bills_folder" in bills_path:
         print(f"\n{RED}错误: 请先在脚本顶部的 'BILLS_DIR' 变量中设置您的账单文件夹路径。{RESET}")
@@ -294,9 +296,9 @@ def main():
 
     if final_result:
         print(f"\n{GREEN}✅ All test steps completed successfully!{RESET}")
-        print(f"{GREEN}   Check the 'output' directory for detailed logs.{RESET}")
+        print(f"{GREEN}   Check the 'py_output' directory for detailed logs.{RESET}")
     else:
-        print(f"\n{RED}❌ A test step failed. Please check the corresponding log file in the 'output' directory for details.{RESET}")
+        print(f"\n{RED}❌ A test step failed. Please check the corresponding log file in the 'py_output' directory for details.{RESET}")
 
 if __name__ == "__main__":
     main()

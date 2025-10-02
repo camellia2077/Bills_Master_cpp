@@ -1,7 +1,7 @@
-// src/db_insert/insertor/BillInserter.hpp
+// db_insert/insertor/BillInserter.hpp
 
-#ifndef BILL_INSERTER_H
-#define BILL_INSERTER_H
+#ifndef BILL_INSERTER_HPP
+#define BILL_INSERTER_HPP
 
 #include "common_structures/CommonData.hpp"
 #include <string>
@@ -25,4 +25,4 @@ private:
     std::string m_db_path; // 只存储数据库路径，而不是连接句柄
 };
 
-#endif // BILL_INSERTER_H
+#endif // BILL_INSERTER_HPP

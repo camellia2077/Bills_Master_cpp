@@ -1,6 +1,6 @@
 // query/plugins/year_formatters/BaseYearlyReportFormatter.hpp
-#ifndef BASE_YEARLY_REPORT_FORMATTER_H
-#define BASE_YEARLY_REPORT_FORMATTER_H
+#ifndef BASE_YEARLY_REPORT_FORMATTER_HPP
+#define BASE_YEARLY_REPORT_FORMATTER_HPP
 
 #include "IYearlyReportFormatter.hpp"
 
@@ -25,4 +25,4 @@ protected:
     virtual std::string generate_footer(const YearlyReportData& data) const = 0;
 };
 
-#endif // BASE_YEARLY_REPORT_FORMATTER_H
+#endif // BASE_YEARLY_REPORT_FORMATTER_HPP
