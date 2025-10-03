@@ -1,6 +1,6 @@
 // query/components/monthly_report/ReportData.hpp
-#ifndef REPORT_DATA_H
-#define REPORT_DATA_H
+#ifndef REPORT_DATA_HPP
+#define REPORT_DATA_HPP
 
 #include <string>
 #include <vector>
@@ -29,4 +29,4 @@ struct MonthlyReportData {
     bool data_found = false;
 };
 
-#endif // REPORT_DATA_H
+#endif // REPORT_DATA_HPP

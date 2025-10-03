@@ -11,133 +11,111 @@
   },
   "categories": [
     {
-      "name": "MEAL吃饭",
-      "sub_items": [
-        {
-          "name": "meal_low",
-          "details": [
-            {"description": "饭", "min_cost": 350.0, "max_cost": 600.0}
-          ]
-        },
-        {
-          "name": "meal_high",
-          "details": [
-            {"description": "醉碳花", "min_cost": 75.0, "max_cost": 90.0},
-            {"description": "德克士", "min_cost": 80.0, "max_cost": 120.0},
-            {"description": "火锅自助", "min_cost": 60.0, "max_cost": 120.0}
-          ]
-        },
-        {
-          "name": "meal_drinks",
-          "details": [
-            {"description": "蜜雪冰城", "min_cost": 30.0, "max_cost": 120.0},
-            {"description": "无糖饮料", "min_cost": 80.0, "max_cost": 120.0}
-          ]
-        },
-        {
-            "name": "meal_snacks",
-            "details": [
-              {"description": "蛋挞", "min_cost": 15.0, "max_cost": 50.0},
-              {"description": "冰激凌", "min_cost": 20.0, "max_cost": 120.0}
-            ]
-          },
-        {
-        "name": "meal_fruits",
-        "details": 
-            [
-                {"description": "菠萝", "min_cost": 40.0, "max_cost": 50.0},
-                {"description": "西瓜", "min_cost": 20.0, "max_cost": 40.0}
-            ]
-        }
+      "parent_category": "meal",
+      "sub_category": "meal_low",
+      "details": [
+        {"description": "饭", "min_cost": 350.0, "max_cost": 600.0}
       ]
     },
     {
-      "name": "FITNESS健身",
-      "sub_items": [
-        {
-        "name": "fitness_diet",
-        "details": [
-            {"description": "牛奶", "min_cost": 30.0, "max_cost": 60.0},
-            {"description": "蛋白粉", "min_cost": 100.0, "max_cost": 200.0},
-            {"description": "复合维生素", "min_cost": 30.0, "max_cost": 60.0}
-          ]
-        }
+      "parent_category": "meal",
+      "sub_category": "meal_high",
+      "details": [
+        {"description": "醉碳花", "min_cost": 75.0, "max_cost": 90.0},
+        {"description": "德克士", "min_cost": 80.0, "max_cost": 120.0},
+        {"description": "火锅自助", "min_cost": 60.0, "max_cost": 120.0}
       ]
     },
     {
-        "name": "PET宠物",
-        "sub_items": [
-          {
-          "name": "pet_tortoise",
-          "details": [
-              {"description": "小青", "min_cost": 25.0, "max_cost": 60.0}
-            ]
-          }
-        ]
+      "parent_category": "meal",
+      "sub_category": "meal_drinks",
+      "details": [
+        {"description": "蜜雪冰城", "min_cost": 30.0, "max_cost": 120.0},
+        {"description": "无糖饮料", "min_cost": 80.0, "max_cost": 120.0}
+      ]
     },
     {
-        "name": "PURCHASE购物",
-        "sub_items": [
-          {
-          "name": "purchase_toys",
-          "details": [
-              {"description": "手办", "min_cost": 25.0, "max_cost": 60.0},
-              {"description": "勋章", "min_cost": 5.0, "max_cost": 15.0}
-            ]
-          },
-          {
-            "name": "purchase_clothes",
-            "details": [
-                {"description": "衣服", "min_cost": 25.0, "max_cost": 40.0}
-              ]
-            }
-        ]
+      "parent_category": "meal",
+      "sub_category": "meal_snacks",
+      "details": [
+        {"description": "蛋挞", "min_cost": 15.0, "max_cost": 50.0},
+        {"description": "冰激凌", "min_cost": 20.0, "max_cost": 120.0}
+      ]
     },
     {
-        "name": "DAILY日常",
-        "sub_items": [
-          {
-          "name": "daily_fees",
-          "details": [
-              {"description": "哈喽", "min_cost": 25.0, "max_cost": 30.0}
-            ]
-          },
-          {
-            "name": "daily_consumables",
-            "details": [
-                {"description": "牙膏", "min_cost": 5.0, "max_cost": 10.0}
-              ]
-            }
-        ]
-    },
-        {
-        "name": "INCOME收入",
-        "sub_items": [
-          {
-          "name": "income_salary",
-          "details": [
-              {"description": "工资", "min_cost": 8000.0, "max_cost": 15000.0}
-            ]
-          }
-        ]
+      "parent_category": "meal",
+      "sub_category": "meal_fruits",
+      "details": [
+        {"description": "菠萝", "min_cost": 40.0, "max_cost": 50.0},
+        {"description": "西瓜", "min_cost": 20.0, "max_cost": 40.0}
+      ]
     },
     {
-        "name": "WEB网络",
-        "sub_items": [
-          {
-          "name": "web_service",
-          "details": [
-              {"description": "迅雷", "min_cost": 25.0, "max_cost": 30.0},
-              {"description": "迷雾", "min_cost": 40.1, "max_cost": 40.7}
-            ]
-          },
-          {
-            "name": "web_game",
-            "details": [
-                {"description": "月卡", "min_cost": 30, "max_cost": 60}
-              ]
-            }
-        ]
+      "parent_category": "fitness",
+      "sub_category": "fitness_diet",
+      "details": [
+        {"description": "牛奶", "min_cost": 30.0, "max_cost": 60.0},
+        {"description": "蛋白粉", "min_cost": 100.0, "max_cost": 200.0},
+        {"description": "复合维生素", "min_cost": 30.0, "max_cost": 60.0}
+      ]
+    },
+    {
+      "parent_category": "pet",
+      "sub_category": "pet_tortoise",
+      "details": [
+        {"description": "小青", "min_cost": 25.0, "max_cost": 60.0}
+      ]
+    },
+    {
+      "parent_category": "purchase",
+      "sub_category": "purchase_toys",
+      "details": [
+        {"description": "手办", "min_cost": 25.0, "max_cost": 60.0},
+        {"description": "勋章", "min_cost": 5.0, "max_cost": 15.0}
+      ]
+    },
+    {
+      "parent_category": "purchase",
+      "sub_category": "purchase_clothes",
+      "details": [
+        {"description": "衣服", "min_cost": 25.0, "max_cost": 40.0}
+      ]
+    },
+    {
+      "parent_category": "daily",
+      "sub_category": "daily_fees",
+      "details": [
+        {"description": "哈喽", "min_cost": 25.0, "max_cost": 30.0}
+      ]
+    },
+    {
+      "parent_category": "daily",
+      "sub_category": "daily_consumables",
+      "details": [
+        {"description": "牙膏", "min_cost": 5.0, "max_cost": 10.0}
+      ]
+    },
+    {
+      "parent_category": "income",
+      "sub_category": "income_salary",
+      "details": [
+        {"description": "工资", "min_cost": 8000.0, "max_cost": 15000.0}
+      ]
+    },
+    {
+      "parent_category": "web",
+      "sub_category": "web_service",
+      "details": [
+        {"description": "迅雷", "min_cost": 25.0, "max_cost": 30.0},
+        {"description": "迷雾", "min_cost": 40.1, "max_cost": 40.7}
+      ]
+    },
+    {
+      "parent_category": "web",
+      "sub_category": "web_game",
+      "details": [
+        {"description": "月卡", "min_cost": 30, "max_cost": 60}
+      ]
     }
   ]
 }

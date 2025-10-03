@@ -1,5 +1,6 @@
-#ifndef BILL_MODIFIER_H
-#define BILL_MODIFIER_H
+// reprocessing/modifier/BillModifier.hpp
+#ifndef BILL_MODIFIER_HPP
+#define BILL_MODIFIER_HPP
 
 
 #include "reprocessing/modifier/_shared_structures/BillDataStructures.hpp" // 包含共用的数据结构
@@ -17,4 +18,4 @@ private:
     Config m_config;
 };
 
-#endif // BILL_MODIFIER_H
+#endif // BILL_MODIFIER_HPP

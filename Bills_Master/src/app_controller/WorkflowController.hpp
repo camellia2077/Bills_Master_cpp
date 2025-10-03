@@ -1,6 +1,6 @@
-// 这个类将封装所有与原始文件处理和数据入库相关的功能。
-#ifndef WORKFLOW_CONTROLLER_H
-#define WORKFLOW_CONTROLLER_H
+// app_controller/WorkflowController.hpp
+#ifndef WORKFLOW_CONTROLLER_HPP
+#define WORKFLOW_CONTROLLER_HPP
 
 #include <string>
 
@@ -14,12 +14,14 @@ public:
 
     bool handle_validation(const std::string& path);
     bool handle_modification(const std::string& path);
-    bool handle_import(const std::string& path);
-    bool handle_full_workflow(const std::string& path);
+    // [修改] 添加 db_path 参数
+    bool handle_import(const std::string& path, const std::string& db_path);
+    // [修改] 添加 db_path 参数
+    bool handle_full_workflow(const std::string& path, const std::string& db_path);
 
 private:
     std::string m_config_path;
     std::string m_modified_output_dir;
 };
 
-#endif // WORKFLOW_CONTROLLER_H
+#endif // WORKFLOW_CONTROLLER_HPP

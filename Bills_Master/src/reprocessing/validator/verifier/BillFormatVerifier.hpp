@@ -1,7 +1,7 @@
-// src/reprocessing/validator/verifier/BillFormatVerifier.hpp (重构后)
+// reprocessing/validator/verifier/BillFormatVerifier.hpp
 
-#ifndef BILL_FORMAT_VERIFIER_H
-#define BILL_FORMAT_VERIFIER_H
+#ifndef BILL_FORMAT_VERIFIER_HPP
+#define BILL_FORMAT_VERIFIER_HPP
 
 #include <string>
 #include <unordered_map>
@@ -42,4 +42,4 @@ private:
     void _handle_content_state(const std::string& line);
 };
 
-#endif // BILL_FORMAT_VERIFIER_H
+#endif // BILL_FORMAT_VERIFIER_HPP

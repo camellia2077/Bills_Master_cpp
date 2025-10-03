@@ -75,8 +75,8 @@ Bills_Master/
 │   │   │   └── MonthQuery.h
 │   │   ├── MonthlyReportGenerator.cpp
 │   │   └── MonthlyReportGenerator.h
-│   ├── QueryDb.cpp
-│   ├── QueryDb.h
+│   ├── QueryFacade.cpp
+│   ├── QueryFacade.h
 │   ├── ReportFormat.h # 导出类型的枚举
 │   └── year/
 │       ├── _year_data/

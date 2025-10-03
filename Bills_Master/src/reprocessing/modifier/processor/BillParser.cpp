@@ -16,7 +16,6 @@ std::vector<ParentItem> BillParser::parse(const std::vector<std::string>& lines,
             out_metadata_lines.push_back(line);
             continue;
         }
-        
         std::string temp = line;
         if(!_trim(temp).empty()){
             temp_lines.push_back(temp);
@@ -24,21 +23,23 @@ std::vector<ParentItem> BillParser::parse(const std::vector<std::string>& lines,
     }
 
     for (const std::string& line : temp_lines) {
-        if (_is_parent_title(line)) {
-            structure.emplace_back();
-            current_parent = &structure.back();
-            current_parent->title = line;
-            current_sub_item = nullptr;
-        } else if (_is_title(line)) {
-            if (!current_parent) {
+        if (_is_title(line)) { // 首先判断是否是一个标题行
+            if (_is_parent_title(line)) { // 然后判断是父标题还是子标题
                 structure.emplace_back();
                 current_parent = &structure.back();
-                current_parent->title = "Default Parent"; 
+                current_parent->title = line;
+                current_sub_item = nullptr;
+            } else { // 是子标题
+                if (!current_parent) {
+                    structure.emplace_back();
+                    current_parent = &structure.back();
+                    current_parent->title = "Default Parent"; 
+                }
+                current_parent->sub_items.emplace_back();
+                current_sub_item = &current_parent->sub_items.back();
+                current_sub_item->title = line;
             }
-            current_parent->sub_items.emplace_back();
-            current_sub_item = &current_parent->sub_items.back();
-            current_sub_item->title = line;
-        } else {
+        } else { // 是内容行
             if (current_sub_item) {
                 current_sub_item->contents.push_back(line);
             }
@@ -54,11 +55,9 @@ bool BillParser::_is_metadata_line(const std::string& line) const {
     return false;
 }
 
+// **修改**: 更新判断逻辑。父分类ID不含下划线。
 bool BillParser::_is_parent_title(const std::string& line) {
-    for (char c : line) {
-        if (std::isupper(static_cast<unsigned char>(c))) return true;
-    }
-    return false;
+    return line.find('_') == std::string::npos;
 }
 
 bool BillParser::_is_title(const std::string& line) {

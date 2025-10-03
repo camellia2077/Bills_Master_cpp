@@ -1,5 +1,6 @@
-#ifndef YEAR_TYP_FORMAT_H
-#define YEAR_TYP_FORMAT_H
+// query/plugins/year_formatters/year_typ/YearTypFormat.hpp
+#ifndef YEAR_TYP_FORMAT_HPP
+#define YEAR_TYP_FORMAT_HPP
 
 #include "query/plugins/year_formatters/BaseYearlyReportFormatter.hpp" 
 #include "YearlyTypConfig.hpp"
@@ -20,4 +21,4 @@ protected:
     std::string generate_footer(const YearlyReportData& data) const override;
 };
 
-#endif // YEAR_TYP_FORMAT_H
+#endif // YEAR_TYP_FORMAT_HPP

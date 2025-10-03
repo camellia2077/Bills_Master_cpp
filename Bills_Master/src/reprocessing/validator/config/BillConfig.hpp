@@ -1,5 +1,6 @@
-#ifndef BILL_CONFIG_H
-#define BILL_CONFIG_H
+// reprocessing/validator/config/BillConfig.hpp
+#ifndef BILL_CONFIG_HPP
+#define BILL_CONFIG_HPP
 
 #include <string>
 #include <unordered_map>
@@ -55,4 +56,4 @@ private:
     void _load_and_parse(const std::string& config_path);
 };
 
-#endif // BILL_CONFIG_H
+#endif // BILL_CONFIG_HPP

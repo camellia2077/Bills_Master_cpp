@@ -1,7 +1,7 @@
-// src/common_structures/CommonData.hpp
+// common_structures/CommonData.hpp
 
-#ifndef COMMON_DATA_H
-#define COMMON_DATA_H
+#ifndef COMMON_DATA_HPP
+#define COMMON_DATA_HPP
 
 #include <string>
 #include <vector>
@@ -14,6 +14,7 @@ struct Transaction {
     std::string description; // 描述物品名称
     std::string source; // source 字段,用于表示来源于自动添加还是手动添加
     std::string comment; // comment 字段,用于表示备注内容
+    std::string transaction_type; // <-- 新增: 用于表示 "Income" 或 "Expense"
 };
 
 // 代表整个解析后的账单文件
@@ -26,4 +27,4 @@ struct ParsedBill {
     std::vector<Transaction> transactions;
 };
 
-#endif // COMMON_DATA_H
+#endif // COMMON_DATA_HPP

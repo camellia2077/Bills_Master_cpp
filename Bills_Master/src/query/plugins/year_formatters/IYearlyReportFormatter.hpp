@@ -1,6 +1,6 @@
-// query/year/year_format/IYearlyReportFormatter.hpp
-#ifndef I_YEARLY_REPORT_FORMATTER_H
-#define I_YEARLY_REPORT_FORMATTER_H
+// query/plugins/year_formatters/IYearlyReportFormatter.hpp
+#ifndef I_YEARLY_REPORT_FORMATTER_HPP
+#define I_YEARLY_REPORT_FORMATTER_HPP
 
 #include <string>
 #include "query/components/yearly_report/YearlyReportData.hpp" // Path to the data structure
@@ -25,4 +25,4 @@ public:
     virtual std::string format_report(const YearlyReportData& data) const = 0; // Pure virtual function
 };
 
-#endif // I_YEARLY_REPORT_FORMATTER_H
+#endif // I_YEARLY_REPORT_FORMATTER_HPP

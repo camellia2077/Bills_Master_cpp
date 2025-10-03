@@ -1,5 +1,6 @@
-#ifndef YEAR_MD_FORMAT_H
-#define YEAR_MD_FORMAT_H
+// query/plugins/year_formatters/year_md/YearMdFormat.hpp
+#ifndef YEAR_MD_FORMAT_HPP
+#define YEAR_MD_FORMAT_HPP
 
 #include "query/plugins/year_formatters/BaseYearlyReportFormatter.hpp" // 变更了 include
 #include "YearMdConfig.hpp"
@@ -21,4 +22,4 @@ protected:
     std::string generate_footer(const YearlyReportData& data) const override;
 };
 
-#endif // YEAR_MD_FORMAT_H
+#endif // YEAR_MD_FORMAT_HPP

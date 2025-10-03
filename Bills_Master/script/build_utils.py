@@ -7,8 +7,8 @@ import time
 from pathlib import Path
 from typing import List
 
-# 从配置文件导入构建生成器
-from config import BUILD_GENERATOR
+# [修改] 从配置文件导入构建生成器和源码目录路径
+from config import BUILD_GENERATOR, CMAKELIST_SOURCE_DIR
 
 def run_command(command: List[str], cwd: Path):
     """在指定目录下运行一个子进程命令，并进行错误处理。"""
@@ -24,7 +24,8 @@ def run_command(command: List[str], cwd: Path):
 
 def setup_environment():
     """切换到项目根目录并返回其路径。"""
-    project_dir = Path(__file__).resolve().parent
+    # [修改] 添加 .parent 来正确地定位到 script 文件夹的上一级
+    project_dir = Path(__file__).resolve().parent.parent
     os.chdir(project_dir)
     print(f"==> Switched to project directory: {os.getcwd()}")
     return project_dir
@@ -56,11 +57,11 @@ def configure_and_build(build_dir: Path, build_type: str):
         print(f"==> Build directory '{build_dir.name}' not found. Creating and configuring...")
         build_dir.mkdir()
 
-        # 使用 config.py 中定义的构建生成器
+        # [修改] 使用 config.py 中定义的源码路径，替换掉硬编码的 ".."
         cmake_command = [
             "cmake", "-G", BUILD_GENERATOR, f"-DCMAKE_BUILD_TYPE={build_type}",
             "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
-            "-DCMAKE_C_COMPILER_LAUNCHER=ccache", ".."
+            "-DCMAKE_C_COMPILER_LAUNCHER=ccache", CMAKELIST_SOURCE_DIR
         ]
         run_command(cmake_command, cwd=build_dir)
     else:

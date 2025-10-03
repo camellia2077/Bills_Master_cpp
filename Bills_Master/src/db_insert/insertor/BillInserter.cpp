@@ -1,4 +1,4 @@
-// src/db_insert/insertor/BillInserter.cpp
+// db_insert/insertor/BillInserter.cpp
 
 #include "BillInserter.hpp"
 #include "DatabaseManager.hpp" // 包含新的数据访问层头文件

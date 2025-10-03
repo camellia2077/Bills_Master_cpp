@@ -1,6 +1,6 @@
-// YearQuery.hpp
-#ifndef YEARLY_DATA_READER_H
-#define YEARLY_DATA_READER_H
+// query/components/yearly_report/YearQuery.hpp
+#ifndef YEAR_QUERY_HPP
+#define YEAR_QUERY_HPP
 
 #include "YearlyReportData.hpp"
 
@@ -17,4 +17,4 @@ private:
     sqlite3* m_db;
 };
 
-#endif // YEARLY_DATA_READER_H
+#endif // YEAR_QUERY_HPP

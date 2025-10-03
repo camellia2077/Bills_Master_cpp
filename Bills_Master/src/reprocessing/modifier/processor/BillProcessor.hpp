@@ -1,7 +1,7 @@
 // reprocessing/modifier/processor/BillProcessor.hpp
 
-#ifndef BILL_PROCESSOR_H
-#define BILL_PROCESSOR_H
+#ifndef BILL_PROCESSOR_HPP
+#define BILL_PROCESSOR_HPP
 
 #include "reprocessing/modifier/_shared_structures/BillDataStructures.hpp"
 #include <vector>
@@ -32,4 +32,4 @@ private:
     static bool _is_title(const std::string& line);
 };
 
-#endif // BILL_PROCESSOR_H
+#endif // BILL_PROCESSOR_HPP
