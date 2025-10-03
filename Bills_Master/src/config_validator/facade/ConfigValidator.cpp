@@ -1,4 +1,4 @@
-// ConfigValidator.cpp
+// config_validator/facade/ConfigValidator.cpp
 #include "ConfigValidator.hpp"
 #include "config_validator/pipeline/ValidatorConfigValidator.hpp"
 #include "config_validator/pipeline/ModifierConfigValidator.hpp"

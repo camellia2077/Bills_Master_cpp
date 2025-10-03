@@ -11,3 +11,5 @@
 ### v0.2.7.3
 1. 创建json配置检验模块
 
+### v0.2.7.5
+1. command_handler模块修改为命令模式 (Command Pattern)

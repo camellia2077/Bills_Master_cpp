@@ -1,4 +1,4 @@
-// ValidatorConfigValidator.cpp
+// config_validator/pipeline/ValidatorConfigValidator.cpp
 #include "ValidatorConfigValidator.hpp"
 
 bool ValidatorConfigValidator::validate(const nlohmann::json& config_json, std::string& error_message) {
