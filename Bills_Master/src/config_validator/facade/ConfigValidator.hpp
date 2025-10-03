@@ -1,4 +1,4 @@
-// config_validator/ConfigValidator.hpp
+// ConfigValidator.hpp
 #ifndef CONFIG_VALIDATOR_HPP
 #define CONFIG_VALIDATOR_HPP
 
