@@ -1,4 +1,4 @@
-// usage_help/usage_help.cpp
+// command_handler/usage_help.cpp
 
 #include "usage_help.hpp"
 #include <iostream>

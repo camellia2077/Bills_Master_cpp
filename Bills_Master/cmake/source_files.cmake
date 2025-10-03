@@ -7,6 +7,11 @@ set(DB_INSERT_DIR         "${SOURCE_ROOT}/db_insert")
 set(QUERY_DIR             "${SOURCE_ROOT}/query")
 set(FILEHANDLER_DIR       "${SOURCE_ROOT}/file_handler")
 set(APPCONTROLLER_DIR     "${SOURCE_ROOT}/app_controller")
+set(CONFIG_VALIDATOR_DIR     "${SOURCE_ROOT}/config_validator")
+
+set(CONFIG_VALIDATOR_SOURCES
+    "${CONFIG_VALIDATOR_DIR}/ConfigValidator.cpp"
+)
 
 set(COMMAND_HANDLER_SOURCES
     "${COMMAND_HANDLER_DIR}/CommandFacade.cpp"
@@ -58,6 +63,7 @@ set(FILEHANDLER_SOURCES
 
 # --- 将所有源文件聚合到 SHARED_SOURCES ---
 set(SHARED_SOURCES
+    ${CONFIG_VALIDATOR_SOURCES}
     ${COMMAND_HANDLER_SOURCES}
     ${REPROCESSING_SOURCES}
     ${DB_INSERT_SOURCES}
