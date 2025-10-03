@@ -1,4 +1,4 @@
-// ConfigValidator.hpp
+// config_validator/facade/ConfigValidator.hpp
 #ifndef CONFIG_VALIDATOR_HPP
 #define CONFIG_VALIDATOR_HPP
 

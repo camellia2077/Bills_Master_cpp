@@ -18,6 +18,9 @@ set(CONFIG_VALIDATOR_SOURCES
 set(COMMAND_HANDLER_SOURCES
     "${COMMAND_HANDLER_DIR}/CommandFacade.cpp"
     "${COMMAND_HANDLER_DIR}/usage_help.cpp"
+    "${COMMAND_HANDLER_DIR}/commands/ExportCommand.cpp"
+    "${COMMAND_HANDLER_DIR}/commands/QueryCommand.cpp"
+    "${COMMAND_HANDLER_DIR}/commands/SimpleCommand.cpp"
 )
 
 set(APPCONTROLLER_SOURCES

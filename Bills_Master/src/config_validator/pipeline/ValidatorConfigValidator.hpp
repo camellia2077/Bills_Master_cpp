@@ -1,4 +1,4 @@
-// ValidatorConfigValidator.hpp
+// config_validator/pipeline/ValidatorConfigValidator.hpp
 #ifndef VALIDATOR_CONFIG_VALIDATOR_HPP
 #define VALIDATOR_CONFIG_VALIDATOR_HPP
 
