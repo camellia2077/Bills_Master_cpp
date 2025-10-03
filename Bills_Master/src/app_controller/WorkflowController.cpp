@@ -1,4 +1,4 @@
-// src/app_controller/WorkflowController.cpp
+// app_controller/WorkflowController.cpp
 
 #include "WorkflowController.hpp"
 #include "reprocessing/Reprocessor.hpp"
@@ -6,7 +6,7 @@
 #include "file_handler/FileHandler.hpp"
 #include "ProcessStats.hpp"
 #include "common/common_utils.hpp"
-#include "config_validator/ConfigValidator.hpp" // 引入配置验证器
+#include "config_validator/facade/ConfigValidator.hpp" // 引入配置验证器
 
 #include <iostream>
 #include <filesystem>

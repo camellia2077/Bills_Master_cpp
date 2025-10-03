@@ -10,7 +10,9 @@ set(APPCONTROLLER_DIR     "${SOURCE_ROOT}/app_controller")
 set(CONFIG_VALIDATOR_DIR     "${SOURCE_ROOT}/config_validator")
 
 set(CONFIG_VALIDATOR_SOURCES
-    "${CONFIG_VALIDATOR_DIR}/ConfigValidator.cpp"
+    "${CONFIG_VALIDATOR_DIR}/facade/ConfigValidator.cpp"
+    "${CONFIG_VALIDATOR_DIR}/pipeline/ValidatorConfigValidator.cpp"
+    "${CONFIG_VALIDATOR_DIR}/pipeline/ModifierConfigValidator.cpp"
 )
 
 set(COMMAND_HANDLER_SOURCES
