@@ -8,9 +8,10 @@
 
 class AppController {
 public:
-   explicit AppController(const std::string& db_path = "bills.sqlite3", 
+   // [修改] 更新默认路径，将它们指向 output/ 目录
+   explicit AppController(const std::string& db_path = "output/bills.sqlite3", 
                           const std::string& config_path = "./config",
-                          const std::string& modified_output_dir = "txt2josn");
+                          const std::string& modified_output_dir = "output/txt2josn");
 
     bool handle_validation(const std::string& path);
     bool handle_modification(const std::string& path);

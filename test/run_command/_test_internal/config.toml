@@ -1,0 +1,51 @@
+# config.toml (新版本)
+
+[paths]
+# 项目产物 (exe, dll) 所在的目录
+build_dir = 'C:\Computer\my_github\github_cpp\bills_master\Bills_Master_cpp\Bills_Master\build\bin'
+# 存放原始 .txt 账单文件的目录
+bills_dir = 'C:\Computer\my_github\github_cpp\bills_master\my_test\bills_test'
+# 预处理后 .json 文件所在的目录
+import_dir = 'C:\Computer\my_github\github_cpp\bills_master\my_test\txt2josn'
+
+# --- [核心修改]：流程控制开关 ---
+# true or false
+[run_control]
+# 控制是否执行“清理”步骤
+run_cleanup = true
+
+# 控制是否执行“准备环境”步骤 (复制 exe, 插件, config)
+run_prepare_env = true
+
+# 控制是否执行所有“指令测试” (validate, import, query, export)
+run_tests = true
+
+[plugins]
+# 需要复制的插件 DLL 名称
+plugin_dlls = [
+    "md_month_formatter.dll", "rst_month_formatter.dll", "tex_month_formatter.dll", "typ_month_formatter.dll",
+    "md_year_formatter.dll", "rst_year_formatter.dll", "tex_year_formatter.dll", "typ_year_formatter.dll"
+]
+
+# --- 测试相关的具体设置 ---
+[settings]
+# (此开关仅在 run_tests = true 时生效)
+# True  -> 运行“导出全部”任务
+# False -> 运行“按日期导出”任务
+run_export_all_tasks = true
+
+# 需要测试的导出格式
+export_formats = ['md', 'tex', 'typ', 'rst']
+
+[cleanup]
+# 需要清理的文件
+files_to_delete = ["bills.sqlite3"]
+# 需要清理的目录
+dirs_to_delete = ["txt_raw", "exported_files", "py_output", "build", "plugins", "config"]
+
+[test_dates]
+# 用于专项日期导出测试的日期配置
+single_year = "2021"
+single_month = "202201"
+range_start = "202403"
+range_end = "202404"
