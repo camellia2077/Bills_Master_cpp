@@ -14,8 +14,10 @@ public:
 
     bool handle_validation(const std::string& path);
     bool handle_modification(const std::string& path);
-    bool handle_import(const std::string& path);
-    bool handle_full_workflow(const std::string& path);
+    // [修改] 添加 db_path 参数
+    bool handle_import(const std::string& path, const std::string& db_path);
+    // [修改] 添加 db_path 参数
+    bool handle_full_workflow(const std::string& path, const std::string& db_path);
 
 private:
     std::string m_config_path;
