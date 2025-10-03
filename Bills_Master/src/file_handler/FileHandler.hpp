@@ -29,6 +29,20 @@ public:
      * @throws std::runtime_error 如果给定的路径不存在，或者当路径指向单个文件但后缀不匹配时。
      */
     std::vector<fs::path> find_files_by_extension(const std::string& input_path_str, const std::string& extension);
+
+    /**
+     * @brief 读取指定路径的文本文件内容。
+     * @param file_path 文件的路径。
+     * @return 返回包含文件内容的字符串。
+     * @throws std::runtime_error 如果文件无法打开。
+     */
+    std::string read_text_file(const fs::path& file_path);
+
+    /**
+     * @brief 创建指定路径的所有目录，如果它们尚不存在。
+     * @param dir_path 要创建的目录路径。
+     */
+    void create_directories(const fs::path& dir_path);
 };
 
 #endif // FILE_HANDLER_HPP

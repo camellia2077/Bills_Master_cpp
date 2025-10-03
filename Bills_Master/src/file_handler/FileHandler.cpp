@@ -3,6 +3,8 @@
 #include "FileHandler.hpp"
 #include <stdexcept>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 
 std::vector<fs::path> FileHandler::find_files_by_extension(const std::string& input_path_str, const std::string& extension) {
     std::vector<fs::path> files_to_process;
@@ -33,4 +35,18 @@ std::vector<fs::path> FileHandler::find_files_by_extension(const std::string& in
     }
 
     return files_to_process;
+}
+
+std::string FileHandler::read_text_file(const fs::path& file_path) {
+    std::ifstream file(file_path);
+    if (!file.is_open()) {
+        throw std::runtime_error("错误: 无法打开文件 '" + file_path.string() + "'");
+    }
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+}
+
+void FileHandler::create_directories(const fs::path& dir_path) {
+    fs::create_directories(dir_path);
 }
