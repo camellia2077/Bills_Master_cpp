@@ -6,8 +6,19 @@ set(REPROCESSING_DIR      "${SOURCE_ROOT}/reprocessing")
 set(DB_INSERT_DIR         "${SOURCE_ROOT}/db_insert")
 set(QUERY_DIR             "${SOURCE_ROOT}/query")
 set(FILEHANDLER_DIR       "${SOURCE_ROOT}/file_handler")
-set(APPCONTROLLER_DIR     "${SOURCE_ROOT}/app_controller")
+set(APP_CONTROLLER_DIR     "${SOURCE_ROOT}/app_controller")
 set(CONFIG_VALIDATOR_DIR     "${SOURCE_ROOT}/config_validator")
+
+
+
+# app_controller
+set(APP_CONTROLLER_SOURCES
+    "${APP_CONTROLLER_DIR}/AppController.cpp"
+    "${APP_CONTROLLER_DIR}/ConfigLoader.cpp"
+    "${APP_CONTROLLER_DIR}/export/ExportController.cpp"
+    "${APP_CONTROLLER_DIR}/workflow/WorkflowController.cpp"
+    "${APP_CONTROLLER_DIR}/workflow/PathBuilder.cpp"
+)
 
 set(CONFIG_VALIDATOR_SOURCES
     "${CONFIG_VALIDATOR_DIR}/facade/ConfigValidator.cpp"
@@ -23,11 +34,6 @@ set(COMMAND_HANDLER_SOURCES
     "${COMMAND_HANDLER_DIR}/commands/SimpleCommand.cpp"
 )
 
-set(APPCONTROLLER_SOURCES
-    "${APPCONTROLLER_DIR}/AppController.cpp"
-    "${APPCONTROLLER_DIR}/ExportController.cpp"
-    "${APPCONTROLLER_DIR}/WorkflowController.cpp"
-)
 
 set(REPROCESSING_SOURCES
     "${REPROCESSING_DIR}/Reprocessor.cpp"
@@ -74,5 +80,5 @@ set(SHARED_SOURCES
     ${DB_INSERT_SOURCES}
     ${QUERY_SOURCES}
     ${FILEHANDLER_SOURCES}
-    ${APPCONTROLLER_SOURCES}
+    ${APP_CONTROLLER_SOURCES}
 )

@@ -13,3 +13,6 @@
 
 ### v0.2.7.5
 1. command_handler模块修改为命令模式 (Command Pattern)
+
+### v0.2.7.6
+1. 优化app_controller模块程序结构

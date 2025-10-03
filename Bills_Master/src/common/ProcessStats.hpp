@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <string>
-#include "common/common_utils.hpp" // For color definitions
+#include "common_utils.hpp" // For color definitions
 
 /**
  * @struct ProcessStats

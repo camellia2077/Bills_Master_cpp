@@ -1,7 +1,9 @@
 // app_controller/AppController.cpp
 #include "AppController.hpp"
-#include "WorkflowController.hpp"
-#include "ExportController.hpp"
+#include "workflow/WorkflowController.hpp"
+#include "export/ExportController.hpp"
+
+#include "file_handler/FileHandler.hpp"
 #include "common/version.hpp"
 #include "common/common_utils.hpp"
 #include <iostream>
@@ -32,8 +34,9 @@ AppController::AppController(const std::string& db_path,
       m_config_path(config_path),
       m_modified_output_dir(modified_output_dir) {
     
-    // [新增] 自动创建 output 文件夹
-    fs::create_directories("output");
+    // [新增] 使用 FileHandler 创建 output 文件夹
+    FileHandler file_handler;
+    file_handler.create_directories("output");
 
     fs::path plugin_dir = get_executable_directory() / "plugins";
 
@@ -49,7 +52,6 @@ AppController::AppController(const std::string& db_path,
         (plugin_dir / "typ_year_formatter.dll").string()
     };
 
-    // [修改] 将导出目录指向 output/exported_files
     m_export_base_dir = "output/exported_files";
     m_format_folder_names = {
         {"md", "Markdown_bills"},
@@ -59,6 +61,7 @@ AppController::AppController(const std::string& db_path,
     };
 }
 
+// ... handle_validation, handle_modification 等其他方法保持不变 ...
 bool AppController::handle_validation(const std::string& path) {
     WorkflowController workflow(m_config_path, m_modified_output_dir);
     return workflow.handle_validation(path);
@@ -69,13 +72,11 @@ bool AppController::handle_modification(const std::string& path) {
     return workflow.handle_modification(path);
 }
 
-// [修改] 将数据库路径 m_db_path 传递给 workflow
 bool AppController::handle_import(const std::string& path) {
     WorkflowController workflow(m_config_path, m_modified_output_dir);
     return workflow.handle_import(path, m_db_path);
 }
 
-// [修改] 将数据库路径 m_db_path 传递给 workflow
 bool AppController::handle_full_workflow(const std::string& path) {
     WorkflowController workflow(m_config_path, m_modified_output_dir);
     return workflow.handle_full_workflow(path, m_db_path);

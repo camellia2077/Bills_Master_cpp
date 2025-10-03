@@ -1,6 +1,6 @@
 // query/core/QueryFacade.cpp
 #include "QueryFacade.hpp"
-#include "app_controller/ProcessStats.hpp"
+#include "common/ProcessStats.hpp"
 #include "common/common_utils.hpp"
 #include <stdexcept>
 #include <iostream>
