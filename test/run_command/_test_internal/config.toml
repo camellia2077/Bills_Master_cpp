@@ -2,11 +2,11 @@
 
 [paths]
 # 项目产物 (exe, dll) 所在的目录
-build_dir = 'C:\Computer\my_github\github_cpp\bills_master\Bills_Master_cpp\Bills_Master\build\bin'
+build_dir = 'C:\Computer\my_github\github_cpp\bills_master\Bills_Master_cpp\apps\bills_master\build\bin'
 # 存放原始 .txt 账单文件的目录
 bills_dir = 'C:\Computer\my_github\github_cpp\bills_master\my_test\bills_test'
 # 预处理后 .json 文件所在的目录
-import_dir = 'C:\Computer\my_github\github_cpp\bills_master\my_test\txt2josn'
+import_dir = 'C:\Computer\my_github\github_cpp\bills_master\my_test\output\txt2josn'
 
 # --- [核心修改]：流程控制开关 ---
 # true or false

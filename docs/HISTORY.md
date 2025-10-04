@@ -16,3 +16,9 @@
 
 ### v0.2.7.6
 1. 优化app_controller模块程序结构
+
+### v0.2.7.7 
+1. 命令行新增--full-workflow
+2. query文件夹重命名为reports
+3. Bills_Master重命名为bills_master并且放入apps文件夹
+4. log_generator移动到apps文件夹
