@@ -1,0 +1,9 @@
+# config.toml
+
+[database]
+# 将此路径修改为您数据库文件的实际位置
+path = 'C:\Computer\my_github\github_cpp\bills_master\my_test\output\bills.sqlite3'
+
+[visualization]
+# Matplotlib 使用的字体列表。程序会依次尝试，直到找到可用字体。
+font_list = ["SimHei", "Microsoft YaHei", "PingFang SC", "WenQuanYi Micro Hei"]

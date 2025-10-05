@@ -67,3 +67,37 @@ def fetch_monthly_data(db_path: str, month: str):
     except sqlite3.Error as e:
         print(f"Database error: {e}", file=sys.stderr)
         return None
+
+# [修改] 获取月度详细消费记录的函数
+def fetch_monthly_details_data(db_path: str, month: str):
+    """
+    获取指定月份的所有单笔消费记录。
+
+    Returns:
+        pd.DataFrame: 包含每笔消费详情的 DataFrame，或在出错时返回 None。
+    """
+    print(f"正在查询 {month} 月的详细消费数据...")
+    try:
+        conn = sqlite3.connect(db_path)
+        # [修改] 在查询中加入 parent_category
+        query = """
+        SELECT
+            parent_category,
+            description,
+            sub_category,
+            amount
+        FROM
+            transactions t
+        JOIN
+            bills b ON t.bill_id = b.id
+        WHERE
+            b.bill_date = ? AND t.transaction_type = 'Expense'
+        ORDER BY
+            parent_category, amount DESC;
+        """
+        df = pd.read_sql_query(query, conn, params=(month,))
+        conn.close()
+        return df
+    except sqlite3.Error as e:
+        print(f"数据库错误: {e}", file=sys.stderr)
+        return None
