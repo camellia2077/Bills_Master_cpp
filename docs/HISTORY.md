@@ -8,6 +8,17 @@
 ### v0.2.7.2
 1. 命令行实现逻辑移动到单独的文件夹
 2. 优化测试py脚本
-### v0.2.7.2
+### v0.2.7.3
 1. 创建json配置检验模块
 
+### v0.2.7.5
+1. command_handler模块修改为命令模式 (Command Pattern)
+
+### v0.2.7.6
+1. 优化app_controller模块程序结构
+
+### v0.2.7.7 
+1. 命令行新增--full-workflow
+2. query文件夹重命名为reports
+3. Bills_Master重命名为bills_master并且放入apps文件夹
+4. log_generator移动到apps文件夹
