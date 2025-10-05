@@ -20,21 +20,28 @@ def parse_arguments(default_db_path: str):
   1. 查询 2025 年的年度数据:
      python main.py year 2025
 
-  2. 查询 2025 年 9 月的数据并指定输出文件名:
-     python main.py month 202509 --out 2025_september.png
+  2. 查询 2025 年 9 月各大类消费汇总:
+     python main.py month 202509
+
+  3. 查询 2025 年 9 月所有具体消费明细:
+     python main.py month-details 202509 --out 2025_september_details.png
 """
     )
+    # [修改] 新增 'month-details' 选项
     parser.add_argument(
         'type', 
-        choices=['year', 'month'], 
-        help="需要生成的图表类型。"
+        choices=['year', 'month', 'month-details'], 
+        help="需要生成的图表类型。\n"
+             "'year': 年度月度消费汇总。\n"
+             "'month': 月度按大类消费汇总。\n"
+             "'month-details': 月度所有消费明细。"
     )
     parser.add_argument(
         'period', 
         type=str,
         help="图表的具体时间周期。\n"
              "对于 'year' 类型, 请提供年份 (例如: 2024)。\n"
-             "对于 'month' 类型, 请提供 YYYYMM 格式的月份 (例如: 202407)。"
+             "对于 'month' 和 'month-details', 请提供 YYYYMM 格式的月份 (例如: 202407)。"
     )
     parser.add_argument(
         '--db', 
@@ -46,7 +53,7 @@ def parse_arguments(default_db_path: str):
         '--out',
         type=str,
         default=None,
-        help="输出图表的图片文件名 (默认: 自动生成, 例如 2025_yearly_chart.png)。"
+        help="输出图表的图片文件名 (默认: 自动生成)。"
     )
     
     return parser.parse_args()
