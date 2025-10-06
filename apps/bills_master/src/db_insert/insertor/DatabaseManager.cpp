@@ -6,10 +6,9 @@
 DatabaseManager::DatabaseManager(const std::string& db_path) : m_db(nullptr) {
     if (sqlite3_open(db_path.c_str(), &m_db) != SQLITE_OK) {
         std::string errmsg = sqlite3_errmsg(m_db);
-        sqlite3_close(m_db); // 确保在抛出异常前关闭句柄
+        sqlite3_close(m_db);
         throw std::runtime_error("无法打开数据库: " + errmsg);
     }
-    // 启用外键约束
     if (sqlite3_exec(m_db, "PRAGMA foreign_keys = ON;", 0, 0, 0) != SQLITE_OK) {
         throw std::runtime_error("无法启用外键支持: " + std::string(sqlite3_errmsg(m_db)));
     }
@@ -23,6 +22,8 @@ DatabaseManager::~DatabaseManager() {
 
 void DatabaseManager::initialize_database() {
     char* errmsg = nullptr;
+    // --- 【核心修改 1】 ---
+    // 更新 bills 表的结构，用三个新字段替换 total_amount
     const char* create_bills_sql =
         "CREATE TABLE IF NOT EXISTS bills ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -30,17 +31,17 @@ void DatabaseManager::initialize_database() {
         " year INTEGER NOT NULL,"
         " month INTEGER NOT NULL,"
         " remark TEXT,"
-        " total_amount REAL NOT NULL DEFAULT 0"
+        " total_income REAL NOT NULL DEFAULT 0,"
+        " total_expense REAL NOT NULL DEFAULT 0,"
+        " balance REAL NOT NULL DEFAULT 0"
         ");";
+    // --- 修改结束 ---
     if (sqlite3_exec(m_db, create_bills_sql, 0, 0, &errmsg) != SQLITE_OK) {
         std::string error_str = errmsg;
         sqlite3_free(errmsg);
         throw std::runtime_error("无法创建 bills 表: " + error_str);
     }
 
-    // ===================================================================
-    //  **修改：在 transactions 表中添加 transaction_type 列**
-    // ===================================================================
     const char* create_transactions_sql =
         "CREATE TABLE IF NOT EXISTS transactions ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -51,10 +52,9 @@ void DatabaseManager::initialize_database() {
         " amount REAL NOT NULL,"
         " source TEXT NOT NULL DEFAULT 'manually_add',"
         " comment TEXT,"
-        " transaction_type TEXT NOT NULL DEFAULT 'Expense'," // <-- 新增列
+        " transaction_type TEXT NOT NULL DEFAULT 'Expense',"
         " FOREIGN KEY (bill_id) REFERENCES bills(id) ON DELETE CASCADE"
         ");";
-    // ===================================================================
 
     if (sqlite3_exec(m_db, create_transactions_sql, 0, 0, &errmsg) != SQLITE_OK) {
         std::string error_str = errmsg;
@@ -95,7 +95,10 @@ void DatabaseManager::delete_bill_by_date(const std::string& date) {
 
 sqlite3_int64 DatabaseManager::insert_bill_record(const ParsedBill& bill_data) {
     sqlite3_stmt* stmt = nullptr;
-    const char* sql = "INSERT INTO bills (bill_date, year, month, remark, total_amount) VALUES (?, ?, ?, ?, ?);";
+    // --- 【核心修改 2】 ---
+    // 更新 INSERT 语句以匹配新的表结构
+    const char* sql = "INSERT INTO bills (bill_date, year, month, remark, total_income, total_expense, balance) VALUES (?, ?, ?, ?, ?, ?, ?);";
+    // --- 修改结束 ---
     if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
         throw std::runtime_error("准备 INSERT bill 语句失败: " + std::string(sqlite3_errmsg(m_db)));
     }
@@ -104,7 +107,12 @@ sqlite3_int64 DatabaseManager::insert_bill_record(const ParsedBill& bill_data) {
     sqlite3_bind_int(stmt, 2, bill_data.year);
     sqlite3_bind_int(stmt, 3, bill_data.month);
     sqlite3_bind_text(stmt, 4, bill_data.remark.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_double(stmt, 5, bill_data.total_amount);
+    // --- 【核心修改 3】 ---
+    // 绑定新的总计字段到SQL语句
+    sqlite3_bind_double(stmt, 5, bill_data.total_income);
+    sqlite3_bind_double(stmt, 6, bill_data.total_expense);
+    sqlite3_bind_double(stmt, 7, bill_data.balance);
+    // --- 修改结束 ---
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         sqlite3_finalize(stmt);
@@ -117,13 +125,9 @@ sqlite3_int64 DatabaseManager::insert_bill_record(const ParsedBill& bill_data) {
 void DatabaseManager::insert_transactions_for_bill(sqlite3_int64 bill_id, const std::vector<Transaction>& transactions) {
     sqlite3_stmt* stmt = nullptr;
     
-    // ===================================================================
-    //  **修改：更新 INSERT 语句以包含 transaction_type**
-    // ===================================================================
     const char* sql =
         "INSERT INTO transactions (bill_id, parent_category, sub_category, description, amount, source, comment, transaction_type) "
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
-    // ===================================================================
 
     if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
         throw std::runtime_error("准备 INSERT transaction 语句失败: " + std::string(sqlite3_errmsg(m_db)));
@@ -142,11 +146,7 @@ void DatabaseManager::insert_transactions_for_bill(sqlite3_int64 bill_id, const 
             sqlite3_bind_text(stmt, 7, transaction.comment.c_str(), -1, SQLITE_STATIC);
         }
         
-        // ===================================================================
-        //  **修改：绑定 transaction_type 的值**
-        // ===================================================================
         sqlite3_bind_text(stmt, 8, transaction.transaction_type.c_str(), -1, SQLITE_STATIC);
-        // ===================================================================
 
         if (sqlite3_step(stmt) != SQLITE_DONE) {
             sqlite3_finalize(stmt);

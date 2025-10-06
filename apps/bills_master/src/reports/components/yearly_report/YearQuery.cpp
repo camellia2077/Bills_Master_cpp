@@ -1,6 +1,5 @@
 // reports/components/yearly_report/YearQuery.cpp
 
-// YearQuery.cpp
 #include "YearQuery.hpp"
 #include <stdexcept>
 #include <string>
@@ -11,22 +10,22 @@ YearlyReportData YearQuery::read_yearly_data(int year) {
     YearlyReportData data;
     data.year = year;
 
-    // --- MODIFICATION START ---
-    // The SQL query now joins the transactions and bills tables.
-    // We select b.month (from bills) and filter by b.year (from bills).
-    const char* sql = "SELECT b.month, SUM(t.amount) "
-                      "FROM transactions AS t "
-                      "JOIN bills AS b ON t.bill_id = b.id "
-                      "WHERE b.year = ? "
-                      "GROUP BY b.month "
-                      "ORDER BY b.month;";
-    // --- MODIFICATION END ---
+    // --- 【核心修改】 ---
+    // 更新SQL查询，以直接从 bills 表中按月分组并累加收入和支出
+    const char* sql = "SELECT "
+                      "  month, "
+                      "  SUM(total_income), "
+                      "  SUM(total_expense) "
+                      "FROM bills "
+                      "WHERE year = ? "
+                      "GROUP BY month "
+                      "ORDER BY month;";
+    // --- 修改结束 ---
                       
     sqlite3_stmt* stmt = nullptr;
 
     if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
-        // This error message now correctly reflects the potential failure point.
-        throw std::runtime_error("Failed to prepare yearly query SQL statement: " + std::string(sqlite3_errmsg(m_db)));
+        throw std::runtime_error("准备年度查询的 SQL 语句失败: " + std::string(sqlite3_errmsg(m_db)));
     }
 
     sqlite3_bind_int(stmt, 1, year);
@@ -34,12 +33,22 @@ YearlyReportData YearQuery::read_yearly_data(int year) {
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         data.data_found = true;
         int month = sqlite3_column_int(stmt, 0);
-        double total_amount = sqlite3_column_double(stmt, 1);
+        double month_income = sqlite3_column_double(stmt, 1);
+        double month_expense = sqlite3_column_double(stmt, 2);
 
-        data.monthly_totals[month] = total_amount;
-        data.grand_total += total_amount;
+        // 填充月度明细
+        data.monthly_summary[month] = {month_income, month_expense};
+
+        // 累加年度总计
+        data.total_income += month_income;
+        data.total_expense += month_expense;
     }
     sqlite3_finalize(stmt);
+
+    // 计算年度总结余
+    if (data.data_found) {
+        data.balance = data.total_income + data.total_expense;
+    }
 
     return data;
 }

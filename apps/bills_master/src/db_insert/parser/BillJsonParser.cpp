@@ -27,7 +27,12 @@ ParsedBill BillJsonParser::parse(const std::string& file_path) {
         bill_data.date = date_str;
         bill_data.remark = data.at("remark").get<std::string>();
         
-        bill_data.total_amount = data.at("total_amount").get<double>();
+        // --- 【核心修改】 ---
+        // 解析新的总计字段，替换旧的 total_amount
+        bill_data.total_income = data.at("total_income").get<double>();
+        bill_data.total_expense = data.at("total_expense").get<double>();
+        bill_data.balance = data.at("balance").get<double>();
+        // --- 修改结束 ---
 
         if (date_str.length() == 6) {
             bill_data.year = std::stoi(date_str.substr(0, 4));
@@ -52,11 +57,10 @@ ParsedBill BillJsonParser::parse(const std::string& file_path) {
                 t.amount = item.at("amount").get<double>();
                 t.source = item.value("source", "manually_add");
                 
-                //  解析 comment 字段，兼容 null 值
                 if (item.contains("comment") && !item.at("comment").is_null()) {
                     t.comment = item.at("comment").get<std::string>();
                 } else {
-                    t.comment = ""; // 如果 comment 字段不存在或其值为 null，则置为空字符串
+                    t.comment = "";
                 }
                 
                 t.transaction_type = item.value("transaction_type", "Expense");

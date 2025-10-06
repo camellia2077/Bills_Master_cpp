@@ -5,35 +5,31 @@
 #include <string>
 #include <cstdint>
 
-// 子结构体，用于组织所有本地化文本标签
 struct MonthTypLabels {
-    // --- 日期连接符 ---
-    std::string year_suffix = "年"; // 用于年份后
-    std::string month_suffix = "月 "; // 用于月份后 (注意末尾的空格)
+    std::string year_suffix = "年";
+    std::string month_suffix = "月 ";
 
-    // --- 标题和标签 ---
+    // --- 【核心修改】: 更新标题和标签 ---
     std::string report_title_suffix = "消费报告";
-    std::string grand_total = "总支出";
+    std::string income_total = "总收入";
+    std::string expense_total = "总支出";
+    std::string balance = "结余";
     std::string remark = "备注";
+    // --- 修改结束 ---
     std::string category_total = "总计";
     std::string sub_category_total = "小计";
     std::string percentage_share = "占比";
     std::string no_data_found = "未找到该月的任何数据。";
 };
 
-// 最终的、专为月度报告设计的配置结构体
 struct MonthTypConfig {
-    // ================== 核心文档样式 ==================
+    // ... 其他配置保持不变 ...
     std::string font_family = "Noto Serif SC";
     uint8_t font_size_pt = 12;
     std::string author = "camellia";
-
-    // ================== 格式化符号 ==================
     std::string currency_symbol = "CNY";
     uint8_t decimal_precision = 2;
     std::string percentage_symbol = "%";
-
-    // ================== 文本标签集 ==================
     MonthTypLabels labels;
 };
 
