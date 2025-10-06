@@ -16,40 +16,46 @@ std::string YearMdFormat::generate_header(const YearlyReportData& data) const {
     return ""; // Markdown 没有正式的头部
 }
 
+// --- 【核心修改】: 更新摘要部分 ---
 std::string YearMdFormat::generate_summary(const YearlyReportData& data) const {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(config.precision);
-    ss << "\n## " << data.year << config.yearly_total_label << ":**"
-       << data.grand_total << " " << config.currency_name << "**\n";
+    ss << "\n## " << data.year << "年 总览\n";
+    ss << "- **" << config.yearly_income_label << ":** " << data.total_income << " " << config.currency_name << "\n";
+    ss << "- **" << config.yearly_expense_label << ":** " << data.total_expense << " " << config.currency_name << "\n";
+    ss << "- **" << config.yearly_balance_label << ":** " << data.balance << " " << config.currency_name << "\n";
     return ss.str();
 }
+// --- 修改结束 ---
 
-// --- 核心修改：生成 Markdown 表格头部 ---
+// --- 【核心修改】: 更新表格头部 ---
 std::string YearMdFormat::generate_monthly_breakdown_header() const {
     std::stringstream ss;
     ss << "\n## " << config.monthly_breakdown_title << "\n\n"
-       << "| " << config.monthly_table_header_month << " | " 
-       << config.monthly_table_header_amount << " (" << config.currency_name << ") |\n"
-       << "| :--- | :--- |\n";
+       << "| " << config.monthly_table_header_month 
+       << " | " << config.monthly_table_header_income << " (" << config.currency_name << ")"
+       << " | " << config.monthly_table_header_expense << " (" << config.currency_name << ") |\n"
+       << "| :--- | :--- | :--- |\n";
     return ss.str();
 }
+// --- 修改结束 ---
 
-// --- 核心修改：生成 Markdown 表格的一行 ---
-std::string YearMdFormat::generate_monthly_item(int year, int month, double total) const {
+// --- 【核心修改】: 更新表格行 ---
+std::string YearMdFormat::generate_monthly_item(int year, int month, const MonthlySummary& summary) const {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(config.precision);
     ss << "| " << year << config.monthly_item_date_separator
        << std::setfill(config.fill_char) << std::setw(config.month_width) << month
-       << " | " << total << " |\n";
+       << " | " << summary.income 
+       << " | " << summary.expense << " |\n";
     return ss.str();
 }
+// --- 修改结束 ---
 
 std::string YearMdFormat::generate_footer(const YearlyReportData& data) const {
     return ""; // Markdown 没有正式的尾部
 }
 
-
-// extern "C" 代码块保持不变
 extern "C" {
     #ifdef _WIN32
         #define PLUGIN_API __declspec(dllexport)

@@ -6,6 +6,7 @@
 
 YearTexFormat::YearTexFormat(const YearlyTexConfig& config) : m_config(config) {}
 
+// ... escape_latex, get_no_data_message, generate_header 函数保持不变 ...
 std::string YearTexFormat::escape_latex(const std::string& input) const {
     std::string output;
     output.reserve(input.size());
@@ -48,16 +49,21 @@ std::string YearTexFormat::generate_header(const YearlyReportData& data) const {
     return ss.str();
 }
 
+// --- 【核心修改】: 更新摘要部分 ---
 std::string YearTexFormat::generate_summary(const YearlyReportData& data) const {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(2);
     ss << "\\section*{" << escape_latex(m_config.summary_section_title) << "}\n";
     ss << "\\begin{itemize}\n";
-    ss << "    \\item \\textbf{" << escape_latex(m_config.grand_total_label) << "} CNY" << data.grand_total << "\n";
+    ss << "    \\item \\textbf{" << escape_latex(m_config.yearly_income_label) << "} CNY" << data.total_income << "\n";
+    ss << "    \\item \\textbf{" << escape_latex(m_config.yearly_expense_label) << "} CNY" << data.total_expense << "\n";
+    ss << "    \\item \\textbf{" << escape_latex(m_config.yearly_balance_label) << "} CNY" << data.balance << "\n";
     ss << "\\end{itemize}\n\n";
     return ss.str();
 }
+// --- 修改结束 ---
 
+// ... generate_monthly_breakdown_header 函数保持不变 ...
 std::string YearTexFormat::generate_monthly_breakdown_header() const {
     std::stringstream ss;
     ss << "\\section*{" << escape_latex(m_config.monthly_breakdown_title) << "}\n";
@@ -65,21 +71,22 @@ std::string YearTexFormat::generate_monthly_breakdown_header() const {
     return ss.str();
 }
 
-std::string YearTexFormat::generate_monthly_item(int year, int month, double total) const {
+// --- 【核心修改】: 更新月度项目 ---
+std::string YearTexFormat::generate_monthly_item(int year, int month, const MonthlySummary& summary) const {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(2);
     ss << "    \\item " << year << escape_latex(m_config.year_month_separator)
        << std::setfill('0') << std::setw(2) << month
-       << ":CNY" << total << "\n";
+       << ": (收入: CNY" << summary.income << ", 支出: CNY" << summary.expense << ")\n";
     return ss.str();
 }
+// --- 修改结束 ---
 
+// ... generate_footer 和插件导出部分保持不变 ...
 std::string YearTexFormat::generate_footer(const YearlyReportData& data) const {
     return "\\end{itemize}\n\n\\end{document}\n";
 }
 
-
-// extern "C" 代码块保持不变
 extern "C" {
     #ifdef _WIN32
         #define PLUGIN_API __declspec(dllexport)
