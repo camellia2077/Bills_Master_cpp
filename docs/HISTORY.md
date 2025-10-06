@@ -22,3 +22,11 @@
 2. query文件夹重命名为reports
 3. Bills_Master重命名为bills_master并且放入apps文件夹
 4. log_generator移动到apps文件夹
+
+
+## v0.2.8.0 - 2025-10-06
+1. 使用+代表收入，-代表支出
+2. 对金额自动求和,不加符号默认为正数
+3. json新增total_expense、total_income 和 balance字段
+4. 数据库插入total_expense、total_income 和 balance
+5. reports新增total_expense、total_income

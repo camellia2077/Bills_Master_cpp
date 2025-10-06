@@ -22,12 +22,9 @@ bool BillGenerator::load_config(const std::string& config_path) {
     try {
         json raw_config = json::parse(config_file);
         
-        // --- 核心修改：加载扁平化的配置 ---
-        // 假设顶层现在是一个扁平的数组
         if (raw_config.is_array()) {
             config_ = raw_config;
         } 
-        // 兼容旧格式，或者当配置包含其他选项时
         else if (raw_config.contains("categories") && raw_config["categories"].is_array()) {
             config_ = raw_config["categories"];
         } else {
@@ -66,22 +63,20 @@ void BillGenerator::generate_bill_file(int year, int month, const std::filesyste
     outfile << "date:" << year_month << std::endl;
     outfile << "remark:" << std::endl << std::endl;
 
-    // 1. 将扁平化的子分类按 parent_category 分组
     std::map<std::string, std::vector<json>> grouped_by_parent;
     for (const auto& sub_item : config_) {
         grouped_by_parent[sub_item["parent_category"]].push_back(sub_item);
     }
 
-    // 2. 遍历分组后的 map 来生成文件，以确保正确的层级结构
     for (auto it = grouped_by_parent.begin(); it != grouped_by_parent.end(); ++it) {
         const std::string& parent_name = it->first;
         const std::vector<json>& sub_items = it->second;
 
-        outfile << parent_name << std::endl; // 写入父分类
+        outfile << parent_name << std::endl;
 
         for (const auto& sub_config : sub_items) {
             outfile << std::endl;
-            outfile << sub_config["sub_category"].get<std::string>() << std::endl; // 写入子分类
+            outfile << sub_config["sub_category"].get<std::string>() << std::endl;
 
             std::vector<json> details_vector;
             if (sub_config.contains("details")) {
@@ -97,7 +92,28 @@ void BillGenerator::generate_bill_file(int year, int month, const std::filesyste
             for (int i = 0; i < num_to_gen; ++i) {
                 const auto& item = details_vector[i];
                 double cost = random_double(item["min_cost"], item["max_cost"]);
-                outfile << std::fixed << std::setprecision(2) << cost << " " << item["description"].get<std::string>();
+                
+                // --- 【核心修改】 ---
+                // 1. 生成一个-10到+10之间的随机调整值
+                double adjustment = random_double(-10.0, 10.0);
+
+                // 2. 根据父分类决定基础金额的符号
+                if (parent_name == "income") {
+                    outfile << "+";
+                } else {
+                    outfile << "-";
+                }
+                
+                // 3. 输出基础金额
+                outfile << std::fixed << std::setprecision(2) << cost;
+
+                // 4. 输出带符号的随机调整值
+                outfile << std::showpos << std::fixed << std::setprecision(2) << adjustment;
+                outfile << std::noshowpos; // 恢复默认行为
+
+                // 5. 输出描述
+                outfile << " " << item["description"].get<std::string>();
+                // --- 修改结束 ---
 
                 std::uniform_real_distribution<> prob_dist(0.0, 1.0);
                 if (!comments_.empty() && prob_dist(random_engine_) < comment_probability_) {
@@ -113,7 +129,6 @@ void BillGenerator::generate_bill_file(int year, int month, const std::filesyste
             outfile << std::endl;
         }
     }
-    // ===================================================================
     
     outfile.close();
     std::cout << "Successfully generated bill file: " << file_path << std::endl;

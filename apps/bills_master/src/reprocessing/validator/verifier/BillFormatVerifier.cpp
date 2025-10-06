@@ -5,7 +5,7 @@
 #include "reprocessing/validator/result/ValidationResult.hpp"
 #include <regex>
 
-// --- 公共入口: 现在非常清晰，像一个流程总结 ---
+// --- Public Entry Point ---
 bool BillFormatVerifier::validate(const std::string& bill_file_path, const BillConfig& config, ValidationResult& result) {
     _initialize_validation(config, result);
 
@@ -24,7 +24,7 @@ bool BillFormatVerifier::validate(const std::string& bill_file_path, const BillC
     return !m_result->has_errors();
 }
 
-// --- 提炼出的新方法 1: 初始化 ---
+// --- Initialization ---
 void BillFormatVerifier::_initialize_validation(const BillConfig& config, ValidationResult& result) {
     m_bill_structure.clear();
     result.clear();
@@ -37,14 +37,13 @@ void BillFormatVerifier::_initialize_validation(const BillConfig& config, Valida
     m_result = &result;
 }
 
-// --- 提炼出的新方法 2: 处理文件头 ---
+// --- File Header Processing ---
 bool BillFormatVerifier::_process_file_header(std::ifstream& file) {
     std::string line;
     
-    // 验证 date
+    // Validate date
     if (std::getline(file, line)) {
         m_line_num++;
-        // [修改] 正则表达式和错误提示都要求 'date:' 为小写
         if (!std::regex_match(line, std::regex(R"(^date:\d{6}$)"))) {
             m_result->add_error("Error (Line " + std::to_string(m_line_num) + "): The first line must be 'date:YYYYMM'. Found: '" + line + "'");
             return false;
@@ -54,10 +53,9 @@ bool BillFormatVerifier::_process_file_header(std::ifstream& file) {
         return false;
     }
 
-    // 验证 remark
+    // Validate remark
     if (std::getline(file, line)) {
         m_line_num++;
-        // [修改] 正则表达式和错误提示都要求 'remark:' 为小写
         if (!std::regex_match(line, std::regex(R"(^remark:.*)"))) {
             m_result->add_error("Error (Line " + std::to_string(m_line_num) + "): The second line must start with 'remark:'. Found: '" + line + "'");
             return false;
@@ -70,7 +68,7 @@ bool BillFormatVerifier::_process_file_header(std::ifstream& file) {
     return true;
 }
 
-// --- 提炼出的新方法 3: 处理文件主体 ---
+// --- File Body Processing ---
 void BillFormatVerifier::_process_file_body(std::ifstream& file) {
     std::string line;
     while (std::getline(file, line)) {
@@ -80,14 +78,12 @@ void BillFormatVerifier::_process_file_body(std::ifstream& file) {
     }
 }
 
-// --- 提炼出的新方法 4: 收尾工作 ---
+// --- Final Validation Checks ---
 void BillFormatVerifier::_finalize_validation() {
-    // 检查最后一个子标题是否有内容
     if (!m_current_sub.empty() && m_bill_structure[m_current_parent][m_current_sub] == 0) {
         m_result->add_warning("Warning (End of File): Sub-title '" + m_current_sub + "' is missing content lines.");
     }
 
-    // 执行所有后置检查
     for (const auto& parent_pair : m_bill_structure) {
         const std::string& parent_title = parent_pair.first;
         const auto& sub_map = parent_pair.second;
@@ -109,8 +105,7 @@ void BillFormatVerifier::_finalize_validation() {
     }
 }
 
-
-// --- 核心的 process_line 保持不变，但现在使用成员变量 ---
+// --- Line Processing Logic ---
 void BillFormatVerifier::_process_line(const std::string& line) {
     switch (m_current_state) {
         case State::EXPECT_PARENT:
@@ -129,7 +124,7 @@ void BillFormatVerifier::_process_line(const std::string& line) {
     }
 }
 
-// --- 状态处理函数现在也使用成员变量 ---
+// --- State Handlers ---
 void BillFormatVerifier::_handle_parent_state(const std::string& line) {
     if (m_config->is_parent_title(line)) {
         m_current_parent = line;
@@ -143,7 +138,7 @@ void BillFormatVerifier::_handle_parent_state(const std::string& line) {
 void BillFormatVerifier::_handle_sub_state(const std::string& line) {
     if (m_config->is_parent_title(line)) {
         m_result->add_error("Error (Line " + std::to_string(m_line_num) + "): Parent title '" + m_current_parent + "' is missing a sub-title.");
-        _handle_parent_state(line); // 直接转换到处理父标题的状态
+        _handle_parent_state(line);
         return;
     }
 
@@ -177,7 +172,11 @@ void BillFormatVerifier::_handle_content_state(const std::string& line) {
         return;
     }
 
-    std::regex content_regex(R"(^\d+(\.\d+)?\s*.*?(?://.*)?$)");
+    // --- 【CORE CHANGE】 ---
+    // The previous regex was too strict and required spaces around operators.
+    // This new regex correctly handles expressions like "-27.21-6.12".
+    std::regex content_regex(R"(^[+-]?\d+(\.\d+)?([+-]\d+(\.\d+)?)*\s*.*)");
+    
     std::string trimmed_line = line;
     trimmed_line.erase(0, trimmed_line.find_first_not_of(" \t\n\r"));
     if (trimmed_line.rfind("//", 0) == 0) {

@@ -8,7 +8,11 @@
 struct MonthMdConfig {
     // --- 报告元数据标签(不含'#') ---
     std::string date_label = "DATE:";
-    std::string total_label = "TOTAL:";
+    // --- 【核心修改】 ---
+    std::string income_label = "INCOME:";
+    std::string expense_label = "EXPENSE:";
+    std::string balance_label = "BALANCE:";
+    // --- 修改结束 ---
     std::string remark_label = "REMARK:";
 
     // --- 文本标签 ---
@@ -22,7 +26,7 @@ struct MonthMdConfig {
     std::string sub_percentage_label_suffix = "%)";
 
     // --- 符号 ---
-    std::string currency_symbol = "CNY"; // 不建议使用¥ 因为字体里面可能没有 导致无法正确渲染
+    std::string currency_symbol = "CNY";
     std::string percentage_symbol = "%";
 
     // --- 格式控制 ---
