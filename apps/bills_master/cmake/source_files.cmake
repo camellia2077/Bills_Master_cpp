@@ -60,11 +60,14 @@ set(REPORTS_SOURCES
     "${REPORTS_DIR}/core/QueryFacade.cpp"
     "${REPORTS_DIR}/core/ReportExporter.cpp"
 
-    "${REPORTS_DIR}/components/monthly_report/MonthlyReportGenerator.cpp"
-    "${REPORTS_DIR}/components/monthly_report/MonthQuery.cpp"
-    "${REPORTS_DIR}/components/monthly_report/ReportSorter.cpp"
-    "${REPORTS_DIR}/components/yearly_report/YearlyReportGenerator.cpp"
-    "${REPORTS_DIR}/components/yearly_report/YearQuery.cpp"
+    "${REPORTS_DIR}/monthly_report/MonthlyReportGenerator.cpp"
+    "${REPORTS_DIR}/monthly_report/MonthQuery.cpp"
+    "${REPORTS_DIR}/monthly_report/ReportSorter.cpp"
+    "${REPORTS_DIR}/plugins/month_formatters/BaseMonthReportFormatter.cpp"
+
+    "${REPORTS_DIR}/yearly_report/YearlyReportGenerator.cpp"
+    "${REPORTS_DIR}/yearly_report/YearQuery.cpp"
+
     "${REPORTS_DIR}/plugins/year_formatters/BaseYearlyReportFormatter.cpp"
 )
 

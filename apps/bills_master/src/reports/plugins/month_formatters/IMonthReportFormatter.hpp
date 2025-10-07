@@ -4,7 +4,7 @@
 
 #include <string>
 
-#include "reports/components/monthly_report/ReportData.hpp" 
+#include "reports/monthly_report/ReportData.hpp" 
 
 /**
  * @class IMonthReportFormatter

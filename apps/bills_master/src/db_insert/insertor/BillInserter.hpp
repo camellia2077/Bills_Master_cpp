@@ -3,7 +3,7 @@
 #ifndef BILL_INSERTER_HPP
 #define BILL_INSERTER_HPP
 
-#include "common_structures/CommonData.hpp"
+#include "common/structures/CommonData.hpp"
 #include <string>
 
 /**

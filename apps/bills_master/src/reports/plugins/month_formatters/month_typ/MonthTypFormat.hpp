@@ -2,22 +2,24 @@
 #ifndef MONTH_TYP_FORMAT_HPP
 #define MONTH_TYP_FORMAT_HPP
 
-#include "reports/plugins/month_formatters/IMonthReportFormatter.hpp"
-#include "MonthTypConfig.hpp" // 包含新的配置头文件
+#include "reports/plugins/month_formatters/BaseMonthReportFormatter.hpp" // 1. Include base
+#include "MonthTypConfig.hpp"
 
-class MonthTypFormat : public IMonthReportFormatter {
+// 2. Inherit from base
+class MonthTypFormat : public BaseMonthReportFormatter {
 public:
-    // 构造函数，通过依赖注入接收一个配置对象
-    // 如果不提供，则会使用默认的配置
     explicit MonthTypFormat(const MonthTypConfig& config = MonthTypConfig{});
 
-    // format_report 接口保持不变
-    std::string format_report(const MonthlyReportData& data) const override;
+protected:
+    // 3. Implement virtual functions
+    std::string get_no_data_message(const MonthlyReportData& data) const override;
+    std::string generate_header(const MonthlyReportData& data) const override;
+    std::string generate_summary(const MonthlyReportData& data) const override;
+    std::string generate_body(const MonthlyReportData& data, const std::vector<std::pair<std::string, ParentCategoryData>>& sorted_parents) const override;
+    std::string generate_footer(const MonthlyReportData& data) const override;
 
 private:
     std::string escape_typst(const std::string& input) const;
-
-    // 持有一个配置对象的实例
     MonthTypConfig config_;
 };
 

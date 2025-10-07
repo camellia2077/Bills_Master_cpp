@@ -3,7 +3,7 @@
 #define I_YEARLY_REPORT_FORMATTER_HPP
 
 #include <string>
-#include "reports/components/yearly_report/YearlyReportData.hpp" // Path to the data structure
+#include "reports/yearly_report/YearlyReportData.hpp" // Path to the data structure
 
 /**
  * @class IYearlyReportFormatter

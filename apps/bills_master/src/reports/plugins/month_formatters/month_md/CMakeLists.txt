@@ -1,6 +1,8 @@
-# 调用在根 CMakeLists.txt 中定义的函数来创建插件 
+# reports/plugins/month_formatters/month_md/CMakeLists.txt
 create_formatter_plugin("md_month_formatter"
-    # 最佳实践：为本地文件也使用绝对路径，使其更加明确
     "${CMAKE_CURRENT_SOURCE_DIR}/MonthMdFormat.cpp"
-    "${CMAKE_SOURCE_DIR}/src/reports/components/monthly_report/ReportSorter.cpp"
+    # Add the new base class implementation
+    "${CMAKE_SOURCE_DIR}/src/reports/plugins/month_formatters/BaseMonthReportFormatter.cpp"
+    # ReportSorter is now used by the base class, so it still needs to be linked
+    "${CMAKE_SOURCE_DIR}/src/reports/monthly_report/ReportSorter.cpp"
 )

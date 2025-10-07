@@ -3,7 +3,7 @@
 #ifndef DATABASE_MANAGER_HPP
 #define DATABASE_MANAGER_HPP
 
-#include "common_structures/CommonData.hpp"
+#include "common/structures/CommonData.hpp"
 #include <sqlite3.h>
 #include <string>
 #include <vector>

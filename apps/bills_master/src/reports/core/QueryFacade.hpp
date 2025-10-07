@@ -2,8 +2,8 @@
 #ifndef QUERY_FACADE_HPP
 #define QUERY_FACADE_HPP
 
-#include "reports/components/monthly_report/MonthlyReportGenerator.hpp"
-#include "reports/components/yearly_report/YearlyReportGenerator.hpp"
+#include "reports/monthly_report/MonthlyReportGenerator.hpp"
+#include "reports/yearly_report/YearlyReportGenerator.hpp"
 #include "reports/core/ReportExporter.hpp"
 #include "reports/core/BillMetadataReader.hpp"
 
