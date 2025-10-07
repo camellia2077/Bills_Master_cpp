@@ -61,9 +61,11 @@
     },
     {
       "parent_category": "pet",
-      "sub_category": "pet_tortoise",
+      "sub_category": "pet_tortoises",
       "details": [
-        {"description": "小青", "min_cost": 25.0, "max_cost": 60.0}
+        {"description": "小青", "min_cost": 25.0, "max_cost": 60.0},
+        {"description": "南石", "min_cost": 10.0, "max_cost": 15.0},
+        {"description": "红耳龟", "min_cost": 5.0, "max_cost": 10.0}
       ]
     },
     {
@@ -104,7 +106,7 @@
     },
     {
       "parent_category": "web",
-      "sub_category": "web_service",
+      "sub_category": "web_services",
       "details": [
         {"description": "迅雷", "min_cost": 25.0, "max_cost": 30.0},
         {"description": "迷雾", "min_cost": 40.1, "max_cost": 40.7}
@@ -112,9 +114,10 @@
     },
     {
       "parent_category": "web",
-      "sub_category": "web_game",
+      "sub_category": "web_games",
       "details": [
-        {"description": "月卡", "min_cost": 30, "max_cost": 60}
+        {"description": "原神月卡", "min_cost": 30, "max_cost": 35},
+        {"description": "皇室战争通行证", "min_cost": 65, "max_cost": 70}
       ]
     }
   ]
