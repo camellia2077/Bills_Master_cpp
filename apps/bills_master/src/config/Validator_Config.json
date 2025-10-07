@@ -25,8 +25,8 @@
       "parent_item": "web",
       "description": "与互联网服务和内容相关的消费",
       "sub_items": [
-        "web_game",
-        "web_service",
+        "web_games",
+        "web_services",
         "web_donates",
         "web_sources"
       ]
@@ -59,7 +59,7 @@
         "pet_equipments",
         "pet_fodder",
         "pet_plants",
-        "pet_tortoise",
+        "pet_tortoises",
         "pet_cats",
         "pet_medicines"
       ]

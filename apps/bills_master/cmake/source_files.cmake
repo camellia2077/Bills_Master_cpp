@@ -46,7 +46,6 @@ set(REPROCESSING_SOURCES
     "${REPROCESSING_DIR}/validator/BillValidator.cpp"
     "${REPROCESSING_DIR}/validator/config/BillConfig.cpp"
     "${REPROCESSING_DIR}/validator/result/ValidationResult.cpp"
-    "${REPROCESSING_DIR}/validator/verifier/BillFormatVerifier.cpp"
 )
 
 set(DB_INSERT_SOURCES

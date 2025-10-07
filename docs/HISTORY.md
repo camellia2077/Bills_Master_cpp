@@ -30,3 +30,7 @@
 3. json新增total_expense、total_income 和 balance字段
 4. 数据库插入total_expense、total_income 和 balance
 5. reports新增total_expense、total_income
+
+## v0.2.8.1 - 2025-10-07
+1. 对txt的格式进行基本验证，再将 txt 转换为 json，再从 json 中对内容进行检验
+2. 将检验错误输出从 std::cerr 改为 std::cout
