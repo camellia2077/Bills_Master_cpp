@@ -42,9 +42,6 @@
 //  (建议根据项目结构手动调整此部分顺序和分组)
 // ===================================================================
 #include "common/common_utils.hpp"            // 使用次数: 12
-#include "reports/plugins/month_formatters/IMonthReportFormatter.hpp" // 使用次数: 7
-#include "reports/plugins/year_formatters/IYearlyReportFormatter.hpp" // 使用次数: 3
-#include "reports/plugins/common/PluginLoader.hpp" // 使用次数: 3
 
 
 
