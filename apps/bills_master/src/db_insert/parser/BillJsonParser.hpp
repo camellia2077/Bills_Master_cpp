@@ -3,7 +3,7 @@
 #ifndef BILL_JSON_PARSER_HPP
 #define BILL_JSON_PARSER_HPP
 
-#include "common_structures/CommonData.hpp"
+#include "common/structures/CommonData.hpp"
 #include <string>
 #include <stdexcept>
 

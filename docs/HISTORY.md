@@ -34,3 +34,8 @@
 ## v0.2.8.1 - 2025-10-07
 1. 对txt的格式进行基本验证，再将 txt 转换为 json，再从 json 中对内容进行检验
 2. 将检验错误输出从 std::cerr 改为 std::cout
+
+## v0.2.8.2 - 2025-10-08
+1. 月度报告格式化器的抽象为BaseMonthReportFormatter
+1. 更新json配置
+2. 优化reports目录

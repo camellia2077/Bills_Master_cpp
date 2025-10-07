@@ -2,20 +2,24 @@
 #ifndef MONTH_RST_FORMAT_HPP
 #define MONTH_RST_FORMAT_HPP
 
-#include "reports/plugins/month_formatters/IMonthReportFormatter.hpp" // 包含基类接口
-#include "MonthRstConfig.hpp" // 包含新的配置文件
+#include "reports/plugins/month_formatters/BaseMonthReportFormatter.hpp" // 1. Include the new base class
+#include "MonthRstConfig.hpp"
 
-// 继承自 IMonthReportFormatter 接口
-class MonthRstFormat : public IMonthReportFormatter {
-private:
-    MonthRstConfig config; // 持有一个配置对象
-
+// 2. Inherit from the new base class
+class MonthRstFormat : public BaseMonthReportFormatter {
 public:
-    // 构造函数，允许传入一个自定义的配置对象，也支持使用默认配置
     explicit MonthRstFormat(const MonthRstConfig& config = MonthRstConfig());
 
-    // 使用 override 关键字实现接口
-    std::string format_report(const MonthlyReportData& data) const override;
+protected:
+    // 3. Implement the pure virtual functions
+    std::string get_no_data_message(const MonthlyReportData& data) const override;
+    std::string generate_header(const MonthlyReportData& data) const override;
+    std::string generate_summary(const MonthlyReportData& data) const override;
+    std::string generate_body(const MonthlyReportData& data, const std::vector<std::pair<std::string, ParentCategoryData>>& sorted_parents) const override;
+    std::string generate_footer(const MonthlyReportData& data) const override;
+
+private:
+    MonthRstConfig config;
 };
 
 #endif // MONTH_RST_FORMAT_HPP

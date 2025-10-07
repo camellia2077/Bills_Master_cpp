@@ -7,7 +7,7 @@
 #include <sqlite3.h>
 #include "YearQuery.hpp"
 #include "reports/plugins/common/PluginLoader.hpp" // 1. 包含新的通用加载器
-#include "reports/plugins/year_formatters/IYearlyReportFormatter.hpp" // 2. 包含接口
+#include "reports/plugins/year_formatters/IYearlyReportFormatter.hpp" 
 
 class YearlyReportGenerator {
 public:
