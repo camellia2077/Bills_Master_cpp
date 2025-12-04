@@ -1,4 +1,4 @@
-// reports/components/yearly_report/YearlyReportGenerator.hpp
+﻿// reports/yearly_report/YearlyReportGenerator.hpp
 #ifndef YEARLY_REPORT_GENERATOR_HPP
 #define YEARLY_REPORT_GENERATOR_HPP
 

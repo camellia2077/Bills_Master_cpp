@@ -1,4 +1,4 @@
-// reports/components/monthly_report/MonthlyReportGenerator.hpp
+﻿// reports/monthly_report/MonthlyReportGenerator.hpp
 #ifndef MONTHLY_REPORT_GENERATOR_HPP
 #define MONTHLY_REPORT_GENERATOR_HPP
 

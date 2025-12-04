@@ -8,5 +8,5 @@ cd /d "%~dp0"
 
 
 
-py run_tests.py
+python run_tests.py
 

@@ -1,4 +1,4 @@
-// reports/components/yearly_report/YearQuery.hpp
+﻿// reports/yearly_report/YearQuery.hpp
 #ifndef YEAR_QUERY_HPP
 #define YEAR_QUERY_HPP
 
