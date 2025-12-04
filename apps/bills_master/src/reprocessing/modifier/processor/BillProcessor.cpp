@@ -65,9 +65,9 @@ void BillProcessor::_sum_up_line(std::string& line) {
         // 移除表达式中的所有空白字符
         expression.erase(std::remove(expression.begin(), expression.end(), ' '), expression.end());
 
-        // 如果表达式不是以+或-开头，在前面加上一个+，方便解析
+        // 如果数字金额不是以+或-开头，默认为支出金额，在前面加上一个-
         if (expression.front() != '+' && expression.front() != '-') {
-            expression.insert(0, 1, '+');
+            expression.insert(0, 1, '-');
         }
 
         double sum = 0.0;

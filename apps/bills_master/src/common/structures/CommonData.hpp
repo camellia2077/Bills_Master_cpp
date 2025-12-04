@@ -1,4 +1,4 @@
-// common_structures/CommonData.hpp
+﻿// common/structures/CommonData.hpp
 
 #ifndef COMMON_DATA_HPP
 #define COMMON_DATA_HPP
