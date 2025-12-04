@@ -1,4 +1,4 @@
-// reports/components/monthly_report/MonthQuery.hpp
+﻿// reports/monthly_report/MonthQuery.hpp
 #ifndef MONTH_QUERY_HPP
 #define MONTH_QUERY_HPP
 

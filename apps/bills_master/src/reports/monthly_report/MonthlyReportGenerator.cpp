@@ -1,4 +1,4 @@
-// reports/components/monthly_report/MonthlyReportGenerator.cpp
+﻿// reports/monthly_report/MonthlyReportGenerator.cpp
 #include "MonthlyReportGenerator.hpp"
 #include <stdexcept>
 
