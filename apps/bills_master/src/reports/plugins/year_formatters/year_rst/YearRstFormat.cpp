@@ -4,7 +4,6 @@
 #include <sstream>
 #include <iomanip>
 
-// ... get_no_data_message 和 generate_header 函数保持不变 ...
 std::string YearRstFormat::get_no_data_message(int year) const {
     return "未找到 " + std::to_string(year) + " 年的任何数据。\n";
 }
@@ -17,7 +16,6 @@ std::string YearRstFormat::generate_header(const YearlyReportData& data) const {
     return ss.str();
 }
 
-// --- 【核心修改】: 更新摘要部分 ---
 std::string YearRstFormat::generate_summary(const YearlyReportData& data) const {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(2);
@@ -26,29 +24,40 @@ std::string YearRstFormat::generate_summary(const YearlyReportData& data) const 
     ss << "**年终结余:** CNY" << data.balance << "\n\n";
     return ss.str();
 }
-// --- 修改结束 ---
 
-// ... generate_monthly_breakdown_header 函数保持不变 ...
+// --- 【核心修改 1】: 使用 list-table 指令生成表格表头 ---
 std::string YearRstFormat::generate_monthly_breakdown_header() const {
     std::stringstream ss;
-    std::string subtitle = "每月明细";
-    ss << subtitle << "\n";
-    ss << std::string(subtitle.length() * 2, '-') << "\n\n";
+    // 使用 list-table 指令，避免了手动对齐字符宽度的困难
+    ss << "\n.. list-table:: 每月明细\n";
+    ss << "   :widths: 15 25 25 25\n"; // 设置列宽比例
+    ss << "   :header-rows: 1\n\n";    // 标记第一行为表头，注意这里必须有一个空行
+    
+    // 输出表头项
+    ss << "   * - 月份\n";
+    ss << "     - 收入\n";
+    ss << "     - 支出\n";
+    ss << "     - 结余\n";
     return ss.str();
 }
 
-
-// --- 【核心修改】: 更新月度项目 ---
+// --- 【核心修改 2】: 计算结余并输出为表格行 ---
 std::string YearRstFormat::generate_monthly_item(int year, int month, const MonthlySummary& summary) const {
     std::stringstream ss;
+    // 计算当月结余
+    double balance = summary.income + summary.expense;
+
     ss << std::fixed << std::setprecision(2);
-    ss << "* " << year << "-" << std::setfill('0') << std::setw(2) << month
-       << ": (收入: CNY" << summary.income << ", 支出: CNY" << summary.expense << ")\n";
+    
+    // 按照 list-table 的列表格式输出行
+    // 注意：每一行都必须以 "   * -" 开头（对应 list-table 的缩进）
+    ss << "   * - " << year << "-" << std::setfill('0') << std::setw(2) << month << "\n";
+    ss << "     - CNY " << summary.income << "\n";
+    ss << "     - CNY " << summary.expense << "\n";
+    ss << "     - CNY " << balance << "\n";
     return ss.str();
 }
-// --- 修改结束 ---
 
-// ... generate_footer 和插件导出部分保持不变 ...
 std::string YearRstFormat::generate_footer(const YearlyReportData& data) const {
     return "";
 }

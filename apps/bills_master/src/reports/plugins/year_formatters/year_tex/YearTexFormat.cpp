@@ -6,7 +6,6 @@
 
 YearTexFormat::YearTexFormat(const YearlyTexConfig& config) : m_config(config) {}
 
-// ... escape_latex, get_no_data_message, generate_header 函数保持不变 ...
 std::string YearTexFormat::escape_latex(const std::string& input) const {
     std::string output;
     output.reserve(input.size());
@@ -49,7 +48,6 @@ std::string YearTexFormat::generate_header(const YearlyReportData& data) const {
     return ss.str();
 }
 
-// --- 【核心修改】: 更新摘要部分 ---
 std::string YearTexFormat::generate_summary(const YearlyReportData& data) const {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(2);
@@ -61,30 +59,47 @@ std::string YearTexFormat::generate_summary(const YearlyReportData& data) const 
     ss << "\\end{itemize}\n\n";
     return ss.str();
 }
-// --- 修改结束 ---
 
-// ... generate_monthly_breakdown_header 函数保持不变 ...
 std::string YearTexFormat::generate_monthly_breakdown_header() const {
     std::stringstream ss;
     ss << "\\section*{" << escape_latex(m_config.monthly_breakdown_title) << "}\n";
-    ss << "\\begin{itemize}\n";
+    
+    // 开始表格环境
+    ss << "\\begin{table}[h]\n";
+    ss << "\\centering\n";
+    ss << "\\begin{tabular}{|c|c|c|c|}\n";
+    ss << "\\hline\n"; // 顶端横线
+    
+    // 表头行
+    ss << "\\textbf{" << escape_latex(m_config.table_header_month) << "} & "
+       << "\\textbf{" << escape_latex(m_config.table_header_income) << "} & "
+       << "\\textbf{" << escape_latex(m_config.table_header_expense) << "} & "
+       << "\\textbf{" << escape_latex(m_config.table_header_balance) << "} \\\\\n";
+    
+    ss << "\\hline\n"; // 表头下的横线
     return ss.str();
 }
 
-// --- 【核心修改】: 更新月度项目 ---
 std::string YearTexFormat::generate_monthly_item(int year, int month, const MonthlySummary& summary) const {
     std::stringstream ss;
+    double balance = summary.income + summary.expense;
+
     ss << std::fixed << std::setprecision(2);
-    ss << "    \\item " << year << escape_latex(m_config.year_month_separator)
-       << std::setfill('0') << std::setw(2) << month
-       << ": (收入: CNY" << summary.income << ", 支出: CNY" << summary.expense << ")\n";
+    
+    // --- 【修复】: 去掉了注释末尾的反斜杠，防止续行符吞掉代码 ---
+    // 输出表格行：月份 & 收入 & 支出 & 结余 (LaTeX newline)
+    ss << year << escape_latex(m_config.year_month_separator)
+       << std::setfill('0') << std::setw(2) << month << " & "
+       << "CNY " << summary.income << " & "
+       << "CNY " << summary.expense << " & "
+       << "CNY " << balance << " \\\\\n";
+       
+    ss << "\\hline\n"; // 每行下面的横线
     return ss.str();
 }
-// --- 修改结束 ---
 
-// ... generate_footer 和插件导出部分保持不变 ...
 std::string YearTexFormat::generate_footer(const YearlyReportData& data) const {
-    return "\\end{itemize}\n\n\\end{document}\n";
+    return "\\end{tabular}\n\\end{table}\n\\end{document}\n";
 }
 
 extern "C" {

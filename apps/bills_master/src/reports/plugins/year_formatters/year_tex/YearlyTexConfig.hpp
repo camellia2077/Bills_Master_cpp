@@ -15,14 +15,19 @@ struct YearlyTexConfig {
     std::string cjk_font = "Noto Serif SC";
     int base_font_size = 12;
 
-    // --- 【核心修改】: 更新文本标签 ---
     std::string summary_section_title = "年度总览";
     std::string yearly_income_label = "年总收入:";
     std::string yearly_expense_label = "年总支出:";
     std::string yearly_balance_label = "年终结余:";
     std::string monthly_breakdown_title = "每月明细";
     std::string year_month_separator = "-";
-    // --- 修改结束 ---
+
+    // --- 【新增】: 表格表头标签 ---
+    std::string table_header_month = "月份";
+    std::string table_header_income = "收入";
+    std::string table_header_expense = "支出";
+    std::string table_header_balance = "结余";
+    // --- 结束 ---
 };
 
 #endif // YEARLY_TEX_CONFIG_HPP
