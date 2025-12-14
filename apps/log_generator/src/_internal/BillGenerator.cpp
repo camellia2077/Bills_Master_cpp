@@ -1,4 +1,4 @@
-// BillGenerator.cpp
+// src/_internal/BillGenerator.cpp
 
 #include "BillGenerator.h"
 #include <iostream>
@@ -93,27 +93,51 @@ void BillGenerator::generate_bill_file(int year, int month, const std::filesyste
                 const auto& item = details_vector[i];
                 double cost = random_double(item["min_cost"], item["max_cost"]);
                 
-                // --- 【核心修改】 ---
                 // 1. 生成一个-10到+10之间的随机调整值
                 double adjustment = random_double(-10.0, 10.0);
 
-                // 2. 根据父分类决定基础金额的符号
+                // --- 修改开始：符号处理与乘法模拟 ---
+
+                // 2. 符号处理
+                // 只有 income 分类强制使用 '+'
+                // 其他分类不输出符号（即默认为正数形式，依靠 Parser 的规则自动识别为支出）
                 if (parent_name == "income") {
                     outfile << "+";
-                } else {
-                    outfile << "-";
                 }
-                
-                // 3. 输出基础金额
-                outfile << std::fixed << std::setprecision(2) << cost;
 
-                // 4. 输出带符号的随机调整值
+                // 3. 乘法模拟
+                // 30% 的概率将 cost 拆分为 "单价 * 数量" 的形式
+                bool use_multiplication = (random_double(0.0, 1.0) < 0.3);
+
+                if (use_multiplication) {
+                    int quantity = random_int(2, 6); // 随机数量 2 到 6
+                    double unit_price = cost / quantity;
+
+                    // 输出单价
+                    outfile << std::fixed << std::setprecision(2) << unit_price;
+
+                    // 随机选择乘法符号 * 或 ×
+                    if (random_int(0, 1) == 0) {
+                        outfile << "*";
+                    } else {
+                        outfile << "×";
+                    }
+
+                    // 输出数量
+                    outfile << quantity;
+                } else {
+                    // 不使用乘法，直接输出总价
+                    outfile << std::fixed << std::setprecision(2) << cost;
+                }
+
+                // 4. 输出带符号的随机调整值 (保持不变，用于模拟 +0.07 或 -1.5 这种修饰)
                 outfile << std::showpos << std::fixed << std::setprecision(2) << adjustment;
                 outfile << std::noshowpos; // 恢复默认行为
 
+                // --- 修改结束 ---
+
                 // 5. 输出描述
                 outfile << " " << item["description"].get<std::string>();
-                // --- 修改结束 ---
 
                 std::uniform_real_distribution<> prob_dist(0.0, 1.0);
                 if (!comments_.empty() && prob_dist(random_engine_) < comment_probability_) {

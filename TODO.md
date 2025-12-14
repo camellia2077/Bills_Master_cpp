@@ -15,9 +15,11 @@
 
 ## P1: 高优先级 (High Priority)
 
------
+* **使用cjson来替换现在的json库，使用两套json库，编译的时候编译不同的exe**
 
 ## P2: 中优先级 (New Features & Improvements)
+
+* **使用json来自定义导出latex,typ的字体格式**
 
   * **[ ] 给parent_item加入注释字段**
 

@@ -26,31 +26,31 @@ std::string YearMdFormat::generate_summary(const YearlyReportData& data) const {
     ss << "- **" << config.yearly_balance_label << ":** " << data.balance << " " << config.currency_name << "\n";
     return ss.str();
 }
-// --- 修改结束 ---
 
-// --- 【核心修改】: 更新表格头部 ---
 std::string YearMdFormat::generate_monthly_breakdown_header() const {
     std::stringstream ss;
     ss << "\n## " << config.monthly_breakdown_title << "\n\n"
        << "| " << config.monthly_table_header_month 
-       << " | " << config.monthly_table_header_income << " (" << config.currency_name << ")"
-       << " | " << config.monthly_table_header_expense << " (" << config.currency_name << ") |\n"
-       << "| :--- | :--- | :--- |\n";
+       << " | " << config.monthly_table_header_income << " (" << config.currency_name << ")"// 收入
+       << " | " << config.monthly_table_header_expense << " (" << config.currency_name << ")"// 支出
+       << " | " << config.monthly_table_header_balance << " (" << config.currency_name << ") |\n" // 新增结余列名
+       << "| :--- | :--- | :--- | :--- |\n";
     return ss.str();
 }
-// --- 修改结束 ---
 
-// --- 【核心修改】: 更新表格行 ---
 std::string YearMdFormat::generate_monthly_item(int year, int month, const MonthlySummary& summary) const {
     std::stringstream ss;
+    // 计算当月结余 (收入 + 支出，因为支出是负数)
+    double monthly_balance = summary.income + summary.expense;
+
     ss << std::fixed << std::setprecision(config.precision);
     ss << "| " << year << config.monthly_item_date_separator
        << std::setfill(config.fill_char) << std::setw(config.month_width) << month
        << " | " << summary.income 
-       << " | " << summary.expense << " |\n";
+       << " | " << summary.expense 
+       << " | " << monthly_balance << " |\n"; // 输出计算结果
     return ss.str();
 }
-// --- 修改结束 ---
 
 std::string YearMdFormat::generate_footer(const YearlyReportData& data) const {
     return ""; // Markdown 没有正式的尾部
