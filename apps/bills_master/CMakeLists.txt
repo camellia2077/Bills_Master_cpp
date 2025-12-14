@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # 定义项目名称和所用语言 (必须在顶层)
-project(BillReprocessor VERSION "0.2.1" LANGUAGES CXX)
+project(BillReprocessor VERSION "0.2.8" LANGUAGES CXX)
 
 # 引入项目设置模块 (现在只包含路径和输出目录设置)
 include(cmake/project_setup.cmake)
