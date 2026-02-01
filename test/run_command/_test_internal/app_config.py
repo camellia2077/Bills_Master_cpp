@@ -2,21 +2,29 @@
 
 import os
 import sys
-import tomllib
+try:
+    import tomllib as toml_loader
+    _TOML_DECODE_ERROR = toml_loader.TOMLDecodeError
+    _USE_BINARY = True
+except ModuleNotFoundError:
+    import toml as toml_loader
+    _TOML_DECODE_ERROR = toml_loader.TomlDecodeError
+    _USE_BINARY = False
 
 # --- [核心修改] ---
 # 获取当前配置文件所在的目录
 _current_dir = os.path.dirname(os.path.abspath(__file__))
-# 构建 config.toml 的完整路径
-_config_path = os.path.join(_current_dir, "config.toml")
+# config.toml 与 run_tests.py 同级，位于 _test_internal 上一级目录
+_config_path = os.path.join(os.path.dirname(_current_dir), "config.toml")
 
 try:
-    with open(_config_path, "rb") as f:
-        _data = tomllib.load(f)
+    open_mode = "rb" if _USE_BINARY else "r"
+    with open(_config_path, open_mode, encoding=None if _USE_BINARY else "utf-8") as f:
+        _data = toml_loader.load(f)
 except FileNotFoundError:
     print(f"错误: 配置文件 '{_config_path}' 未找到。")
     sys.exit(1)
-except tomllib.TOMLDecodeError as e:
+except _TOML_DECODE_ERROR as e:
     print(f"错误: 解析 'config.toml' 文件失败: {e}")
     sys.exit(1)
 
@@ -42,6 +50,8 @@ PLUGIN_DLLS = PLUGINS.get("plugin_dlls", [])
 
 RUN_EXPORT_ALL_TASKS = SETTINGS.get("run_export_all_tasks", True)
 EXPORT_FORMATS = SETTINGS.get("export_formats", [])
+INGEST_MODE = SETTINGS.get("ingest_mode", "stepwise")
+INGEST_WRITE_JSON = SETTINGS.get("ingest_write_json", False)
 
 FILES_TO_DELETE = CLEANUP.get("files_to_delete", [])
 DIRS_TO_DELETE = CLEANUP.get("dirs_to_delete", [])

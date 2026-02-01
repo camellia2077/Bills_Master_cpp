@@ -1,6 +1,8 @@
 # 设置 C++ 标准为 C++23
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# [New] 生成编译数据库 (compile_commands.json)，供 clang-tidy/tools 使用
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # --- 为 Release 构建类型设置优化编译选项 ---
 # Os优化和flto不能一起开，会报错

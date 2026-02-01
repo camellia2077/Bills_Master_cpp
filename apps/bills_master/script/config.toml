@@ -1,0 +1,9 @@
+[build]
+# Optional: "Ninja" or "Unix Makefiles"
+generator = "Ninja"
+
+# Optional: "clang" or "gcc" (leave empty to use CMake default)
+compiler = "gcc"
+
+# Path to the directory containing the top-level CMakeLists.txt
+cmake_source_dir = "."

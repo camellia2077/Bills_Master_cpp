@@ -11,7 +11,10 @@ echo ""
 
 echo "==> Executing Python build script..."
 # Run the Python build script. Using python3 is recommended.
-python3 build_debug.py
+echo "==> Starting the Python build script (Debug)..."
+# Execute the Python script
+# Execute the Python script
+python3 run.py build --mode Debug "$@"
 
 echo ""
 echo "==> Wrapper script finished."

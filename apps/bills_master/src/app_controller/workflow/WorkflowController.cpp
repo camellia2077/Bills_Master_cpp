@@ -1,8 +1,11 @@
 // app_controller/workflow/WorkflowController.cpp
 #include "WorkflowController.hpp"
 #include "app_controller/ConfigLoader.hpp"
-#include "reprocessing/Reprocessor.hpp"
-#include "db_insert/DataProcessor.hpp"
+#include "conversion/Reprocessor.hpp"
+#include "adapters/db/SqliteBillRepository.hpp"
+#include "adapters/io/FileBillContentReader.hpp"
+#include "adapters/io/FileBillFileEnumerator.hpp"
+#include "adapters/serialization/JsonBillSerializer.hpp"
 #include "common/ProcessStats.hpp"
 #include "common/common_utils.hpp"
 
@@ -20,6 +23,9 @@ WorkflowController::WorkflowController(const std::string& config_path, const std
         // 将 m_file_handler 注入 ConfigLoader
         m_validator_config = ConfigLoader::load_and_validate_validator_config(config_path, m_file_handler);
         m_modifier_config = ConfigLoader::load_and_validate_modifier_config(config_path, m_file_handler);
+        m_content_reader = std::make_unique<FileBillContentReader>();
+        m_file_enumerator = std::make_unique<FileBillFileEnumerator>(m_file_handler);
+        m_serializer = std::make_unique<JsonBillSerializer>();
     } catch (const std::runtime_error& e) {
         throw;
     }
@@ -29,12 +35,17 @@ bool WorkflowController::handle_validation(const std::string& path) {
     ProcessStats stats;
     try {
         Reprocessor reprocessor(m_validator_config, m_modifier_config);
-        // 使用成员 m_file_handler
-        std::vector<fs::path> files = m_file_handler.find_files_by_extension(path, ".txt");
+        std::vector<fs::path> files = m_file_enumerator->ListFilesByExtension(path, ".txt");
         for (const auto& file : files) {
-            if (reprocessor.validate_bill(file.string())) {
-                stats.success++;
-            } else {
+            try {
+                std::string bill_content = m_content_reader->Read(file.string());
+                if (reprocessor.validate_content(bill_content, file.string())) {
+                    stats.success++;
+                } else {
+                    stats.failure++;
+                }
+            } catch (const std::exception& e) {
+                std::cerr << RED_COLOR << "错误: " << RESET_COLOR << e.what() << std::endl;
                 stats.failure++;
             }
         }
@@ -47,18 +58,30 @@ bool WorkflowController::handle_validation(const std::string& path) {
 }
 
 bool WorkflowController::handle_modification(const std::string& path) {
+    return handle_convert(path);
+}
+
+bool WorkflowController::handle_convert(const std::string& path) {
     ProcessStats stats;
     try {
         Reprocessor reprocessor(m_validator_config, m_modifier_config);
-        // 使用成员 m_file_handler
-        std::vector<fs::path> files = m_file_handler.find_files_by_extension(path, ".txt");
+        std::vector<fs::path> files = m_file_enumerator->ListFilesByExtension(path, ".txt");
         for (const auto& file : files) {
             fs::path final_output_path = m_path_builder.build_output_path(file);
             
-            std::cout << "\n--- 正在修改: " << file.string() << " -> " << final_output_path.string() << " ---\n";
-            if(reprocessor.modify_bill(file.string(), final_output_path.string())) {
+            std::cout << "\n--- 正在转换: " << file.string() << " -> " << final_output_path.string() << " ---\n";
+            try {
+                std::string bill_content = m_content_reader->Read(file.string());
+                ParsedBill bill_data{};
+                if (!reprocessor.convert_content(bill_content, bill_data)) {
+                    stats.failure++;
+                    continue;
+                }
+                m_serializer->WriteJson(bill_data, final_output_path.string());
+                std::cout << "--- 转换成功。输出已保存至 '" << final_output_path.string() << "' ---\n";
                 stats.success++;
-            } else {
+            } catch (const std::exception& e) {
+                std::cerr << RED_COLOR << "错误: " << RESET_COLOR << e.what() << std::endl;
                 stats.failure++;
             }
         }
@@ -66,7 +89,78 @@ bool WorkflowController::handle_modification(const std::string& path) {
         std::cerr << RED_COLOR << "错误: " << RESET_COLOR << e.what() << std::endl;
         stats.failure++;
     }
-    stats.print_summary("Modification");
+    stats.print_summary("Conversion");
+    return stats.failure == 0;
+}
+
+bool WorkflowController::handle_ingest(const std::string& path,
+                                       const std::string& db_path,
+                                       bool write_json) {
+    ProcessStats stats;
+    std::cout << "--- Ingest workflow started ---\n";
+    try {
+        Reprocessor reprocessor(m_validator_config, m_modifier_config);
+        SqliteBillRepository repository(db_path);
+        std::vector<fs::path> files = m_file_enumerator->ListFilesByExtension(path, ".txt");
+        if (files.empty()) {
+            std::cout << "未找到需要处理的 .txt 文件。\n";
+            stats.print_summary("Ingest");
+            return true;
+        }
+
+        for (const auto& file : files) {
+            std::cout << "\n========================================\n";
+            std::cout << "正在处理文件: " << file.string() << "\n";
+            std::cout << "========================================\n";
+
+            ParsedBill bill_data{};
+            try {
+                std::string bill_content = m_content_reader->Read(file.string());
+                if (!reprocessor.validate_and_convert_content(bill_content, file.string(), bill_data)) {
+                    std::cerr << RED_COLOR << "验证或转换失败"
+                              << RESET_COLOR << " 文件: " << file.string() << "。已跳过此文件。\n";
+                    stats.failure++;
+                    continue;
+                }
+            } catch (const std::exception& e) {
+                std::cerr << RED_COLOR << "错误: " << RESET_COLOR << e.what() << std::endl;
+                stats.failure++;
+                continue;
+            }
+
+            if (write_json) {
+                fs::path output_path = m_path_builder.build_output_path(file);
+                try {
+                    m_serializer->WriteJson(bill_data, output_path.string());
+                    std::cout << GREEN_COLOR << "成功: " << RESET_COLOR
+                              << "JSON 已保存至 '" << output_path.string() << "'.\n";
+                } catch (const std::exception& e) {
+                    std::cerr << RED_COLOR << "JSON 写入失败"
+                              << RESET_COLOR << " 文件: " << file.string()
+                              << "，原因: " << e.what() << "\n";
+                    stats.failure++;
+                    continue;
+                }
+            }
+
+            try {
+                repository.InsertBill(bill_data);
+                std::cout << GREEN_COLOR << "成功: " << RESET_COLOR
+                          << "此文件的数据已成功导入数据库。\n";
+                stats.success++;
+            } catch (const std::exception& e) {
+                std::cerr << RED_COLOR << "数据库导入失败"
+                          << RESET_COLOR << " 文件: " << file.string()
+                          << "，原因: " << e.what() << "\n";
+                stats.failure++;
+            }
+        }
+    } catch (const std::runtime_error& e) {
+        std::cerr << RED_COLOR << "错误: " << RESET_COLOR
+                  << "工作流执行期间发生错误: " << e.what() << std::endl;
+        stats.failure++;
+    }
+    stats.print_summary("Ingest");
     return stats.failure == 0;
 }
 
@@ -74,14 +168,17 @@ bool WorkflowController::handle_import(const std::string& path, const std::strin
     ProcessStats stats;
     std::cout << "正在使用数据库文件: " << db_path << "\n";
     try {
-        DataProcessor data_processor;
-        // 使用成员 m_file_handler
-        std::vector<fs::path> files = m_file_handler.find_files_by_extension(path, ".json");
+        SqliteBillRepository repository(db_path);
+        std::vector<fs::path> files = m_file_enumerator->ListFilesByExtension(path, ".json");
         for (const auto& file : files) {
             std::cout << "\n--- 正在处理并导入数据库: " << file.string() << " ---\n";
-            if (data_processor.process_and_insert(file.string(), db_path)) {
+            try {
+                ParsedBill import_bill = m_serializer->ReadJson(file.string());
+                repository.InsertBill(import_bill);
                 stats.success++;
-            } else {
+            } catch (const std::exception& e) {
+                std::cerr << RED_COLOR << "数据库导入失败" << RESET_COLOR << " 文件: " << file.string()
+                          << "，原因: " << e.what() << "\n";
                 stats.failure++;
             }
         }
@@ -99,9 +196,9 @@ bool WorkflowController::handle_full_workflow(const std::string& path, const std
     std::cout << "--- 自动化处理工作流已启动 ---\n";
     try {
         Reprocessor reprocessor(m_validator_config, m_modifier_config);
-        DataProcessor data_processor;
+        SqliteBillRepository repository(db_path);
 
-        std::vector<fs::path> files = m_file_handler.find_files_by_extension(path, ".txt");
+        std::vector<fs::path> files = m_file_enumerator->ListFilesByExtension(path, ".txt");
         if (files.empty()) {
             std::cout << "未找到需要处理的 .txt 文件。\n";
             stats.print_summary("Full Workflow");
@@ -112,9 +209,17 @@ bool WorkflowController::handle_full_workflow(const std::string& path, const std
             std::cout << "\n========================================\n";
             std::cout << "正在处理文件: " << file_path.string() << "\n";
             std::cout << "========================================\n";
+            std::string bill_content;
+            try {
+                bill_content = m_content_reader->Read(file_path.string());
+            } catch (const std::exception& e) {
+                std::cerr << RED_COLOR << "错误: " << RESET_COLOR << e.what() << std::endl;
+                stats.failure++;
+                continue;
+            }
             
             std::cout << "\n[步骤 1/3] 正在验证账单文件...\n";
-            if (!reprocessor.validate_bill(file_path.string())) {
+            if (!reprocessor.validate_content(bill_content, file_path.string())) {
                 std::cerr << RED_COLOR << "验证失败" << RESET_COLOR << " 文件: " << file_path.string() << "。已跳过此文件。" << "\n";
                 stats.failure++;
                 continue;
@@ -123,20 +228,32 @@ bool WorkflowController::handle_full_workflow(const std::string& path, const std
             
             fs::path modified_path = m_path_builder.build_output_path(file_path);
 
-            std::cout << "\n[步骤 2/3] 正在修改账单文件...\n";
-            if (!reprocessor.modify_bill(file_path.string(), modified_path.string())) {
-                std::cerr << RED_COLOR << "修改失败" << RESET_COLOR << " 文件: " << file_path.string() << "。已跳过此文件。" << "\n";
+            std::cout << "\n[步骤 2/3] 正在转换账单文件...\n";
+            ParsedBill bill_data{};
+            if (!reprocessor.convert_content(bill_content, bill_data)) {
+                std::cerr << RED_COLOR << "转换失败" << RESET_COLOR << " 文件: " << file_path.string() << "。已跳过此文件。" << "\n";
                 stats.failure++;
                 continue;
             }
-            std::cout << GREEN_COLOR << "成功: " << RESET_COLOR << "修改完成。修改后的文件已保存至 '" << modified_path.string() << "'。\n";
+            try {
+                m_serializer->WriteJson(bill_data, modified_path.string());
+                std::cout << GREEN_COLOR << "成功: " << RESET_COLOR << "转换完成。转换后的文件已保存至 '" << modified_path.string() << "'。\n";
+            } catch (const std::exception& e) {
+                std::cerr << RED_COLOR << "JSON 写入失败" << RESET_COLOR << " 文件: " << file_path.string()
+                          << "，原因: " << e.what() << "\n";
+                stats.failure++;
+                continue;
+            }
             
             std::cout << "\n[步骤 3/3] 正在解析并插入数据库...\n";
-            if (data_processor.process_and_insert(modified_path.string(), db_path)) {
+            try {
+                ParsedBill import_bill = m_serializer->ReadJson(modified_path.string());
+                repository.InsertBill(import_bill);
                 std::cout << GREEN_COLOR << "成功: " << RESET_COLOR << "此文件的数据已成功导入数据库。" << "\n";
                 stats.success++;
-            } else {
-                std::cerr << RED_COLOR << "数据库导入失败" << RESET_COLOR << " 文件: " << modified_path.string() << "。" << "\n";
+            } catch (const std::exception& e) {
+                std::cerr << RED_COLOR << "数据库导入失败" << RESET_COLOR << " 文件: " << modified_path.string()
+                          << "，原因: " << e.what() << "\n";
                 stats.failure++;
             }
         }

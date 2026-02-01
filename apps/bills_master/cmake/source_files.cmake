@@ -2,7 +2,7 @@
 #  源文件收集
 # ==============================================================================
 set(COMMAND_HANDLER_DIR   "${SOURCE_ROOT}/command_handler")
-set(REPROCESSING_DIR      "${SOURCE_ROOT}/reprocessing")
+set(CONVERSION_DIR        "${SOURCE_ROOT}/conversion")
 set(DB_INSERT_DIR         "${SOURCE_ROOT}/db_insert")
 set(REPORTS_DIR             "${SOURCE_ROOT}/reports")
 set(FILEHANDLER_DIR       "${SOURCE_ROOT}/file_handler")
@@ -30,29 +30,39 @@ set(COMMAND_HANDLER_SOURCES
     "${COMMAND_HANDLER_DIR}/CommandFacade.cpp"
     "${COMMAND_HANDLER_DIR}/usage_help.cpp"
     "${COMMAND_HANDLER_DIR}/commands/ExportCommand.cpp"
+    "${COMMAND_HANDLER_DIR}/commands/IngestCommand.cpp"
     "${COMMAND_HANDLER_DIR}/commands/QueryCommand.cpp"
     "${COMMAND_HANDLER_DIR}/commands/SimpleCommand.cpp"
 )
 
 
-set(REPROCESSING_SOURCES
-    "${REPROCESSING_DIR}/Reprocessor.cpp"
-    "${REPROCESSING_DIR}/modifier/BillModifier.cpp"
-    "${REPROCESSING_DIR}/modifier/config_loader/ConfigLoader.cpp"
-    "${REPROCESSING_DIR}/modifier/processor/BillContentTransformer.cpp"
-    "${REPROCESSING_DIR}/modifier/processor/BillParser.cpp"
-    "${REPROCESSING_DIR}/modifier/processor/BillProcessor.cpp"
-    "${REPROCESSING_DIR}/modifier/raw_format/BillJsonFormatter.cpp"
-    "${REPROCESSING_DIR}/validator/BillValidator.cpp"
-    "${REPROCESSING_DIR}/validator/config/BillConfig.cpp"
-    "${REPROCESSING_DIR}/validator/result/ValidationResult.cpp"
+set(CONVERSION_SOURCES
+    "${CONVERSION_DIR}/Reprocessor.cpp"
+    "${CONVERSION_DIR}/convert/BillConverter.cpp"
+    "${CONVERSION_DIR}/modifier/config_loader/ConfigLoader.cpp"
+    "${CONVERSION_DIR}/modifier/processor/BillContentTransformer.cpp"
+    "${CONVERSION_DIR}/modifier/processor/BillParser.cpp"
+    "${CONVERSION_DIR}/modifier/processor/BillProcessor.cpp"
+    "${CONVERSION_DIR}/validator/BillValidator.cpp"
+    "${CONVERSION_DIR}/validator/config/BillConfig.cpp"
+    "${CONVERSION_DIR}/validator/result/ValidationResult.cpp"
 )
 
 set(DB_INSERT_SOURCES
     "${DB_INSERT_DIR}/DataProcessor.cpp"
     "${DB_INSERT_DIR}/insertor/BillInserter.cpp"
     "${DB_INSERT_DIR}/insertor/DatabaseManager.cpp"
-    "${DB_INSERT_DIR}/parser/BillJsonParser.cpp"
+)
+
+set(SERIALIZATION_SOURCES
+    "${SOURCE_ROOT}/serialization/BillJsonSerializer.cpp"
+)
+
+set(ADAPTER_SOURCES
+    "${SOURCE_ROOT}/adapters/io/FileBillContentReader.cpp"
+    "${SOURCE_ROOT}/adapters/io/FileBillFileEnumerator.cpp"
+    "${SOURCE_ROOT}/adapters/serialization/JsonBillSerializer.cpp"
+    "${SOURCE_ROOT}/adapters/db/SqliteBillRepository.cpp"
 )
 # reports
 set(REPORTS_SOURCES
@@ -79,8 +89,10 @@ set(FILEHANDLER_SOURCES
 set(SHARED_SOURCES
     ${CONFIG_VALIDATOR_SOURCES}
     ${COMMAND_HANDLER_SOURCES}
-    ${REPROCESSING_SOURCES}
+    ${CONVERSION_SOURCES}
     ${DB_INSERT_SOURCES}
+    ${SERIALIZATION_SOURCES}
+    ${ADAPTER_SOURCES}
     ${REPORTS_SOURCES}
     ${FILEHANDLER_SOURCES}
     ${APP_CONTROLLER_SOURCES}

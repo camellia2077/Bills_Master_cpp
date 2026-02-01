@@ -39,6 +39,13 @@ AppController::AppController(const std::string& db_path,
     file_handler.create_directories("output");
 
     fs::path plugin_dir = get_executable_directory() / "plugins";
+    fs::path exe_dir = get_executable_directory();
+
+    fs::path config_path_resolved = config_path;
+    if (config_path_resolved.is_relative()) {
+        config_path_resolved = exe_dir / config_path_resolved;
+    }
+    m_config_path = config_path_resolved.string();
 
     m_plugin_files = {
         (plugin_dir / "md_month_formatter.dll").string(),
@@ -68,8 +75,17 @@ bool AppController::handle_validation(const std::string& path) {
 }
 
 bool AppController::handle_modification(const std::string& path) {
+    return handle_convert(path);
+}
+
+bool AppController::handle_convert(const std::string& path) {
     WorkflowController workflow(m_config_path, m_modified_output_dir);
-    return workflow.handle_modification(path);
+    return workflow.handle_convert(path);
+}
+
+bool AppController::handle_ingest(const std::string& path, bool write_json) {
+    WorkflowController workflow(m_config_path, m_modified_output_dir);
+    return workflow.handle_ingest(path, m_db_path, write_json);
 }
 
 bool AppController::handle_import(const std::string& path) {

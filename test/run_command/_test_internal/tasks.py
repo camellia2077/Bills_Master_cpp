@@ -13,16 +13,33 @@ class ImportTasks:
 
     def run(self):
         print(f"{constants.CYAN}--- 2. Running Import Tasks ---{constants.RESET}")
-        if not self.executor.run("Validate", ["--validate", self.bills_path], "1_validate.log"): return False
-        
-        if not self.executor.run("Modify", ["--modify", self.bills_path], "2_modify.log"): return False
+        ingest_mode = config.INGEST_MODE.lower()
+        if ingest_mode == "ingest":
+            cmd_args = ["--ingest", self.bills_path]
+            if config.INGEST_WRITE_JSON:
+                cmd_args.append("--json")
+            if not self.executor.run("Ingest", cmd_args, "1_ingest.log"):
+                return False
+            return True
+
+        if ingest_mode != "stepwise":
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(f"      {constants.RED}错误: 未知 ingest_mode: '{config.INGEST_MODE}'{constants.RESET}")
+            return False
+
+        if not self.executor.run("Validate", ["--validate", self.bills_path], "1_validate.log"):
+            return False
+
+        if not self.executor.run("Convert", ["--convert", self.bills_path], "2_convert.log"):
+            return False
 
         if not os.path.exists(self.import_path):
             print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
-            print(f"      {constants.RED}错误: '--modify' 命令执行了, 但未能创建 import 目录: '{self.import_path}'{constants.RESET}")
+            print(f"      {constants.RED}错误: '--convert' 命令执行了, 但未能创建 import 目录: '{self.import_path}'{constants.RESET}")
             return False
 
-        if not self.executor.run("Import", ["--import", self.import_path], "3_import.log"): return False
+        if not self.executor.run("Import", ["--import", self.import_path], "3_import.log"):
+            return False
         
         return True
 

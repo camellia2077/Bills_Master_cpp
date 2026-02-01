@@ -15,6 +15,8 @@ public:
 
     bool handle_validation(const std::string& path);
     bool handle_modification(const std::string& path);
+    bool handle_convert(const std::string& path);
+    bool handle_ingest(const std::string& path, bool write_json);
     bool handle_import(const std::string& path);
     bool handle_full_workflow(const std::string& path);
     bool handle_export(const std::string& type, const std::vector<std::string>& values, const std::string& format_str = "md");

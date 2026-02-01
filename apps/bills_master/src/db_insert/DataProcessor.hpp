@@ -8,7 +8,8 @@
 
 class DataProcessor {
 public:
-    bool process_and_insert(const std::string& bill_file_path, const std::string& db_path);
+ static bool process_and_insert(const std::string& bill_file_path,
+                                const std::string& db_path);
 };
 
 #endif // DATA_PROCESSOR_HPP

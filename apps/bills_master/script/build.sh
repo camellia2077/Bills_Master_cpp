@@ -11,7 +11,10 @@ echo ""
 
 echo "==> Starting the Python build script..."
 # Execute the Python script
-python3 build.py
+echo "==> Starting the Python build script..."
+# Execute the Python script
+# Execute the Python script
+python3 run.py build --mode Release "$@"
 
 echo ""
 echo "==> Launcher script finished."

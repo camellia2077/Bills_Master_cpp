@@ -1,8 +1,14 @@
 # 设置 CMake 所需的最低版本 (必须在顶层)
 cmake_minimum_required(VERSION 3.10)
 
+# 可选编译器选择（在 project() 之前生效）
+include(cmake/compiler_select.cmake)
+
 # 定义项目名称和所用语言 (必须在顶层)
-project(BillReprocessor VERSION "0.2.1" LANGUAGES CXX)
+project(BillReprocessor VERSION "0.2.8" LANGUAGES CXX)
+
+# 将模块路径添加到CMake的搜索路径中
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # 引入项目设置模块 (现在只包含路径和输出目录设置)
 include(cmake/project_setup.cmake)
@@ -21,3 +27,7 @@ include(cmake/targets.cmake)
 
 # 定义插件构建逻辑并加载所有插件
 include(cmake/plugins.cmake)
+
+# --- 代码格式化工具 ---
+include(AddFormatTarget)
+include(AddTidyFixTarget)
