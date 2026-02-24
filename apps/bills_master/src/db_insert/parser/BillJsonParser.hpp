@@ -3,9 +3,10 @@
 #ifndef BILL_JSON_PARSER_HPP
 #define BILL_JSON_PARSER_HPP
 
-#include "common/structures/CommonData.hpp"
-#include <string>
 #include <stdexcept>
+#include <string>
+
+#include "common/structures/CommonData.hpp"
 
 /**
  * @class BillJsonParser
@@ -15,14 +16,14 @@
  * ParsedBill 和 Transaction 结构体中，以供后续的数据库插入操作使用。
  */
 class BillJsonParser {
-public:
-    /**
-     * @brief 解析指定的 JSON 文件。
-     * @param file_path JSON 文件的路径。
-     * @return 一个填充了数据的 ParsedBill 结构体。
-     * @throws std::runtime_error 如果文件无法打开或 JSON 格式不正确。
-     */
-    ParsedBill parse(const std::string& file_path);
+ public:
+  /**
+   * @brief 解析指定的 JSON 文件。
+   * @param file_path JSON 文件的路径。
+   * @return 一个填充了数据的 ParsedBill 结构体。
+   * @throws std::runtime_error 如果文件无法打开或 JSON 格式不正确。
+   */
+  ParsedBill parse(const std::string& file_path);
 };
 
-#endif // BILL_JSON_PARSER_HPP
+#endif  // BILL_JSON_PARSER_HPP

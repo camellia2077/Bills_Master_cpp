@@ -2,18 +2,19 @@
 #ifndef INGEST_COMMAND_HPP
 #define INGEST_COMMAND_HPP
 
-#include "command_handler/commands/interface/ICommand.hpp"
 #include <string>
 #include <vector>
 
-class IngestCommand : public ICommand {
-public:
-    bool execute(const std::vector<std::string>& args, AppController& controller) override;
+#include "command_handler/commands/interface/ICommand.hpp"
 
-private:
-    static auto parse_args(const std::vector<std::string>& args,
-                           std::string& path,
-                           bool& write_json) -> void;
+class IngestCommand : public ICommand {
+ public:
+  bool execute(const std::vector<std::string>& args,
+               AppController& controller) override;
+
+ private:
+  static auto parse_args(const std::vector<std::string>& args,
+                         std::string& path, bool& write_json) -> void;
 };
 
-#endif // INGEST_COMMAND_HPP
+#endif  // INGEST_COMMAND_HPP

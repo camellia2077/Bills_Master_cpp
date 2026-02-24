@@ -1,7 +1,8 @@
 // command_handler/commands/ExportCommand.cpp
 #include "ExportCommand.hpp"
-#include <stdexcept>
+
 #include <print>
+#include <stdexcept>
 
 ExportCommand::ExportCommand(std::string format, std::string type_filter)
     : m_format_str(std::move(format)), m_type_filter(std::move(type_filter)) {}

@@ -3,18 +3,15 @@
 # Exit immediately if a command fails
 set -e
 
-echo "==> Changing to the script's root directory..."
-# This command ensures the script runs from its own location
-cd "$(dirname "$0")"
-echo "==> Current directory: $(pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
+echo "==> Script directory: $SCRIPT_DIR"
+echo "==> Repo root: $REPO_ROOT"
 echo ""
 
-echo "==> Starting the Python build script..."
-# Execute the Python script
-echo "==> Starting the Python build script..."
-# Execute the Python script
-# Execute the Python script
-python3 run.py build --mode Release "$@"
+echo "==> Starting the Python build script (Release)..."
+python3 "$REPO_ROOT/scripts/build_bills_master.py" build "$@"
 
 echo ""
-echo "==> Launcher script finished."
+echo "==> Build finished."

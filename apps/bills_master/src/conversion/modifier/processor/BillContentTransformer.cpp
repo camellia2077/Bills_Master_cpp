@@ -7,7 +7,8 @@
 #include "BillParser.hpp"     // --- 引入新的解析器 ---
 #include "BillProcessor.hpp"  // --- 引入新的预处理器 ---
 
-BillContentTransformer::BillContentTransformer(const Config& config) : m_config(config) {}
+BillContentTransformer::BillContentTransformer(const Config& config)
+    : m_config(config) {}
 
 auto BillContentTransformer::process(const std::string& bill_content)
     -> ParsedBill {

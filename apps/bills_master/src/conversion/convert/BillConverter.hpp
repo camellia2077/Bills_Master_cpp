@@ -2,19 +2,19 @@
 #ifndef BILL_CONVERTER_HPP
 #define BILL_CONVERTER_HPP
 
-#include "common/structures/CommonData.hpp"
-#include "conversion/modifier/_shared_structures/BillDataStructures.hpp"
-#include "nlohmann/json.hpp"
 #include <string>
 
+#include "common/structures/CommonData.hpp"
+#include "conversion/modifier/_shared_structures/BillDataStructures.hpp"
+
 class BillConverter {
-public:
-    explicit BillConverter(const nlohmann::json& config_json);
+ public:
+  explicit BillConverter(Config config);
 
-    ParsedBill convert(const std::string& bill_content);
+  ParsedBill convert(const std::string& bill_content);
 
-private:
-    Config m_config;
+ private:
+  Config m_config;
 };
 
-#endif // BILL_CONVERTER_HPP
+#endif  // BILL_CONVERTER_HPP

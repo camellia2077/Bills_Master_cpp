@@ -1,5 +1,6 @@
 // command_handler/commands/SimpleCommand.cpp
 #include "SimpleCommand.hpp"
+
 #include <stdexcept>
 
 SimpleCommand::SimpleCommand(std::string command_name, Action action)

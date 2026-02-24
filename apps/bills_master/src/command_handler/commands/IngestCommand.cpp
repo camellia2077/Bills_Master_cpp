@@ -1,5 +1,6 @@
 // command_handler/commands/IngestCommand.cpp
 #include "IngestCommand.hpp"
+
 #include <stdexcept>
 
 auto IngestCommand::execute(const std::vector<std::string>& args,
@@ -14,8 +15,7 @@ auto IngestCommand::execute(const std::vector<std::string>& args,
 }
 
 auto IngestCommand::parse_args(const std::vector<std::string>& args,
-                               std::string& path,
-                               bool& write_json) -> void {
+                               std::string& path, bool& write_json) -> void {
   for (const auto& arg : args) {
     if (arg == "--json" || arg == "-j") {
       write_json = true;

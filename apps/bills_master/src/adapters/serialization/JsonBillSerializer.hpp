@@ -5,10 +5,10 @@
 #include "ports/BillSerializer.hpp"
 
 class JsonBillSerializer : public BillSerializer {
-public:
-    auto ReadJson(const std::string& file_path) -> ParsedBill override;
-    void WriteJson(const ParsedBill& bill_data,
-                   const std::string& file_path) override;
+ public:
+  auto ReadJson(const std::string& file_path) -> ParsedBill override;
+  void WriteJson(const ParsedBill& bill_data,
+                 const std::string& file_path) override;
 };
 
-#endif // JSON_BILL_SERIALIZER_HPP
+#endif  // JSON_BILL_SERIALIZER_HPP

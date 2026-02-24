@@ -5,12 +5,13 @@
 #include "command_handler/commands/interface/ICommand.hpp"
 
 class QueryCommand : public ICommand {
-public:
-    explicit QueryCommand(std::string format);
-    bool execute(const std::vector<std::string>& args, AppController& controller) override;
+ public:
+  explicit QueryCommand(std::string format);
+  bool execute(const std::vector<std::string>& args,
+               AppController& controller) override;
 
-private:
-    std::string m_format_str;
+ private:
+  std::string m_format_str;
 };
 
-#endif // QUERY_COMMAND_HPP
+#endif  // QUERY_COMMAND_HPP

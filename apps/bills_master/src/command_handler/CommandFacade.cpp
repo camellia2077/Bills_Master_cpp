@@ -1,46 +1,58 @@
 // command_handler/CommandFacade.cpp
 #include "CommandFacade.hpp"
+
 #include "app_controller/AppController.hpp"
 #include "common/common_utils.hpp"
 #include "usage_help.hpp"
 
 // 引入所有具体的命令类
-#include "commands/SimpleCommand.hpp"
-#include "commands/ExportCommand.hpp"
-#include "commands/QueryCommand.hpp"
-#include "commands/IngestCommand.hpp"
-
 #include <iostream>
 #include <print>
 #include <stdexcept>
 
-void CommandFacade::register_commands(const std::string& format, const std::string& type_filter) {
-    // 注册简单命令
-    m_commands["--validate"] = std::make_unique<SimpleCommand>("validate", &AppController::handle_validation);
-    m_commands["-v"] = std::make_unique<SimpleCommand>("validate", &AppController::handle_validation);
-    
-    m_commands["--modify"] = std::make_unique<SimpleCommand>("modify", &AppController::handle_modification);
-    m_commands["-m"] = std::make_unique<SimpleCommand>("modify", &AppController::handle_modification);
+#include "commands/ExportCommand.hpp"
+#include "commands/IngestCommand.hpp"
+#include "commands/QueryCommand.hpp"
+#include "commands/SimpleCommand.hpp"
 
-    m_commands["--convert"] = std::make_unique<SimpleCommand>("convert", &AppController::handle_convert);
-    m_commands["-c"] = std::make_unique<SimpleCommand>("convert", &AppController::handle_convert);
+void CommandFacade::register_commands(const std::string& format,
+                                      const std::string& type_filter) {
+  // 注册简单命令
+  m_commands["--validate"] = std::make_unique<SimpleCommand>(
+      "validate", &AppController::handle_validation);
+  m_commands["-v"] = std::make_unique<SimpleCommand>(
+      "validate", &AppController::handle_validation);
 
-    m_commands["--import"] = std::make_unique<SimpleCommand>("import", &AppController::handle_import);
-    m_commands["-i"] = std::make_unique<SimpleCommand>("import", &AppController::handle_import);
+  m_commands["--modify"] = std::make_unique<SimpleCommand>(
+      "modify", &AppController::handle_modification);
+  m_commands["-m"] = std::make_unique<SimpleCommand>(
+      "modify", &AppController::handle_modification);
 
-    m_commands["--ingest"] = std::make_unique<IngestCommand>();
-    m_commands["-I"] = std::make_unique<IngestCommand>();
+  m_commands["--convert"] = std::make_unique<SimpleCommand>(
+      "convert", &AppController::handle_convert);
+  m_commands["-c"] = std::make_unique<SimpleCommand>(
+      "convert", &AppController::handle_convert);
 
-    // [新增] 注册完整工作流命令
-    m_commands["--full-workflow"] = std::make_unique<SimpleCommand>("full-workflow", &AppController::handle_full_workflow);
-    m_commands["-F"] = std::make_unique<SimpleCommand>("full-workflow", &AppController::handle_full_workflow);
+  m_commands["--import"] =
+      std::make_unique<SimpleCommand>("import", &AppController::handle_import);
+  m_commands["-i"] =
+      std::make_unique<SimpleCommand>("import", &AppController::handle_import);
 
-    // 注册复杂命令，并传入全局选项
-    m_commands["--export"] = std::make_unique<ExportCommand>(format, type_filter);
-    m_commands["-e"] = std::make_unique<ExportCommand>(format, type_filter);
+  m_commands["--ingest"] = std::make_unique<IngestCommand>();
+  m_commands["-I"] = std::make_unique<IngestCommand>();
 
-    m_commands["--query"] = std::make_unique<QueryCommand>(format);
-    m_commands["-q"] = std::make_unique<QueryCommand>(format);
+  // [新增] 注册完整工作流命令
+  m_commands["--full-workflow"] = std::make_unique<SimpleCommand>(
+      "full-workflow", &AppController::handle_full_workflow);
+  m_commands["-F"] = std::make_unique<SimpleCommand>(
+      "full-workflow", &AppController::handle_full_workflow);
+
+  // 注册复杂命令，并传入全局选项
+  m_commands["--export"] = std::make_unique<ExportCommand>(format, type_filter);
+  m_commands["-e"] = std::make_unique<ExportCommand>(format, type_filter);
+
+  m_commands["--query"] = std::make_unique<QueryCommand>(format);
+  m_commands["-q"] = std::make_unique<QueryCommand>(format);
 }
 
 auto CommandFacade::run(int argc, char* argv[]) -> int {
@@ -84,7 +96,7 @@ auto CommandFacade::run(int argc, char* argv[]) -> int {
       return 0;
     }
     if (command_name == "--version" || command_name == "-V") {
-      AppController().display_version();
+      AppController::display_version();
       return 0;
     }
 
@@ -92,10 +104,10 @@ auto CommandFacade::run(int argc, char* argv[]) -> int {
     register_commands(format_str, type_filter);
 
     // 3. 查找并执行命令
-    auto it = m_commands.find(command_name);
-    if (it != m_commands.end()) {
+    auto command_it = m_commands.find(command_name);
+    if (command_it != m_commands.end()) {
       AppController controller;  // 仅在需要执行命令时创建
-      if (it->second->execute(command_args, controller)) {
+      if (command_it->second->execute(command_args, controller)) {
         return 0;  // 成功
       }
       return 1;  // 失败

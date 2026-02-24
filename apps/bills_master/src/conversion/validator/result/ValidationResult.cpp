@@ -1,13 +1,14 @@
 // conversion/validator/result/ValidationResult.cpp
 #include "ValidationResult.hpp"
-#include "common/common_utils.hpp" // For using color macros
+
+#include "common/common_utils.hpp"  // For using color macros
 
 void ValidationResult::add_error(const std::string& message) {
-    errors.push_back(message);
+  errors.push_back(message);
 }
 
 void ValidationResult::add_warning(const std::string& message) {
-    warnings.push_back(message);
+  warnings.push_back(message);
 }
 
 auto ValidationResult::has_errors() const -> bool {
@@ -18,7 +19,8 @@ auto ValidationResult::has_errors() const -> bool {
 //
 // **关于为何将错误输出从 std::cerr 改为 std::cout 的说明**
 //
-// 按照标准实践，错误信息通常应输出到标准错误流 (std::cerr)，而常规信息输出到标准输出流 (std::cout)。
+// 按照标准实践，错误信息通常应输出到标准错误流
+// (std::cerr)，而常规信息输出到标准输出流 (std::cout)。
 // 然而，在本项目中，我们特意将所有输出（包括错误）都定向到了 std::cout。
 //
 // **理由如下:**
@@ -29,33 +31,36 @@ auto ValidationResult::has_errors() const -> bool {
 // 通过将所有内容输出到同一个流，我们确保了日志的 **时序一致性** 和 **可读性**。
 // 错误信息会紧跟在产生它的操作之后，极大地提升了调试效率。
 //
-// 在这个特定的测试场景下，我们认为 **日志的易读性比严格遵守流分离的规范更重要**。
-// 程序依然通过 **退出码 (Exit Code)** 来向外部脚本报告成功或失败的状态，这是更健壮的机制。
+// 在这个特定的测试场景下，我们认为
+// **日志的易读性比严格遵守流分离的规范更重要**。 程序依然通过 **退出码 (Exit
+// Code)** 来向外部脚本报告成功或失败的状态，这是更健壮的机制。
 //
 void ValidationResult::print_report() const {
-    std::cout << "\n--- Validation Report ---\n";
-    if (errors.empty() && warnings.empty()) {
-        std::cout << "Validation passed, no errors or warnings found.\n";
-        return;
-    }
+  std::cout << "\n--- Validation Report ---\n";
+  if (errors.empty() && warnings.empty()) {
+    std::cout << "Validation passed, no errors or warnings found.\n";
+    return;
+  }
 
-    if (!errors.empty()) {
-        std::cout << RED_COLOR << "Found " << errors.size() << " error(s):\n" << RESET_COLOR;
-        for (const auto& err : errors) {
-            std::cout << "- " << err << std::endl;
-        }
+  if (!errors.empty()) {
+    std::cout << RED_COLOR << "Found " << errors.size() << " error(s):\n"
+              << RESET_COLOR;
+    for (const auto& err : errors) {
+      std::cout << "- " << err << std::endl;
     }
+  }
 
-    if (!warnings.empty()) {
-        std::cout << YELLOW_COLOR << "Found " << warnings.size() << " warning(s):\n" << RESET_COLOR;
-        for (const auto& warn : warnings) {
-            std::cout << "- " << warn << std::endl;
-        }
+  if (!warnings.empty()) {
+    std::cout << YELLOW_COLOR << "Found " << warnings.size() << " warning(s):\n"
+              << RESET_COLOR;
+    for (const auto& warn : warnings) {
+      std::cout << "- " << warn << std::endl;
     }
-    std::cout << "--- End of Report ---\n\n";
+  }
+  std::cout << "--- End of Report ---\n\n";
 }
 
 void ValidationResult::clear() {
-    errors.clear();
-    warnings.clear();
+  errors.clear();
+  warnings.clear();
 }

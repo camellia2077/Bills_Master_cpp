@@ -15,7 +15,12 @@ except ModuleNotFoundError:
 # 获取当前配置文件所在的目录
 _current_dir = os.path.dirname(os.path.abspath(__file__))
 # config.toml 与 run_tests.py 同级，位于 _test_internal 上一级目录
-_config_path = os.path.join(os.path.dirname(_current_dir), "config.toml")
+_default_config_path = os.path.join(os.path.dirname(_current_dir), "config.toml")
+_config_path = os.environ.get("BILLS_MASTER_TEST_CONFIG", "").strip()
+if _config_path:
+    _config_path = os.path.abspath(_config_path)
+else:
+    _config_path = _default_config_path
 
 try:
     open_mode = "rb" if _USE_BINARY else "r"

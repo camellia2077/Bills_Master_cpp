@@ -8,4 +8,4 @@
  */
 void print_help(const char* program_name);
 
-#endif // USAGE_HELP_HPP
+#endif  // USAGE_HELP_HPP

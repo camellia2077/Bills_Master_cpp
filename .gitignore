@@ -1,12 +1,17 @@
 build/
-build_debug/
+build_tidy/
+build_fast/
 my_test/
 .vscode/
 pdf_files/
 __pycache__/
+build_*/
+temp/
 
 bills_output_from_config/
+output/
 
+*.log
 *.pdf
 *.rst
 # 忽略所有 .exe 可执行文件

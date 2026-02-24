@@ -1,9 +1,11 @@
 // conversion/validator/BillValidator.cpp
 #include "BillValidator.hpp"
-#include "common/common_utils.hpp"
+
 #include <iostream>
-#include <string>
 #include <sstream>
+#include <string>
+
+#include "common/common_utils.hpp"
 
 // --- NEW: TxtStructureVerifier implementation ---
 auto TxtStructureVerifier::verify(const std::string& bill_content,
@@ -69,18 +71,18 @@ auto BillContentValidator::verify(const ParsedBill& bill_data,
 }
 
 // --- BillValidator Implementation ---
-BillValidator::BillValidator(const nlohmann::json& config_json)
-    : m_config(std::make_unique<BillConfig>(config_json))
-{
-    std::cout << "BillValidator initialized successfully, configuration loaded.\n";
+BillValidator::BillValidator(BillConfig config)
+    : m_config(std::make_unique<BillConfig>(std::move(config))) {
+  std::cout
+      << "BillValidator initialized successfully, configuration loaded.\n";
 }
 
 auto BillValidator::validate_txt_structure(const std::string& bill_content,
                                            ValidationResult& result) -> bool {
-  return m_txt_verifier.verify(bill_content, result);
+  return TxtStructureVerifier::verify(bill_content, result);
 }
 
 auto BillValidator::validate_bill_content(const ParsedBill& bill_data,
                                           ValidationResult& result) -> bool {
-  return m_bill_verifier.verify(bill_data, *m_config, result);
+  return BillContentValidator::verify(bill_data, *m_config, result);
 }

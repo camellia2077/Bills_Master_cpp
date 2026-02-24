@@ -1,0 +1,191 @@
+#!/usr/bin/env python3
+
+import argparse
+import subprocess
+import sys
+from pathlib import Path
+
+from bills_master_builder.task_splitter import split_tidy_logs
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent
+PROJECT_DIR = REPO_ROOT / "apps" / "bills_master"
+
+
+def run_command(command: list[str], cwd: Path) -> None:
+    print(f"==> Running command: {' '.join(command)}")
+    try:
+        subprocess.run(command, check=True, cwd=cwd)
+    except FileNotFoundError:
+        print(
+            f"!!! Error: Command '{command[0]}' not found. "
+            "Is it installed and in your PATH?"
+        )
+        sys.exit(1)
+    except subprocess.CalledProcessError as exc:
+        print(f"\n!!! A build step failed with exit code {exc.returncode}.")
+        sys.exit(exc.returncode)
+
+
+def ensure_cmake_configured(
+    build_dir: Path, generator: str, build_type: str, compiler: str
+) -> None:
+    if not build_dir.exists():
+        print(f"==> Creating build directory: {build_dir}")
+        build_dir.mkdir(parents=True)
+
+    cache_file = build_dir / "CMakeCache.txt"
+    if cache_file.is_file():
+        print("==> Using existing CMake configuration.")
+        return
+
+    cmake_args = [
+        "cmake",
+        "-S",
+        str(PROJECT_DIR),
+        "-B",
+        str(build_dir),
+        "-G",
+        generator,
+        f"-DCMAKE_BUILD_TYPE={build_type}",
+        "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
+        "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
+    ]
+    if compiler:
+        cmake_args.append(f"-DBILL_COMPILER={compiler}")
+
+    run_command(cmake_args, cwd=PROJECT_DIR)
+
+
+def run_build_capture(
+    build_dir: Path, target: str | None, extra_args: list[str] | None = None
+) -> tuple[list[str], bool]:
+    command = ["cmake", "--build", str(build_dir)]
+    if target:
+        command.extend(["--target", target])
+    if extra_args:
+        command.extend(extra_args)
+
+    print(f"==> Running command: {' '.join(command)}")
+    try:
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except FileNotFoundError:
+        print(
+            f"!!! Error: Command '{command[0]}' not found. "
+            "Is it installed and in your PATH?"
+        )
+        sys.exit(1)
+
+    log_path = build_dir / "build.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    log_lines: list[str] = []
+    assert process.stdout is not None
+    with log_path.open("w", encoding="utf-8") as log_file:
+        for line in process.stdout:
+            log_lines.append(line)
+            log_file.write(line)
+            print(line, end="")
+
+    process.wait()
+    success = process.returncode == 0
+    if success:
+        print("==> Build finished successfully.")
+    else:
+        print(f"==> Build failed with exit code {process.returncode}.")
+    return log_lines, success
+
+
+def run_build(build_dir: Path, build_type: str, extra_args: list[str] | None = None) -> list[str]:
+    ensure_cmake_configured(
+        build_dir=build_dir,
+        generator="Ninja",
+        build_type=build_type,
+        compiler="gcc",
+    )
+
+    log_lines, success = run_build_capture(
+        build_dir, target=None, extra_args=extra_args
+    )
+    if not success:
+        sys.exit(1)
+    return log_lines
+
+
+def run_tidy(extra_args: list[str] | None = None) -> None:
+    build_dir = PROJECT_DIR / "build_tidy"
+
+    ensure_cmake_configured(
+        build_dir=build_dir,
+        generator="Ninja",
+        build_type="Debug",
+        compiler="gcc",
+    )
+
+    print("==> Running clang-tidy checks...")
+    log_lines, success = run_build_capture(
+        build_dir, target="tidy", extra_args=extra_args
+    )
+
+    if log_lines:
+        tasks_dir = build_dir / "tasks"
+        count = split_tidy_logs(log_lines, tasks_dir)
+        print(f"==> Created {count} task log files in {tasks_dir}")
+    else:
+        print("==> No build output captured; skipping task split.")
+
+    if not success:
+        sys.exit(1)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Bills Master build helper")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    build_parser = subparsers.add_parser("build", help="Run a Release build")
+    build_parser.add_argument(
+        "extra", nargs=argparse.REMAINDER, help="Extra args for cmake --build"
+    )
+
+    build_fast_parser = subparsers.add_parser(
+        "build_fast", help="Run a fast Debug build"
+    )
+    build_fast_parser.add_argument(
+        "extra", nargs=argparse.REMAINDER, help="Extra args for cmake --build"
+    )
+
+    tidy_parser = subparsers.add_parser("tidy", help="Run clang-tidy checks")
+    tidy_parser.add_argument(
+        "extra", nargs=argparse.REMAINDER, help="Extra args for cmake --build"
+    )
+
+    args = parser.parse_args()
+
+    extra_args: list[str] = []
+    if hasattr(args, "extra"):
+        extra_args = args.extra
+        if extra_args and extra_args[0] == "--":
+            extra_args = extra_args[1:]
+
+    if args.command == "build":
+        run_build(PROJECT_DIR / "build", build_type="Release", extra_args=extra_args)
+    elif args.command == "build_fast":
+        run_build(PROJECT_DIR / "build_fast", build_type="Debug", extra_args=extra_args)
+    elif args.command == "tidy":
+        run_tidy(extra_args=extra_args)
+    else:
+        parser.print_help()
+        return 1
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

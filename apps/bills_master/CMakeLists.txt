@@ -30,4 +30,4 @@ include(cmake/plugins.cmake)
 
 # --- 代码格式化工具 ---
 include(AddFormatTarget)
-include(AddTidyFixTarget)
+include(AddTidyTarget)

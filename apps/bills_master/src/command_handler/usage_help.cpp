@@ -1,15 +1,15 @@
 // command_handler/usage_help.cpp
 
 #include "usage_help.hpp"
-#include <iostream>
-#include <string>
-#include <print>
 
-#include "common/common_utils.hpp" // Required for color codes
+#include <iostream>
+#include <print>
+#include <string>
+
+#include "common/common_utils.hpp"  // Required for color codes
 
 void print_help(const char* program_name) {
   std::string command_color = CYAN_COLOR;
-  std::string tile_color = GREEN_COLOR;
 
   std::println(
       "Bill Master - A command-line tool for processing bill files.\n");
@@ -24,8 +24,7 @@ void print_help(const char* program_name) {
       "  Validates the format of one or more bill files at the given path.\n");
 
   std::println("{}--modify, -m{} <path>", command_color, RESET_COLOR);
-  std::println(
-      "  Converts bill files to JSON (legacy alias of --convert).\n");
+  std::println("  Converts bill files to JSON (legacy alias of --convert).\n");
 
   std::println("{}--convert, -c{} <path>", command_color, RESET_COLOR);
   std::println("  Converts bill files to JSON for persistence.\n");
@@ -33,9 +32,11 @@ void print_help(const char* program_name) {
   std::println("{}--import, -i{} <path>", command_color, RESET_COLOR);
   std::println("  Parses and inserts bill data into the database.\n");
 
-  std::println("{}--ingest, -I{} <path> [--json|-j]", command_color, RESET_COLOR);
+  std::println("{}--ingest, -I{} <path> [--json|-j]", command_color,
+               RESET_COLOR);
   std::println(
-      "  Validates, converts, and inserts bill files. Use --json to persist JSON locally.\n");
+      "  Validates, converts, and inserts bill files. Use --json to persist "
+      "JSON locally.\n");
 
   // [新增] 添加 full-workflow 的帮助说明
   std::println("{}--full-workflow, -F{} <path>", command_color, RESET_COLOR);

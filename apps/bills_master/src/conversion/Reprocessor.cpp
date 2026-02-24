@@ -1,20 +1,22 @@
 // conversion/Reprocessor.cpp
 #include "Reprocessor.hpp"
-#include "conversion/validator/result/ValidationResult.hpp" // 需要包含此文件以使用 ValidationResult
-#include "common/common_utils.hpp" // 用于颜色输出
+
 #include <iostream>
 
-// 构造函数保持不变
-Reprocessor::Reprocessor(const nlohmann::json& validator_config_json, const nlohmann::json& modifier_config_json) {
-    try {
-        m_validator = std::make_unique<BillValidator>(validator_config_json);
-        m_converter = std::make_unique<BillConverter>(modifier_config_json);
-    } catch (const std::exception& e) {
-        std::cerr << "在 Reprocessor 内部组件初始化过程中发生错误: " << e.what() << std::endl;
-        throw;
-    }
-}
+#include "common/common_utils.hpp"                           // 用于颜色输出
+#include "conversion/validator/result/ValidationResult.hpp"  // 需要包含此文件以使用 ValidationResult
 
+// 构造函数保持不变
+Reprocessor::Reprocessor(BillConfig validator_config, Config modifier_config) {
+  try {
+    m_validator = std::make_unique<BillValidator>(std::move(validator_config));
+    m_converter = std::make_unique<BillConverter>(std::move(modifier_config));
+  } catch (const std::exception& e) {
+    std::cerr << "在 Reprocessor 内部组件初始化过程中发生错误: " << e.what()
+              << std::endl;
+    throw;
+  }
+}
 
 // --- MODIFIED: validate_content 方法实现了新的流程编排逻辑 ---
 auto Reprocessor::validate_content(const std::string& bill_content,

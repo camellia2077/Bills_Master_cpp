@@ -1,5 +1,6 @@
 // command_handler/commands/QueryCommand.cpp
 #include "QueryCommand.hpp"
+
 #include <stdexcept>
 
 QueryCommand::QueryCommand(std::string format)

@@ -3,7 +3,8 @@
 #define I_YEARLY_REPORT_FORMATTER_HPP
 
 #include <string>
-#include "reports/yearly_report/YearlyReportData.hpp" // Path to the data structure
+
+#include "reports/yearly_report/YearlyReportData.hpp"  // Path to the data structure
 
 /**
  * @class IYearlyReportFormatter
@@ -13,16 +14,17 @@
  * It allows client code to handle different report formats in a uniform way.
  */
 class IYearlyReportFormatter {
-public:
-    // A virtual destructor is essential for a base class with virtual functions.
-    virtual ~IYearlyReportFormatter() = default;
+ public:
+  // A virtual destructor is essential for a base class with virtual functions.
+  virtual ~IYearlyReportFormatter() = default;
 
-    /**
-     * @brief Formats the yearly report data.
-     * @param data The YearlyReportData struct containing all report data.
-     * @return A formatted string representing the full report.
-     */
-    virtual std::string format_report(const YearlyReportData& data) const = 0; // Pure virtual function
+  /**
+   * @brief Formats the yearly report data.
+   * @param data The YearlyReportData struct containing all report data.
+   * @return A formatted string representing the full report.
+   */
+  virtual std::string format_report(
+      const YearlyReportData& data) const = 0;  // Pure virtual function
 };
 
-#endif // I_YEARLY_REPORT_FORMATTER_HPP
+#endif  // I_YEARLY_REPORT_FORMATTER_HPP

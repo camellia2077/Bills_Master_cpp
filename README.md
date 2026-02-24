@@ -78,4 +78,5 @@
 本项目的诞生离不开以下贡献者的努力：
 
 * **[@camellia2077](https://github.com/camellia2077)**: 项目的发起者与核心开发者。
-* **Google Gemini 2.5 Pro**: 提供了贯穿项目开发全流程的 AI 辅助。
+* **Google Gemini 2.5 Pro & 3 Pro**: 提供了贯穿项目开发全流程的 AI 辅助与高级逻辑优化。
+* **GPT-5.2 Codex**: 提供了高效的代码生成与重构支持。

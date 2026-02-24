@@ -1,0 +1,38 @@
+
+
+# **`TODO.md`**
+
+
+
+
+
+## P0: 紧急修复 (Critical Bugs)
+
+
+
+## P1: 高优先级 (High Priority)
+
+* **使用cjson来替换现在的json库，使用两套json库，编译的时候编译不同的exe**
+
+## P2: 中优先级 (New Features & Improvements)
+
+* **使用json来自定义导出latex,typ的字体格式**
+
+  * **[ ] 给parent_item加入注释字段**
+
+* **[ ] 给Modifier_Config配置文件进行合法性验证**
+
+  * **[ ] 功能开发: 在导出报告中增加 `source`, `comment`, `transaction_type`,  字段是否输出的json选项**
+
+      * **描述**: 目前这三个字段已成功存入数据库，但尚未在最终报告中展示。应该给导出模块增加json配置，因为用户有时候只想看到最简洁的导出，不需要`source`, `comment`, `transaction_type` ,   这些字段。
+
+
+  * **[ ] 功能增强：为年度报告增加月度平均值和差异分析**
+
+      * **描述**: 增强年度报告的数据分析能力，使其更具参考价值。
+      * **任务**:
+        1.  **计算逻辑**: 在 `YearlyReportGenerator` 或 `YearQuery` 中，计算出年度总支出后，除以有数据的月份数，得到“月平均支出”。
+        2.  **数据展示**: 在所有格式的年度报告中，为每个月的数据行增加一列或一行，显示该月支出与“月平均支出”的差额（例如 `+150.70` 或 `-88.25`）。
+
+## P3: 低优先级 (Refactoring & Investigation)
+(暂无)
