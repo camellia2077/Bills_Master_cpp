@@ -27,8 +27,8 @@ def main() -> int:
         "workflow",
         nargs="?",
         default="bills",
-        choices=["bills", "bills-build", "log-build"],
-        help="bills=build+CLI test, bills-build=compile bills_master, log-build=compile log_generator",
+        choices=["bills", "bills-build", "core-build", "core-abi", "log-build"],
+        help="bills=build+CLI test, bills-build=compile bills_windows_cli, core-build=compile bills_core, core-abi=run ABI smoke tests, log-build=compile log_generator",
     )
     parser.add_argument(
         "extra",
@@ -49,6 +49,16 @@ def main() -> int:
         entry = repo_root / "scripts" / "build_bills_master.py"
         if not forwarded:
             forwarded = ["build_fast"]
+        return run([python_exe, str(entry), *forwarded])
+
+    if args.workflow == "core-build":
+        entry = repo_root / "scripts" / "build_bills_core.py"
+        if not forwarded:
+            forwarded = ["build_fast", "--shared"]
+        return run([python_exe, str(entry), *forwarded])
+
+    if args.workflow == "core-abi":
+        entry = repo_root / "scripts" / "test_bills_core_abi.py"
         return run([python_exe, str(entry), *forwarded])
 
     entry = repo_root / "scripts" / "build_log_generator.py"

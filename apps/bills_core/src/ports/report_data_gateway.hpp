@@ -1,0 +1,21 @@
+#ifndef REPORT_DATA_GATEWAY_HPP
+#define REPORT_DATA_GATEWAY_HPP
+
+#include <string>
+#include <vector>
+
+#include "ports/contracts/reports/monthly/monthly_report_data.hpp"
+#include "ports/contracts/reports/yearly/yearly_report_data.hpp"
+
+class ReportDataGateway {
+ public:
+  virtual ~ReportDataGateway() = default;
+
+  [[nodiscard]] virtual auto ReadMonthlyData(int year, int month)
+      -> MonthlyReportData = 0;
+  [[nodiscard]] virtual auto ReadYearlyData(int year) -> YearlyReportData = 0;
+  [[nodiscard]] virtual auto ListAvailableMonths()
+      -> std::vector<std::string> = 0;
+};
+
+#endif  // REPORT_DATA_GATEWAY_HPP

@@ -1,0 +1,22 @@
+// reports/monthly_report/MonthlyReportGenerator.hpp
+#ifndef MONTHLY_REPORT_GENERATOR_HPP
+#define MONTHLY_REPORT_GENERATOR_HPP
+
+#include <string>
+
+#include "ports/month_report_formatter_provider.hpp"
+#include "ports/report_data_gateway.hpp"
+
+class MonthlyReportGenerator {
+ public:
+  explicit MonthlyReportGenerator(ReportDataGateway* report_data_gateway,
+                                  MonthReportFormatterProvider* formatter_provider);
+
+  std::string generate(int year, int month, const std::string& format_name);
+
+ private:
+  ReportDataGateway* report_data_gateway_;
+  MonthReportFormatterProvider* formatter_provider_;
+};
+
+#endif  // MONTHLY_REPORT_GENERATOR_HPP

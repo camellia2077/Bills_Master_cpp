@@ -10,6 +10,8 @@ temp/
 
 bills_output_from_config/
 output/
+test/config/
+test/plugins/
 
 *.log
 *.pdf

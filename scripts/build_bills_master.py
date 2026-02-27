@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -9,7 +10,7 @@ from bills_master_builder.task_splitter import split_tidy_logs
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
-PROJECT_DIR = REPO_ROOT / "apps" / "bills_master"
+PROJECT_DIR = REPO_ROOT / "apps" / "bills_windows_cli"
 
 
 def run_command(command: list[str], cwd: Path) -> None:
@@ -27,6 +28,17 @@ def run_command(command: list[str], cwd: Path) -> None:
         sys.exit(exc.returncode)
 
 
+def read_cache_home_directory(cache_file: Path) -> Path | None:
+    try:
+        with cache_file.open("r", encoding="utf-8", errors="ignore") as handle:
+            for line in handle:
+                if line.startswith("CMAKE_HOME_DIRECTORY:INTERNAL="):
+                    return Path(line.split("=", 1)[1].strip())
+    except OSError:
+        return None
+    return None
+
+
 def ensure_cmake_configured(
     build_dir: Path, generator: str, build_type: str, compiler: str
 ) -> None:
@@ -36,8 +48,13 @@ def ensure_cmake_configured(
 
     cache_file = build_dir / "CMakeCache.txt"
     if cache_file.is_file():
-        print("==> Using existing CMake configuration.")
-        return
+        cached_home = read_cache_home_directory(cache_file)
+        if cached_home is not None and cached_home.resolve() == PROJECT_DIR.resolve():
+            print("==> Using existing CMake configuration.")
+            return
+        print("==> Existing CMake cache points to a different source. Recreating build directory.")
+        shutil.rmtree(build_dir)
+        build_dir.mkdir(parents=True, exist_ok=True)
 
     cmake_args = [
         "cmake",
