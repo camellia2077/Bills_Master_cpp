@@ -45,6 +45,7 @@ PLUGINS = _data.get("plugins", {})
 SETTINGS = _data.get("settings", {})
 CLEANUP = _data.get("cleanup", {})
 TEST_DATES = _data.get("test_dates", {})
+RUNTIME = _data.get("runtime", {})
 
 def _resolve_config_path(raw_path):
     if not raw_path:
@@ -56,6 +57,13 @@ def _resolve_config_path(raw_path):
 BUILD_DIR = _resolve_config_path(PATHS.get("build_dir"))
 BILLS_DIR = _resolve_config_path(PATHS.get("bills_dir"))
 IMPORT_DIR = _resolve_config_path(PATHS.get("import_dir"))
+_runtime_base_raw = RUNTIME.get("base_dir", "")
+RUNTIME_BASE_DIR = _resolve_config_path(_runtime_base_raw) if _runtime_base_raw else ""
+RUNTIME_RUN_ID = str(RUNTIME.get("run_id", "")).strip()
+_runtime_output_raw = RUNTIME.get("output_dir", "")
+RUNTIME_OUTPUT_DIR = _resolve_config_path(_runtime_output_raw) if _runtime_output_raw else ""
+_runtime_summary_raw = RUNTIME.get("summary_path", "")
+RUNTIME_SUMMARY_PATH = _resolve_config_path(_runtime_summary_raw) if _runtime_summary_raw else ""
 
 PLUGIN_DLLS = PLUGINS.get("plugin_dlls", [])
 
@@ -63,6 +71,8 @@ RUN_EXPORT_ALL_TASKS = SETTINGS.get("run_export_all_tasks", True)
 EXPORT_FORMATS = SETTINGS.get("export_formats", [])
 INGEST_MODE = SETTINGS.get("ingest_mode", "stepwise")
 INGEST_WRITE_JSON = SETTINGS.get("ingest_write_json", False)
+EXPORT_PIPELINE = SETTINGS.get("export_pipeline", "model-first")
+OUTPUT_PROJECT = SETTINGS.get("output_project", "bills_tracer")
 
 FILES_TO_DELETE = CLEANUP.get("files_to_delete", [])
 DIRS_TO_DELETE = CLEANUP.get("dirs_to_delete", [])

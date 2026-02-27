@@ -1,0 +1,97 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "report_type": "yearly",
+    "generated_at_utc": "2026-02-27T13:22:22Z",
+    "source": "bills_core"
+  },
+  "scope": {
+    "period_start": "2024-01",
+    "period_end": "2024-12",
+    "remark": "",
+    "data_found": true
+  },
+  "summary": {
+    "total_income": 145582.91,
+    "total_expense": -16350.18,
+    "balance": 129232.73000000001
+  },
+  "items": {
+    "categories": [],
+    "monthly_summary": [
+      {
+        "month": 1,
+        "income": 13389.61,
+        "expense": -1220.59,
+        "balance": 14610.2
+      },
+      {
+        "month": 2,
+        "income": 14618.69,
+        "expense": -1199.54,
+        "balance": 15818.23
+      },
+      {
+        "month": 3,
+        "income": 14861.35,
+        "expense": -1580.39,
+        "balance": 16441.74
+      },
+      {
+        "month": 4,
+        "income": 8555.37,
+        "expense": -1561.3,
+        "balance": 10116.67
+      },
+      {
+        "month": 5,
+        "income": 9247.81,
+        "expense": -1300.78,
+        "balance": 10548.59
+      },
+      {
+        "month": 6,
+        "income": 13912.67,
+        "expense": -1545.28,
+        "balance": 15457.95
+      },
+      {
+        "month": 7,
+        "income": 11161.28,
+        "expense": -1168.21,
+        "balance": 12329.490000000002
+      },
+      {
+        "month": 8,
+        "income": 12480.06,
+        "expense": -1402.88,
+        "balance": 13882.939999999999
+      },
+      {
+        "month": 9,
+        "income": 13295.75,
+        "expense": -1400.34,
+        "balance": 14696.09
+      },
+      {
+        "month": 10,
+        "income": 11913.79,
+        "expense": -1225.07,
+        "balance": 13138.86
+      },
+      {
+        "month": 11,
+        "income": 11397.36,
+        "expense": -1366.05,
+        "balance": 12763.41
+      },
+      {
+        "month": 12,
+        "income": 10749.17,
+        "expense": -1379.75,
+        "balance": 12128.92
+      }
+    ]
+  },
+  "extensions": {}
+}

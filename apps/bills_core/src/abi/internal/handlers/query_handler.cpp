@@ -2,7 +2,12 @@
 
 #include <algorithm>
 #include <cctype>
+#include <regex>
 
+#include "ports/contracts/reports/monthly/monthly_report_data.hpp"
+#include "ports/contracts/reports/yearly/yearly_report_data.hpp"
+#include "reports/standard_json/standard_report_assembler.hpp"
+#include "reports/standard_json/standard_report_json_serializer.hpp"
 #include "serialization/bills_json_serializer.hpp"
 
 namespace bills::core::abi {
@@ -30,24 +35,20 @@ auto parse_year_string(const std::string& raw, int& year) -> bool {
 }
 
 auto parse_month_string(const std::string& raw, int& year, int& month) -> bool {
-  if (raw.size() != 6U) {
+  static const std::regex kIsoMonthRegex(R"(^(\d{4})-(0[1-9]|1[0-2])$)");
+  std::smatch match;
+  if (!std::regex_match(raw, match, kIsoMonthRegex) || match.size() != 3U) {
     return false;
   }
-
   try {
-    year = std::stoi(raw.substr(0U, 4U));
-    month = std::stoi(raw.substr(4U, 2U));
+    year = std::stoi(match[1].str());
+    month = std::stoi(match[2].str());
   } catch (...) {
     return false;
   }
 
   return year >= 1900 && year <= 9999 && month >= 1 && month <= 12;
 }
-
-struct QueryMonthTotals {
-  double income = 0.0;
-  double expense = 0.0;
-};
 
 }  // namespace
 
@@ -120,10 +121,15 @@ auto handle_query_command(const Json& request) -> std::string {
   double total_income = 0.0;
   double total_expense = 0.0;
   double total_balance = 0.0;
-  std::map<int, QueryMonthTotals> monthly_summary;
+  std::map<int, MonthlySummary> yearly_monthly_summary;
   std::map<std::string, double> income_by_parent;
   std::map<std::string, double> expense_by_parent;
+  MonthlyReportData monthly_report_data;
   Json file_results = Json::array();
+
+  monthly_report_data.year = query_year;
+  monthly_report_data.month = query_month;
+  monthly_report_data.data_found = false;
 
   for (const auto& file : files) {
     Json item;
@@ -143,6 +149,7 @@ auto handle_query_command(const Json& request) -> std::string {
         total_income += bill_data.total_income;
         total_expense += bill_data.total_expense;
         total_balance += bill_data.balance;
+        monthly_report_data.data_found = true;
 
         item["date"] = bill_data.date;
         item["year"] = bill_data.year;
@@ -150,12 +157,20 @@ auto handle_query_command(const Json& request) -> std::string {
         item["transaction_count"] = bill_data.transactions.size();
 
         if (is_year_query) {
-          auto& summary = monthly_summary[bill_data.month];
+          auto& summary = yearly_monthly_summary[bill_data.month];
           summary.income += bill_data.total_income;
           summary.expense += bill_data.total_expense;
         }
 
         for (const auto& transaction : bill_data.transactions) {
+          if (is_month_query) {
+            auto& parent_data = monthly_report_data.aggregated_data[transaction.parent_category];
+            parent_data.parent_total += transaction.amount;
+            auto& sub_data = parent_data.sub_categories[transaction.sub_category];
+            sub_data.sub_total += transaction.amount;
+            sub_data.transactions.push_back(transaction);
+          }
+
           const std::string txn_type = to_ascii_lower(transaction.transaction_type);
           if (txn_type == "income") {
             income_by_parent[transaction.parent_category] += transaction.amount;
@@ -190,6 +205,10 @@ auto handle_query_command(const Json& request) -> std::string {
   data["total_expense"] = total_expense;
   data["balance"] = total_balance;
 
+  monthly_report_data.total_income = total_income;
+  monthly_report_data.total_expense = total_expense;
+  monthly_report_data.balance = total_balance;
+
   Json category_totals = Json::object();
   Json income_categories = Json::object();
   for (const auto& [category, amount] : income_by_parent) {
@@ -205,7 +224,7 @@ auto handle_query_command(const Json& request) -> std::string {
 
   if (is_year_query) {
     Json monthly = Json::array();
-    for (const auto& [month, summary] : monthly_summary) {
+    for (const auto& [month, summary] : yearly_monthly_summary) {
       Json month_item;
       month_item["month"] = month;
       month_item["income"] = summary.income;
@@ -214,6 +233,24 @@ auto handle_query_command(const Json& request) -> std::string {
       monthly.push_back(std::move(month_item));
     }
     data["monthly_summary"] = std::move(monthly);
+  }
+
+  if (is_month_query) {
+    const StandardReport standard_report =
+        StandardReportAssembler::FromMonthly(monthly_report_data);
+    data["standard_report"] = StandardReportJsonSerializer::ToJson(standard_report);
+  } else {
+    YearlyReportData yearly_report_data;
+    yearly_report_data.year = query_year;
+    yearly_report_data.data_found = (matched_bills > 0U);
+    yearly_report_data.total_income = total_income;
+    yearly_report_data.total_expense = total_expense;
+    yearly_report_data.balance = total_balance;
+    yearly_report_data.monthly_summary = std::move(yearly_monthly_summary);
+
+    const StandardReport standard_report =
+        StandardReportAssembler::FromYearly(yearly_report_data);
+    data["standard_report"] = StandardReportJsonSerializer::ToJson(standard_report);
   }
 
   data["files"] = std::move(file_results);

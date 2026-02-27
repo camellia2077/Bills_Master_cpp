@@ -134,11 +134,14 @@ def select_fixture_txt_path() -> Path:
     return candidates[0]
 
 
-def parse_yyyymm_from_stem(path: Path) -> tuple[int, int, str]:
+def parse_iso_month_from_stem(path: Path) -> tuple[int, int, str]:
     stem = path.stem
-    require(stem.isdigit() and len(stem) == 6, f"Fixture file must be YYYYMM.txt: {path}")
-    year = int(stem[:4])
-    month = int(stem[4:6])
+    parts = stem.split("-")
+    require(len(parts) == 2, f"Fixture file must be YYYY-MM.txt: {path}")
+    require(parts[0].isdigit() and len(parts[0]) == 4, f"Invalid fixture year: {path}")
+    require(parts[1].isdigit() and len(parts[1]) == 2, f"Invalid fixture month: {path}")
+    year = int(parts[0])
+    month = int(parts[1])
     require(1900 <= year <= 9999, f"Invalid year parsed from fixture: {path}")
     require(1 <= month <= 12, f"Invalid month parsed from fixture: {path}")
     return year, month, stem
@@ -215,7 +218,7 @@ def run_fixture_command_tests(
     require(fixture_config_dir.is_dir(), f"Fixture config dir missing: {fixture_config_dir}")
 
     fixture_txt = select_fixture_txt_path()
-    year, month, yyyymm = parse_yyyymm_from_stem(fixture_txt)
+    year, month, iso_month = parse_iso_month_from_stem(fixture_txt)
 
     validate = client.invoke(
         {
@@ -366,7 +369,7 @@ def run_fixture_command_tests(
                 "command": "query",
                 "params": {
                     "type": "month",
-                    "value": yyyymm,
+                    "value": iso_month,
                     "input_path": str(output_path),
                 },
             }

@@ -4,8 +4,10 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iomanip>
 #include <ranges>
 #include <regex>
+#include <sstream>
 #include <stdexcept>
 #include <string_view>
 
@@ -18,8 +20,7 @@ constexpr std::string_view kIncomeType = "Income";
 constexpr std::string_view kExpenseType = "Expense";
 constexpr std::size_t kExpectedMatchSize = 3U;
 constexpr std::size_t kYearLength = 4U;
-constexpr std::size_t kMonthLength = 2U;
-constexpr std::size_t kDateLength = kYearLength + kMonthLength;
+const std::regex kIsoDateRegex(R"(^(\d{4})-([1-9]|1[0-2])$)");
 }  // namespace
 
 BillParser::BillParser(const Config& config) : m_config(config) {}
@@ -134,12 +135,18 @@ auto BillParser::parse(const std::vector<std::string>& lines) const
   bill_data.balance = bill_data.total_income + bill_data.total_expense;
 
   if (!bill_data.date.empty()) {
-    if (bill_data.date.size() != kDateLength) {
-      throw std::runtime_error("账单日期格式无效，必须为 YYYYMM。");
+    std::smatch match;
+    if (!std::regex_match(bill_data.date, match, kIsoDateRegex) ||
+        match.size() != kExpectedMatchSize) {
+      throw std::runtime_error("账单日期格式无效，必须为 YYYY-M。");
     }
-    bill_data.year = std::stoi(bill_data.date.substr(0, kYearLength));
-    bill_data.month =
-        std::stoi(bill_data.date.substr(kYearLength, kMonthLength));
+    bill_data.year = std::stoi(match[1].str());
+    bill_data.month = std::stoi(match[2].str());
+
+    std::ostringstream normalized_date_stream;
+    normalized_date_stream << bill_data.year << "-" << std::setw(2)
+                           << std::setfill('0') << bill_data.month;
+    bill_data.date = normalized_date_stream.str();
   }
 
   return bill_data;

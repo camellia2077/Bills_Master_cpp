@@ -4,8 +4,11 @@
 #include <print>
 #include <stdexcept>
 
-ExportCommand::ExportCommand(std::string format, std::string type_filter)
-    : m_format_str(std::move(format)), m_type_filter(std::move(type_filter)) {}
+ExportCommand::ExportCommand(std::string format, std::string type_filter,
+                             std::string export_pipeline)
+    : m_format_str(std::move(format)),
+      m_type_filter(std::move(type_filter)),
+      m_export_pipeline(std::move(export_pipeline)) {}
 
 auto ExportCommand::execute(const std::vector<std::string>& args,
                             AppController& controller) -> bool {
@@ -52,7 +55,8 @@ auto ExportCommand::handle_export_all(AppController& controller) -> bool {
       std::println("\n-> Processing format: {}", current_format);
     }
 
-    if (!controller.handle_export(export_target, {}, current_format)) {
+    if (!controller.handle_export(export_target, {}, current_format,
+                                  m_export_pipeline)) {
       all_successful = false;
     }
   }
@@ -65,5 +69,6 @@ auto ExportCommand::handle_export_date(const std::vector<std::string>& values,
     throw std::runtime_error(
         "Missing date value(s) for 'export date' command.");
   }
-  return controller.handle_export("date", values, m_format_str);
+  return controller.handle_export("date", values, m_format_str,
+                                  m_export_pipeline);
 }

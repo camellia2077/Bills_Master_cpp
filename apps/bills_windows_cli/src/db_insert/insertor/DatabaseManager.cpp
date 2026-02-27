@@ -5,7 +5,8 @@
 #include <iostream>
 
 namespace {
-constexpr int kDeleteBillDateIndex = 1;
+constexpr int kDeleteBillYearIndex = 1;
+constexpr int kDeleteBillMonthIndex = 2;
 
 constexpr int kInsertBillDateIndex = 1;
 constexpr int kInsertBillYearIndex = 2;
@@ -108,15 +109,15 @@ void DatabaseManager::rollback_transaction() {
   sqlite3_exec(m_db, "ROLLBACK;", nullptr, nullptr, nullptr);
 }
 
-void DatabaseManager::delete_bill_by_date(const std::string& date) {
+void DatabaseManager::delete_bill_by_year_month(int year, int month) {
   sqlite3_stmt* stmt = nullptr;
-  const char* sql = "DELETE FROM bills WHERE bill_date = ?;";
+  const char* sql = "DELETE FROM bills WHERE year = ? AND month = ?;";
   if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
     throw std::runtime_error("准备 DELETE 语句失败: " +
                              std::string(sqlite3_errmsg(m_db)));
   }
-  sqlite3_bind_text(stmt, kDeleteBillDateIndex, date.c_str(), -1,
-                    SQLITE_STATIC);
+  sqlite3_bind_int(stmt, kDeleteBillYearIndex, year);
+  sqlite3_bind_int(stmt, kDeleteBillMonthIndex, month);
   if (sqlite3_step(stmt) != SQLITE_DONE) {
     sqlite3_finalize(stmt);
     throw std::runtime_error("执行 DELETE 语句失败: " +

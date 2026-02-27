@@ -22,19 +22,24 @@ class AppController {
   bool handle_full_workflow(const std::string& path);
   bool handle_export(const std::string& type,
                      const std::vector<std::string>& values,
-                     const std::string& format_str = "md");
+                     const std::string& format_str = "md",
+                     const std::string& export_pipeline = "legacy");
 
   static void display_version();
 
  private:
   auto load_enabled_formats(const std::string& config_path) -> std::set<std::string>;
   auto normalize_format(std::string format_name) const -> std::string;
+  auto normalize_export_pipeline(std::string pipeline_name) const
+      -> std::string;
   auto infer_export_requirements(const std::string& type,
                                  const std::vector<std::string>& values) const
       -> std::pair<bool, bool>;
   auto is_export_format_available(const std::string& type,
                                   const std::vector<std::string>& values,
-                                  const std::string& format_str) const -> bool;
+                                  const std::string& format_str,
+                                  const std::string& export_pipeline) const
+      -> bool;
 
   std::string m_db_path;
   std::string m_config_path;

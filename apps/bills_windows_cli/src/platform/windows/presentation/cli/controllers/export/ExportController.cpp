@@ -27,7 +27,9 @@ ExportController::ExportController(
 // 中的完全相同，直接复制过来即可。
 auto ExportController::handle_export(const std::string& type,
                                      const std::vector<std::string>& values,
-                                     const std::string& format_str) -> bool {
+                                     const std::string& format_str,
+                                     const std::string& export_pipeline)
+    -> bool {
   bool success = false;
   try {
     auto db_session = std::make_unique<SqliteReportDbSession>(m_db_path);
@@ -43,38 +45,44 @@ auto ExportController::handle_export(const std::string& type,
         m_format_folder_names);
 
     if (type == "all") {
-      success = report_export_service.export_all_reports(format_str);
+      success =
+          report_export_service.export_all_reports(format_str, export_pipeline);
     } else if (type == "all_months") {
-      success = report_export_service.export_all_monthly_reports(format_str);
+      success = report_export_service.export_all_monthly_reports(
+          format_str, export_pipeline);
     } else if (type == "all_years") {
-      success = report_export_service.export_all_yearly_reports(format_str);
+      success = report_export_service.export_all_yearly_reports(
+          format_str, export_pipeline);
     } else if (type == "date") {
       if (values.empty()) {
         throw std::runtime_error(
             "At least one date string must be provided for 'date' export.");
       }
       if (values.size() == 1) {  // 单个日期
-        success = report_export_service.export_by_date(values[0], format_str);
+        success = report_export_service.export_by_date(values[0], format_str,
+                                                       export_pipeline);
       } else if (values.size() == 2) {  // 日期区间
         success = report_export_service.export_by_date_range(
-            values[0], values[1], format_str);
+            values[0], values[1], format_str, export_pipeline);
       } else {
         throw std::runtime_error(
-            "For 'date' export, please provide one (YYYY or YYYYMM) or two "
-            "(YYYYMM YYYYMM) date values.");
+            "For 'date' export, please provide one (YYYY or YYYY-MM) or two "
+            "(YYYY-MM YYYY-MM) date values.");
       }
     } else if (type == "year") {
       if (values.empty() || values[0].empty()) {
         throw std::runtime_error(
             "A year must be provided to export a yearly report.");
       }
-      success = report_export_service.export_yearly_report(values[0], format_str);
+      success = report_export_service.export_yearly_report(
+          values[0], format_str, false, export_pipeline);
     } else if (type == "month") {
       if (values.empty() || values[0].empty()) {
         throw std::runtime_error(
-            "A month (YYYYMM) must be provided to export a monthly report.");
+            "A month (YYYY-MM) must be provided to export a monthly report.");
       }
-      success = report_export_service.export_monthly_report(values[0], format_str);
+      success = report_export_service.export_monthly_report(
+          values[0], format_str, false, export_pipeline);
     } else {
       throw std::runtime_error("Unknown export type: " + type);
     }

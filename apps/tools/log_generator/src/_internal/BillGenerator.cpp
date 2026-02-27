@@ -54,10 +54,10 @@ auto BillGenerator::load_config(const std::string& config_path) -> bool {
 }
 
 void BillGenerator::generate_bill_file(int year, int month, const std::filesystem::path& dir_path) const {
-    std::stringstream ss_year_month;
-    ss_year_month << year << std::setw(2) << std::setfill('0') << month;
-    std::string year_month = ss_year_month.str();
-    std::filesystem::path file_path = dir_path / (year_month + ".txt");
+    std::stringstream ss_file_name;
+    ss_file_name << year << "-" << std::setw(2) << std::setfill('0') << month;
+    const std::string file_name = ss_file_name.str();
+    std::filesystem::path file_path = dir_path / (file_name + ".txt");
 
     std::ofstream outfile(file_path);
     if (!outfile) {
@@ -65,7 +65,7 @@ void BillGenerator::generate_bill_file(int year, int month, const std::filesyste
         return;
     }
     // 标题行的date和remark
-    outfile << "date:" << year_month << std::endl;
+    outfile << "date:" << year << "-" << month << std::endl;
     outfile << "remark:" << std::endl << std::endl;
 
     std::map<std::string, std::vector<json>> grouped_by_parent;

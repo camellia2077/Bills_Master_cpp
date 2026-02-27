@@ -4,6 +4,14 @@ import os
 from . import app_config as config
 from . import constants
 
+
+def with_export_pipeline(base_args):
+    pipeline = str(config.EXPORT_PIPELINE).strip()
+    if not pipeline:
+        return base_args
+    return [*base_args, "--export-pipeline", pipeline]
+
+
 class ImportTasks:
     """Import类负责执行数据校验、修改和导入任务。"""
     def __init__(self, executor, bills_path, import_path):
@@ -49,8 +57,18 @@ class QueryTasks:
         self.executor = executor
     def run(self):
         print(f"{constants.CYAN}--- 3. Running Query Tasks ---{constants.RESET}")
-        if not self.executor.run("Query Year", ["--query", "year", config.TEST_DATES['single_year']], "4_query_year.log"): return False
-        if not self.executor.run("Query Month", ["--query", "month", config.TEST_DATES['single_month']], "5_query_month.log"): return False
+        if not self.executor.run(
+            "Query Year",
+            with_export_pipeline(["--query", "year", config.TEST_DATES['single_year']]),
+            "4_query_year.log",
+        ):
+            return False
+        if not self.executor.run(
+            "Query Month",
+            with_export_pipeline(["--query", "month", config.TEST_DATES['single_month']]),
+            "5_query_month.log",
+        ):
+            return False
         return True
 
 class ExportTasks:
@@ -62,7 +80,11 @@ class ExportTasks:
         for fmt in config.EXPORT_FORMATS:
             step_name = f"Export All ({fmt.upper()})"
             log_filename = f"6_export_all_{fmt}.log"
-            if not self.executor.run(step_name, ["--export", "all", "--format", fmt], log_filename):
+            if not self.executor.run(
+                step_name,
+                with_export_pipeline(["--export", "all", "--format", fmt]),
+                log_filename,
+            ):
                 return False
         return True
 
@@ -77,19 +99,25 @@ class DateExportTasks:
         for fmt in config.EXPORT_FORMATS:
             step_name = f"Export Year {config.TEST_DATES['single_year']} ({fmt.upper()})"
             log_filename = f"10_export_date_year_{fmt}.log"
-            cmd_args = ["-e", "d", config.TEST_DATES["single_year"], "-f", fmt]
+            cmd_args = with_export_pipeline(
+                ["-e", "d", config.TEST_DATES["single_year"], "-f", fmt]
+            )
             if not self.executor.run(step_name, cmd_args, log_filename): return False
 
         for fmt in config.EXPORT_FORMATS:
             step_name = f"Export Month {config.TEST_DATES['single_month']} ({fmt.upper()})"
             log_filename = f"11_export_date_month_{fmt}.log"
-            cmd_args = ["-e", "d", config.TEST_DATES["single_month"], "-f", fmt]
+            cmd_args = with_export_pipeline(
+                ["-e", "d", config.TEST_DATES["single_month"], "-f", fmt]
+            )
             if not self.executor.run(step_name, cmd_args, log_filename): return False
 
         for fmt in config.EXPORT_FORMATS:
             step_name = f"Export Range ({fmt.upper()})"
             log_filename = f"12_export_date_range_{fmt}.log"
-            cmd_args = ["-e", "d", config.TEST_DATES["range_start"], config.TEST_DATES["range_end"], "-f", fmt]
+            cmd_args = with_export_pipeline(
+                ["-e", "d", config.TEST_DATES["range_start"], config.TEST_DATES["range_end"], "-f", fmt]
+            )
             if not self.executor.run(step_name, cmd_args, log_filename): return False
             
         return True

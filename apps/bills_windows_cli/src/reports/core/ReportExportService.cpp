@@ -2,17 +2,87 @@
 #include "ReportExportService.hpp"
 
 #include <iostream>
+#include <regex>
 #include <set>
 #include <stdexcept>
 #include <utility>
+#include <cctype>
 
 #include "common/process_stats.hpp"
 #include "common/common_utils.hpp"
+#include "reports/standard_json/standard_report_assembler.hpp"
+#include "reports/standard_json/standard_report_json_serializer.hpp"
+#include "StandardJsonLatexRenderer.hpp"
+#include "StandardJsonMarkdownRenderer.hpp"
+#include "StandardJsonTypstRenderer.hpp"
 
 namespace {
 constexpr std::size_t kYearLength = 4U;
-constexpr std::size_t kMonthLength = 2U;
-constexpr std::size_t kYearMonthLength = kYearLength + kMonthLength;
+const std::regex kIsoMonthRegex(R"(^(\d{4})-(0[1-9]|1[0-2])$)");
+constexpr const char* kMonthFormatterSuffix = "_month_formatter";
+constexpr const char* kYearFormatterSuffix = "_year_formatter";
+
+auto parse_iso_month(const std::string& value, int& year, int& month) -> bool {
+  std::smatch match;
+  if (!std::regex_match(value, match, kIsoMonthRegex) || match.size() != 3U) {
+    return false;
+  }
+  try {
+    year = std::stoi(match[1].str());
+    month = std::stoi(match[2].str());
+  } catch (...) {
+    return false;
+  }
+  return true;
+}
+
+auto month_key(int year, int month) -> int { return year * 100 + month; }
+
+auto is_markdown_format(std::string format_name) -> bool {
+  std::ranges::transform(format_name, format_name.begin(),
+                         [](unsigned char ch) -> char {
+                           return static_cast<char>(std::tolower(ch));
+                         });
+  return format_name == "md" || format_name == "markdown";
+}
+
+auto is_latex_format(std::string format_name) -> bool {
+  std::ranges::transform(format_name, format_name.begin(),
+                         [](unsigned char ch) -> char {
+                           return static_cast<char>(std::tolower(ch));
+                         });
+  return format_name == "tex" || format_name == "latex";
+}
+
+auto is_typst_format(std::string format_name) -> bool {
+  std::ranges::transform(format_name, format_name.begin(),
+                         [](unsigned char ch) -> char {
+                           return static_cast<char>(std::tolower(ch));
+                         });
+  return format_name == "typ" || format_name == "typst";
+}
+
+auto normalize_export_pipeline(std::string pipeline_name) -> std::string {
+  std::ranges::transform(pipeline_name, pipeline_name.begin(),
+                         [](unsigned char ch) -> char {
+                           return static_cast<char>(std::tolower(ch));
+                         });
+  std::ranges::replace(pipeline_name, '_', '-');
+  if (pipeline_name.empty()) {
+    return "legacy";
+  }
+  if (pipeline_name == "jsonfirst") {
+    return "json-first";
+  }
+  if (pipeline_name == "modelfirst") {
+    return "model-first";
+  }
+  if (pipeline_name != "legacy" && pipeline_name != "model-first" &&
+      pipeline_name != "json-first") {
+    throw std::invalid_argument("Unknown export pipeline: " + pipeline_name);
+  }
+  return pipeline_name;
+}
 }  // namespace
 
 // Constructor with fully injected adapters/providers
@@ -49,10 +119,45 @@ ReportExportService::~ReportExportService() = default;
 
 auto ReportExportService::export_yearly_report(const std::string& year_str,
                                                const std::string& format_name,
-                                               bool suppress_output) -> bool {
+                                               bool suppress_output,
+                                               const std::string& export_pipeline)
+    -> bool {
   try {
+    const std::string pipeline = normalize_export_pipeline(export_pipeline);
+    const bool use_json_first_markdown =
+        pipeline == "json-first" && is_markdown_format(format_name);
+    const bool use_standard_latex =
+        (pipeline == "model-first" || pipeline == "json-first") &&
+        is_latex_format(format_name);
+    const bool use_standard_typst =
+        (pipeline == "model-first" || pipeline == "json-first") &&
+        is_typst_format(format_name);
     int year = std::stoi(year_str);
-    std::string report = m_yearly_generator->generate(year, format_name);
+    YearlyReportData yearly_data = m_report_data_gateway->ReadYearlyData(year);
+    const StandardReport standard_report =
+        StandardReportAssembler::FromYearly(yearly_data);
+    const std::string standard_report_json =
+        StandardReportJsonSerializer::ToString(standard_report);
+    m_report_exporter->export_yearly_standard_json(standard_report_json, year_str);
+
+    std::string report;
+    if (use_json_first_markdown) {
+      report = StandardJsonMarkdownRenderer::render(standard_report_json);
+    } else if (use_standard_latex) {
+      report = StandardJsonLatexRenderer::render(standard_report_json);
+    } else if (use_standard_typst) {
+      report = StandardJsonTypstRenderer::render(standard_report_json);
+    } else {
+      auto formatter = m_year_formatter_provider->CreateFormatter(format_name);
+      if (!formatter) {
+        std::string expected_plugin_name = format_name + kYearFormatterSuffix;
+        throw std::runtime_error(
+            "Yearly formatter for '" + format_name +
+            "' is not available. Please ensure that the plugin '" +
+            expected_plugin_name + "' is available in the plugins directory.");
+      }
+      report = formatter->format_report(yearly_data);
+    }
 
     if (!suppress_output) {
       std::cout << report;
@@ -71,15 +176,51 @@ auto ReportExportService::export_yearly_report(const std::string& year_str,
 
 auto ReportExportService::export_monthly_report(const std::string& month_str,
                                                 const std::string& format_name,
-                                                bool suppress_output) -> bool {
+                                                bool suppress_output,
+                                                const std::string& export_pipeline)
+    -> bool {
   try {
-    if (month_str.length() != kYearMonthLength) {
+    const std::string pipeline = normalize_export_pipeline(export_pipeline);
+    const bool use_json_first_markdown =
+        pipeline == "json-first" && is_markdown_format(format_name);
+    const bool use_standard_latex =
+        (pipeline == "model-first" || pipeline == "json-first") &&
+        is_latex_format(format_name);
+    const bool use_standard_typst =
+        (pipeline == "model-first" || pipeline == "json-first") &&
+        is_typst_format(format_name);
+    int year = 0;
+    int month = 0;
+    if (!parse_iso_month(month_str, year, month)) {
       throw std::invalid_argument("Invalid month format.");
     }
-    int year = std::stoi(month_str.substr(0, kYearLength));
-    int month = std::stoi(month_str.substr(kYearLength, kMonthLength));
-    std::string report =
-        m_monthly_generator->generate(year, month, format_name);
+    MonthlyReportData monthly_data =
+        m_report_data_gateway->ReadMonthlyData(year, month);
+    const StandardReport standard_report =
+        StandardReportAssembler::FromMonthly(monthly_data);
+    const std::string standard_report_json =
+        StandardReportJsonSerializer::ToString(standard_report);
+    m_report_exporter->export_monthly_standard_json(standard_report_json,
+                                                    month_str);
+
+    std::string report;
+    if (use_json_first_markdown) {
+      report = StandardJsonMarkdownRenderer::render(standard_report_json);
+    } else if (use_standard_latex) {
+      report = StandardJsonLatexRenderer::render(standard_report_json);
+    } else if (use_standard_typst) {
+      report = StandardJsonTypstRenderer::render(standard_report_json);
+    } else {
+      auto formatter = m_month_formatter_provider->CreateFormatter(format_name);
+      if (!formatter) {
+        std::string expected_plugin_name = format_name + kMonthFormatterSuffix;
+        throw std::runtime_error(
+            "Monthly formatter for '" + format_name +
+            "' is not available. Please ensure that the plugin '" +
+            expected_plugin_name + "' is available in the plugins directory.");
+      }
+      report = formatter->format_report(monthly_data);
+    }
 
     if (!suppress_output) {
       std::cout << report;
@@ -97,28 +238,46 @@ auto ReportExportService::export_monthly_report(const std::string& month_str,
 }
 
 auto ReportExportService::export_by_date(const std::string& date_str,
-                                         const std::string& format_name)
+                                         const std::string& format_name,
+                                         const std::string& export_pipeline)
     -> bool {
   if (date_str.length() == kYearLength) {
-    return export_yearly_report(date_str, format_name, false);
+    return export_yearly_report(date_str, format_name, false, export_pipeline);
   }
-  if (date_str.length() == kYearMonthLength) {
-    return export_monthly_report(date_str, format_name, false);
+  int parsed_year = 0;
+  int parsed_month = 0;
+  if (parse_iso_month(date_str, parsed_year, parsed_month)) {
+    return export_monthly_report(date_str, format_name, false,
+                                 export_pipeline);
   }
   std::cerr << RED_COLOR << "Error:" << RESET_COLOR
             << " Invalid date format for export: '" << date_str
-            << "'. Please use YYYY or YYYYMM.\n";
+            << "'. Please use YYYY or YYYY-MM.\n";
   return false;
 }
 
 auto ReportExportService::export_by_date_range(
     const std::string& start_date, const std::string& end_date,
-    const std::string& format_name) -> bool {
-  if (start_date.length() != kYearMonthLength ||
-      end_date.length() != kYearMonthLength ||
-      start_date > end_date) {
+    const std::string& format_name,
+    const std::string& export_pipeline) -> bool {
+  std::string pipeline;
+  try {
+    pipeline = normalize_export_pipeline(export_pipeline);
+  } catch (const std::exception& e) {
+    std::cerr << RED_COLOR << "Error:" << RESET_COLOR << " " << e.what()
+              << "\n";
+    return false;
+  }
+
+  int start_year = 0;
+  int start_month = 0;
+  int end_year = 0;
+  int end_month = 0;
+  if (!parse_iso_month(start_date, start_year, start_month) ||
+      !parse_iso_month(end_date, end_year, end_month) ||
+      month_key(start_year, start_month) > month_key(end_year, end_month)) {
     std::cerr << RED_COLOR << "Error:" << RESET_COLOR
-              << " Invalid date range. Use YYYYMM format and ensure start_date "
+              << " Invalid date range. Use YYYY-MM format and ensure start_date "
                  "is not after end_date.\n";
     return false;
   }
@@ -132,7 +291,14 @@ auto ReportExportService::export_by_date_range(
         m_report_data_gateway->ListAvailableMonths();
     std::vector<std::string> months_to_export;
     for (const auto& month : all_months) {
-      if (month >= start_date && month <= end_date) {
+      int current_year = 0;
+      int current_month = 0;
+      if (!parse_iso_month(month, current_year, current_month)) {
+        continue;
+      }
+      const int current_key = month_key(current_year, current_month);
+      if (current_key >= month_key(start_year, start_month) &&
+          current_key <= month_key(end_year, end_month)) {
         months_to_export.push_back(month);
       }
     }
@@ -145,7 +311,7 @@ auto ReportExportService::export_by_date_range(
 
     for (const auto& month : months_to_export) {
       std::cout << "Exporting report for " << month << "...";
-      if (export_monthly_report(month, format_name, true)) {
+      if (export_monthly_report(month, format_name, true, pipeline)) {
         stats.success++;
         std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
       } else {
@@ -164,7 +330,17 @@ auto ReportExportService::export_by_date_range(
 }
 
 auto ReportExportService::export_all_monthly_reports(
-    const std::string& format_name) -> bool {
+    const std::string& format_name,
+    const std::string& export_pipeline) -> bool {
+  std::string pipeline;
+  try {
+    pipeline = normalize_export_pipeline(export_pipeline);
+  } catch (const std::exception& e) {
+    std::cerr << RED_COLOR << "Error:" << RESET_COLOR << " " << e.what()
+              << "\n";
+    return false;
+  }
+
   ProcessStats stats;
   std::cout << "\n--- Starting Monthly Report Export (" << format_name
             << " format) ---\n";
@@ -179,7 +355,7 @@ auto ReportExportService::export_all_monthly_reports(
 
     for (const auto& month : all_months) {
       std::cout << "Exporting report for " << month << "...";
-      if (export_monthly_report(month, format_name, true)) {
+      if (export_monthly_report(month, format_name, true, pipeline)) {
         stats.success++;
         std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
       } else {
@@ -197,7 +373,17 @@ auto ReportExportService::export_all_monthly_reports(
 }
 
 auto ReportExportService::export_all_yearly_reports(
-    const std::string& format_name) -> bool {
+    const std::string& format_name,
+    const std::string& export_pipeline) -> bool {
+  std::string pipeline;
+  try {
+    pipeline = normalize_export_pipeline(export_pipeline);
+  } catch (const std::exception& e) {
+    std::cerr << RED_COLOR << "Error:" << RESET_COLOR << " " << e.what()
+              << "\n";
+    return false;
+  }
+
   ProcessStats stats;
   std::cout << "\n--- Starting Yearly Report Export (" << format_name
             << " format) ---\n";
@@ -219,7 +405,7 @@ auto ReportExportService::export_all_yearly_reports(
 
     for (const auto& year : unique_years) {
       std::cout << "Exporting summary for " << year << "...";
-      if (export_yearly_report(year, format_name, true)) {
+      if (export_yearly_report(year, format_name, true, pipeline)) {
         stats.success++;
         std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
       } else {
@@ -236,12 +422,22 @@ auto ReportExportService::export_all_yearly_reports(
   return stats.failure == 0;
 }
 
-auto ReportExportService::export_all_reports(const std::string& format_name)
+auto ReportExportService::export_all_reports(const std::string& format_name,
+                                             const std::string& export_pipeline)
     -> bool {
+  std::string pipeline;
+  try {
+    pipeline = normalize_export_pipeline(export_pipeline);
+  } catch (const std::exception& e) {
+    std::cerr << RED_COLOR << "Error:" << RESET_COLOR << " " << e.what()
+              << "\n";
+    return false;
+  }
+
   std::cout << "\n--- Starting Full Report Export (" << format_name
             << " format) ---\n";
-  bool monthly_ok = export_all_monthly_reports(format_name);
-  bool yearly_ok = export_all_yearly_reports(format_name);
+  bool monthly_ok = export_all_monthly_reports(format_name, pipeline);
+  bool yearly_ok = export_all_yearly_reports(format_name, pipeline);
   bool overall_success = monthly_ok && yearly_ok;
 
   if (overall_success) {

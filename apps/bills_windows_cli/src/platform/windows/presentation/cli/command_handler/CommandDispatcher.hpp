@@ -23,7 +23,8 @@ class CommandDispatcher {
 
  private:
   void register_commands(const std::string& format,
-                         const std::string& type_filter);
+                         const std::string& type_filter,
+                         const std::string& export_pipeline);
 
   // 命令注册表
   std::map<std::string, std::unique_ptr<ICommand>> m_commands;

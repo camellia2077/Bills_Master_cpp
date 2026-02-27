@@ -64,11 +64,16 @@ set(DB_INSERT_SOURCES
 
 set(SERIALIZATION_SOURCES
     "${CORE_SOURCE_ROOT}/serialization/bills_json_serializer.cpp"
+    "${CORE_SOURCE_ROOT}/reports/standard_json/standard_report_assembler.cpp"
+    "${CORE_SOURCE_ROOT}/reports/standard_json/standard_report_json_serializer.cpp"
 )
 
 set(REPORTS_CORE_SOURCES
     "${REPORTS_DIR}/core/ReportExportService.cpp"
     "${REPORTS_DIR}/core/ReportExporter.cpp"
+    "${REPORTS_DIR}/core/StandardJsonLatexRenderer.cpp"
+    "${REPORTS_DIR}/core/StandardJsonMarkdownRenderer.cpp"
+    "${REPORTS_DIR}/core/StandardJsonTypstRenderer.cpp"
     "${REPORTS_DIR}/monthly_report/MonthlyReportGenerator.cpp"
     "${REPORTS_DIR}/monthly_report/ReportSorter.cpp"
     "${REPORTS_DIR}/yearly_report/YearlyReportGenerator.cpp"

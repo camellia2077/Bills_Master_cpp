@@ -40,8 +40,31 @@ def read_cache_home_directory(cache_file: Path) -> Path | None:
     return None
 
 
+def read_cache_cxx_compiler(cache_file: Path) -> str | None:
+    try:
+        with cache_file.open("r", encoding="utf-8", errors="ignore") as handle:
+            for line in handle:
+                if line.startswith("CMAKE_CXX_COMPILER:FILEPATH="):
+                    return line.split("=", 1)[1].strip()
+    except OSError:
+        return None
+    return None
+
+
+def cache_matches_compiler(cache_file: Path, compiler: str) -> bool:
+    cached = read_cache_cxx_compiler(cache_file)
+    if not cached:
+        return False
+    name = Path(cached).name.lower()
+    if compiler == "clang":
+        return "clang" in name
+    if compiler == "gcc":
+        return name.startswith("g++") or name.startswith("c++")
+    return False
+
+
 def ensure_cmake_configured(
-    build_dir: Path, generator: str, build_type: str, shared: bool
+    build_dir: Path, generator: str, build_type: str, shared: bool, compiler: str
 ) -> None:
     if not build_dir.exists():
         print(f"==> Creating build directory: {build_dir}")
@@ -51,7 +74,12 @@ def ensure_cmake_configured(
     if cache_file.is_file():
         cached_home = read_cache_home_directory(cache_file)
         if cached_home is not None and cached_home.resolve() == PROJECT_DIR.resolve():
-            print("==> Refreshing existing CMake configuration.")
+            if cache_matches_compiler(cache_file, compiler):
+                print("==> Refreshing existing CMake configuration.")
+            else:
+                print("==> Existing CMake cache compiler mismatch. Recreating build directory.")
+                shutil.rmtree(build_dir)
+                build_dir.mkdir(parents=True, exist_ok=True)
         else:
             print("==> Existing CMake cache points to a different source. Recreating build directory.")
             shutil.rmtree(build_dir)
@@ -68,17 +96,28 @@ def ensure_cmake_configured(
         f"-DCMAKE_BUILD_TYPE={build_type}",
         f"-DBILLS_CORE_BUILD_SHARED={'ON' if shared else 'OFF'}",
     ]
+    if compiler:
+        compiler_value = compiler.strip().lower()
+        if compiler_value == "clang":
+            cmake_args.append("-DCMAKE_CXX_COMPILER=clang++")
+        elif compiler_value == "gcc":
+            cmake_args.append("-DCMAKE_CXX_COMPILER=g++")
+        else:
+            print("!!! Error: compiler must be 'clang' or 'gcc'.")
+            sys.exit(1)
     run_command(cmake_args, cwd=PROJECT_DIR)
 
 
 def run_build(
-    build_dir: Path, build_type: str, shared: bool, extra_args: list[str] | None = None
+    build_dir: Path, build_type: str, shared: bool, compiler: str,
+    extra_args: list[str] | None = None
 ) -> None:
     ensure_cmake_configured(
         build_dir=build_dir,
         generator="Ninja",
         build_type=build_type,
         shared=shared,
+        compiler=compiler,
     )
 
     command = ["cmake", "--build", str(build_dir), "--target", "bills_core"]
@@ -93,6 +132,12 @@ def main() -> int:
         "command",
         choices=["build", "build_fast"],
         help="build=Release, build_fast=Debug",
+    )
+    parser.add_argument(
+        "--compiler",
+        choices=["clang", "gcc"],
+        default="clang",
+        help="Compiler choice (default: clang)",
     )
     parser.add_argument(
         "--shared",
@@ -117,6 +162,7 @@ def main() -> int:
             PROJECT_DIR / "build",
             build_type="Release",
             shared=args.shared,
+            compiler=args.compiler,
             extra_args=extra_args,
         )
     elif args.command == "build_fast":
@@ -124,6 +170,7 @@ def main() -> int:
             PROJECT_DIR / "build_fast",
             build_type="Debug",
             shared=args.shared,
+            compiler=args.compiler,
             extra_args=extra_args,
         )
     else:

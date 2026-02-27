@@ -22,6 +22,10 @@ option(BILLS_ENABLE_LTO_RELEASE
     "Enable LTO for Release builds"
     ON
 )
+option(BILLS_ENABLE_TIDY
+    "Enable clang-tidy target configuration"
+    ON
+)
 
 # Export format switches (Phase 3 / Step 3.1): default to MD-only build.
 option(ENABLE_FMT_MD "Enable Markdown formatter plugins" ON)
@@ -52,4 +56,8 @@ include(cmake/plugins.cmake)
 
 # --- 代码格式化工具 ---
 include(AddFormatTarget)
-include(AddTidyTarget)
+if(BILLS_ENABLE_TIDY)
+    include(AddTidyTarget)
+else()
+    message(STATUS "BILLS_ENABLE_TIDY=OFF, skip configuring tidy target.")
+endif()

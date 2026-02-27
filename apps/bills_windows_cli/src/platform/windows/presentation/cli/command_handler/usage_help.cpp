@@ -14,7 +14,8 @@ void print_help(const char* program_name) {
   std::println(
       "Bill Master - A command-line tool for processing bill files.\n");
   std::println(
-      "Usage: {} <command> [arguments] [--format <format>] [--type <type>]\n",
+      "Usage: {} <command> [arguments] [--format <format>] [--type <type>] "
+      "[--export-pipeline <legacy|model-first|json-first>]\n",
       program_name);
 
   std::cout << GREEN_COLOR << "--- Core Commands ---\n" << RESET_COLOR;
@@ -50,8 +51,8 @@ void print_help(const char* program_name) {
   std::println("  Example: {} -q y 2024 --format tex\n", program_name);
 
   std::println("{}--query month, -q m{} <month>", command_color, RESET_COLOR);
-  std::println("  Queries and exports the monthly details (format: YYYYMM).");
-  std::println("  Example: {} -q m 202407\n", program_name);
+  std::println("  Queries and exports the monthly details (format: YYYY-MM).");
+  std::println("  Example: {} -q m 2024-07\n", program_name);
 
   std::println("{}--export all, -e a{}", command_color, RESET_COLOR);
   std::println(
@@ -62,12 +63,12 @@ void print_help(const char* program_name) {
                RESET_COLOR);
   std::println("  Exports reports for a specific date or date range.");
   std::println(
-      "  - Single date: YYYY (all months in year), YYYYMM (single month).");
+      "  - Single date: YYYY (all months in year), YYYY-MM (single month).");
   std::println(
-      "  - Date range: YYYYMM YYYYMM (all months between start and end, "
+      "  - Date range: YYYY-MM YYYY-MM (all months between start and end, "
       "inclusive).");
   std::println("  Example (single): {} -e d 2024 -f tex", program_name);
-  std::println("  Example (range):  {} -e d 202404 202407 -f md\n",
+  std::println("  Example (range):  {} -e d 2024-04 2024-07 -f md\n",
                program_name);
 
   std::cout << GREEN_COLOR << "--- Options ---\n" << RESET_COLOR;
@@ -82,7 +83,14 @@ void print_help(const char* program_name) {
   std::println("  --type, -t <type>");
   std::println(
       "    For '--export all', filters by type ('month'/'m' or 'year'/'y').");
-  std::println("    Example: --type year\n");
+  std::println("    Example: --type year");
+
+  std::println("  --export-pipeline <pipeline>");
+  std::println(
+      "    Select report export pipeline "
+      "('legacy', 'model-first', or 'json-first'). "
+      "Defaults to 'legacy'.");
+  std::println("    Example: --export-pipeline model-first\n");
 
   std::cout << GREEN_COLOR << "--- General ---\n" << RESET_COLOR;
 

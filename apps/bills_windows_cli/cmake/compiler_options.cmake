@@ -23,6 +23,18 @@ if(BILLS_ENABLE_LTO_RELEASE AND NOT MSVC AND _BILLS_CAN_USE_LTO)
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -flto")
+
+    if(WIN32 AND MINGW AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        # MinGW + Clang LTO must use lld to avoid GNU ld LLVMgold plugin failures.
+        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fuse-ld=lld")
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fuse-ld=lld")
+        set(CMAKE_EXE_LINKER_FLAGS_RELEASE
+            "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -fuse-ld=lld")
+        set(CMAKE_SHARED_LINKER_FLAGS_RELEASE
+            "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -fuse-ld=lld")
+        set(CMAKE_MODULE_LINKER_FLAGS_RELEASE
+            "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} -fuse-ld=lld")
+    endif()
 endif()
 
 # --- 定义 PCH (预编译头) 编译选项 ---

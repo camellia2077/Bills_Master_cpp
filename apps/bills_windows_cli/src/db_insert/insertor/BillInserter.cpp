@@ -28,7 +28,7 @@ void BillInserter::insert_bill(const ParsedBill& bill_data) {
     db_manager.begin_transaction();
 
     // 业务流程步骤 2: 删除可能存在的旧账单
-    db_manager.delete_bill_by_date(bill_data.date);
+    db_manager.delete_bill_by_year_month(bill_data.year, bill_data.month);
 
     // 业务流程步骤 3: 插入新的账单记录并获取ID
     sqlite3_int64 bill_id = db_manager.insert_bill_record(bill_data);

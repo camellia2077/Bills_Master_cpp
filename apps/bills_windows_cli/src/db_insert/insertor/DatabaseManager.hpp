@@ -33,7 +33,7 @@ class DatabaseManager {
   void rollback_transaction();
 
   // --- Data Manipulation (CRUD) ---
-  void delete_bill_by_date(const std::string& date);
+  void delete_bill_by_year_month(int year, int month);
   sqlite3_int64 insert_bill_record(const ParsedBill& bill_data);
   void insert_transactions_for_bill(
       sqlite3_int64 bill_id, const std::vector<Transaction>& transactions);

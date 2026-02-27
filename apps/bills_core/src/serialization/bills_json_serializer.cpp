@@ -4,6 +4,7 @@
 
 #include <fstream>
 #include <iomanip>
+#include <regex>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
@@ -13,8 +14,7 @@ namespace {
 constexpr int kIndentSpaces = 4;
 constexpr int kMoneyPrecision = 2;
 constexpr std::size_t kYearLength = 4U;
-constexpr std::size_t kMonthLength = 2U;
-constexpr std::size_t kDateLength = kYearLength + kMonthLength;
+const std::regex kIsoMonthRegex(R"(^(\d{4})-(0[1-9]|1[0-2])$)");
 
 auto FormatMoney(double value) -> nlohmann::json {
   std::stringstream money_stream;
@@ -67,12 +67,13 @@ auto BillJsonSerializer::deserialize(const nlohmann::json& data) -> ParsedBill {
     bill_data.total_expense = data.at("total_expense").get<double>();
     bill_data.balance = data.at("balance").get<double>();
 
-    if (kDateStr.length() == kDateLength) {
-      bill_data.year = std::stoi(kDateStr.substr(0, kYearLength));
-      bill_data.month = std::stoi(kDateStr.substr(kYearLength, kMonthLength));
-    } else {
-      throw std::runtime_error("JSON中的日期格式无效，必须为 YYYYMM 格式。");
+    std::smatch match;
+    if (!std::regex_match(kDateStr, match, kIsoMonthRegex) ||
+        match.size() != 3U) {
+      throw std::runtime_error("JSON中的日期格式无效，必须为 YYYY-MM 格式。");
     }
+    bill_data.year = std::stoi(match[1].str());
+    bill_data.month = std::stoi(match[2].str());
 
     const auto& categories = data.at("categories");
     for (const auto& parent_item : categories.items()) {

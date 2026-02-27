@@ -7,7 +7,8 @@
 class ExportCommand : public ICommand {
  public:
   // 通过构造函数接收全局选项
-  ExportCommand(std::string format, std::string type_filter);
+  ExportCommand(std::string format, std::string type_filter,
+                std::string export_pipeline);
   bool execute(const std::vector<std::string>& args,
                AppController& controller) override;
 
@@ -18,6 +19,7 @@ class ExportCommand : public ICommand {
 
   std::string m_format_str;
   std::string m_type_filter;
+  std::string m_export_pipeline;
 };
 
 #endif  // EXPORT_COMMAND_HPP

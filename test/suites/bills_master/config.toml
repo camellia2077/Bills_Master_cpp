@@ -38,19 +38,22 @@ run_export_all_tasks = true
 ingest_mode = "stepwise"
 # 仅对 ingest 生效，是否持久化 JSON
 ingest_write_json = false
+# 导出流水线: legacy | model-first | json-first
+export_pipeline = "model-first"
 
 # 需要测试的导出格式
 export_formats = ['md']
+output_project = 'bills_tracer'
 
 [cleanup]
 # 需要清理的文件
 files_to_delete = ["bills.sqlite3"]
 # 需要清理的目录
-dirs_to_delete = ["output", "build", "plugins", "config"]
+dirs_to_delete = ["output/bills_tracer", "output/txt2josn", "output/exported_files", "output/logs", "build", "plugins", "config"]
 
 [test_dates]
 # 用于专项日期导出测试的日期配置
 single_year = "2021"
-single_month = "202201"
-range_start = "202403"
-range_end = "202404"
+single_month = "2022-01"
+range_start = "2024-03"
+range_end = "2024-04"

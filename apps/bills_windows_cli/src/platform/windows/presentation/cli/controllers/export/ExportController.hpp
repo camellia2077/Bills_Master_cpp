@@ -19,7 +19,8 @@ class ExportController {
 
   bool handle_export(const std::string& type,
                      const std::vector<std::string>& values,
-                     const std::string& format_str);
+                     const std::string& format_str,
+                     const std::string& export_pipeline);
 
  private:
   std::string m_db_path;

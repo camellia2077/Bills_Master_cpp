@@ -20,6 +20,10 @@ class ReportExporter {
   void export_monthly(const std::string& report_content,
                       const std::string& month_str,
                       const std::string& format_name);
+  void export_yearly_standard_json(const std::string& report_content,
+                                   const std::string& year_str);
+  void export_monthly_standard_json(const std::string& report_content,
+                                    const std::string& month_str);
 
  private:
   fs::path m_export_base_dir;

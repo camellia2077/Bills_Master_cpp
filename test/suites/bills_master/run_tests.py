@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import shutil
 from datetime import datetime
 from pathlib import Path
 
@@ -45,13 +46,52 @@ def build_summary(
     }
 
 
+def resolve_runtime_base_dir() -> Path:
+    runtime_base = str(config.RUNTIME_BASE_DIR).strip()
+    if runtime_base:
+        return Path(runtime_base).resolve()
+    return TEST_ROOT
+
+
+def resolve_run_output_root(project_output_root: Path) -> Path:
+    runtime_output = str(getattr(config, "RUNTIME_OUTPUT_DIR", "")).strip()
+    if runtime_output:
+        return Path(runtime_output).resolve()
+    return project_output_root
+
+
+def resolve_summary_path(project_output_root: Path) -> Path:
+    runtime_summary = str(getattr(config, "RUNTIME_SUMMARY_PATH", "")).strip()
+    if runtime_summary:
+        return Path(runtime_summary).resolve()
+    return project_output_root / SUMMARY_FILENAME
+
+
+def archive_project_outputs(run_output_root: Path, runtime_base_dir: Path) -> None:
+    shared_output_root = runtime_base_dir / "output"
+    mappings = [
+        (shared_output_root / "txt2josn", run_output_root / "txt2josn"),
+        (shared_output_root / "exported_files", run_output_root / "exported_files"),
+    ]
+    for source_dir, target_dir in mappings:
+        if not source_dir.exists():
+            continue
+        if target_dir.exists():
+            shutil.rmtree(target_dir)
+        target_dir.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(source_dir), str(target_dir))
+
+
 def main():
     if os.name == "nt":
         os.system("color")
     print(f"[TEST_START] {datetime.now().isoformat(timespec='seconds')}")
 
-    test_root = str(TEST_ROOT)
-    summary_path = TEST_ROOT / "output" / SUMMARY_FILENAME
+    runtime_base_dir = resolve_runtime_base_dir()
+    test_root = str(runtime_base_dir)
+    project_output_root = TEST_ROOT / "output" / config.OUTPUT_PROJECT
+    run_output_root = resolve_run_output_root(project_output_root)
+    summary_path = resolve_summary_path(project_output_root)
     preparer = TestPreparer(test_root)
 
     # --- 步骤 1: 清理环境 (根据开关决定是否执行) ---
@@ -88,7 +128,10 @@ def main():
 
     # --- 步骤 3: 执行指令测试 (根据开关决定是否执行) ---
     if config.RUN_TESTS:
-        final_result, summary_payload = run_test_sequence(TEST_ROOT, preparer)
+        final_result, summary_payload = run_test_sequence(
+            runtime_base_dir, preparer, run_output_root
+        )
+        archive_project_outputs(run_output_root, runtime_base_dir)
         write_summary_file(summary_path, summary_payload)
         if not final_result:
             sys.exit(1)
@@ -107,9 +150,9 @@ def main():
     print(f"\n{constants.GREEN}[OK] Script finished.{constants.RESET}")
 
 
-def run_test_sequence(project_root, preparer):
-    exe_path = project_root / preparer.exe_name
-    output_dir = project_root / "output" / "logs"
+def run_test_sequence(runtime_base_dir: Path, preparer, run_output_root: Path):
+    exe_path = runtime_base_dir / preparer.exe_name
+    output_dir = run_output_root / "logs"
     output_dir.mkdir(parents=True, exist_ok=True)
     
     if not exe_path.exists():
@@ -154,9 +197,17 @@ def run_test_sequence(project_root, preparer):
     # --- 报告最终结果 ---
     if final_result:
         print(f"\n{constants.GREEN}[OK] All test steps completed successfully!{constants.RESET}")
-        print(f"{constants.GREEN}   Check the 'test/output/logs' directory for detailed logs.{constants.RESET}")
+        print(
+            f"{constants.GREEN}   Check the "
+            f"'{output_dir}' directory for detailed logs."
+            f"{constants.RESET}"
+        )
     else:
-        print(f"\n{constants.RED}[FAILED] A test step failed. Please check the corresponding log file in the 'test/output/logs' directory for details.{constants.RESET}")
+        print(
+            f"\n{constants.RED}[FAILED] A test step failed. Please check the corresponding "
+            f"log file in '{output_dir}' for details."
+            f"{constants.RESET}"
+        )
     summary_mode = "export_all" if config.RUN_EXPORT_ALL_TASKS else "date_export"
     summary_payload = build_summary(
         ok=final_result,

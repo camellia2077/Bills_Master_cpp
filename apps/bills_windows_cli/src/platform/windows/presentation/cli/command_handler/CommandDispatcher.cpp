@@ -16,7 +16,8 @@
 #include "commands/SimpleCommand.hpp"
 
 void CommandDispatcher::register_commands(const std::string& format,
-                                          const std::string& type_filter) {
+                                          const std::string& type_filter,
+                                          const std::string& export_pipeline) {
   // 注册简单命令
   m_commands["--validate"] = std::make_unique<SimpleCommand>(
       "validate", &AppController::handle_validation);
@@ -48,11 +49,14 @@ void CommandDispatcher::register_commands(const std::string& format,
       "full-workflow", &AppController::handle_full_workflow);
 
   // 注册复杂命令，并传入全局选项
-  m_commands["--export"] = std::make_unique<ExportCommand>(format, type_filter);
-  m_commands["-e"] = std::make_unique<ExportCommand>(format, type_filter);
+  m_commands["--export"] =
+      std::make_unique<ExportCommand>(format, type_filter, export_pipeline);
+  m_commands["-e"] =
+      std::make_unique<ExportCommand>(format, type_filter, export_pipeline);
 
-  m_commands["--query"] = std::make_unique<QueryCommand>(format);
-  m_commands["-q"] = std::make_unique<QueryCommand>(format);
+  m_commands["--query"] =
+      std::make_unique<QueryCommand>(format, export_pipeline);
+  m_commands["-q"] = std::make_unique<QueryCommand>(format, export_pipeline);
 }
 
 auto CommandDispatcher::run(int argc, char* argv[]) -> int {
@@ -67,6 +71,7 @@ auto CommandDispatcher::run(int argc, char* argv[]) -> int {
     std::vector<std::string> command_args;
     std::string format_str = "md";
     std::string type_filter;
+    std::string export_pipeline = "legacy";
 
     // 1. 解析全局选项和命令
     for (size_t i = 0; i < args.size(); ++i) {
@@ -82,6 +87,12 @@ auto CommandDispatcher::run(int argc, char* argv[]) -> int {
           type_filter = args[i];
         } else {
           throw std::runtime_error("Missing value for --type flag.");
+        }
+      } else if (arg == "--export-pipeline") {
+        if (++i < args.size()) {
+          export_pipeline = args[i];
+        } else {
+          throw std::runtime_error("Missing value for --export-pipeline flag.");
         }
       } else if (command_name.empty()) {
         command_name = arg;
@@ -101,7 +112,7 @@ auto CommandDispatcher::run(int argc, char* argv[]) -> int {
     }
 
     // 2. 注册所有命令
-    register_commands(format_str, type_filter);
+    register_commands(format_str, type_filter, export_pipeline);
 
     // 3. 查找并执行命令
     auto command_it = m_commands.find(command_name);

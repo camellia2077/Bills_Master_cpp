@@ -167,7 +167,7 @@ auto SqliteReportDataGateway::ListAvailableMonths() -> std::vector<std::string> 
     int month = sqlite3_column_int(stmt, kSecondColumn);
 
     std::stringstream month_stream;
-    month_stream << year << std::setfill('0') << std::setw(2) << month;
+    month_stream << year << "-" << std::setfill('0') << std::setw(2) << month;
     months.push_back(month_stream.str());
   }
 

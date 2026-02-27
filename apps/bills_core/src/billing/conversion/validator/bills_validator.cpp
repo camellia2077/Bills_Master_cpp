@@ -14,9 +14,10 @@ auto TxtStructureVerifier::verify(const std::string& bill_content,
   // Validate date
   if (std::getline(stream, line)) {
     line_num++;
-    if (!std::regex_match(line, std::regex(R"(^date:\d{6}$)"))) {
+    if (!std::regex_match(line,
+                          std::regex(R"(^date:\d{4}-(?:[1-9]|1[0-2])$)"))) {
       result.add_error("Error (Line " + std::to_string(line_num) +
-                       "): The first line must be 'date:YYYYMM'. Found: '" +
+                       "): The first line must be 'date:YYYY-M'. Found: '" +
                        line + "'");
       return false;
     }

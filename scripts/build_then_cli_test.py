@@ -4,12 +4,15 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 
@@ -39,20 +42,52 @@ FORMAT_CONFIG = {
 RUNTIME_EXPORT_FORMATS_FILENAME = "Export_Formats.json"
 TEST_SUMMARY_FILENAME = "test_summary.json"
 PYTHON_TEST_LOG_FILENAME = "test_python_output.log"
+DEFAULT_OUTPUT_PROJECT = "bills_tracer"
+DEFAULT_BUILD_ROOT = "apps/bills_windows_cli/build_cli_test"
+DEFAULT_BUILD_DIR_MODE = "isolated"
+DEFAULT_MAX_RUNS = 20
+RUNS_DIR_NAME = "runs"
+LATEST_SYNC_LOCK_DIR_NAME = ".latest_sync.lock"
 
 CLEANUP_FILES = ["bills.sqlite3"]
-CLEANUP_DIRS = [
-    "output",
-    "build",
-    "plugins",
-    "config",
-]
+CLEANUP_DIRS = ["build", "plugins", "config", "output"]
 
 
 def run_command(command: list[str], cwd: Path | None = None,
                 env: dict[str, str] | None = None) -> None:
     print(f"==> {' '.join(command)}")
     subprocess.run(command, cwd=str(cwd) if cwd else None, env=env, check=True)
+
+
+def sanitize_segment(value: str) -> str:
+    allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+    normalized = "".join(ch if ch in allowed else "_" for ch in value.strip())
+    normalized = normalized.strip("_")
+    return normalized or "default"
+
+
+def short_hash(text: str, length: int = 8) -> str:
+    return hashlib.sha1(text.encode("utf-8")).hexdigest()[:length]
+
+
+@contextmanager
+def directory_lock(lock_dir: Path, timeout_seconds: int = 900):
+    lock_dir = lock_dir.resolve()
+    lock_parent = lock_dir.parent
+    lock_parent.mkdir(parents=True, exist_ok=True)
+    start = time.time()
+    while True:
+        try:
+            lock_dir.mkdir()
+            break
+        except FileExistsError:
+            if time.time() - start > timeout_seconds:
+                raise TimeoutError(f"Timed out waiting for build lock: {lock_dir}")
+            time.sleep(0.25)
+    try:
+        yield
+    finally:
+        shutil.rmtree(lock_dir, ignore_errors=True)
 
 
 def load_test_summary(summary_path: Path) -> dict | None:
@@ -101,14 +136,150 @@ def read_cache_home_directory(cache_file: Path) -> Path | None:
     return None
 
 
+def read_cache_compilers(cache_file: Path) -> tuple[str | None, str | None]:
+    c_compiler = None
+    cxx_compiler = None
+    try:
+        with cache_file.open("r", encoding="utf-8", errors="ignore") as handle:
+            for line in handle:
+                if line.startswith("CMAKE_C_COMPILER:FILEPATH="):
+                    c_compiler = line.split("=", 1)[1].strip()
+                elif line.startswith("CMAKE_CXX_COMPILER:FILEPATH="):
+                    cxx_compiler = line.split("=", 1)[1].strip()
+    except OSError:
+        return None, None
+    return c_compiler, cxx_compiler
+
+
+def cache_uses_clang(cache_file: Path) -> bool:
+    c_compiler, cxx_compiler = read_cache_compilers(cache_file)
+    if not c_compiler or not cxx_compiler:
+        return False
+    c_name = Path(c_compiler).name.lower()
+    cxx_name = Path(cxx_compiler).name.lower()
+    return "clang" in c_name and "clang" in cxx_name
+
+
 def prepare_build_dir(build_dir: Path, source_dir: Path) -> None:
     cache_file = build_dir / "CMakeCache.txt"
     if not cache_file.exists():
         return
     cached_home = read_cache_home_directory(cache_file)
-    if cached_home is not None and cached_home.resolve() == source_dir.resolve():
+    if (
+        cached_home is not None
+        and cached_home.resolve() == source_dir.resolve()
+        and cache_uses_clang(cache_file)
+    ):
         return
     shutil.rmtree(build_dir)
+
+
+def resolve_build_dir(
+    repo_root: Path,
+    explicit_build_dir: str | None,
+    build_dir_mode: str,
+    output_project: str,
+    export_pipeline: str,
+    formats: list[str],
+    build_type: str,
+    generator: str,
+) -> Path:
+    if explicit_build_dir:
+        return (repo_root / explicit_build_dir).resolve()
+
+    build_root = (repo_root / DEFAULT_BUILD_ROOT).resolve()
+    if build_dir_mode == "shared":
+        return (build_root / "shared").resolve()
+
+    format_tag = sanitize_segment("-".join(formats))
+    project_tag = sanitize_segment(output_project)
+    pipeline_tag = sanitize_segment(export_pipeline)
+    build_type_tag = sanitize_segment(build_type.lower())
+    generator_tag = sanitize_segment(generator.lower())
+    unique_seed = f"{project_tag}|{pipeline_tag}|{format_tag}|{build_type_tag}|{generator_tag}"
+    unique_tag = short_hash(unique_seed, length=12)
+    build_name = f"b_{unique_tag}"
+    return (build_root / "iso" / build_name).resolve()
+
+
+def make_runtime_base_dir(
+    project_output_root: Path,
+    output_project: str,
+    export_pipeline: str,
+    run_tag: str,
+) -> Path:
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    project_tag = sanitize_segment(output_project)
+    pipeline_tag = sanitize_segment(export_pipeline)
+    custom_tag = sanitize_segment(run_tag) if run_tag else "auto"
+    pid_tag = str(os.getpid())
+    folder = f"{timestamp}_{project_tag}_{pipeline_tag}_{custom_tag}_{pid_tag}"
+    runtime_base = project_output_root / "_runtime" / folder
+    runtime_base.mkdir(parents=True, exist_ok=True)
+    return runtime_base.resolve()
+
+
+def make_run_output_dir(project_output_root: Path, run_id: str) -> Path:
+    run_output_dir = project_output_root / RUNS_DIR_NAME / run_id
+    run_output_dir.mkdir(parents=True, exist_ok=True)
+    return run_output_dir.resolve()
+
+
+def write_json_file(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def replace_path(src: Path, dst: Path) -> None:
+    if not src.exists():
+        return
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if dst.exists():
+        if dst.is_dir():
+            shutil.rmtree(dst)
+        else:
+            dst.unlink()
+    if src.is_dir():
+        shutil.copytree(src, dst)
+    else:
+        shutil.copy2(src, dst)
+
+
+def sync_latest_project_outputs(project_output_root: Path, run_output_dir: Path) -> None:
+    lock_dir = project_output_root / LATEST_SYNC_LOCK_DIR_NAME
+    with directory_lock(lock_dir):
+        replace_path(
+            run_output_dir / TEST_SUMMARY_FILENAME,
+            project_output_root / TEST_SUMMARY_FILENAME,
+        )
+        replace_path(
+            run_output_dir / PYTHON_TEST_LOG_FILENAME,
+            project_output_root / PYTHON_TEST_LOG_FILENAME,
+        )
+        replace_path(run_output_dir / "logs", project_output_root / "logs")
+        replace_path(run_output_dir / "txt2josn", project_output_root / "txt2josn")
+        replace_path(run_output_dir / "exported_files", project_output_root / "exported_files")
+        (project_output_root / "latest_run.txt").write_text(
+            run_output_dir.name,
+            encoding="utf-8",
+        )
+
+
+def prune_old_runs(project_output_root: Path, max_runs: int) -> None:
+    if max_runs <= 0:
+        return
+    runs_root = project_output_root / RUNS_DIR_NAME
+    if not runs_root.exists():
+        return
+    run_dirs = [path for path in runs_root.iterdir() if path.is_dir()]
+    if len(run_dirs) <= max_runs:
+        return
+    run_dirs.sort(key=lambda path: path.stat().st_mtime, reverse=True)
+    for old_run_dir in run_dirs[max_runs:]:
+        shutil.rmtree(old_run_dir, ignore_errors=True)
 
 
 def parse_formats(raw_formats: str) -> list[str]:
@@ -168,16 +339,26 @@ def to_toml_list(items: list[str]) -> str:
     return "[" + ", ".join(f"'{item}'" for item in items) + "]"
 
 
+def build_cleanup_dirs() -> list[str]:
+    return [*CLEANUP_DIRS]
+
+
 def write_temp_test_config(
     config_path: Path,
     build_bin_dir: Path,
     bills_dir: Path,
     import_dir: Path,
+    runtime_base_dir: Path,
+    runtime_run_id: str,
+    runtime_output_dir: Path,
+    runtime_summary_path: Path,
     plugin_dlls: list[str],
     run_export_all_tasks: bool,
     export_formats: list[str],
     ingest_mode: str,
     ingest_write_json: bool,
+    export_pipeline: str,
+    output_project: str,
     single_year: str,
     single_month: str,
     range_start: str,
@@ -187,6 +368,12 @@ def write_temp_test_config(
 build_dir = '{build_bin_dir.as_posix()}'
 bills_dir = '{bills_dir.as_posix()}'
 import_dir = '{import_dir.as_posix()}'
+
+[runtime]
+base_dir = '{runtime_base_dir.as_posix()}'
+run_id = '{runtime_run_id}'
+output_dir = '{runtime_output_dir.as_posix()}'
+summary_path = '{runtime_summary_path.as_posix()}'
 
 [run_control]
 run_cleanup = true
@@ -200,11 +387,13 @@ plugin_dlls = {to_toml_list(plugin_dlls)}
 run_export_all_tasks = {str(run_export_all_tasks).lower()}
 ingest_mode = '{ingest_mode}'
 ingest_write_json = {str(ingest_write_json).lower()}
+export_pipeline = '{export_pipeline}'
 export_formats = {to_toml_list(export_formats)}
+output_project = '{output_project}'
 
 [cleanup]
 files_to_delete = {to_toml_list(CLEANUP_FILES)}
-dirs_to_delete = {to_toml_list(CLEANUP_DIRS)}
+dirs_to_delete = {to_toml_list(build_cleanup_dirs())}
 
 [test_dates]
 single_year = '{single_year}'
@@ -218,30 +407,39 @@ range_end = '{range_end}'
 def build_cli(source_dir: Path, build_dir: Path, generator: str,
               build_type: str, target: str,
               plugin_targets: list[str], cmake_defines: list[str]) -> None:
-    prepare_build_dir(build_dir, source_dir)
-    configure_cmd = [
-        "cmake",
-        "-S",
-        str(source_dir),
-        "-B",
-        str(build_dir),
-        "-G",
-        generator,
-        f"-DCMAKE_BUILD_TYPE={build_type}",
-        *cmake_defines,
-    ]
-    run_command(configure_cmd)
+    lock_dir = build_dir.parent / f"{build_dir.name}.lock"
+    with directory_lock(lock_dir):
+        prepare_build_dir(build_dir, source_dir)
+        configure_cmd = [
+            "cmake",
+            "-S",
+            str(source_dir),
+            "-B",
+            str(build_dir),
+            "-G",
+            generator,
+            f"-DCMAKE_BUILD_TYPE={build_type}",
+            "-DBILL_COMPILER=clang",
+            *cmake_defines,
+        ]
+        run_command(configure_cmd)
 
-    build_targets = [target, *plugin_targets]
-    build_cmd = ["cmake", "--build", str(build_dir), "--target", *build_targets]
-    run_command(build_cmd)
+        build_targets = [target, *plugin_targets]
+        build_cmd = ["cmake", "--build", str(build_dir), "--target", *build_targets]
+        run_command(build_cmd)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Build bill_master_cli and run command-line tests."
     )
-    parser.add_argument("--build-dir", default="apps/bills_windows_cli/build_cli_test")
+    parser.add_argument("--build-dir", default="")
+    parser.add_argument(
+        "--build-dir-mode",
+        default=DEFAULT_BUILD_DIR_MODE,
+        choices=["isolated", "shared"],
+        help="isolated=dedicated build dir per test run; shared=single reusable build dir.",
+    )
     parser.add_argument("--build-type", default="Debug")
     parser.add_argument("--generator", default="Ninja")
     parser.add_argument("--target", default="bill_master_cli")
@@ -251,24 +449,62 @@ def main() -> int:
                         choices=["stepwise", "ingest"])
     parser.add_argument("--ingest-write-json", action="store_true")
     parser.add_argument("--run-export-all", action="store_true")
+    parser.add_argument(
+        "--export-pipeline",
+        default="model-first",
+        choices=["legacy", "model-first", "json-first"],
+    )
     parser.add_argument("--single-year", default="2024")
-    parser.add_argument("--single-month", default="202401")
-    parser.add_argument("--range-start", default="202401")
-    parser.add_argument("--range-end", default="202412")
+    parser.add_argument("--single-month", default="2024-01")
+    parser.add_argument("--range-start", default="2024-01")
+    parser.add_argument("--range-end", default="2024-12")
     parser.add_argument("--python", default=sys.executable)
+    parser.add_argument("--output-project", default=DEFAULT_OUTPUT_PROJECT)
+    parser.add_argument(
+        "--run-tag",
+        default="",
+        help="Optional label for runtime workspace folder naming.",
+    )
+    parser.add_argument(
+        "--max-runs",
+        type=int,
+        default=DEFAULT_MAX_RUNS,
+        help="Maximum number of historical run artifacts to keep per output project. <=0 disables pruning.",
+    )
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parent.parent
     source_dir = repo_root / "apps" / "bills_windows_cli"
-    build_dir = repo_root / args.build_dir
+    export_formats = parse_formats(args.formats)
+    output_project_name = sanitize_segment(args.output_project)
+    explicit_build_dir = args.build_dir.strip()
+    build_dir = resolve_build_dir(
+        repo_root=repo_root,
+        explicit_build_dir=explicit_build_dir if explicit_build_dir else None,
+        build_dir_mode=args.build_dir_mode,
+        output_project=output_project_name,
+        export_pipeline=args.export_pipeline,
+        formats=export_formats,
+        build_type=args.build_type,
+        generator=args.generator,
+    )
     build_bin_dir = build_dir / "bin"
     bills_dir = repo_root / args.bills_dir
     test_root = repo_root / "test"
+    project_output_root = test_root / "output" / output_project_name
     test_runner = test_root / "suites" / "bills_master" / "run_tests.py"
-    test_workdir = test_root
-    import_dir = test_root / "output" / "txt2josn"
-    summary_path = test_root / "output" / TEST_SUMMARY_FILENAME
-    python_test_log_path = test_root / "output" / PYTHON_TEST_LOG_FILENAME
+    runtime_base_dir = make_runtime_base_dir(
+        project_output_root=project_output_root,
+        output_project=output_project_name,
+        export_pipeline=args.export_pipeline,
+        run_tag=args.run_tag,
+    )
+    run_id = runtime_base_dir.name
+    run_output_dir = make_run_output_dir(project_output_root, run_id)
+    test_workdir = runtime_base_dir
+    import_dir = runtime_base_dir / "output" / "txt2josn"
+    summary_path = run_output_dir / TEST_SUMMARY_FILENAME
+    python_test_log_path = run_output_dir / PYTHON_TEST_LOG_FILENAME
 
     if not bills_dir.exists():
         print(f"Error: bills data directory not found: {bills_dir}")
@@ -278,7 +514,6 @@ def main() -> int:
         print(f"Error: test runner not found: {test_runner}")
         return 2
 
-    export_formats = parse_formats(args.formats)
     plugin_targets = selected_plugin_targets(export_formats)
     plugin_dlls = selected_plugin_dlls(export_formats)
     format_defines = cmake_format_defines(export_formats)
@@ -311,16 +546,36 @@ def main() -> int:
         temp_config_path = Path(tmp_file.name)
 
     try:
+        write_json_file(
+            run_output_dir / "run_manifest.json",
+            {
+                "run_id": run_id,
+                "status": "running",
+                "output_project": output_project_name,
+                "export_pipeline": args.export_pipeline,
+                "formats": export_formats,
+                "build_dir": build_dir.as_posix(),
+                "runtime_base_dir": runtime_base_dir.as_posix(),
+                "run_output_dir": run_output_dir.as_posix(),
+                "created_at": datetime.now().isoformat(timespec="seconds"),
+            },
+        )
         write_temp_test_config(
             config_path=temp_config_path,
             build_bin_dir=build_bin_dir,
             bills_dir=bills_dir,
             import_dir=import_dir,
+            runtime_base_dir=runtime_base_dir,
+            runtime_run_id=run_id,
+            runtime_output_dir=run_output_dir,
+            runtime_summary_path=summary_path,
             plugin_dlls=plugin_dlls,
             run_export_all_tasks=args.run_export_all,
             export_formats=export_formats,
             ingest_mode=args.ingest_mode,
             ingest_write_json=args.ingest_write_json,
+            export_pipeline=args.export_pipeline,
+            output_project=output_project_name,
             single_year=args.single_year,
             single_month=args.single_month,
             range_start=args.range_start,
@@ -357,6 +612,21 @@ def main() -> int:
         summary = load_test_summary(summary_path)
         if summary is None:
             print(f"CLI tests did not produce summary JSON: {summary_path}")
+            write_json_file(
+                run_output_dir / "run_manifest.json",
+                {
+                    "run_id": run_id,
+                    "status": "failed_no_summary",
+                    "output_project": output_project_name,
+                    "export_pipeline": args.export_pipeline,
+                    "formats": export_formats,
+                    "build_dir": build_dir.as_posix(),
+                    "runtime_base_dir": runtime_base_dir.as_posix(),
+                    "run_output_dir": run_output_dir.as_posix(),
+                    "completed_at": datetime.now().isoformat(timespec="seconds"),
+                    "test_return_code": test_result.returncode,
+                },
+            )
             return test_result.returncode if test_result.returncode != 0 else 3
         success = int(summary.get("success", 0))
         failed = int(summary.get("failed", 0))
@@ -366,10 +636,43 @@ def main() -> int:
             "CLI test summary: "
             f"ok={ok}, total={total}, success={success}, failed={failed}"
         )
+        write_json_file(
+            run_output_dir / "run_manifest.json",
+            {
+                "run_id": run_id,
+                "status": "ok" if ok and failed == 0 else "failed",
+                "output_project": output_project_name,
+                "export_pipeline": args.export_pipeline,
+                "formats": export_formats,
+                "build_dir": build_dir.as_posix(),
+                "runtime_base_dir": runtime_base_dir.as_posix(),
+                "run_output_dir": run_output_dir.as_posix(),
+                "completed_at": datetime.now().isoformat(timespec="seconds"),
+                "test_return_code": test_result.returncode,
+                "summary": summary,
+            },
+        )
+        sync_latest_project_outputs(project_output_root, run_output_dir)
+        prune_old_runs(project_output_root, args.max_runs)
         if not ok or failed > 0:
             return test_result.returncode if test_result.returncode != 0 else 1
     except subprocess.CalledProcessError as exc:
         print(f"CLI tests failed with exit code {exc.returncode}.")
+        write_json_file(
+            run_output_dir / "run_manifest.json",
+            {
+                "run_id": run_id,
+                "status": "build_or_test_crashed",
+                "output_project": output_project_name,
+                "export_pipeline": args.export_pipeline,
+                "formats": export_formats,
+                "build_dir": build_dir.as_posix(),
+                "runtime_base_dir": runtime_base_dir.as_posix(),
+                "run_output_dir": run_output_dir.as_posix(),
+                "completed_at": datetime.now().isoformat(timespec="seconds"),
+                "return_code": exc.returncode,
+            },
+        )
         return exc.returncode
     finally:
         temp_config_path.unlink(missing_ok=True)

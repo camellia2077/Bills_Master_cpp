@@ -168,6 +168,25 @@ auto AppController::normalize_format(std::string format_name) const
   return format_name;
 }
 
+auto AppController::normalize_export_pipeline(std::string pipeline_name) const
+    -> std::string {
+  std::transform(pipeline_name.begin(), pipeline_name.end(),
+                 pipeline_name.begin(), [](unsigned char ch) -> char {
+                   return static_cast<char>(std::tolower(ch));
+                 });
+  std::ranges::replace(pipeline_name, '_', '-');
+  if (pipeline_name.empty()) {
+    return "legacy";
+  }
+  if (pipeline_name == "jsonfirst") {
+    return "json-first";
+  }
+  if (pipeline_name == "modelfirst") {
+    return "model-first";
+  }
+  return pipeline_name;
+}
+
 auto AppController::infer_export_requirements(
     const std::string& type, const std::vector<std::string>& values) const
     -> std::pair<bool, bool> {
@@ -195,7 +214,8 @@ auto AppController::infer_export_requirements(
 
 auto AppController::is_export_format_available(
     const std::string& type, const std::vector<std::string>& values,
-    const std::string& format_str) const -> bool {
+    const std::string& format_str,
+    const std::string& export_pipeline) const -> bool {
   const std::string format = normalize_format(format_str);
   if (m_enabled_formats.count(format) == 0U) {
     std::cerr << RED_COLOR << "Error: " << RESET_COLOR
@@ -208,14 +228,27 @@ auto AppController::is_export_format_available(
   }
 
   const auto [need_month, need_year] = infer_export_requirements(type, values);
-  if (need_month && m_month_formats_available.count(format) == 0U) {
+  const bool skip_plugin_check_for_markdown =
+      format == "md" && export_pipeline == "json-first";
+  const bool skip_plugin_check_for_latex =
+      format == "tex" &&
+      (export_pipeline == "model-first" || export_pipeline == "json-first");
+  const bool skip_plugin_check_for_typst =
+      format == "typ" &&
+      (export_pipeline == "model-first" || export_pipeline == "json-first");
+  const bool skip_plugin_check =
+      skip_plugin_check_for_markdown || skip_plugin_check_for_latex ||
+      skip_plugin_check_for_typst;
+  if (!skip_plugin_check &&
+      need_month && m_month_formats_available.count(format) == 0U) {
     std::cerr << RED_COLOR << "Error: " << RESET_COLOR
               << "Month formatter plugin for format '" << format
               << "' is not available in runtime plugins directory."
               << std::endl;
     return false;
   }
-  if (need_year && m_year_formats_available.count(format) == 0U) {
+  if (!skip_plugin_check &&
+      need_year && m_year_formats_available.count(format) == 0U) {
     std::cerr << RED_COLOR << "Error: " << RESET_COLOR
               << "Year formatter plugin for format '" << format
               << "' is not available in runtime plugins directory."
@@ -259,15 +292,30 @@ auto AppController::handle_full_workflow(const std::string& path) -> bool {
 
 auto AppController::handle_export(const std::string& type,
                                   const std::vector<std::string>& values,
-                                  const std::string& format_str) -> bool {
+                                  const std::string& format_str,
+                                  const std::string& export_pipeline) -> bool {
   const std::string normalized_format = normalize_format(format_str);
-  if (!is_export_format_available(type, values, normalized_format)) {
+  const std::string normalized_pipeline =
+      normalize_export_pipeline(export_pipeline);
+  if (normalized_pipeline != "legacy" &&
+      normalized_pipeline != "model-first" &&
+      normalized_pipeline != "json-first") {
+    std::cerr << RED_COLOR << "Error: " << RESET_COLOR
+              << "Unknown value for --export-pipeline: '" << export_pipeline
+              << "'. Use 'legacy', 'model-first', or 'json-first'."
+              << std::endl;
+    return false;
+  }
+
+  if (!is_export_format_available(type, values, normalized_format,
+                                  normalized_pipeline)) {
     return false;
   }
 
   ExportController exporter(m_db_path, m_plugin_files, m_export_base_dir,
                             m_format_folder_names);
-  return exporter.handle_export(type, values, normalized_format);
+  return exporter.handle_export(type, values, normalized_format,
+                                normalized_pipeline);
 }
 
 void AppController::display_version() {

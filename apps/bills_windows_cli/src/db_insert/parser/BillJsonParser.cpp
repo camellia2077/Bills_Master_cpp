@@ -2,6 +2,7 @@
 
 #include "BillJsonParser.hpp"
 #include <fstream>
+#include <regex>
 #include "nlohmann/json.hpp"
 
 using json = nlohmann::json;
@@ -34,12 +35,13 @@ ParsedBill BillJsonParser::parse(const std::string& file_path) {
         bill_data.balance = data.at("balance").get<double>();
         // --- 修改结束 ---
 
-        if (date_str.length() == 6) {
-            bill_data.year = std::stoi(date_str.substr(0, 4));
-            bill_data.month = std::stoi(date_str.substr(4, 2));
-        } else {
-            throw std::runtime_error("JSON中的日期格式无效，必须为 YYYYMM 格式。");
+        static const std::regex kIsoMonthRegex(R"(^(\d{4})-(0[1-9]|1[0-2])$)");
+        std::smatch match;
+        if (!std::regex_match(date_str, match, kIsoMonthRegex) || match.size() != 3) {
+            throw std::runtime_error("JSON中的日期格式无效，必须为 YYYY-MM 格式。");
         }
+        bill_data.year = std::stoi(match[1].str());
+        bill_data.month = std::stoi(match[2].str());
 
         // 2. 遍历 categories 对象以解析交易
         const auto& categories = data.at("categories");

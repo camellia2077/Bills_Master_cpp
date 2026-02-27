@@ -1,0 +1,42 @@
+{
+  "monthly_md_2024_01": {
+    "source": "Markdown_bills/months/2024/2024-01.md",
+    "baseline": "monthly/2024-01.md",
+    "sha256": "b2029e39b5976421cba8e9284bcd856644b67835ebbc15434f99dc1ec29db53c"
+  },
+  "monthly_json_2024_01": {
+    "source": "standard_json/months/2024/2024-01.json",
+    "baseline": "monthly/2024-01.json",
+    "sha256": "3d578d4eed23d9fc7f9438576e510791a9b5592480185aaf4994152fad86722f"
+  },
+  "yearly_md_2024": {
+    "source": "Markdown_bills/years/2024.md",
+    "baseline": "yearly/2024.md",
+    "sha256": "b15206d32e0d060fb28f6c344b5aa41e41c0138c8fb771ec864561b09eb0a2e6"
+  },
+  "yearly_json_2024": {
+    "source": "standard_json/years/2024.json",
+    "baseline": "yearly/2024.json",
+    "sha256": "6a92e945d1a9cbeef2fded6db67f633b4c6c79c8d9d5a9c1095cb49a9d63c712"
+  },
+  "range_md_2024_03": {
+    "source": "Markdown_bills/months/2024/2024-03.md",
+    "baseline": "range/2024-03.md",
+    "sha256": "07b0309a69988d418ee548d1ad95f1e227cee5757974d92b3fd31b6cef061026"
+  },
+  "range_md_2024_04": {
+    "source": "Markdown_bills/months/2024/2024-04.md",
+    "baseline": "range/2024-04.md",
+    "sha256": "ada49261b5d0c992daabff8813731d9ea6ebfa2ce6668c2b6a2cebdd839b548c"
+  },
+  "range_json_2024_03": {
+    "source": "standard_json/months/2024/2024-03.json",
+    "baseline": "range/2024-03.json",
+    "sha256": "e709e34317e3b452c044decf5954981b3879a86931af2759d734c476c28ae8c6"
+  },
+  "range_json_2024_04": {
+    "source": "standard_json/months/2024/2024-04.json",
+    "baseline": "range/2024-04.json",
+    "sha256": "5853420c712c7deafc39471b52545ff5d4bbf825ad918132876b18f11cf4400e"
+  }
+}
