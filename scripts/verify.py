@@ -21,8 +21,24 @@ def run(command: list[str]) -> int:
     return subprocess.call(command)
 
 
+def resolve_project_output_root(
+    repo_root: Path,
+    project: str,
+    preferred_group: str = "artifact",
+) -> Path:
+    grouped = repo_root / "test" / "output" / preferred_group / project
+    legacy = repo_root / "test" / "output" / project
+    if grouped.exists():
+        return grouped
+    if legacy.exists():
+        return legacy
+    return grouped
+
+
 def load_test_summary(repo_root: Path, project: str) -> dict | None:
-    summary_path = repo_root / "test" / "output" / project / "test_summary.json"
+    summary_path = (
+        resolve_project_output_root(repo_root, project) / "test_summary.json"
+    )
     if not summary_path.exists():
         print(f"[ERROR] Missing test summary: {summary_path}")
         return None
@@ -54,7 +70,9 @@ def validate_test_summary(repo_root: Path, project: str) -> int:
 
 
 def load_python_test_duration_seconds(repo_root: Path, project: str) -> float | None:
-    log_path = repo_root / "test" / "output" / project / "test_python_output.log"
+    log_path = (
+        resolve_project_output_root(repo_root, project) / "test_python_output.log"
+    )
     if not log_path.exists():
         print(f"[ERROR] Missing python test log: {log_path}")
         return None
@@ -231,6 +249,8 @@ def run_bills_parallel_smoke(
     compare_cmd = [
         python_exe,
         str(compare_entry),
+        "--output-group",
+        "artifact",
         "--compare-projects",
         args.model_project,
         args.json_project,
@@ -252,6 +272,95 @@ def run_bills_parallel_smoke(
     )
 
 
+def run_logic_tests(
+    repo_root: Path,
+    python_exe: str,
+    forwarded: list[str],
+) -> int:
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        "--skip-core-build",
+        action="store_true",
+        help="Skip bills_core build before ABI tests.",
+    )
+    parser.add_argument(
+        "--skip-core-abi",
+        action="store_true",
+        help="Skip bills_core ABI tests.",
+    )
+    args, passthrough = parser.parse_known_args(forwarded)
+
+    if args.skip_core_build and args.skip_core_abi:
+        print("[ERROR] logic-tests: both --skip-core-build and --skip-core-abi are set.")
+        return 2
+
+    if not args.skip_core_build:
+        core_build_entry = repo_root / "scripts" / "build_bills_core.py"
+        build_code = run([python_exe, str(core_build_entry), "build_fast", "--shared"])
+        if build_code != 0:
+            return build_code
+
+    if not args.skip_core_abi:
+        core_abi_entry = (
+            repo_root / "test" / "suites" / "logic" / "bills_core_abi" / "run_tests.py"
+        )
+        return run([python_exe, str(core_abi_entry), *passthrough])
+
+    return 0
+
+
+def run_artifact_tests(
+    repo_root: Path,
+    python_exe: str,
+    forwarded: list[str],
+) -> int:
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        "--scope",
+        default="full",
+        choices=["basic", "smoke", "gate", "full"],
+        help="basic=bills, smoke=bills-parallel-smoke, gate=report-consistency-gate, full=basic+gate",
+    )
+    args, passthrough = parser.parse_known_args(forwarded)
+
+    if args.scope in ("basic", "full"):
+        bills_entry = repo_root / "scripts" / "build_then_cli_test.py"
+        bills_code = run([python_exe, str(bills_entry)])
+        if bills_code != 0:
+            return bills_code
+
+    if args.scope == "smoke":
+        return run_bills_parallel_smoke(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=passthrough,
+        )
+
+    if args.scope in ("gate", "full"):
+        default_gate_args = [
+            "--model-project",
+            "bills_gate_model_first",
+            "--json-project",
+            "bills_gate_json_first",
+            "--formats",
+            "md,tex,typ",
+            "--compare-scope",
+            "all",
+            "--build-dir-mode",
+            "isolated",
+            "--enforce-performance-gate",
+            "--max-performance-regression",
+            "0.10",
+        ]
+        return run_bills_parallel_smoke(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=[*default_gate_args, *passthrough],
+        )
+
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Unified verify entry for build and test workflows."
@@ -262,6 +371,9 @@ def main() -> int:
         default="bills",
         choices=[
             "bills",
+            "logic-tests",
+            "artifact-tests",
+            "all-tests",
             "bills-parallel-smoke",
             "report-consistency-gate",
             "bills-build",
@@ -272,7 +384,9 @@ def main() -> int:
             "report-pipeline-compare",
         ],
         help=(
-            "bills=build+CLI test, bills-build=compile bills_windows_cli, "
+            "bills=build+CLI test, logic-tests=unit/component style checks, "
+            "artifact-tests=integration/e2e/snapshot style checks, all-tests=logic+artifact, "
+            "bills-build=compile bills_windows_cli, "
             "bills-parallel-smoke=run model-first/json-first bills in parallel and compare outputs, "
             "report-consistency-gate=run full model/json consistency gate with performance threshold, "
             "core-build=compile bills_core, core-abi=run ABI smoke tests, "
@@ -295,6 +409,34 @@ def main() -> int:
     if args.workflow == "bills":
         entry = repo_root / "scripts" / "build_then_cli_test.py"
         return run([python_exe, str(entry), *forwarded])
+
+    if args.workflow == "logic-tests":
+        return run_logic_tests(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=forwarded,
+        )
+
+    if args.workflow == "artifact-tests":
+        return run_artifact_tests(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=forwarded,
+        )
+
+    if args.workflow == "all-tests":
+        logic_code = run_logic_tests(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=[],
+        )
+        if logic_code != 0:
+            return logic_code
+        return run_artifact_tests(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=forwarded,
+        )
 
     if args.workflow == "bills-parallel-smoke":
         return run_bills_parallel_smoke(
@@ -338,7 +480,7 @@ def main() -> int:
         return run([python_exe, str(entry), *forwarded])
 
     if args.workflow == "core-abi":
-        entry = repo_root / "scripts" / "test_bills_core_abi.py"
+        entry = repo_root / "test" / "suites" / "logic" / "bills_core_abi" / "run_tests.py"
         return run([python_exe, str(entry), *forwarded])
 
     if args.workflow == "report-snapshot":

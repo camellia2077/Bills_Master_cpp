@@ -22,6 +22,13 @@ const std::regex kIsoMonthRegex(R"(^(\d{4})-(0[1-9]|1[0-2])$)");
 constexpr const char* kMonthFormatterSuffix = "_month_formatter";
 constexpr const char* kYearFormatterSuffix = "_year_formatter";
 
+enum class StandardRenderMode {
+  kNone,
+  kMarkdown,
+  kLatex,
+  kTypst,
+};
+
 auto parse_iso_month(const std::string& value, int& year, int& month) -> bool {
   std::smatch match;
   if (!std::regex_match(value, match, kIsoMonthRegex) || match.size() != 3U) {
@@ -62,6 +69,38 @@ auto is_typst_format(std::string format_name) -> bool {
   return format_name == "typ" || format_name == "typst";
 }
 
+auto select_standard_render_mode(const std::string& pipeline,
+                                 const std::string& format_name)
+    -> StandardRenderMode {
+  if (pipeline == "json-first" && is_markdown_format(format_name)) {
+    return StandardRenderMode::kMarkdown;
+  }
+  if ((pipeline == "model-first" || pipeline == "json-first") &&
+      is_latex_format(format_name)) {
+    return StandardRenderMode::kLatex;
+  }
+  if ((pipeline == "model-first" || pipeline == "json-first") &&
+      is_typst_format(format_name)) {
+    return StandardRenderMode::kTypst;
+  }
+  return StandardRenderMode::kNone;
+}
+
+auto render_standard_report(const std::string& standard_report_json,
+                            const StandardRenderMode mode) -> std::string {
+  switch (mode) {
+    case StandardRenderMode::kMarkdown:
+      return StandardJsonMarkdownRenderer::render(standard_report_json);
+    case StandardRenderMode::kLatex:
+      return StandardJsonLatexRenderer::render(standard_report_json);
+    case StandardRenderMode::kTypst:
+      return StandardJsonTypstRenderer::render(standard_report_json);
+    case StandardRenderMode::kNone:
+    default:
+      return {};
+  }
+}
+
 auto normalize_export_pipeline(std::string pipeline_name) -> std::string {
   std::ranges::transform(pipeline_name, pipeline_name.begin(),
                          [](unsigned char ch) -> char {
@@ -69,7 +108,7 @@ auto normalize_export_pipeline(std::string pipeline_name) -> std::string {
                          });
   std::ranges::replace(pipeline_name, '_', '-');
   if (pipeline_name.empty()) {
-    return "legacy";
+    return "model-first";
   }
   if (pipeline_name == "jsonfirst") {
     return "json-first";
@@ -124,14 +163,8 @@ auto ReportExportService::export_yearly_report(const std::string& year_str,
     -> bool {
   try {
     const std::string pipeline = normalize_export_pipeline(export_pipeline);
-    const bool use_json_first_markdown =
-        pipeline == "json-first" && is_markdown_format(format_name);
-    const bool use_standard_latex =
-        (pipeline == "model-first" || pipeline == "json-first") &&
-        is_latex_format(format_name);
-    const bool use_standard_typst =
-        (pipeline == "model-first" || pipeline == "json-first") &&
-        is_typst_format(format_name);
+    const StandardRenderMode standard_render_mode =
+        select_standard_render_mode(pipeline, format_name);
     int year = std::stoi(year_str);
     YearlyReportData yearly_data = m_report_data_gateway->ReadYearlyData(year);
     const StandardReport standard_report =
@@ -141,12 +174,8 @@ auto ReportExportService::export_yearly_report(const std::string& year_str,
     m_report_exporter->export_yearly_standard_json(standard_report_json, year_str);
 
     std::string report;
-    if (use_json_first_markdown) {
-      report = StandardJsonMarkdownRenderer::render(standard_report_json);
-    } else if (use_standard_latex) {
-      report = StandardJsonLatexRenderer::render(standard_report_json);
-    } else if (use_standard_typst) {
-      report = StandardJsonTypstRenderer::render(standard_report_json);
+    if (standard_render_mode != StandardRenderMode::kNone) {
+      report = render_standard_report(standard_report_json, standard_render_mode);
     } else {
       auto formatter = m_year_formatter_provider->CreateFormatter(format_name);
       if (!formatter) {
@@ -181,14 +210,8 @@ auto ReportExportService::export_monthly_report(const std::string& month_str,
     -> bool {
   try {
     const std::string pipeline = normalize_export_pipeline(export_pipeline);
-    const bool use_json_first_markdown =
-        pipeline == "json-first" && is_markdown_format(format_name);
-    const bool use_standard_latex =
-        (pipeline == "model-first" || pipeline == "json-first") &&
-        is_latex_format(format_name);
-    const bool use_standard_typst =
-        (pipeline == "model-first" || pipeline == "json-first") &&
-        is_typst_format(format_name);
+    const StandardRenderMode standard_render_mode =
+        select_standard_render_mode(pipeline, format_name);
     int year = 0;
     int month = 0;
     if (!parse_iso_month(month_str, year, month)) {
@@ -204,12 +227,8 @@ auto ReportExportService::export_monthly_report(const std::string& month_str,
                                                     month_str);
 
     std::string report;
-    if (use_json_first_markdown) {
-      report = StandardJsonMarkdownRenderer::render(standard_report_json);
-    } else if (use_standard_latex) {
-      report = StandardJsonLatexRenderer::render(standard_report_json);
-    } else if (use_standard_typst) {
-      report = StandardJsonTypstRenderer::render(standard_report_json);
+    if (standard_render_mode != StandardRenderMode::kNone) {
+      report = render_standard_report(standard_report_json, standard_render_mode);
     } else {
       auto formatter = m_month_formatter_provider->CreateFormatter(format_name);
       if (!formatter) {

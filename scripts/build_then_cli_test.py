@@ -43,6 +43,7 @@ RUNTIME_EXPORT_FORMATS_FILENAME = "Export_Formats.json"
 TEST_SUMMARY_FILENAME = "test_summary.json"
 PYTHON_TEST_LOG_FILENAME = "test_python_output.log"
 DEFAULT_OUTPUT_PROJECT = "bills_tracer"
+DEFAULT_OUTPUT_GROUP = "artifact"
 DEFAULT_BUILD_ROOT = "apps/bills_windows_cli/build_cli_test"
 DEFAULT_BUILD_DIR_MODE = "isolated"
 DEFAULT_MAX_RUNS = 20
@@ -212,8 +213,18 @@ def make_runtime_base_dir(
     project_tag = sanitize_segment(output_project)
     pipeline_tag = sanitize_segment(export_pipeline)
     custom_tag = sanitize_segment(run_tag) if run_tag else "auto"
-    pid_tag = str(os.getpid())
-    folder = f"{timestamp}_{project_tag}_{pipeline_tag}_{custom_tag}_{pid_tag}"
+    # Keep runtime directory names short to avoid Windows MAX_PATH issues
+    # during nested export path creation in parallel smoke workflows.
+    project_short = project_tag[:12]
+    pipeline_short = pipeline_tag[:10]
+    custom_short = custom_tag[:10]
+    fingerprint = short_hash(
+        f"{project_tag}|{pipeline_tag}|{custom_tag}|{os.getpid()}",
+        length=8,
+    )
+    folder = (
+        f"{timestamp}_{project_short}_{pipeline_short}_{custom_short}_{fingerprint}"
+    )
     runtime_base = project_output_root / "_runtime" / folder
     runtime_base.mkdir(parents=True, exist_ok=True)
     return runtime_base.resolve()
@@ -491,8 +502,10 @@ def main() -> int:
     build_bin_dir = build_dir / "bin"
     bills_dir = repo_root / args.bills_dir
     test_root = repo_root / "test"
-    project_output_root = test_root / "output" / output_project_name
-    test_runner = test_root / "suites" / "bills_master" / "run_tests.py"
+    project_output_root = (
+        test_root / "output" / DEFAULT_OUTPUT_GROUP / output_project_name
+    )
+    test_runner = test_root / "suites" / "artifact" / "bills_master" / "run_tests.py"
     runtime_base_dir = make_runtime_base_dir(
         project_output_root=project_output_root,
         output_project=output_project_name,

@@ -160,6 +160,18 @@ def collect_scoped_files(root: Path, compare_scope: str) -> dict[str, Path]:
     return files
 
 
+def resolve_project_output_root(repo_root: Path, project: str, output_group: str) -> Path:
+    grouped = repo_root / "test" / "output" / output_group / project
+    legacy = repo_root / "test" / "output" / project
+    if output_group == "legacy":
+        return legacy
+    if grouped.exists():
+        return grouped
+    if legacy.exists():
+        return legacy
+    return grouped
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Compare exported report outputs against frozen snapshots.",
@@ -167,14 +179,22 @@ def main() -> int:
     parser.add_argument(
         "--project",
         default="bills_tracer",
-        help="Project output directory under test/output (default: bills_tracer).",
+        help="Project output directory name (default: bills_tracer).",
+    )
+    parser.add_argument(
+        "--output-group",
+        default="artifact",
+        help=(
+            "Output group under test/output (default: artifact). "
+            "Use legacy for old layout test/output/<project>."
+        ),
     )
     parser.add_argument(
         "--compare-projects",
         nargs=2,
         metavar=("PROJECT_A", "PROJECT_B"),
         help=(
-            "Compare outputs between two projects under test/output. "
+            "Compare outputs between two projects under selected output group. "
             "Example: --compare-projects bills_tracer_model_first bills_tracer_json_first"
         ),
     )
@@ -198,8 +218,14 @@ def main() -> int:
 
     if args.compare_projects:
         project_a, project_b = args.compare_projects
-        project_a_root = repo_root / "test" / "output" / project_a / "exported_files"
-        project_b_root = repo_root / "test" / "output" / project_b / "exported_files"
+        project_a_root = (
+            resolve_project_output_root(repo_root, project_a, args.output_group)
+            / "exported_files"
+        )
+        project_b_root = (
+            resolve_project_output_root(repo_root, project_b, args.output_group)
+            / "exported_files"
+        )
         return compare_between_projects(
             manifest=manifest,
             project_a_root=project_a_root,
@@ -207,7 +233,10 @@ def main() -> int:
             compare_scope=args.compare_scope,
         )
 
-    current_root = repo_root / "test" / "output" / args.project / "exported_files"
+    current_root = (
+        resolve_project_output_root(repo_root, args.project, args.output_group)
+        / "exported_files"
+    )
     return compare_against_baseline(
         manifest=manifest,
         current_root=current_root,

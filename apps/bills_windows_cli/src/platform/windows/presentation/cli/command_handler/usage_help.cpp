@@ -89,7 +89,7 @@ void print_help(const char* program_name) {
   std::println(
       "    Select report export pipeline "
       "('legacy', 'model-first', or 'json-first'). "
-      "Defaults to 'legacy'.");
+      "Defaults to 'model-first'.");
   std::println("    Example: --export-pipeline model-first\n");
 
   std::cout << GREEN_COLOR << "--- General ---\n" << RESET_COLOR;

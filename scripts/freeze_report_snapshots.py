@@ -52,7 +52,9 @@ def sha256(path: Path) -> str:
 
 def main() -> int:
     repo_root = Path(__file__).resolve().parent.parent
-    source_root = repo_root / "test" / "output" / "bills_tracer" / "exported_files"
+    source_root = (
+        repo_root / "test" / "output" / "artifact" / "bills_tracer" / "exported_files"
+    )
     baseline_root = repo_root / "test" / "baseline" / "report_snapshots"
 
     manifest: dict[str, dict[str, str]] = {}

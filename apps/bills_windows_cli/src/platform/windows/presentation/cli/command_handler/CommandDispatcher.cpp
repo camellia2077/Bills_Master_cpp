@@ -71,7 +71,7 @@ auto CommandDispatcher::run(int argc, char* argv[]) -> int {
     std::vector<std::string> command_args;
     std::string format_str = "md";
     std::string type_filter;
-    std::string export_pipeline = "legacy";
+    std::string export_pipeline = "model-first";
 
     // 1. 解析全局选项和命令
     for (size_t i = 0; i < args.size(); ++i) {

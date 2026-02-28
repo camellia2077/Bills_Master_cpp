@@ -23,7 +23,7 @@ class AppController {
   bool handle_export(const std::string& type,
                      const std::vector<std::string>& values,
                      const std::string& format_str = "md",
-                     const std::string& export_pipeline = "legacy");
+                     const std::string& export_pipeline = "model-first");
 
   static void display_version();
 

@@ -176,7 +176,7 @@ auto AppController::normalize_export_pipeline(std::string pipeline_name) const
                  });
   std::ranges::replace(pipeline_name, '_', '-');
   if (pipeline_name.empty()) {
-    return "legacy";
+    return "model-first";
   }
   if (pipeline_name == "jsonfirst") {
     return "json-first";

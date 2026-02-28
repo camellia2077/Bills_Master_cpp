@@ -13,7 +13,9 @@ except ModuleNotFoundError:
 
 _current_dir = os.path.dirname(os.path.abspath(__file__))
 _test_root = os.path.dirname(os.path.dirname(_current_dir))
-_default_config_path = os.path.join(_test_root, "suites", "bills_master", "config.toml")
+_default_config_path = os.path.join(
+    _test_root, "suites", "artifact", "bills_master", "config.toml"
+)
 _config_path = os.environ.get("BILLS_MASTER_TEST_CONFIG", "").strip()
 if _config_path:
     _config_path = os.path.abspath(_config_path)

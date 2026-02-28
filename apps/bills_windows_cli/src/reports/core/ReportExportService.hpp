@@ -32,27 +32,27 @@ class ReportExportService {
   bool export_yearly_report(const std::string& year_str,
                             const std::string& format_name,
                             bool suppress_output = false,
-                            const std::string& export_pipeline = "legacy");
+                            const std::string& export_pipeline = "model-first");
   bool export_monthly_report(const std::string& month_str,
                              const std::string& format_name,
                              bool suppress_output = false,
-                             const std::string& export_pipeline = "legacy");
+                             const std::string& export_pipeline = "model-first");
   bool export_by_date(const std::string& date_str,
                       const std::string& format_name,
-                      const std::string& export_pipeline = "legacy");
+                      const std::string& export_pipeline = "model-first");
   bool export_by_date_range(const std::string& start_date,
                             const std::string& end_date,
                             const std::string& format_name,
-                            const std::string& export_pipeline = "legacy");
+                            const std::string& export_pipeline = "model-first");
 
   // Batch Export APIs
   bool export_all_reports(const std::string& format_name,
-                          const std::string& export_pipeline = "legacy");
+                          const std::string& export_pipeline = "model-first");
   bool export_all_monthly_reports(
       const std::string& format_name,
-      const std::string& export_pipeline = "legacy");
+      const std::string& export_pipeline = "model-first");
   bool export_all_yearly_reports(const std::string& format_name,
-                                 const std::string& export_pipeline = "legacy");
+                                 const std::string& export_pipeline = "model-first");
 
  private:
   std::unique_ptr<ReportDataGateway> m_report_data_gateway;
