@@ -1,0 +1,26 @@
+// reports/plugins/year_formatters/year_typ/YearTypFormat.hpp
+#ifndef YEAR_TYP_FORMAT_HPP
+#define YEAR_TYP_FORMAT_HPP
+
+#include "yearly_typ_config.hpp"
+#include "reports/plugins/year_formatters/base_yearly_report_formatter.hpp"
+
+class YearTypFormat : public BaseYearlyReportFormatter {
+ public:
+  explicit YearTypFormat(const YearlyTypConfig& config = YearlyTypConfig{});
+
+ private:
+  YearlyTypConfig config_;
+
+ protected:
+  std::string get_no_data_message(int year) const override;
+  std::string generate_header(const YearlyReportData& data) const override;
+  std::string generate_summary(const YearlyReportData& data) const override;
+  std::string generate_monthly_breakdown_header() const override;
+  // 重写生成表格行的函数
+  std::string generate_monthly_item(
+      int year, int month, const MonthlySummary& summary) const override;
+  std::string generate_footer(const YearlyReportData& data) const override;
+};
+
+#endif  // YEAR_TYP_FORMAT_HPP

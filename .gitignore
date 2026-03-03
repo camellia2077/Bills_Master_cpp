@@ -5,13 +5,23 @@ my_test/
 .vscode/
 pdf_files/
 __pycache__/
+*.pyc
 build_*/
 temp/
 
+# Keep repository-managed sources under tools/build tracked.
+!tools/build/
+!tools/build/**
+# But still ignore local build artifacts generated inside migrated tools.
+tools/build/**/build/
+tools/build/**/build_*/
+tools/build/**/__pycache__/
+
 bills_output_from_config/
 output/
-test/config/
-test/plugins/
+tests/output/
+tests/fixtures/config/
+tests/fixtures/plugins/
 
 *.log
 *.pdf

@@ -1,25 +1,25 @@
 # Verify 约束
 
-每次修改代码后，必须执行编译和测试，统一通过 `scripts/verify.py` 触发，不允许跳过。
+每次修改代码后，必须执行编译和测试，统一通过 `tools/verify/verify.py` 触发，不允许跳过。
 
 ## 统一入口
 
-- 默认（推荐）：`python scripts/verify.py`
+- 默认（推荐）：`python tools/verify/verify.py`
   - 等价于 `bills` 工作流（编译 + CLI 测试）。
-- 并行冒烟（推荐用于流水线一致性）：`python scripts/verify.py bills-parallel-smoke`
+- 并行冒烟（推荐用于流水线一致性）：`python tools/verify/verify.py bills-parallel-smoke`
   - 并发执行两套：
     - `model-first`
     - `json-first`
   - 自动校验：
     - 两套 `test_summary.json` 都为成功
     - 两套导出产物做项目间快照对比（默认 `md`）
-- 一致性门禁（Phase 5.3）：`python scripts/verify.py report-consistency-gate`
+- 一致性门禁（Phase 5.3）：`python tools/verify/verify.py report-consistency-gate`
   - 默认执行：
     - `formats=md,tex,typ`
     - `compare-scope=all`
     - 性能门禁：`model-first` 相比 `json-first` 回归不超过 `+10%`
-- 仅编译 `bills_master`：`python scripts/verify.py bills-build -- build_fast`
-- 仅编译 `log_generator`：`python scripts/verify.py log-build -- build --mode Debug`
+- 仅编译 `bills_master`：`python tools/verify/verify.py bills-build -- build_fast`
+- 仅编译 `log_generator`：`python tools/verify/verify.py log-build -- build --mode Debug`
 
 并行冒烟可选参数：
 
