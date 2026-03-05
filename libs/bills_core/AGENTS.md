@@ -1,27 +1,21 @@
 # bills_core Agent Guide
 
-本文件是 `libs/bills_core` 的 agent 执行入口约束。详细设计不放在这里，统一在 `docs/modules/bills_core/`。
+`libs/bills_core` 目录只保留执行入口与导航，详细说明统一维护在 `docs/modules/bills_core/`。
 
-## 1. 工作入口
+## 必读顺序
 
-- 修改前先读：`libs/bills_core/README.md`
-- 详细文档索引：`docs/modules/bills_core/module_map.md`
+1. `libs/bills_core/README.md`
+2. `docs/modules/bills_core/module_map.md`
+3. `docs/modules/bills_core/change_guide.md`
 
-## 2. 变更范围约束
+## 约束
 
-- 仅在需求相关目录改动，避免跨模块“顺手重构”。
-- 涉及 ABI 行为变更时，必须同步检查 `docs/modules/bills_core/abi_contract.md`。
-- 不要新增重复实现，优先复用已有 ports/contracts 和 use case。
+- 涉及 ABI 改动时，必须先读：`docs/modules/bills_core/abi_contract.md`
+- 仅修改需求相关目录，避免跨模块顺手重构
+- 优先复用 `ports` / `use_cases` / 已有模块接口，不新增重复实现
 
-## 3. 验证要求
+## 验证
 
-- 代码修改后至少执行一次：
-  - `python tools/verify/verify.py`
-- 涉及导出链路/多流水线一致性时，优先执行：
-  - `python tools/verify/verify.py bills-parallel-smoke`
-- 若失败，先修复再重复执行，直到返回码为 `0`。
-
-## 4. 文档策略
-
-- 这里仅放规则和导航，不放大段设计细节。
-- 详细内容写入 `docs/modules/bills_core/`，并在 `README.md`/本文件保持链接可达。
+- 修改后至少执行一次：`python tools/verify/verify.py`
+- 失败需修复后重跑，直到返回码 `0`
+- 仅当本次改动为纯文档修改（`docs/**`、`*.md`）时，可跳过 `verify`

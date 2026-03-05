@@ -1,5 +1,7 @@
 # bills_core Build And Test
 
+改动定位建议先看：`docs/modules/bills_core/change_guide.md`
+
 ## 统一验证入口
 
 - `python tools/verify/verify.py`

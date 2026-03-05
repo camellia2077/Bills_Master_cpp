@@ -7,9 +7,20 @@
 - `docs/modules/module_standards.md`
 - `docs/modules/bills_core/architecture.md`
 - `docs/modules/bills_core/module_map.md`
+- `docs/modules/bills_core/change_guide.md`
 - `docs/modules/bills_core/build_and_test.md`
 - `docs/modules/bills_core/abi_contract.md`
+- `docs/modules/bills_core/c_abi_boundary.md`
+- `docs/modules/bills_core/c_abi_schema_draft.md`
 - `docs/modules/bills_core/standard_report_json_schema_v1.md`
+- `docs/modules/bills_io/architecture.md`
+- `docs/modules/bills_io/module_map.md`
+- `docs/modules/bills_io/change_guide.md`
+- `docs/modules/bills_io/build_and_test.md`
+- `docs/modules/bills_cli/architecture.md`
+- `docs/modules/bills_cli/module_map.md`
+- `docs/modules/bills_cli/change_guide.md`
+- `docs/modules/bills_cli/build_and_test.md`
 
 ## release
 
@@ -22,13 +33,3 @@
 ## roadmap
 
 - `docs/roadmap/TODO.md`（唯一待办入口）
-
-## others
-
-- `docs/others/ARCHITECTURE.md`
-- `docs/others/DEPENDENCIES.md`
-- `docs/others/DATABASE_SCHEMA.md`
-- `docs/others/C_ABI_BOUNDARY.md`
-- `docs/others/C_ABI_SCHEMA_DRAFT.md`
-- `docs/others/DIRECTORY_STRUCTURE.md`
-- `docs/others/GRAPH_CONFIGURATION.md`

@@ -27,5 +27,6 @@
 ## 相关阅读
 
 - `docs/modules/bills_core/module_map.md`
+- `docs/modules/bills_core/change_guide.md`
 - `docs/modules/bills_core/abi_contract.md`
 - `docs/modules/bills_core/build_and_test.md`

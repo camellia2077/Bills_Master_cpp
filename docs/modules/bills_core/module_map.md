@@ -2,6 +2,8 @@
 
 本页用于让 agent 快速定位“改哪里”。
 
+相关阅读：`docs/modules/bills_core/change_guide.md`
+
 ## 代码目录
 
 - `libs/bills_core/src/billing/`

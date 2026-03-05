@@ -2,7 +2,7 @@
 
 ## Scope
 - This document freezes the current refactor boundary for Android reuse.
-- Source of truth for Phase 0/1 decisions in `docs/others/C_ABI_SCHEMA_DRAFT.md`.
+- Source of truth for Phase 0/1 decisions in `docs/modules/bills_core/c_abi_schema_draft.md`.
 - Working draft copy for discussion: `temp/c-abi.md`.
 
 ## Module Boundaries
