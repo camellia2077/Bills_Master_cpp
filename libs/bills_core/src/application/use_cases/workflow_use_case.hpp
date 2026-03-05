@@ -9,11 +9,12 @@
 #include "common/result.hpp"
 #include "billing/conversion/modifier/_shared_structures/bills_data_structures.hpp"
 #include "billing/conversion/validator/config/bills_config.hpp"
-#include "ports/bills_content_reader.hpp"
-#include "ports/bills_file_enumerator.hpp"
-#include "ports/output_path_builder.hpp"
-#include "ports/bills_repository.hpp"
-#include "ports/bills_serializer.hpp"
+
+class BillContentReader;
+class BillFileEnumerator;
+class BillRepository;
+class BillSerializer;
+class OutputPathBuilder;
 
 class WorkflowUseCase {
  public:

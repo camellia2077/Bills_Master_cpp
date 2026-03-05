@@ -1,49 +1,72 @@
-#include "abi/internal/abi_shared.hpp"
+#include <cstddef>
+#include <exception>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include "billing/conversion/bills_processing_pipeline.hpp"
+#if BILLS_CORE_MODULES_ENABLED
+import bill.core.abi;
+import bill.core.billing.pipeline;
+namespace core_abi = bills::core::modules::abi;
+using bills::core::modules::billing::BillProcessingPipeline;
+#else
+#include "abi/internal/abi_shared.hpp"
+namespace core_abi = bills::core::abi;
+#endif
 
 namespace bills::core::abi {
+
+#if BILLS_CORE_MODULES_ENABLED
+using Json = core_abi::Json;
+namespace fs = core_abi::fs;
+using BillValidationRules = core_abi::BillValidationRules;
+using BillConfig = core_abi::BillConfig;
+using Config = core_abi::Config;
+#endif
 
 auto handle_validate_command(const Json& request) -> std::string {
   const Json params = request.value("params", Json::object());
   if (!params.is_object()) {
-    return make_response(false, error_code::kParamInvalidRequest,
-                         "'params' must be a JSON object.");
+    return core_abi::make_response(false, core_abi::error_code::kParamInvalidRequest,
+                                   "'params' must be a JSON object.");
   }
 
   const std::string input_path = params.value("input_path", "");
   if (input_path.empty()) {
-    return make_response(false, error_code::kParamInvalidRequest,
-                         "Validate requires non-empty 'params.input_path'.");
+    return core_abi::make_response(
+        false, core_abi::error_code::kParamInvalidRequest,
+        "Validate requires non-empty 'params.input_path'.");
   }
 
   BillConfig validator_config{BillValidationRules{}};
   Config modifier_config{};
   const std::string config_error =
-      read_and_validate_configs(params, validator_config, modifier_config);
+      core_abi::read_and_validate_configs(params, validator_config, modifier_config);
   if (!config_error.empty()) {
     Json data;
     data["detail"] = config_error;
-    return make_response(false, error_code::kParamInvalidConfig,
-                         "Failed to load/validate configuration.",
-                         std::move(data));
+    return core_abi::make_response(
+        false, core_abi::error_code::kParamInvalidConfig,
+        "Failed to load/validate configuration.", std::move(data));
   }
 
   std::vector<fs::path> files;
   try {
-    files = list_txt_files(fs::path(input_path));
+    files = core_abi::list_txt_files(fs::path(input_path));
   } catch (const std::exception& ex) {
     Json data;
     data["detail"] = ex.what();
-    return make_response(false, error_code::kParamInvalidInputPath,
-                         "Failed to enumerate input files.", std::move(data));
+    return core_abi::make_response(
+        false, core_abi::error_code::kParamInvalidInputPath,
+        "Failed to enumerate input files.", std::move(data));
   }
 
   if (files.empty()) {
     Json data;
     data["input_path"] = input_path;
-    return make_response(false, error_code::kBusinessNoInputFiles,
-                         "No .txt files found under input_path.", std::move(data));
+    return core_abi::make_response(
+        false, core_abi::error_code::kBusinessNoInputFiles,
+        "No .txt files found under input_path.", std::move(data));
   }
 
   BillProcessingPipeline pipeline(validator_config, modifier_config);
@@ -56,7 +79,7 @@ auto handle_validate_command(const Json& request) -> std::string {
     Json item;
     item["path"] = file.string();
     try {
-      const std::string content = read_text_file(file);
+      const std::string content = core_abi::read_text_file(file);
       const bool ok = pipeline.validate_content(content, file.string());
       item["ok"] = ok;
       if (ok) {
@@ -81,11 +104,13 @@ auto handle_validate_command(const Json& request) -> std::string {
   data["files"] = std::move(file_results);
 
   if (failure == 0U) {
-    return make_response(true, error_code::kOk,
-                         "Validation completed successfully.", std::move(data));
+    return core_abi::make_response(
+        true, core_abi::error_code::kOk, "Validation completed successfully.",
+        std::move(data));
   }
-  return make_response(false, error_code::kBusinessValidationFailed,
-                       "One or more files failed validation.", std::move(data));
+  return core_abi::make_response(
+      false, core_abi::error_code::kBusinessValidationFailed,
+      "One or more files failed validation.", std::move(data));
 }
 
 }  // namespace bills::core::abi

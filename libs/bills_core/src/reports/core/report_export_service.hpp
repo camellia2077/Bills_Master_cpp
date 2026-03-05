@@ -6,12 +6,10 @@
 #include <memory>
 #include <string>
 
-#include "ports/month_report_formatter_provider.hpp"
-#include "ports/report_data_gateway.hpp"
-#include "ports/yearly_report_formatter_provider.hpp"
-#include "report_exporter.hpp"
-#include "../monthly_report/monthly_report_generator.hpp"
-#include "../yearly_report/yearly_report_generator.hpp"
+class ReportDataGateway;
+class MonthReportFormatterProvider;
+class YearlyReportFormatterProvider;
+class ReportExporter;
 
 class ReportExportService {
  public:
@@ -58,8 +56,6 @@ class ReportExportService {
   std::unique_ptr<ReportDataGateway> m_report_data_gateway;
   std::unique_ptr<MonthReportFormatterProvider> m_month_formatter_provider;
   std::unique_ptr<YearlyReportFormatterProvider> m_year_formatter_provider;
-  std::unique_ptr<MonthlyReportGenerator> m_monthly_generator;
-  std::unique_ptr<YearlyReportGenerator> m_yearly_generator;
   std::unique_ptr<ReportExporter> m_report_exporter;
 };
 

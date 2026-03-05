@@ -1,6 +1,7 @@
 // conversion/validator/bills_validator.cpp
 #include "bills_validator.hpp"
 
+#include <regex>
 #include <sstream>
 #include <string>
 

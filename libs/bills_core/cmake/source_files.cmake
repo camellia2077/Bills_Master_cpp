@@ -4,6 +4,7 @@ set(CONVERSION_DIR        "${CORE_SOURCE_ROOT}/billing/conversion")
 set(SERIALIZATION_DIR     "${CORE_SOURCE_ROOT}/serialization")
 set(REPORTS_DIR           "${CORE_SOURCE_ROOT}/reports")
 set(ABI_DIR               "${CORE_SOURCE_ROOT}/abi")
+set(MODULES_DIR           "${CORE_SOURCE_ROOT}/modules")
 
 set(CONFIG_VALIDATOR_SOURCES
     "${CONFIG_VALIDATOR_DIR}/pipeline/validator_config_validator.cpp"
@@ -45,4 +46,41 @@ set(CORE_SOURCES
     ${SERIALIZATION_SOURCES}
     ${REPORTS_SOURCES}
     ${ABI_SOURCES}
+)
+
+set(CORE_MODULE_INTERFACE_FILES
+    "${MODULES_DIR}/core_build_info.cppm"
+    "${MODULES_DIR}/common_result.cppm"
+    "${MODULES_DIR}/common_process_stats.cppm"
+    "${MODULES_DIR}/common_version.cppm"
+    "${MODULES_DIR}/domain_bill_record.cppm"
+    "${MODULES_DIR}/config_validator_validator_types.cppm"
+    "${MODULES_DIR}/config_validator_validator.cppm"
+    "${MODULES_DIR}/config_validator_modifier_types.cppm"
+    "${MODULES_DIR}/config_validator_modifier.cppm"
+    "${MODULES_DIR}/config_bill_config.cppm"
+    "${MODULES_DIR}/config_modifier_data.cppm"
+    "${MODULES_DIR}/serialization_bill_json_serializer.cppm"
+    "${MODULES_DIR}/billing_processing_pipeline.cppm"
+    "${MODULES_DIR}/ports_bills_content_reader.cppm"
+    "${MODULES_DIR}/ports_bills_file_enumerator.cppm"
+    "${MODULES_DIR}/ports_bills_repository.cppm"
+    "${MODULES_DIR}/ports_bills_serializer.cppm"
+    "${MODULES_DIR}/ports_output_path_builder.cppm"
+    "${MODULES_DIR}/ports_month_report_formatter_provider.cppm"
+    "${MODULES_DIR}/ports_yearly_report_formatter_provider.cppm"
+    "${MODULES_DIR}/ports_report_data_gateway.cppm"
+    "${MODULES_DIR}/reports_standard_report_assembler.cppm"
+    "${MODULES_DIR}/reports_standard_report_json_serializer.cppm"
+    "${MODULES_DIR}/reports_report_exporter.cppm"
+    "${MODULES_DIR}/application_workflow_use_case.cppm"
+    "${MODULES_DIR}/abi_shared.cppm"
+)
+
+set(CORE_MODULE_CONSUMER_SOURCES
+    "${MODULES_DIR}/core_build_info_import_smoke.cpp"
+    "${MODULES_DIR}/phase2_core_module_import_smoke.cpp"
+    "${MODULES_DIR}/phase2_call_chain_module_import_smoke.cpp"
+    "${MODULES_DIR}/phase3_layer_module_import_smoke.cpp"
+    "${MODULES_DIR}/phase3_abi_module_import_smoke.cpp"
 )

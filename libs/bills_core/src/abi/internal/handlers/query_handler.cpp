@@ -1,16 +1,38 @@
-#include "abi/internal/abi_shared.hpp"
-
 #include <algorithm>
+#include <cstddef>
 #include <cctype>
+#include <exception>
+#include <map>
 #include <regex>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include "ports/contracts/reports/monthly/monthly_report_data.hpp"
-#include "ports/contracts/reports/yearly/yearly_report_data.hpp"
-#include "reports/standard_json/standard_report_assembler.hpp"
-#include "reports/standard_json/standard_report_json_serializer.hpp"
-#include "serialization/bills_json_serializer.hpp"
+#if BILLS_CORE_MODULES_ENABLED
+import bill.core.abi;
+import bill.core.domain.bill_record;
+import bill.core.reports.standard_report_assembler;
+import bill.core.reports.standard_report_json_serializer;
+import bill.core.serialization.bill_json_serializer;
+namespace core_abi = bills::core::modules::abi;
+using bills::core::modules::domain_bill_record::ParsedBill;
+using bills::core::modules::reports::MonthlyReportData;
+using bills::core::modules::reports::MonthlySummary;
+using bills::core::modules::reports::StandardReportAssembler;
+using bills::core::modules::reports::StandardReportJsonSerializer;
+using bills::core::modules::reports::YearlyReportData;
+using bills::core::modules::serialization::BillJsonSerializer;
+#else
+#include "abi/internal/abi_shared.hpp"
+namespace core_abi = bills::core::abi;
+#endif
 
 namespace bills::core::abi {
+
+#if BILLS_CORE_MODULES_ENABLED
+using Json = core_abi::Json;
+namespace fs = core_abi::fs;
+#endif
 
 namespace {
 
@@ -55,18 +77,19 @@ auto parse_month_string(const std::string& raw, int& year, int& month) -> bool {
 auto handle_query_command(const Json& request) -> std::string {
   const Json params = request.value("params", Json::object());
   if (!params.is_object()) {
-    return make_response(false, error_code::kParamInvalidRequest,
-                         "'params' must be a JSON object.");
+    return core_abi::make_response(false, core_abi::error_code::kParamInvalidRequest,
+                                   "'params' must be a JSON object.");
   }
 
   const std::string query_type_raw = params.value("type", "");
   const std::string query_value = params.value("value", "");
   const std::string input_path =
-      params.value("input_path", std::string(constants::kDefaultConvertOutputDir));
+      params.value("input_path",
+                   std::string(core_abi::constants::kDefaultConvertOutputDir));
 
   if (query_type_raw.empty() || query_value.empty()) {
-    return make_response(
-        false, error_code::kParamInvalidRequest,
+    return core_abi::make_response(
+        false, core_abi::error_code::kParamInvalidRequest,
         "Query requires non-empty 'params.type' and 'params.value'.");
   }
 
@@ -77,8 +100,9 @@ auto handle_query_command(const Json& request) -> std::string {
     Json data;
     data["type"] = query_type_raw;
     data["supported_types"] = {"year", "month"};
-    return make_response(false, error_code::kParamInvalidRequest,
-                         "Unsupported query type.", std::move(data));
+    return core_abi::make_response(
+        false, core_abi::error_code::kParamInvalidRequest,
+        "Unsupported query type.", std::move(data));
   }
 
   int query_year = 0;
@@ -93,26 +117,28 @@ auto handle_query_command(const Json& request) -> std::string {
     Json data;
     data["type"] = query_type_raw;
     data["value"] = query_value;
-    return make_response(false, error_code::kParamInvalidRequest,
-                         "Invalid query value format.", std::move(data));
+    return core_abi::make_response(
+        false, core_abi::error_code::kParamInvalidRequest,
+        "Invalid query value format.", std::move(data));
   }
 
   std::vector<fs::path> files;
   try {
-    files = list_json_files(fs::path(input_path));
+    files = core_abi::list_json_files(fs::path(input_path));
   } catch (const std::exception& ex) {
     Json data;
     data["detail"] = ex.what();
-    return make_response(false, error_code::kParamInvalidInputPath,
-                         "Failed to enumerate input files.", std::move(data));
+    return core_abi::make_response(
+        false, core_abi::error_code::kParamInvalidInputPath,
+        "Failed to enumerate input files.", std::move(data));
   }
 
   if (files.empty()) {
     Json data;
     data["input_path"] = input_path;
-    return make_response(false, error_code::kBusinessNoInputFiles,
-                         "No .json files found under input_path.",
-                         std::move(data));
+    return core_abi::make_response(
+        false, core_abi::error_code::kBusinessNoInputFiles,
+        "No .json files found under input_path.", std::move(data));
   }
 
   std::size_t parse_failures = 0;
@@ -236,7 +262,7 @@ auto handle_query_command(const Json& request) -> std::string {
   }
 
   if (is_month_query) {
-    const StandardReport standard_report =
+    const auto standard_report =
         StandardReportAssembler::FromMonthly(monthly_report_data);
     data["standard_report"] = StandardReportJsonSerializer::ToJson(standard_report);
   } else {
@@ -248,7 +274,7 @@ auto handle_query_command(const Json& request) -> std::string {
     yearly_report_data.balance = total_balance;
     yearly_report_data.monthly_summary = std::move(yearly_monthly_summary);
 
-    const StandardReport standard_report =
+    const auto standard_report =
         StandardReportAssembler::FromYearly(yearly_report_data);
     data["standard_report"] = StandardReportJsonSerializer::ToJson(standard_report);
   }
@@ -256,18 +282,20 @@ auto handle_query_command(const Json& request) -> std::string {
   data["files"] = std::move(file_results);
 
   if (matched_bills == 0U) {
-    return make_response(false, error_code::kBusinessQueryNotFound,
-                         "No data matched the query.", std::move(data));
+    return core_abi::make_response(
+        false, core_abi::error_code::kBusinessQueryNotFound,
+        "No data matched the query.", std::move(data));
   }
 
   if (parse_failures == 0U) {
-    return make_response(true, error_code::kOk, "Query completed successfully.",
-                         std::move(data));
+    return core_abi::make_response(
+        true, core_abi::error_code::kOk, "Query completed successfully.",
+        std::move(data));
   }
 
-  return make_response(false, error_code::kBusinessQueryFailed,
-                       "Query completed with partial failures.",
-                       std::move(data));
+  return core_abi::make_response(
+      false, core_abi::error_code::kBusinessQueryFailed,
+      "Query completed with partial failures.", std::move(data));
 }
 
 }  // namespace bills::core::abi

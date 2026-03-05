@@ -4,11 +4,9 @@
 
 #include <string_view>
 
-// 使用命名空间来组织应用配置信息，避免全局污染
-namespace AppInfo {
-// 使用 constexpr 和 string_view 可以在编译期确定字符串，效率更高
-constexpr std::string_view VERSION = "v0.3.0";
-constexpr std::string_view LAST_UPDATED = "2025-12-14";
-}  // namespace AppInfo
+namespace bills::core::version {
+inline constexpr std::string_view kVersion = "0.4.0";
+inline constexpr std::string_view kLastUpdated = "2026-03-05";
+}  // namespace bills::core::version
 
 #endif  // VERSION_HPP

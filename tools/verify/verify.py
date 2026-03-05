@@ -418,6 +418,93 @@ def run_logic_tests(
     return 0
 
 
+def run_module_mode_check(
+    repo_root: Path,
+    python_exe: str,
+    forwarded: list[str],
+) -> int:
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        "--command",
+        default="build_fast",
+        choices=["build", "build_fast"],
+        help="Build command for bills_core dual-mode check.",
+    )
+    parser.add_argument(
+        "--compiler",
+        default="clang",
+        choices=["clang", "gcc"],
+        help="Compiler for bills_core dual-mode check.",
+    )
+    parser.add_argument(
+        "--shared",
+        action="store_true",
+        default=True,
+        help="Build shared library (default).",
+    )
+    parser.add_argument(
+        "--static",
+        dest="shared",
+        action="store_false",
+        help="Build static library.",
+    )
+    args, passthrough = parser.parse_known_args(forwarded)
+
+    core_build_entry = repo_root / "tools" / "build" / "build_bills_core.py"
+    base_cmd = [
+        python_exe,
+        str(core_build_entry),
+        args.command,
+        "--compiler",
+        args.compiler,
+        "--shared" if args.shared else "--static",
+    ]
+    off_cmd = [*base_cmd, "--no-modules", *passthrough]
+    on_cmd = [*base_cmd, "--modules", *passthrough]
+
+    print("[INFO] Module mode check: BILLS_ENABLE_MODULES=OFF")
+    off_code = run(off_cmd)
+    if off_code != 0:
+        print("[FAILED] Module mode check failed in OFF channel.")
+        return off_code
+
+    print("[INFO] Module mode check: BILLS_ENABLE_MODULES=ON")
+    on_code = run(on_cmd)
+    if on_code != 0:
+        print("[FAILED] Module mode check failed in ON channel.")
+        return on_code
+
+    print("[OK] Module mode check passed for OFF/ON channels.")
+    return 0
+
+
+def run_tools_layer_check(
+    repo_root: Path,
+    python_exe: str,
+    forwarded: list[str],
+) -> int:
+    entry = repo_root / "tools" / "verify" / "tools" / "check_tools_layering.py"
+    return run([python_exe, str(entry), *forwarded])
+
+
+def run_import_layer_check(
+    repo_root: Path,
+    python_exe: str,
+    forwarded: list[str],
+) -> int:
+    entry = repo_root / "tools" / "verify" / "tools" / "check_import_layering.py"
+    return run([python_exe, str(entry), *forwarded])
+
+
+def run_boundary_layer_check(
+    repo_root: Path,
+    python_exe: str,
+    forwarded: list[str],
+) -> int:
+    entry = repo_root / "tools" / "verify" / "tools" / "check_boundary_layering.py"
+    return run([python_exe, str(entry), *forwarded])
+
+
 def run_artifact_tests(
     repo_root: Path,
     python_exe: str,
@@ -495,6 +582,10 @@ def main() -> int:
             "logic-tests",
             "artifact-tests",
             "all-tests",
+            "module-mode-check",
+            "tools-layer-check",
+            "import-layer-check",
+            "boundary-layer-check",
             "bills-parallel-smoke",
             "report-consistency-gate",
             "bills-build",
@@ -507,6 +598,10 @@ def main() -> int:
         help=(
             "bills=build+CLI test, logic-tests=unit/component style checks, "
             "artifact-tests=integration/e2e/snapshot style checks, all-tests=logic+artifact, "
+            "module-mode-check=dual-channel core build with BILLS_ENABLE_MODULES=OFF/ON, "
+            "tools-layer-check=check tools/* layering dependency rules, "
+            "import-layer-check=check call-layer include/import policy for C++ sources, "
+            "boundary-layer-check=check boundary-layer include allowlist policy for C++ sources, "
             "bills-build=compile bills_cli, "
             "bills-parallel-smoke=run model-first/json-first bills in parallel and compare outputs, "
             "report-consistency-gate=run full model/json consistency gate with performance threshold, "
@@ -553,7 +648,63 @@ def main() -> int:
         )
         if logic_code != 0:
             return logic_code
+        module_mode_code = run_module_mode_check(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=[],
+        )
+        if module_mode_code != 0:
+            return module_mode_code
+        tools_layer_code = run_tools_layer_check(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=[],
+        )
+        if tools_layer_code != 0:
+            return tools_layer_code
+        import_layer_code = run_import_layer_check(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=[],
+        )
+        if import_layer_code != 0:
+            return import_layer_code
+        boundary_layer_code = run_boundary_layer_check(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=[],
+        )
+        if boundary_layer_code != 0:
+            return boundary_layer_code
         return run_artifact_tests(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=forwarded,
+        )
+
+    if args.workflow == "module-mode-check":
+        return run_module_mode_check(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=forwarded,
+        )
+
+    if args.workflow == "tools-layer-check":
+        return run_tools_layer_check(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=forwarded,
+        )
+
+    if args.workflow == "import-layer-check":
+        return run_import_layer_check(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=forwarded,
+        )
+
+    if args.workflow == "boundary-layer-check":
+        return run_boundary_layer_check(
             repo_root=repo_root,
             python_exe=python_exe,
             forwarded=forwarded,

@@ -1,13 +1,21 @@
 #include "abi/bills_core_abi.h"
 
 #include <cstdlib>
+#include <exception>
+#include <string>
+#include <utility>
 
+#if BILLS_CORE_MODULES_ENABLED
+import bill.core.abi;
+namespace abi = bills::core::modules::abi;
+#else
 #include "abi/internal/abi_shared.hpp"
+namespace abi = bills::core::abi;
+#endif
 
 namespace {
 
-using Json = bills::core::abi::Json;
-namespace abi = bills::core::abi;
+using Json = abi::Json;
 
 }  // namespace
 

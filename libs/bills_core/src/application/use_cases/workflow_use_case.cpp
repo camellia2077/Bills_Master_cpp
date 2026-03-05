@@ -5,7 +5,29 @@
 #include <string_view>
 #include <vector>
 
+#if BILLS_CORE_MODULES_ENABLED
+import bill.core.billing.pipeline;
+import bill.core.domain.bill_record;
+import bill.core.ports.bills_content_reader;
+import bill.core.ports.bills_file_enumerator;
+import bill.core.ports.bills_repository;
+import bill.core.ports.bills_serializer;
+import bill.core.ports.output_path_builder;
+using bills::core::modules::billing::BillProcessingPipeline;
+using bills::core::modules::domain_bill_record::ParsedBill;
+using bills::core::modules::ports::BillContentReader;
+using bills::core::modules::ports::BillFileEnumerator;
+using bills::core::modules::ports::BillRepository;
+using bills::core::modules::ports::BillSerializer;
+using bills::core::modules::ports::OutputPathBuilder;
+#else
 #include "billing/conversion/bills_processing_pipeline.hpp"
+#include "ports/bills_content_reader.hpp"
+#include "ports/bills_file_enumerator.hpp"
+#include "ports/bills_repository.hpp"
+#include "ports/bills_serializer.hpp"
+#include "ports/output_path_builder.hpp"
+#endif
 
 namespace fs = std::filesystem;
 

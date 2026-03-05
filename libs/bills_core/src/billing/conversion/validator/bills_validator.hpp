@@ -2,14 +2,12 @@
 #ifndef BILL_VALIDATOR_HPP
 #define BILL_VALIDATOR_HPP
 
-#include <fstream>
 #include <memory>
-#include <regex>
 #include <string>
 
-#include "domain/bill/bill_record.hpp"
 #include "billing/conversion/validator/config/bills_config.hpp"
 #include "billing/conversion/validator/result/validation_result.hpp"
+#include "domain/bill/bill_record.hpp"
 
 // --- NEW: TxtStructureVerifier class ---
 // 只负责验证 TXT 的基本文件头结构
@@ -38,8 +36,6 @@ class BillValidator {
 
  private:
   std::unique_ptr<BillConfig> m_config;
-  TxtStructureVerifier m_txt_verifier;
-  BillContentValidator m_bill_verifier;
 };
 
 #endif  // BILL_VALIDATOR_HPP

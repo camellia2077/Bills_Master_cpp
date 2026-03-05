@@ -7,9 +7,13 @@
 #include <string_view>
 #include <vector>
 
+#include "billing/conversion/bills_processing_pipeline.hpp"
 #include "billing/conversion/modifier/_shared_structures/bills_data_structures.hpp"
 #include "billing/conversion/validator/config/bills_config.hpp"
 #include "nlohmann/json.hpp"
+#include "reports/standard_json/standard_report_assembler.hpp"
+#include "reports/standard_json/standard_report_json_serializer.hpp"
+#include "serialization/bills_json_serializer.hpp"
 
 namespace bills::core::abi {
 

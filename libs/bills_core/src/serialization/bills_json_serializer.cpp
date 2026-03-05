@@ -2,9 +2,9 @@
 
 #include "bills_json_serializer.hpp"
 
+#include <cctype>
 #include <fstream>
 #include <iomanip>
-#include <regex>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
@@ -13,13 +13,35 @@
 namespace {
 constexpr int kIndentSpaces = 4;
 constexpr int kMoneyPrecision = 2;
-constexpr std::size_t kYearLength = 4U;
-const std::regex kIsoMonthRegex(R"(^(\d{4})-(0[1-9]|1[0-2])$)");
 
 auto FormatMoney(double value) -> nlohmann::json {
   std::stringstream money_stream;
   money_stream << std::fixed << std::setprecision(kMoneyPrecision) << value;
   return nlohmann::json::parse(money_stream.str());
+}
+
+auto is_ascii_digit(char character) -> bool {
+  return std::isdigit(static_cast<unsigned char>(character)) != 0;
+}
+
+auto parse_iso_month(const std::string& date, int& year, int& month) -> bool {
+  if (date.size() != 7U || date[4] != '-') {
+    return false;
+  }
+  if (!is_ascii_digit(date[0]) || !is_ascii_digit(date[1]) ||
+      !is_ascii_digit(date[2]) || !is_ascii_digit(date[3]) ||
+      !is_ascii_digit(date[5]) || !is_ascii_digit(date[6])) {
+    return false;
+  }
+
+  try {
+    year = std::stoi(date.substr(0U, 4U));
+    month = std::stoi(date.substr(5U, 2U));
+  } catch (...) {
+    return false;
+  }
+
+  return month >= 1 && month <= 12;
 }
 }  // namespace
 
@@ -67,13 +89,9 @@ auto BillJsonSerializer::deserialize(const nlohmann::json& data) -> ParsedBill {
     bill_data.total_expense = data.at("total_expense").get<double>();
     bill_data.balance = data.at("balance").get<double>();
 
-    std::smatch match;
-    if (!std::regex_match(kDateStr, match, kIsoMonthRegex) ||
-        match.size() != 3U) {
+    if (!parse_iso_month(kDateStr, bill_data.year, bill_data.month)) {
       throw std::runtime_error("JSON中的日期格式无效，必须为 YYYY-MM 格式。");
     }
-    bill_data.year = std::stoi(match[1].str());
-    bill_data.month = std::stoi(match[2].str());
 
     const auto& categories = data.at("categories");
     for (const auto& parent_item : categories.items()) {

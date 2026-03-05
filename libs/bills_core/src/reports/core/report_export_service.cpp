@@ -1,20 +1,44 @@
 // reports/core/ReportExportService.cpp
 #include "report_export_service.hpp"
 
+#include <algorithm>
+#include <cctype>
 #include <iostream>
 #include <regex>
 #include <set>
 #include <stdexcept>
 #include <utility>
-#include <cctype>
 
-#include "common/process_stats.hpp"
 #include "common/common_utils.hpp"
-#include "reports/standard_json/standard_report_assembler.hpp"
-#include "reports/standard_json/standard_report_json_serializer.hpp"
 #include "standard_json_latex_renderer.hpp"
 #include "standard_json_markdown_renderer.hpp"
 #include "standard_json_typst_renderer.hpp"
+#if BILLS_CORE_MODULES_ENABLED
+import bill.core.common.process_stats;
+import bill.core.ports.month_report_formatter_provider;
+import bill.core.ports.report_data_gateway;
+import bill.core.ports.yearly_report_formatter_provider;
+import bill.core.reports.report_exporter;
+import bill.core.reports.standard_report_assembler;
+import bill.core.reports.standard_report_json_serializer;
+using bills::core::modules::common_process_stats::ProcessStats;
+using bills::core::modules::ports::MonthReportFormatterProvider;
+using bills::core::modules::ports::ReportDataGateway;
+using bills::core::modules::ports::YearlyReportFormatterProvider;
+using bills::core::modules::reports::ReportExporter;
+using bills::core::modules::reports::StandardReportAssembler;
+using bills::core::modules::reports::MonthlyReportData;
+using bills::core::modules::reports::StandardReportJsonSerializer;
+using bills::core::modules::reports::YearlyReportData;
+#else
+#include "common/process_stats.hpp"
+#include "ports/month_report_formatter_provider.hpp"
+#include "ports/report_data_gateway.hpp"
+#include "ports/yearly_report_formatter_provider.hpp"
+#include "report_exporter.hpp"
+#include "reports/standard_json/standard_report_assembler.hpp"
+#include "reports/standard_json/standard_report_json_serializer.hpp"
+#endif
 
 namespace {
 constexpr std::size_t kYearLength = 4U;
@@ -72,7 +96,7 @@ auto is_typst_format(std::string format_name) -> bool {
 auto select_standard_render_mode(const std::string& pipeline,
                                  const std::string& format_name)
     -> StandardRenderMode {
-  if (pipeline == "json-first" && is_markdown_format(format_name)) {
+  if (is_markdown_format(format_name)) {
     return StandardRenderMode::kMarkdown;
   }
   if ((pipeline == "model-first" || pipeline == "json-first") &&
@@ -144,12 +168,6 @@ ReportExportService::ReportExportService(
     throw std::invalid_argument("Year formatter provider must not be null.");
   }
 
-  m_monthly_generator =
-      std::make_unique<MonthlyReportGenerator>(m_report_data_gateway.get(),
-                                               m_month_formatter_provider.get());
-  m_yearly_generator =
-      std::make_unique<YearlyReportGenerator>(m_report_data_gateway.get(),
-                                              m_year_formatter_provider.get());
   m_report_exporter =
       std::make_unique<ReportExporter>(export_base_dir, format_folder_names);
 }
@@ -167,7 +185,7 @@ auto ReportExportService::export_yearly_report(const std::string& year_str,
         select_standard_render_mode(pipeline, format_name);
     int year = std::stoi(year_str);
     YearlyReportData yearly_data = m_report_data_gateway->ReadYearlyData(year);
-    const StandardReport standard_report =
+    const auto standard_report =
         StandardReportAssembler::FromYearly(yearly_data);
     const std::string standard_report_json =
         StandardReportJsonSerializer::ToString(standard_report);
@@ -219,7 +237,7 @@ auto ReportExportService::export_monthly_report(const std::string& month_str,
     }
     MonthlyReportData monthly_data =
         m_report_data_gateway->ReadMonthlyData(year, month);
-    const StandardReport standard_report =
+    const auto standard_report =
         StandardReportAssembler::FromMonthly(monthly_data);
     const std::string standard_report_json =
         StandardReportJsonSerializer::ToString(standard_report);

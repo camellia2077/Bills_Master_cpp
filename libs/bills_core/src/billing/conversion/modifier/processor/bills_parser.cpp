@@ -19,8 +19,42 @@ constexpr std::string_view kDefaultSource = "manually_add";
 constexpr std::string_view kIncomeType = "Income";
 constexpr std::string_view kExpenseType = "Expense";
 constexpr std::size_t kExpectedMatchSize = 3U;
-constexpr std::size_t kYearLength = 4U;
-const std::regex kIsoDateRegex(R"(^(\d{4})-([1-9]|1[0-2])$)");
+
+auto is_ascii_digit(char character) -> bool {
+  return std::isdigit(static_cast<unsigned char>(character)) != 0;
+}
+
+auto parse_iso_year_month(const std::string& date, int& year, int& month)
+    -> bool {
+  if (date.size() < 6U || date.size() > 7U || date[4] != '-') {
+    return false;
+  }
+
+  if (!is_ascii_digit(date[0]) || !is_ascii_digit(date[1]) ||
+      !is_ascii_digit(date[2]) || !is_ascii_digit(date[3])) {
+    return false;
+  }
+
+  try {
+    year = std::stoi(date.substr(0U, 4U));
+  } catch (...) {
+    return false;
+  }
+
+  if (date.size() == 6U) {
+    if (!is_ascii_digit(date[5])) {
+      return false;
+    }
+    month = date[5] - '0';
+  } else {
+    if (!is_ascii_digit(date[5]) || !is_ascii_digit(date[6])) {
+      return false;
+    }
+    month = std::stoi(date.substr(5U, 2U));
+  }
+
+  return month >= 1 && month <= 12;
+}
 }  // namespace
 
 BillParser::BillParser(const Config& config) : m_config(config) {}
@@ -102,8 +136,11 @@ auto BillParser::parse(const std::vector<std::string>& lines) const
              const std::string& right_value) -> bool {
             double val_a = _get_numeric_value_from_content(left_value);
             double val_b = _get_numeric_value_from_content(right_value);
-            if (val_a != val_b) {
-              return val_a > val_b;
+            if (val_a > val_b) {
+              return true;
+            }
+            if (val_a < val_b) {
+              return false;
             }
             return left_value < right_value;
           });
@@ -135,13 +172,9 @@ auto BillParser::parse(const std::vector<std::string>& lines) const
   bill_data.balance = bill_data.total_income + bill_data.total_expense;
 
   if (!bill_data.date.empty()) {
-    std::smatch match;
-    if (!std::regex_match(bill_data.date, match, kIsoDateRegex) ||
-        match.size() != kExpectedMatchSize) {
+    if (!parse_iso_year_month(bill_data.date, bill_data.year, bill_data.month)) {
       throw std::runtime_error("账单日期格式无效，必须为 YYYY-M。");
     }
-    bill_data.year = std::stoi(match[1].str());
-    bill_data.month = std::stoi(match[2].str());
 
     std::ostringstream normalized_date_stream;
     normalized_date_stream << bill_data.year << "-" << std::setw(2)
@@ -170,8 +203,9 @@ auto BillParser::_is_title(const std::string& line) -> bool {
     return false;
   }
   for (char character : line) {
-    if (isspace(character) == 0) {
-      return std::isalpha(static_cast<unsigned char>(character)) != 0;
+    const auto unsigned_character = static_cast<unsigned char>(character);
+    if (std::isspace(unsigned_character) == 0) {
+      return std::isalpha(unsigned_character) != 0;
     }
   }
   return false;

@@ -1,8 +1,13 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.28)
 
 project(BillsCore LANGUAGES CXX)
 
 option(BILLS_ENABLE_LTO_RELEASE "Enable LTO for Release builds" ON)
+option(BILLS_ENABLE_MODULES "Enable C++ modules pilot for bills_core" OFF)
+
+if(BILLS_ENABLE_MODULES AND CMAKE_VERSION VERSION_LESS 3.28)
+    message(FATAL_ERROR "BILLS_ENABLE_MODULES requires CMake >= 3.28")
+endif()
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -46,6 +51,16 @@ add_library(bills_core ${BILLS_CORE_LIBRARY_TYPE}
 )
 add_library(bill_master_core ALIAS bills_core)
 
+if(BILLS_ENABLE_MODULES)
+    target_sources(bills_core PRIVATE
+        ${CORE_MODULE_CONSUMER_SOURCES}
+    )
+    target_sources(bills_core PRIVATE
+        FILE_SET CXX_MODULES FILES
+            ${CORE_MODULE_INTERFACE_FILES}
+    )
+endif()
+
 set_target_properties(bills_core PROPERTIES
     OUTPUT_NAME "bills_core"
 )
@@ -64,6 +79,11 @@ target_include_directories(bills_core PUBLIC
 target_compile_definitions(bills_core PRIVATE BILLS_CORE_ABI_BUILD)
 if(BILLS_CORE_BUILD_SHARED)
     target_compile_definitions(bills_core PUBLIC BILLS_CORE_SHARED)
+endif()
+if(BILLS_ENABLE_MODULES)
+    target_compile_definitions(bills_core PUBLIC BILLS_CORE_MODULES_ENABLED=1)
+else()
+    target_compile_definitions(bills_core PUBLIC BILLS_CORE_MODULES_ENABLED=0)
 endif()
 
 target_link_libraries(bills_core PUBLIC

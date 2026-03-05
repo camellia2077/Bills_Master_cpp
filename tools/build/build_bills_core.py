@@ -63,8 +63,30 @@ def cache_matches_compiler(cache_file: Path, compiler: str) -> bool:
     return False
 
 
+def read_cache_bool_option(cache_file: Path, key: str) -> bool | None:
+    prefix = f"{key}:BOOL="
+    try:
+        with cache_file.open("r", encoding="utf-8", errors="ignore") as handle:
+            for line in handle:
+                if line.startswith(prefix):
+                    value = line.split("=", 1)[1].strip().upper()
+                    if value == "ON":
+                        return True
+                    if value == "OFF":
+                        return False
+                    return None
+    except OSError:
+        return None
+    return None
+
+
 def ensure_cmake_configured(
-    build_dir: Path, generator: str, build_type: str, shared: bool, compiler: str
+    build_dir: Path,
+    generator: str,
+    build_type: str,
+    shared: bool,
+    compiler: str,
+    modules_enabled: bool,
 ) -> None:
     if not build_dir.exists():
         print(f"==> Creating build directory: {build_dir}")
@@ -73,11 +95,20 @@ def ensure_cmake_configured(
     cache_file = build_dir / "CMakeCache.txt"
     if cache_file.is_file():
         cached_home = read_cache_home_directory(cache_file)
+        cached_modules_enabled = read_cache_bool_option(
+            cache_file, "BILLS_ENABLE_MODULES"
+        )
         if cached_home is not None and cached_home.resolve() == PROJECT_DIR.resolve():
-            if cache_matches_compiler(cache_file, compiler):
+            if (
+                cache_matches_compiler(cache_file, compiler)
+                and cached_modules_enabled == modules_enabled
+            ):
                 print("==> Refreshing existing CMake configuration.")
             else:
-                print("==> Existing CMake cache compiler mismatch. Recreating build directory.")
+                print(
+                    "==> Existing CMake cache compiler/module options mismatch. "
+                    "Recreating build directory."
+                )
                 shutil.rmtree(build_dir)
                 build_dir.mkdir(parents=True, exist_ok=True)
         else:
@@ -95,6 +126,7 @@ def ensure_cmake_configured(
         generator,
         f"-DCMAKE_BUILD_TYPE={build_type}",
         f"-DBILLS_CORE_BUILD_SHARED={'ON' if shared else 'OFF'}",
+        f"-DBILLS_ENABLE_MODULES={'ON' if modules_enabled else 'OFF'}",
     ]
     if compiler:
         compiler_value = compiler.strip().lower()
@@ -109,7 +141,11 @@ def ensure_cmake_configured(
 
 
 def run_build(
-    build_dir: Path, build_type: str, shared: bool, compiler: str,
+    build_dir: Path,
+    build_type: str,
+    shared: bool,
+    compiler: str,
+    modules_enabled: bool,
     extra_args: list[str] | None = None
 ) -> None:
     ensure_cmake_configured(
@@ -118,6 +154,7 @@ def run_build(
         build_type=build_type,
         shared=shared,
         compiler=compiler,
+        modules_enabled=modules_enabled,
     )
 
     command = ["cmake", "--build", str(build_dir), "--target", "bills_core"]
@@ -152,6 +189,19 @@ def main() -> int:
         action="store_false",
         help="Build static library",
     )
+    parser.add_argument(
+        "--modules",
+        dest="modules_enabled",
+        action="store_true",
+        default=False,
+        help="Enable C++ modules pilot (BILLS_ENABLE_MODULES=ON)",
+    )
+    parser.add_argument(
+        "--no-modules",
+        dest="modules_enabled",
+        action="store_false",
+        help="Disable C++ modules pilot (BILLS_ENABLE_MODULES=OFF)",
+    )
 
     args, extra_args = parser.parse_known_args()
     if extra_args and extra_args[0] == "--":
@@ -163,6 +213,7 @@ def main() -> int:
             build_type="Release",
             shared=args.shared,
             compiler=args.compiler,
+            modules_enabled=args.modules_enabled,
             extra_args=extra_args,
         )
     elif args.command == "build_fast":
@@ -171,6 +222,7 @@ def main() -> int:
             build_type="Debug",
             shared=args.shared,
             compiler=args.compiler,
+            modules_enabled=args.modules_enabled,
             extra_args=extra_args,
         )
     else:

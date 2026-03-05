@@ -7,8 +7,15 @@
 #include <set>
 #include <sstream>
 
+#if BILLS_CORE_MODULES_ENABLED
+import bill.core.config.modifier;
+import bill.core.config.validator;
+using bills::core::modules::config_validator::ModifierConfigValidator;
+using bills::core::modules::config_validator::ValidatorConfigValidator;
+#else
 #include "config_validator/pipeline/modifier_config_validator.hpp"
 #include "config_validator/pipeline/validator_config_validator.hpp"
+#endif
 
 namespace bills::core::abi {
 
