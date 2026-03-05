@@ -11,7 +11,10 @@ from bills_master_builder.task_splitter import split_tidy_logs
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[1]
 PROJECT_DIR = REPO_ROOT / "apps" / "bills_cli"
-ARTIFACT_WORKSPACE_DIR = (
+RUNTIME_WORKSPACE_DIR = (
+    REPO_ROOT / "tests" / "output" / "runtime" / "bills_tracer" / "workspace"
+)
+LEGACY_WORKSPACE_DIR = (
     REPO_ROOT / "test" / "output" / "artifact_bills_tracer" / "workspace"
 )
 RUNTIME_SIDECAR_EXTS = {".dll", ".exe", ".manifest", ".pdb"}
@@ -53,8 +56,8 @@ def sync_runtime_artifacts(build_dir: Path) -> None:
         print(f"==> Skip artifact sync: missing directory {build_bin_dir}")
         return
 
-    ARTIFACT_WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
-    for stale in ARTIFACT_WORKSPACE_DIR.iterdir():
+    RUNTIME_WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
+    for stale in RUNTIME_WORKSPACE_DIR.iterdir():
         if stale.is_file() and stale.suffix.lower() in RUNTIME_SIDECAR_EXTS:
             stale.unlink()
 
@@ -64,14 +67,16 @@ def sync_runtime_artifacts(build_dir: Path) -> None:
             continue
         if entry.suffix.lower() not in RUNTIME_SIDECAR_EXTS:
             continue
-        shutil.copy2(entry, ARTIFACT_WORKSPACE_DIR / entry.name)
+        shutil.copy2(entry, RUNTIME_WORKSPACE_DIR / entry.name)
         copied_files.append(entry.name)
 
-    replace_path(build_bin_dir / "config", ARTIFACT_WORKSPACE_DIR / "config")
+    replace_path(build_bin_dir / "config", RUNTIME_WORKSPACE_DIR / "config")
     print(
         "==> Synced runtime artifacts to "
-        f"{ARTIFACT_WORKSPACE_DIR} ({len(copied_files)} files + config)"
+        f"{RUNTIME_WORKSPACE_DIR} ({len(copied_files)} files + config)"
     )
+    replace_path(RUNTIME_WORKSPACE_DIR, LEGACY_WORKSPACE_DIR)
+    print(f"==> Synced compatibility workspace: {LEGACY_WORKSPACE_DIR}")
 
 
 def read_cache_home_directory(cache_file: Path) -> Path | None:

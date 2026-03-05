@@ -4,5 +4,6 @@ module;
 export module bill.core.reports.standard_report_json_serializer;
 
 export namespace bills::core::modules::reports {
+using StandardReport = ::StandardReport;
 using StandardReportJsonSerializer = ::StandardReportJsonSerializer;
 }

@@ -1,0 +1,56 @@
+schema_version = 1
+
+[pipeline]
+name = "reporting_compile2pdf"
+description = "Compile exported reports to PDF (tooling workflow, not core gate)."
+default_timeout_seconds = 3600
+
+[output]
+root = "tests/output/logic/pipeline_runner/reporting_compile2pdf"
+
+[env]
+PYTHONUNBUFFERED = "1"
+
+[reporting.input]
+source_directory = "tests/output/artifact/bills_tracer/exported_files"
+
+[reporting.output]
+output_directory = "tests/output/artifact/reporting/compile2pdf"
+
+[reporting.compiler]
+compile_types = ""
+markdown_compilers = "pandoc"
+benchmark_loops = 1
+incremental = false
+clean_output = false
+jobs = 1
+font = "Noto Serif SC"
+
+[[steps]]
+id = "compile2pdf_auto"
+name = "Run compile2pdf auto workflow"
+command = [
+  "{python}",
+  "tools/reporting/compile2pdf/main.py",
+  "--no-incremental",
+  "--jobs",
+  "1",
+  "--font",
+  "Noto Serif SC",
+]
+cwd = "{repo_root}"
+timeout_seconds = 3600
+retries = 0
+depends_on = []
+artifacts = [
+  "tests/output/artifact/reporting/compile2pdf",
+]
+
+[steps.env]
+BILLS_COMPILE2PDF_SOURCE = "{repo_root}/tests/output/artifact/bills_tracer/exported_files"
+BILLS_COMPILE2PDF_OUTPUT = "{repo_root}/tests/output/artifact/reporting/compile2pdf"
+BILLS_COMPILE2PDF_TYPES = ""
+BILLS_COMPILE2PDF_MD_COMPILERS = "pandoc"
+BILLS_COMPILE2PDF_BENCHMARK_LOOPS = "1"
+BILLS_COMPILE2PDF_INCREMENTAL = "0"
+BILLS_COMPILE2PDF_CLEAN = "0"

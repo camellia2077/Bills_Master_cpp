@@ -75,7 +75,7 @@ void print_help(const char* program_name) {
 
   std::println("  --format, -f <format>");
   std::println(
-      "    Specify output format ('md', 'tex', 'typ', 'rst', 'all', 'a'). "
+      "    Specify output format ('md', 'json', 'tex', 'rst', 'all', 'a'). "
       "Defaults to 'md'.");
   std::println("    Use 'all' or 'a' to export in all available formats.");
   std::println("    Example: --format tex");

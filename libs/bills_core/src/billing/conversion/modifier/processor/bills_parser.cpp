@@ -26,7 +26,7 @@ auto is_ascii_digit(char character) -> bool {
 
 auto parse_iso_year_month(const std::string& date, int& year, int& month)
     -> bool {
-  if (date.size() < 6U || date.size() > 7U || date[4] != '-') {
+  if (date.size() != 7U || date[4] != '-') {
     return false;
   }
 
@@ -41,17 +41,10 @@ auto parse_iso_year_month(const std::string& date, int& year, int& month)
     return false;
   }
 
-  if (date.size() == 6U) {
-    if (!is_ascii_digit(date[5])) {
-      return false;
-    }
-    month = date[5] - '0';
-  } else {
-    if (!is_ascii_digit(date[5]) || !is_ascii_digit(date[6])) {
-      return false;
-    }
-    month = std::stoi(date.substr(5U, 2U));
+  if (!is_ascii_digit(date[5]) || !is_ascii_digit(date[6])) {
+    return false;
   }
+  month = std::stoi(date.substr(5U, 2U));
 
   return month >= 1 && month <= 12;
 }
@@ -173,7 +166,7 @@ auto BillParser::parse(const std::vector<std::string>& lines) const
 
   if (!bill_data.date.empty()) {
     if (!parse_iso_year_month(bill_data.date, bill_data.year, bill_data.month)) {
-      throw std::runtime_error("账单日期格式无效，必须为 YYYY-M。");
+      throw std::runtime_error("账单日期格式无效，必须为 YYYY-MM。");
     }
 
     std::ostringstream normalized_date_stream;

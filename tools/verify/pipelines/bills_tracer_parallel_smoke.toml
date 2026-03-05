@@ -1,0 +1,82 @@
+schema_version = 1
+
+[pipeline]
+name = "bills_tracer_parallel_smoke"
+description = "Model-first and json-first runs with snapshot compare."
+default_timeout_seconds = 7200
+
+[output]
+root = "tests/output/logic/pipeline_runner/bills_tracer_parallel_smoke"
+
+[env]
+PYTHONUNBUFFERED = "1"
+
+[[steps]]
+id = "model_first_run"
+name = "Run bills_tracer model-first"
+command = [
+  "{python}",
+  "tools/build/bills_tracer_flow.py",
+  "--export-pipeline",
+  "model-first",
+  "--output-project",
+  "bills_tracer_model_first",
+  "--run-tag",
+  "parallel_model",
+  "--formats",
+  "md",
+  "--build-dir-mode",
+  "isolated",
+]
+cwd = "{repo_root}"
+timeout_seconds = 7200
+retries = 0
+depends_on = []
+artifacts = [
+  "tests/output/artifact/bills_tracer_model_first/test_summary.json",
+]
+
+[[steps]]
+id = "json_first_run"
+name = "Run bills_tracer json-first"
+command = [
+  "{python}",
+  "tools/build/bills_tracer_flow.py",
+  "--export-pipeline",
+  "json-first",
+  "--output-project",
+  "bills_tracer_json_first",
+  "--run-tag",
+  "parallel_json",
+  "--formats",
+  "md",
+  "--build-dir-mode",
+  "isolated",
+]
+cwd = "{repo_root}"
+timeout_seconds = 7200
+retries = 0
+depends_on = []
+artifacts = [
+  "tests/output/artifact/bills_tracer_json_first/test_summary.json",
+]
+
+[[steps]]
+id = "snapshot_compare"
+name = "Compare model-first and json-first snapshots"
+command = [
+  "{python}",
+  "tools/verify/check_report_snapshots.py",
+  "--output-group",
+  "artifact",
+  "--compare-projects",
+  "bills_tracer_model_first",
+  "bills_tracer_json_first",
+  "--compare-scope",
+  "md",
+]
+cwd = "{repo_root}"
+timeout_seconds = 1800
+retries = 0
+depends_on = ["model_first_run", "json_first_run"]
+artifacts = []

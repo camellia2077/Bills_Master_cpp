@@ -1,0 +1,43 @@
+schema_version = 1
+
+[pipeline]
+name = "reporting_graph_generator"
+description = "Generate charts from latest runtime sqlite db (tooling workflow, not core gate)."
+default_timeout_seconds = 1800
+
+[output]
+root = "tests/output/logic/pipeline_runner/reporting_graph_generator"
+
+[env]
+PYTHONUNBUFFERED = "1"
+
+[reporting.input]
+db_path = "tests/output/runtime/bills_tracer/runs/<latest>/bills.sqlite3"
+
+[reporting.output]
+output_directory = "tests/output/artifact/reporting/graph_generator"
+
+[reporting.options]
+chart_type = "year"
+period = "2024"
+
+[[steps]]
+id = "graph_latest_db"
+name = "Run graph_generator using latest runtime db"
+command = [
+  "{python}",
+  "tools/reporting/graph_generator/run_latest_chart.py",
+  "--type",
+  "year",
+  "--period",
+  "2024",
+  "--output-dir",
+  "tests/output/artifact/reporting/graph_generator",
+]
+cwd = "{repo_root}"
+timeout_seconds = 1800
+retries = 0
+depends_on = []
+artifacts = [
+  "tests/output/artifact/reporting/graph_generator",
+]

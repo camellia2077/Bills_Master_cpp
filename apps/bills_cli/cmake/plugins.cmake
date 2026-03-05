@@ -51,12 +51,4 @@ else()
     message(STATUS "Skipped formatter plugins for format 'tex' (ENABLE_FMT_TEX=OFF)")
 endif()
 
-# --- Typst ---
-if(ENABLE_FMT_TYP)
-    add_subdirectory(${SOURCE_ROOT}/reports/plugins/month_formatters/month_typ)
-    add_subdirectory(${SOURCE_ROOT}/reports/plugins/year_formatters/year_typ)
-else()
-    message(STATUS "Skipped formatter plugins for format 'typ' (ENABLE_FMT_TYP=OFF)")
-endif()
-
 message(STATUS "All plugins configured.")

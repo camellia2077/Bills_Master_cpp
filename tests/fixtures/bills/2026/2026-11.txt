@@ -1,0 +1,61 @@
+date:2026-11
+remark:
+
+daily
+
+daily_fees
+8.54*3-9.73 哈喽
+
+daily_consumables
+5.79+3.75 牙膏
+
+fitness
+
+fitness_diet
+41.19+7.33 复合维生素 // 有优惠买的
+
+income
+
+income_salary
++11909.04-0.05 工资 // 这是对这项物品描述的注释你可以无视我
+
+meal
+
+meal_low
+545.84+6.00 饭 // 有点贵了
+
+meal_high
+19.28*6+7.17 火锅自助
+
+meal_drinks
+32.07+3.56 蜜雪冰城
+112.59+9.23 无糖饮料
+
+meal_snacks
+91.30+1.81 冰激凌
+
+meal_fruits
+7.95×3-4.48 西瓜
+
+pet
+
+pet_tortoises
+2.02×4+8.84 红耳龟
+12.51-0.97 南石
+
+purchase
+
+purchase_toys
+28.67-7.14 手办
+
+purchase_clothes
+29.70-4.77 衣服
+
+web
+
+web_services
+40.50+9.76 迷雾
+
+web_games
+68.69-7.49 皇室战争通行证 // 家庭必需品
+33.27+2.22 原神月卡 // 这是对这项物品描述的注释你可以无视我

@@ -6,6 +6,7 @@ import argparse
 import json
 import subprocess
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from statistics import mean, median
@@ -20,6 +21,138 @@ def normalize_extra(extra_args: list[str]) -> list[str]:
 def run(command: list[str]) -> int:
     print(f"==> Running: {' '.join(command)}")
     return subprocess.call(command)
+
+
+def sanitize_segment(value: str) -> str:
+    allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+    normalized = "".join(ch if ch in allowed else "_" for ch in value.strip())
+    normalized = normalized.strip("_")
+    return normalized or "default"
+
+
+def to_toml_list(items: list[str]) -> str:
+    return "[" + ", ".join(json.dumps(item) for item in items) + "]"
+
+
+def detect_output_project(forwarded: list[str], default: str = "bills_tracer") -> str:
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--output-project", default=default)
+    args, _ = parser.parse_known_args(forwarded)
+    return sanitize_segment(str(args.output_project))
+
+
+def render_pipeline_config(
+    *,
+    pipeline_name: str,
+    pipeline_description: str,
+    output_root: str,
+    steps: list[dict],
+    default_timeout_seconds: int = 7200,
+) -> str:
+    lines = [
+        "schema_version = 1",
+        "",
+        "[pipeline]",
+        f"name = {json.dumps(pipeline_name)}",
+        f"description = {json.dumps(pipeline_description)}",
+        f"default_timeout_seconds = {default_timeout_seconds}",
+        "",
+        "[output]",
+        f"root = {json.dumps(output_root)}",
+        "",
+        "[env]",
+        'PYTHONUNBUFFERED = "1"',
+        "",
+    ]
+    for step in steps:
+        lines.extend(
+            [
+                "[[steps]]",
+                f"id = {json.dumps(step['id'])}",
+                f"name = {json.dumps(step.get('name', step['id']))}",
+                f"command = {to_toml_list(step['command'])}",
+                f"cwd = {json.dumps(step.get('cwd', '{repo_root}'))}",
+                f"timeout_seconds = {int(step.get('timeout_seconds', default_timeout_seconds))}",
+                f"retries = {int(step.get('retries', 0))}",
+                f"depends_on = {to_toml_list([str(item) for item in step.get('depends_on', [])])}",
+                f"artifacts = {to_toml_list([str(item) for item in step.get('artifacts', [])])}",
+                "",
+            ]
+        )
+    return "\n".join(lines)
+
+
+def run_pipeline_steps(
+    *,
+    repo_root: Path,
+    python_exe: str,
+    pipeline_name: str,
+    pipeline_description: str,
+    output_root: str,
+    steps: list[dict],
+    run_id_prefix: str = "",
+) -> int:
+    config_text = render_pipeline_config(
+        pipeline_name=pipeline_name,
+        pipeline_description=pipeline_description,
+        output_root=output_root,
+        steps=steps,
+    )
+    temp_dir = repo_root / "temp"
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    run_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    runner_entry = repo_root / "tools" / "verify" / "pipeline_runner.py"
+
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".toml",
+        prefix=f"verify_pipeline_{sanitize_segment(pipeline_name)}_",
+        dir=temp_dir,
+        delete=False,
+        encoding="utf-8",
+    ) as handle:
+        config_path = Path(handle.name)
+        handle.write(config_text)
+
+    try:
+        command = [python_exe, str(runner_entry), "--config", str(config_path)]
+        if run_id_prefix:
+            command.extend(["--run-id", f"{sanitize_segment(run_id_prefix)}_{run_id}"])
+        return run(command)
+    finally:
+        config_path.unlink(missing_ok=True)
+
+
+def run_bills_workflow(
+    repo_root: Path,
+    python_exe: str,
+    forwarded: list[str],
+) -> int:
+    output_project = detect_output_project(forwarded)
+    flow_entry = repo_root / "tools" / "build" / "bills_tracer_flow.py"
+    steps = [
+        {
+            "id": "bills_tracer",
+            "name": "Run bills tracer flow",
+            "command": [python_exe, str(flow_entry), *forwarded],
+            "cwd": "{repo_root}",
+            "timeout_seconds": 7200,
+            "depends_on": [],
+            "artifacts": [
+                f"tests/output/artifact/{output_project}/test_summary.json",
+                f"tests/output/artifact/{output_project}/test_python_output.log",
+            ],
+        }
+    ]
+    return run_pipeline_steps(
+        repo_root=repo_root,
+        python_exe=python_exe,
+        pipeline_name="verify_bills",
+        pipeline_description="verify workflow bills",
+        output_root="tests/output/logic/pipeline_runner/verify_bills",
+        steps=steps,
+        run_id_prefix=output_project,
+    )
 
 
 def resolve_project_output_root(
@@ -206,7 +339,7 @@ def run_bills_parallel_smoke(
     parser.add_argument(
         "--compare-scope",
         default="md",
-        choices=["all", "md", "json", "tex", "typ"],
+        choices=["all", "md", "json", "tex"],
     )
     parser.add_argument(
         "--build-dir-mode",
@@ -235,12 +368,11 @@ def run_bills_parallel_smoke(
         print("[ERROR] --max-performance-regression must be >= 0.")
         return 2
 
-    build_then_entry = repo_root / "tools" / "build" / "build_then_cli_test.py"
-    compare_entry = repo_root / "tools" / "verify" / "check_report_snapshots.py"
+    flow_entry = repo_root / "tools" / "build" / "bills_tracer_flow.py"
 
     model_cmd = [
         python_exe,
-        str(build_then_entry),
+        str(flow_entry),
         "--export-pipeline",
         "model-first",
         "--output-project",
@@ -255,7 +387,7 @@ def run_bills_parallel_smoke(
     ]
     json_cmd = [
         python_exe,
-        str(build_then_entry),
+        str(flow_entry),
         "--export-pipeline",
         "json-first",
         "--output-project",
@@ -272,7 +404,7 @@ def run_bills_parallel_smoke(
     json_rev_project = f"{args.json_project}__rev"
     model_cmd_rev = [
         python_exe,
-        str(build_then_entry),
+        str(flow_entry),
         "--export-pipeline",
         "model-first",
         "--output-project",
@@ -287,7 +419,7 @@ def run_bills_parallel_smoke(
     ]
     json_cmd_rev = [
         python_exe,
-        str(build_then_entry),
+        str(flow_entry),
         "--export-pipeline",
         "json-first",
         "--output-project",
@@ -301,44 +433,86 @@ def run_bills_parallel_smoke(
         *passthrough,
     ]
 
+    pipeline_steps: list[dict] = []
+    compare_dependencies = ["model_primary", "json_primary"]
     if args.enforce_performance_gate:
-        # Performance gate should avoid cross-run contention (build/test overlap),
-        # otherwise one pipeline may be penalized by the other pipeline's build load.
-        # Also run both execution orders to reduce first-run cold-start bias.
-        print(f"==> Running (perf gate order A model->json): {' '.join(model_cmd)}")
-        model_code = subprocess.call(model_cmd)
-        print(f"==> Running (perf gate order A model->json): {' '.join(json_cmd)}")
-        json_code = subprocess.call(json_cmd)
-        print(f"==> Running (perf gate order B json->model): {' '.join(json_cmd_rev)}")
-        json_rev_code = subprocess.call(json_cmd_rev)
-        print(f"==> Running (perf gate order B json->model): {' '.join(model_cmd_rev)}")
-        model_rev_code = subprocess.call(model_cmd_rev)
-    else:
-        print(f"==> Running (parallel): {' '.join(model_cmd)}")
-        model_proc = subprocess.Popen(model_cmd)
-        print(f"==> Running (parallel): {' '.join(json_cmd)}")
-        json_proc = subprocess.Popen(json_cmd)
-
-        model_code = model_proc.wait()
-        json_code = json_proc.wait()
-        model_rev_code = 0
-        json_rev_code = 0
-
-    if (
-        model_code != 0
-        or json_code != 0
-        or model_rev_code != 0
-        or json_rev_code != 0
-    ):
-        print(
-            "[FAILED] Parallel bills workflow failed: "
-            f"model_exit={model_code}, json_exit={json_code}, "
-            f"model_rev_exit={model_rev_code}, json_rev_exit={json_rev_code}"
+        pipeline_steps.extend(
+            [
+                {
+                    "id": "model_primary",
+                    "name": "Perf-A model-first",
+                    "command": model_cmd,
+                    "depends_on": [],
+                },
+                {
+                    "id": "json_primary",
+                    "name": "Perf-A json-first",
+                    "command": json_cmd,
+                    "depends_on": ["model_primary"],
+                },
+                {
+                    "id": "json_rev",
+                    "name": "Perf-B json-first",
+                    "command": json_cmd_rev,
+                    "depends_on": ["json_primary"],
+                },
+                {
+                    "id": "model_rev",
+                    "name": "Perf-B model-first",
+                    "command": model_cmd_rev,
+                    "depends_on": ["json_rev"],
+                },
+            ]
         )
-        for code in (model_code, json_code, model_rev_code, json_rev_code):
-            if code != 0:
-                return code
-        return 1
+    else:
+        pipeline_steps.extend(
+            [
+                {
+                    "id": "model_primary",
+                    "name": "Model-first run",
+                    "command": model_cmd,
+                    "depends_on": [],
+                },
+                {
+                    "id": "json_primary",
+                    "name": "Json-first run",
+                    "command": json_cmd,
+                    "depends_on": [],
+                },
+            ]
+        )
+
+    compare_entry = repo_root / "tools" / "verify" / "check_report_snapshots.py"
+    pipeline_steps.append(
+        {
+            "id": "snapshot_compare",
+            "name": "Compare snapshots",
+            "command": [
+                python_exe,
+                str(compare_entry),
+                "--output-group",
+                "artifact",
+                "--compare-projects",
+                args.model_project,
+                args.json_project,
+                "--compare-scope",
+                args.compare_scope,
+            ],
+            "depends_on": compare_dependencies,
+            "timeout_seconds": 1800,
+        }
+    )
+    pipeline_code = run_pipeline_steps(
+        repo_root=repo_root,
+        python_exe=python_exe,
+        pipeline_name="verify_bills_parallel_smoke",
+        pipeline_description="verify bills parallel smoke/gate via TOML pipeline",
+        output_root="tests/output/logic/pipeline_runner/verify_bills_parallel_smoke",
+        steps=pipeline_steps,
+        run_id_prefix=f"{args.model_project}_{args.json_project}",
+    )
+    if pipeline_code != 0:
+        return pipeline_code
 
     model_summary_code = validate_test_summary(repo_root, args.model_project)
     json_summary_code = validate_test_summary(repo_root, args.json_project)
@@ -353,21 +527,6 @@ def run_bills_parallel_smoke(
             return model_rev_summary_code
         if json_rev_summary_code != 0:
             return json_rev_summary_code
-
-    compare_cmd = [
-        python_exe,
-        str(compare_entry),
-        "--output-group",
-        "artifact",
-        "--compare-projects",
-        args.model_project,
-        args.json_project,
-        "--compare-scope",
-        args.compare_scope,
-    ]
-    compare_code = run(compare_cmd)
-    if compare_code != 0:
-        return compare_code
 
     if not args.enforce_performance_gate:
         return 0
@@ -525,8 +684,11 @@ def run_artifact_tests(
     args, passthrough = parser.parse_known_args(forwarded)
 
     if args.scope in ("basic", "full"):
-        bills_entry = repo_root / "tools" / "build" / "build_then_cli_test.py"
-        bills_code = run([python_exe, str(bills_entry)])
+        bills_code = run_bills_workflow(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=[],
+        )
         if bills_code != 0:
             return bills_code
 
@@ -544,7 +706,7 @@ def run_artifact_tests(
             "--json-project",
             "bills_gate_json_first",
             "--formats",
-            "md,tex,typ",
+            "md,json,tex",
             "--compare-scope",
             "all",
             "--build-dir-mode",
@@ -565,6 +727,72 @@ def run_artifact_tests(
             python_exe=python_exe,
             forwarded=[*default_gate_args, *passthrough],
         )
+
+    return 0
+
+
+def run_pipeline_workflow(
+    repo_root: Path,
+    python_exe: str,
+    forwarded: list[str],
+    default_config: str = "",
+) -> int:
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--config", default=default_config)
+    parser.add_argument("--run-id", default="")
+    parser.add_argument("--list-steps", action="store_true")
+    args, passthrough = parser.parse_known_args(forwarded)
+
+    config_path = args.config.strip()
+    if not config_path:
+        print("[ERROR] pipeline-run requires --config <path>.")
+        return 2
+
+    runner_entry = repo_root / "tools" / "verify" / "pipeline_runner.py"
+    command = [python_exe, str(runner_entry), "--config", config_path]
+    if args.run_id.strip():
+        command.extend(["--run-id", args.run_id.strip()])
+    if args.list_steps:
+        command.append("--list-steps")
+    command.extend(passthrough)
+    return run(command)
+
+
+def run_reporting_tools(
+    repo_root: Path,
+    python_exe: str,
+    forwarded: list[str],
+) -> int:
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--skip-compile2pdf", action="store_true")
+    parser.add_argument("--skip-graph", action="store_true")
+    args, passthrough = parser.parse_known_args(forwarded)
+
+    if passthrough:
+        print(
+            "[WARN] reporting-tools ignores extra args: "
+            f"{' '.join(passthrough)}"
+        )
+
+    if not args.skip_compile2pdf:
+        code = run_pipeline_workflow(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=[],
+            default_config="tools/verify/pipelines/reporting_compile2pdf.toml",
+        )
+        if code != 0:
+            return code
+
+    if not args.skip_graph:
+        code = run_pipeline_workflow(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=[],
+            default_config="tools/verify/pipelines/reporting_graph_generator.toml",
+        )
+        if code != 0:
+            return code
 
     return 0
 
@@ -592,8 +820,15 @@ def main() -> int:
             "core-build",
             "core-abi",
             "log-build",
+            "log-cli-test",
             "report-snapshot",
             "report-pipeline-compare",
+            "pipeline-run",
+            "pipeline-bills",
+            "pipeline-log-generator",
+            "reporting-compile2pdf",
+            "reporting-graph",
+            "reporting-tools",
         ],
         help=(
             "bills=build+CLI test, logic-tests=unit/component style checks, "
@@ -607,8 +842,15 @@ def main() -> int:
             "report-consistency-gate=run full model/json consistency gate with performance threshold, "
             "core-build=compile bills_core, core-abi=run ABI smoke tests, "
             "log-build=compile log_generator, "
+            "log-cli-test=build log_generator and run CLI command tests, "
             "report-snapshot=compare exported reports with frozen snapshots, "
-            "report-pipeline-compare=compare model-first and json-first outputs"
+            "report-pipeline-compare=compare model-first and json-first outputs, "
+            "pipeline-run=run TOML workflow via pipeline_runner, "
+            "pipeline-bills=run bills pipeline config, "
+            "pipeline-log-generator=run log_generator pipeline config, "
+            "reporting-compile2pdf=run compile2pdf tooling workflow, "
+            "reporting-graph=run graph_generator tooling workflow, "
+            "reporting-tools=run compile2pdf+graph tooling workflows"
         ),
     )
     parser.add_argument(
@@ -623,8 +865,11 @@ def main() -> int:
     forwarded = normalize_extra(args.extra)
 
     if args.workflow == "bills":
-        entry = repo_root / "tools" / "build" / "build_then_cli_test.py"
-        return run([python_exe, str(entry), *forwarded])
+        return run_bills_workflow(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=forwarded,
+        )
 
     if args.workflow == "logic-tests":
         return run_logic_tests(
@@ -724,7 +969,7 @@ def main() -> int:
             "--json-project",
             "bills_gate_json_first",
             "--formats",
-            "md,tex,typ",
+            "md,json,tex",
             "--compare-scope",
             "all",
             "--build-dir-mode",
@@ -773,10 +1018,72 @@ def main() -> int:
             ]
         return run([python_exe, str(entry), *forwarded])
 
-    entry = repo_root / "tools" / "build" / "build_log_generator.py"
-    if not forwarded:
-        forwarded = ["build", "--mode", "Debug"]
-    return run([python_exe, str(entry), *forwarded])
+    if args.workflow == "pipeline-run":
+        return run_pipeline_workflow(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=forwarded,
+        )
+
+    if args.workflow == "pipeline-bills":
+        return run_pipeline_workflow(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=forwarded,
+            default_config="tools/verify/pipelines/bills_tracer_single.toml",
+        )
+
+    if args.workflow == "pipeline-log-generator":
+        return run_pipeline_workflow(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=forwarded,
+            default_config="tools/verify/pipelines/log_generator_artifact.toml",
+        )
+
+    if args.workflow == "reporting-compile2pdf":
+        return run_pipeline_workflow(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=forwarded,
+            default_config="tools/verify/pipelines/reporting_compile2pdf.toml",
+        )
+
+    if args.workflow == "reporting-graph":
+        return run_pipeline_workflow(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=forwarded,
+            default_config="tools/verify/pipelines/reporting_graph_generator.toml",
+        )
+
+    if args.workflow == "reporting-tools":
+        return run_reporting_tools(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=forwarded,
+        )
+
+    if args.workflow == "log-cli-test":
+        return run_pipeline_workflow(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            forwarded=forwarded,
+            default_config="tools/verify/pipelines/log_generator_cli.toml",
+        )
+
+    if args.workflow == "log-build":
+        if not forwarded:
+            return run_pipeline_workflow(
+                repo_root=repo_root,
+                python_exe=python_exe,
+                forwarded=[],
+                default_config="tools/verify/pipelines/log_generator_build.toml",
+            )
+        entry = repo_root / "tools" / "build" / "log_generator_flow.py"
+        return run([python_exe, str(entry), *forwarded])
+
+    raise AssertionError(f"Unhandled workflow: {args.workflow}")
 
 
 if __name__ == "__main__":

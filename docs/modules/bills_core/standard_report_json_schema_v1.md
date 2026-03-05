@@ -1,9 +1,16 @@
 # Standard Report JSON Schema v1
 
 ## 1. Scope
-- Purpose: provide a unified report data contract before rendering to MD/LaTeX/Typst.
+- Purpose: provide a unified report data contract before rendering to MD/LaTeX/JSON.
 - Applies to: monthly report and yearly report.
 - Source of truth: bills_core report DTO.
+- Positioning: JSON is one renderer output of `StandardReport`, not an independent business source.
+
+## 1.1 Ownership & Boundary
+- `StandardReport` owner: `libs/bills_core/src/reports/standard_json/standard_report_dto.hpp`
+- Assembler boundary: `*ReportData -> StandardReport`
+- Serializer boundary: `StandardReport -> JSON string`
+- Renderer boundary: output-specific rendering (`md/tex/json`) belongs to presentation/export layer
 
 ## 2. Top-Level Structure
 - `meta` object (required)
@@ -66,6 +73,7 @@
 - monthly category/sub-category/transaction ordering follows stable amount-desc order in renderer path.
 - optional text fields use empty string defaults; list fields use empty arrays when no data.
 - serializer key order is stable for snapshot reproducibility.
+- renderer should consume `items.monthly_summary[].balance` as contract value; recomputing in renderer is transitional behavior to be removed in Struct-First phase 2.
 
 ## 5. Compatibility Policy
 - additive fields only within `1.x` and should be optional.

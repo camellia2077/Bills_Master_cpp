@@ -1,0 +1,24 @@
+schema_version = 1
+
+[pipeline]
+name = "log_generator_build"
+description = "Configure and build log_generator (Debug)."
+default_timeout_seconds = 1800
+
+[output]
+root = "tests/output/logic/pipeline_runner/log_generator_build"
+
+[env]
+PYTHONUNBUFFERED = "1"
+
+[[steps]]
+id = "build"
+name = "Build log_generator debug"
+command = ["{python}", "tools/build/log_generator_flow.py", "build", "--mode", "Debug"]
+cwd = "{repo_root}"
+timeout_seconds = 1800
+retries = 0
+depends_on = []
+artifacts = [
+  "tests/generators/log_generator/build_debug/bin/generator.exe",
+]

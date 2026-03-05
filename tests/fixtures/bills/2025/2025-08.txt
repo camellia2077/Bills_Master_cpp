@@ -1,0 +1,64 @@
+date:2025-08
+remark:
+
+daily
+
+daily_fees
+4.46*6+3.23 哈喽
+
+daily_consumables
+3.27*3+1.65 牙膏
+
+fitness
+
+fitness_diet
+58.82-2.59 牛奶
+164.15-7.99 蛋白粉 // 这是对这项物品描述的注释你可以无视我
+
+income
+
+income_salary
++6265.04*2+2.83 工资 // 有优惠买的
+
+meal
+
+meal_low
+112.78*4+4.10 饭
+
+meal_high
+63.11-1.50 火锅自助 // 我是注释我是注释
+94.97-9.60 德克士 // 有优惠买的
+19.50×4-9.29 醉碳花
+
+meal_drinks
+31.46*3-7.51 无糖饮料 // 有点贵了
+
+meal_snacks
+3.40*6-7.87 蛋挞 // 有点贵了
+
+meal_fruits
+34.31+5.15 西瓜 // 有点贵了
+13.62×3+7.59 菠萝
+
+pet
+
+pet_tortoises
+13.36+8.18 南石
+
+purchase
+
+purchase_toys
+5.90-0.38 勋章
+49.36-7.52 手办 // 家庭必需品
+
+purchase_clothes
+35.11+8.92 衣服 // 有优惠买的
+
+web
+
+web_services
+40.46-2.94 迷雾
+
+web_games
+30.82-9.66 原神月卡
+33.04×2-6.31 皇室战争通行证 // 有点贵了

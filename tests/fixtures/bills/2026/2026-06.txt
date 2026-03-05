@@ -1,0 +1,61 @@
+date:2026-06
+remark:
+
+daily
+
+daily_fees
+27.08+1.62 哈喽
+
+daily_consumables
+5.65-3.26 牙膏 // 有点贵了
+
+fitness
+
+fitness_diet
+32.16+6.54 牛奶
+
+income
+
+income_salary
++9024.38-4.50 工资
+
+meal
+
+meal_low
+125.73*4+0.08 饭 // 这是对这项物品描述的注释你可以无视我
+
+meal_high
+86.74-2.09 醉碳花 // 家庭必需品
+
+meal_drinks
+92.58-4.28 蜜雪冰城 // 有点贵了
+
+meal_snacks
+6.71*3-1.52 蛋挞
+
+meal_fruits
+44.62+8.98 菠萝 // 有优惠买的
+
+pet
+
+pet_tortoises
+28.33*2-3.96 小青
+10.40+2.57 南石
+1.02*5+8.42 红耳龟
+
+purchase
+
+purchase_toys
+2.37×5+3.33 勋章
+
+purchase_clothes
+38.48+1.12 衣服
+
+web
+
+web_services
+40.43-9.78 迷雾
+
+web_games
+32.99-6.29 原神月卡 // 我是注释我是注释
+65.32-9.93 皇室战争通行证 // 有优惠买的

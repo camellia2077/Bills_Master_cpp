@@ -1,25 +1,31 @@
 #!/usr/bin/env python3
+"""Deprecated compatibility wrapper for log_generator flow."""
 
-import argparse
+from __future__ import annotations
+
+import subprocess
 import sys
 from pathlib import Path
 
-from log_generator_build.cli import main as cli_main
-from log_generator_build.config_loader import load_config
-
-SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parents[1]
-PROJECT_DIR = REPO_ROOT / "tools" / "build" / "log_generator"
-DEFAULT_CONFIG_PATH = PROJECT_DIR / "script" / "config.toml"
+DEPRECATION_START_DATE = "2026-03-05"
+SUNSET_DATE = "2026-06-30"
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--config", default=str(DEFAULT_CONFIG_PATH))
-    args, remaining = parser.parse_known_args(sys.argv[1:])
-
-    config = load_config(Path(args.config).resolve())
-    return cli_main(config=config, project_dir=PROJECT_DIR, argv=remaining)
+    repo_root = Path(__file__).resolve().parents[2]
+    flow_entry = repo_root / "tools" / "build" / "log_generator_flow.py"
+    forwarded_args = sys.argv[1:]
+    print(
+        "[DEPRECATED] `tools/build/build_log_generator.py` is a compatibility "
+        f"entry (deprecated since {DEPRECATION_START_DATE}) and is planned for "
+        f"removal after {SUNSET_DATE}. "
+        "Use `python tools/verify/verify.py log-build -- ...` or "
+        "`python tools/build/log_generator_flow.py ...`.",
+        file=sys.stderr,
+    )
+    command = [sys.executable, str(flow_entry), *forwarded_args]
+    print(f"==> Forwarding to flow: {' '.join(command)}")
+    return subprocess.call(command)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,62 @@
+date:2026-10
+remark:
+
+daily
+
+daily_fees
+29.55+3.95 哈喽
+
+daily_consumables
+2.09*4-0.82 牙膏
+
+fitness
+
+fitness_diet
+145.72+6.61 蛋白粉
+9.14×5+7.51 复合维生素
+17.02*3+0.57 牛奶 // 有点贵了
+
+income
+
+income_salary
++8135.33+0.08 工资
+
+meal
+
+meal_low
+234.23*2+9.07 饭
+
+meal_high
+77.15-4.92 醉碳花 // 这是对这项物品描述的注释你可以无视我
+
+meal_drinks
+113.14-7.00 无糖饮料 // 这是对这项物品描述的注释你可以无视我
+69.70+3.34 蜜雪冰城
+
+meal_snacks
+3.96*6-0.00 蛋挞
+
+meal_fruits
+42.62+6.78 菠萝
+
+pet
+
+pet_tortoises
+6.30+5.16 红耳龟
+12.76-8.02 南石 // 这是对这项物品描述的注释你可以无视我
+
+purchase
+
+purchase_toys
+12.80-1.77 勋章
+
+purchase_clothes
+11.74×3-8.07 衣服
+
+web
+
+web_services
+13.93×2-1.15 迅雷 // 家庭必需品
+
+web_games
+31.65-1.77 原神月卡

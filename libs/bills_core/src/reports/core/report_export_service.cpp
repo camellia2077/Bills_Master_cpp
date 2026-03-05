@@ -12,7 +12,6 @@
 #include "common/common_utils.hpp"
 #include "standard_json_latex_renderer.hpp"
 #include "standard_json_markdown_renderer.hpp"
-#include "standard_json_typst_renderer.hpp"
 #if BILLS_CORE_MODULES_ENABLED
 import bill.core.common.process_stats;
 import bill.core.ports.month_report_formatter_provider;
@@ -28,6 +27,7 @@ using bills::core::modules::ports::YearlyReportFormatterProvider;
 using bills::core::modules::reports::ReportExporter;
 using bills::core::modules::reports::StandardReportAssembler;
 using bills::core::modules::reports::MonthlyReportData;
+using bills::core::modules::reports::StandardReport;
 using bills::core::modules::reports::StandardReportJsonSerializer;
 using bills::core::modules::reports::YearlyReportData;
 #else
@@ -48,9 +48,9 @@ constexpr const char* kYearFormatterSuffix = "_year_formatter";
 
 enum class StandardRenderMode {
   kNone,
+  kJson,
   kMarkdown,
   kLatex,
-  kTypst,
 };
 
 auto parse_iso_month(const std::string& value, int& year, int& month) -> bool {
@@ -77,6 +77,14 @@ auto is_markdown_format(std::string format_name) -> bool {
   return format_name == "md" || format_name == "markdown";
 }
 
+auto is_json_format(std::string format_name) -> bool {
+  std::ranges::transform(format_name, format_name.begin(),
+                         [](unsigned char ch) -> char {
+                           return static_cast<char>(std::tolower(ch));
+                         });
+  return format_name == "json";
+}
+
 auto is_latex_format(std::string format_name) -> bool {
   std::ranges::transform(format_name, format_name.begin(),
                          [](unsigned char ch) -> char {
@@ -85,40 +93,32 @@ auto is_latex_format(std::string format_name) -> bool {
   return format_name == "tex" || format_name == "latex";
 }
 
-auto is_typst_format(std::string format_name) -> bool {
-  std::ranges::transform(format_name, format_name.begin(),
-                         [](unsigned char ch) -> char {
-                           return static_cast<char>(std::tolower(ch));
-                         });
-  return format_name == "typ" || format_name == "typst";
-}
-
 auto select_standard_render_mode(const std::string& pipeline,
                                  const std::string& format_name)
     -> StandardRenderMode {
+  (void)pipeline;
+  if (is_json_format(format_name)) {
+    return StandardRenderMode::kJson;
+  }
   if (is_markdown_format(format_name)) {
     return StandardRenderMode::kMarkdown;
   }
-  if ((pipeline == "model-first" || pipeline == "json-first") &&
-      is_latex_format(format_name)) {
+  if (is_latex_format(format_name)) {
     return StandardRenderMode::kLatex;
-  }
-  if ((pipeline == "model-first" || pipeline == "json-first") &&
-      is_typst_format(format_name)) {
-    return StandardRenderMode::kTypst;
   }
   return StandardRenderMode::kNone;
 }
 
-auto render_standard_report(const std::string& standard_report_json,
+auto render_standard_report(const StandardReport& standard_report,
+                            const std::string& standard_report_json,
                             const StandardRenderMode mode) -> std::string {
   switch (mode) {
+    case StandardRenderMode::kJson:
+      return standard_report_json;
     case StandardRenderMode::kMarkdown:
-      return StandardJsonMarkdownRenderer::render(standard_report_json);
+      return StandardJsonMarkdownRenderer::render(standard_report);
     case StandardRenderMode::kLatex:
-      return StandardJsonLatexRenderer::render(standard_report_json);
-    case StandardRenderMode::kTypst:
-      return StandardJsonTypstRenderer::render(standard_report_json);
+      return StandardJsonLatexRenderer::render(standard_report);
     case StandardRenderMode::kNone:
     default:
       return {};
@@ -193,7 +193,8 @@ auto ReportExportService::export_yearly_report(const std::string& year_str,
 
     std::string report;
     if (standard_render_mode != StandardRenderMode::kNone) {
-      report = render_standard_report(standard_report_json, standard_render_mode);
+      report = render_standard_report(standard_report, standard_report_json,
+                                      standard_render_mode);
     } else {
       auto formatter = m_year_formatter_provider->CreateFormatter(format_name);
       if (!formatter) {
@@ -246,7 +247,8 @@ auto ReportExportService::export_monthly_report(const std::string& month_str,
 
     std::string report;
     if (standard_render_mode != StandardRenderMode::kNone) {
-      report = render_standard_report(standard_report_json, standard_render_mode);
+      report = render_standard_report(standard_report, standard_report_json,
+                                      standard_render_mode);
     } else {
       auto formatter = m_month_formatter_provider->CreateFormatter(format_name);
       if (!formatter) {

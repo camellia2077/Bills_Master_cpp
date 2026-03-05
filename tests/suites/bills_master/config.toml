@@ -2,9 +2,9 @@
 
 [paths]
 # 项目产物 (exe, dll) 所在的目录
-build_dir = '../../../../test/output/artifact_bills_tracer/workspace'
+build_dir = '../../../../tests/output/runtime/bills_tracer/workspace'
 # 存放原始 .txt 账单文件的目录
-bills_dir = '../../../fixtures/bills_output_from_config'
+bills_dir = '../../../fixtures/bills'
 # 预处理后 .json 文件所在的目录
 import_dir = '../../../output/txt2josn'
 

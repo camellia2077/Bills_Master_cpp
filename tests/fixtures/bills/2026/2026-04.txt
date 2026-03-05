@@ -1,0 +1,61 @@
+date:2026-04
+remark:
+
+daily
+
+daily_fees
+4.49*6+0.18 哈喽 // 我是注释我是注释
+
+daily_consumables
+8.60-7.29 牙膏
+
+fitness
+
+fitness_diet
+51.77+6.62 牛奶
+
+income
+
+income_salary
++10625.73-8.64 工资
+
+meal
+
+meal_low
+587.32-5.38 饭
+
+meal_high
+82.57-7.96 德克士
+69.31-4.19 火锅自助
+
+meal_drinks
+84.55-8.61 无糖饮料
+55.14+6.11 蜜雪冰城
+
+meal_snacks
+99.06-6.29 冰激凌 // 家庭必需品
+
+meal_fruits
+12.20×3-1.00 西瓜
+
+pet
+
+pet_tortoises
+6.56*6-4.93 小青
+12.58+8.63 南石
+
+purchase
+
+purchase_toys
+51.89-5.39 手办
+
+purchase_clothes
+33.54+6.70 衣服
+
+web
+
+web_services
+13.45×3+4.80 迷雾 // 这是对这项物品描述的注释你可以无视我
+
+web_games
+67.35+7.42 皇室战争通行证

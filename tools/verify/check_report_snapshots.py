@@ -41,8 +41,6 @@ def should_compare_source(source_rel: str, compare_scope: str) -> bool:
         return suffix == ".json"
     if compare_scope == "tex":
         return suffix == ".tex"
-    if compare_scope == "typ":
-        return suffix == ".typ"
     return False
 
 
@@ -118,7 +116,7 @@ def compare_between_projects(
         if not compare_file(project_a_path, project_b_path):
             failed.append(f"{key}: content mismatch")
 
-    # Compare additional files that are not listed in manifest (e.g. tex/typ).
+    # Compare additional files that are not listed in manifest (e.g. tex).
     extra_rel_paths = sorted(union_rel_paths - manifest_sources)
     for relative in extra_rel_paths:
         project_a_path = files_a.get(relative)
@@ -193,7 +191,7 @@ def main() -> int:
     parser.add_argument(
         "--compare-scope",
         default="all",
-        choices=["all", "md", "json", "tex", "typ"],
+        choices=["all", "md", "json", "tex"],
         help="Limit comparison to selected file type.",
     )
     args = parser.parse_args()

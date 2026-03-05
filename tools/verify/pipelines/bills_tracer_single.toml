@@ -1,0 +1,25 @@
+schema_version = 1
+
+[pipeline]
+name = "bills_tracer_single"
+description = "Build+sync runtime+run tests for bills_tracer."
+default_timeout_seconds = 7200
+
+[output]
+root = "tests/output/logic/pipeline_runner/bills_tracer_single"
+
+[env]
+PYTHONUNBUFFERED = "1"
+
+[[steps]]
+id = "run_bills_tracer"
+name = "Run bills_tracer default workflow"
+command = ["{python}", "tools/build/bills_tracer_flow.py"]
+cwd = "{repo_root}"
+timeout_seconds = 7200
+retries = 0
+depends_on = []
+artifacts = [
+  "tests/output/artifact/bills_tracer/test_summary.json",
+  "tests/output/artifact/bills_tracer/test_python_output.log",
+]

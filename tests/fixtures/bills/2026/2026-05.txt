@@ -1,0 +1,63 @@
+date:2026-05
+remark:
+
+daily
+
+daily_fees
+26.64+0.36 哈喽
+
+daily_consumables
+8.73+5.73 牙膏 // 家庭必需品
+
+fitness
+
+fitness_diet
+117.62+3.47 蛋白粉 // 有优惠买的
+
+income
+
+income_salary
++9301.56-8.20 工资 // 有优惠买的
+
+meal
+
+meal_low
+355.42+0.32 饭
+
+meal_high
+85.13+7.17 火锅自助 // 我是注释我是注释
+88.88+4.29 醉碳花
+
+meal_drinks
+104.77+0.17 无糖饮料
+
+meal_snacks
+97.66-9.60 冰激凌 // 有优惠买的
+20.69+3.81 蛋挞
+
+meal_fruits
+36.50-4.06 西瓜
+
+pet
+
+pet_tortoises
+9.94-0.80 红耳龟
+3.45*4+4.86 南石 // 这是对这项物品描述的注释你可以无视我
+53.68+6.92 小青
+
+purchase
+
+purchase_toys
+32.68-4.94 手办
+3.94*3-1.58 勋章 // 这是对这项物品描述的注释你可以无视我
+
+purchase_clothes
+33.50+8.27 衣服
+
+web
+
+web_services
+29.83-9.67 迅雷 // 有点贵了
+
+web_games
+30.20-4.15 原神月卡

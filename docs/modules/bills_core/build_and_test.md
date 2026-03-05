@@ -41,6 +41,9 @@
   - 逻辑层：`tests/suites/logic/bills_core_abi/run_tests.py`
   - 产物层：`tests/suites/artifact/bills_master/run_tests.py`
 - 测试输出目录：
+  - 运行时层：`tests/output/runtime/<project>/`
+    - `workspace/`（exe/dll/config）
+    - `runs/<run_id>/`（每次执行独立运行目录）
   - 逻辑层预留：`tests/output/logic/`
   - 产物层默认：`tests/output/artifact/<project>/`
 
@@ -56,6 +59,14 @@
   - `python tools/verify/verify.py bills-build -- build_fast`
 - 仅构建 log_generator：
   - `python tools/verify/verify.py log-build -- build --mode Debug`
+  - Phase 4 起默认由 TOML runner 驱动（`log-build` 无参数时直接使用 `tools/verify/pipelines/log_generator_build.toml`）。
+- log_generator 完整命令行测试（构建 + CLI 参数覆盖）：
+  - `python tools/verify/verify.py log-cli-test`
+  - 默认由 TOML runner 执行 `tools/verify/pipelines/log_generator_cli.toml`。
+- 生成 log_generator 测试输入（默认落盘到 artifact）：
+  - `python tools/build/log_generator_flow.py generate --mode Debug --start-year 2024 --end-year 2024`
+- 显式将 log_generator 数据提升到 fixtures（默认不会覆盖夹具）：
+  - `python tools/build/log_generator_flow.py promote-fixtures`
 - 模块模式双通道检查：
   - `python tools/verify/verify.py module-mode-check`
   - 可选参数示例：
@@ -65,8 +76,27 @@
   - `python tools/verify/verify.py tools-layer-check`
 - 一致性门禁（含性能阈值）：
   - `python tools/verify/verify.py report-consistency-gate`
-  - 默认格式：`md,tex,typ`
+  - 默认格式：`md,json,tex`
   - 默认性能阈值：`model-first` 相比 `json-first` 不超过 `+10%`
+- TOML 流程 Runner（Phase 2）：
+  - 通用入口：`python tools/verify/verify.py pipeline-run -- --config tools/verify/pipelines/bills_artifact.toml`
+  - bills 示例：`python tools/verify/verify.py pipeline-bills`
+  - log_generator 示例：`python tools/verify/verify.py pipeline-log-generator`
+- Phase 3 收敛说明：
+  - `python tools/verify/verify.py bills` 已切到 TOML runner 驱动（命令兼容保持不变）。
+  - `python tools/verify/verify.py bills-parallel-smoke` / `report-consistency-gate` 也由 TOML pipeline 编排。
+- Phase 4 收敛说明：
+  - `python tools/build/build_log_generator.py` 为兼容壳层，已改为直接转发 `tools/build/log_generator_flow.py`。
+  - `promote-fixtures` 为显式步骤，执行记录落在 `tests/output/artifact/log_generator/last_promote.json`。
+- Phase 6 兼容入口下线窗口：
+  - `tools/build/build_then_cli_test.py`、`tools/build/build_log_generator.py` 自 `2026-03-05` 起输出弃用提示。
+  - 计划下线日期：`2026-06-30`。
+  - 推荐入口：`python tools/verify/verify.py`（工作流）或 `tools/build/*_flow.py`（底层流程）。
+- Phase 5（reporting workflow，独立于核心门禁）：
+  - compile2pdf：`python tools/verify/verify.py reporting-compile2pdf`
+  - graph_generator：`python tools/verify/verify.py reporting-graph`
+  - 一键执行二者：`python tools/verify/verify.py reporting-tools`
+  - 这些 workflow 默认不并入 `bills` / `report-consistency-gate`。
 
 ## 测试结果读取（给 agent）
 
@@ -78,6 +108,8 @@
   - 包含开始时间、结束时间、return code、stdout/stderr。
 - 单次运行产物（并行场景）：
   - `tests/output/artifact/<project>/runs/<run_id>/`
+- 运行时工作区（兼容旧路径镜像）：
+  - `tests/output/runtime/<project>/workspace`
 
 ## 失败排查
 

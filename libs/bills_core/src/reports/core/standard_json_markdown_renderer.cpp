@@ -9,9 +9,10 @@
 #include <vector>
 
 #include "nlohmann/json.hpp"
+#include "reports/standard_json/standard_report_json_serializer.hpp"
 
 namespace {
-using Json = nlohmann::json;
+using Json = nlohmann::ordered_json;
 
 struct MonthlyTransaction {
   double amount = 0.0;
@@ -177,6 +178,20 @@ auto render_yearly(const Json& root) -> std::string {
 }
 
 }  // namespace
+
+auto StandardJsonMarkdownRenderer::render(const StandardReport& standard_report)
+    -> std::string {
+  const Json root = StandardReportJsonSerializer::ToJson(standard_report);
+  const std::string report_type = root.at("meta").value("report_type", "");
+  if (report_type == "monthly") {
+    return render_monthly(root);
+  }
+  if (report_type == "yearly") {
+    return render_yearly(root);
+  }
+
+  throw std::runtime_error("Unsupported report_type in standard report JSON.");
+}
 
 auto StandardJsonMarkdownRenderer::render(const std::string& standard_report_json)
     -> std::string {

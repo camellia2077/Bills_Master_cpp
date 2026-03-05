@@ -11,7 +11,7 @@
 
 - `application/use_cases/`：纯业务流程编排，不依赖 UI/CLI 输出。
 - `ports/`：核心对外依赖抽象（仓储、文件枚举、序列化、报表网关、格式提供器等）。
-- `reports/`：平台无关报表编排与标准 JSON 渲染逻辑（markdown/latex/typst）。
+- `reports/`：平台无关报表编排与标准 JSON 渲染逻辑（markdown/latex/json）。
 - `abi/`：C ABI 边界层，仅做命令解包、调用、结果封装。
 
 ## 约束

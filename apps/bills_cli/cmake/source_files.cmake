@@ -67,7 +67,6 @@ set(REPORTS_CORE_SOURCES
     "${CORE_REPORTS_DIR}/core/report_exporter.cpp"
     "${CORE_REPORTS_DIR}/core/standard_json_latex_renderer.cpp"
     "${CORE_REPORTS_DIR}/core/standard_json_markdown_renderer.cpp"
-    "${CORE_REPORTS_DIR}/core/standard_json_typst_renderer.cpp"
     "${CORE_REPORTS_DIR}/monthly_report/monthly_report_generator.cpp"
     "${CORE_REPORTS_DIR}/monthly_report/report_sorter.cpp"
     "${CORE_REPORTS_DIR}/yearly_report/yearly_report_generator.cpp"

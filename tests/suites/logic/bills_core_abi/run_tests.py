@@ -128,7 +128,7 @@ def require(condition: bool, message: str) -> None:
 
 
 def select_fixture_txt_path() -> Path:
-    fixture_root = REPO_ROOT / "tests" / "fixtures" / "bills_output_from_config"
+    fixture_root = REPO_ROOT / "tests" / "fixtures" / "bills"
     candidates = sorted(fixture_root.rglob("*.txt"))
     require(candidates, f"No .txt fixtures found under: {fixture_root}")
     return candidates[0]

@@ -13,7 +13,7 @@
 
 ## P2: 中优先级
 
-- [ ] 使用 JSON 配置导出 `latex/typ` 字体格式。
+- [ ] 使用 JSON 配置导出 `latex` 字体格式。
 - [ ] 给 `parent_item` 增加注释字段。
 - [ ] 给 `Modifier_Config` 配置文件增加合法性校验。
 - [ ] 在导出报告中增加 `source/comment/transaction_type` 字段开关。

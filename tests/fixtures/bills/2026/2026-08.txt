@@ -1,0 +1,65 @@
+date:2026-08
+remark:
+
+daily
+
+daily_fees
+15.00*2-0.65 哈喽 // 家庭必需品
+
+daily_consumables
+1.81*5-1.71 牙膏
+
+fitness
+
+fitness_diet
+36.16-8.28 复合维生素
+55.34-7.01 牛奶 // 有优惠买的
+181.09-6.85 蛋白粉 // 家庭必需品
+
+income
+
+income_salary
++3152.40×3-7.16 工资 // 我是注释我是注释
+
+meal
+
+meal_low
+557.59+2.94 饭
+
+meal_high
+44.63×2+6.56 醉碳花
+
+meal_drinks
+92.53+2.67 蜜雪冰城
+
+meal_snacks
+49.11+0.98 蛋挞 // 家庭必需品
+74.70-5.96 冰激凌
+
+meal_fruits
+49.17+4.79 菠萝
+
+pet
+
+pet_tortoises
+12.18+2.53 南石
+9.06*5+0.26 小青
+7.02-7.56 红耳龟 // 有点贵了
+
+purchase
+
+purchase_toys
+10.01+2.88 勋章
+51.30-3.95 手办
+
+purchase_clothes
+9.32×4+8.35 衣服 // 有点贵了
+
+web
+
+web_services
+29.62+7.94 迅雷
+13.52×3+1.62 迷雾
+
+web_games
+6.78×5-1.51 原神月卡 // 有优惠买的

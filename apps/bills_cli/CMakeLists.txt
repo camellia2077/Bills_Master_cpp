@@ -31,7 +31,6 @@ option(BILLS_ENABLE_TIDY
 option(ENABLE_FMT_MD "Enable Markdown formatter plugins" ON)
 option(ENABLE_FMT_RST "Enable reStructuredText formatter plugins" OFF)
 option(ENABLE_FMT_TEX "Enable LaTeX formatter plugins" OFF)
-option(ENABLE_FMT_TYP "Enable Typst formatter plugins" OFF)
 
 # 将模块路径添加到CMake的搜索路径中
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")

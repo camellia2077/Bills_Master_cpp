@@ -32,13 +32,16 @@ namespace {
 constexpr const char* kExportFormatConfigName = "Export_Formats.json";
 constexpr const char* kMonthPluginSuffix = "_month_formatter.dll";
 constexpr const char* kYearPluginSuffix = "_year_formatter.dll";
+constexpr const char* kLegacyPipelineDeprecatedSince = "2026-03-05";
+constexpr const char* kLegacyPipelineRemovalTarget = "2026-06-30";
 
 auto is_embedded_format(std::string format_name) -> bool {
   std::ranges::transform(format_name, format_name.begin(),
                          [](unsigned char ch) -> char {
                            return static_cast<char>(std::tolower(ch));
                          });
-  return format_name == "md" || format_name == "markdown";
+  return format_name == "md" || format_name == "markdown" ||
+         format_name == "json";
 }
 
 auto GetExecutableDirectory() -> fs::path {
@@ -122,9 +125,9 @@ AppController::AppController(std::string db_path,
 
   m_export_base_dir = "output/exported_files";
   m_format_folder_names = {{"md", "Markdown_bills"},
+                           {"json", "JSON_bills"},
                            {"tex", "LaTeX_bills"},
-                           {"rst", "reST_bills"},
-                           {"typ", "Typst_bills"}};
+                           {"rst", "reST_bills"}};
   m_workflow_controller =
       std::make_unique<WorkflowController>(m_config_path, m_modified_output_dir);
   m_export_controller = std::make_unique<ExportController>(
@@ -246,6 +249,7 @@ auto AppController::is_export_format_available(
     const std::string& type, const std::vector<std::string>& values,
     const std::string& format_str,
     const std::string& export_pipeline) const -> bool {
+  (void)export_pipeline;
   const std::string format = normalize_format(format_str);
   if (m_enabled_formats.count(format) == 0U) {
     std::cerr << RED_COLOR << "Error: " << RESET_COLOR
@@ -259,15 +263,11 @@ auto AppController::is_export_format_available(
 
   const auto [need_month, need_year] = infer_export_requirements(type, values);
   const bool skip_plugin_check_for_markdown = is_embedded_format(format);
-  const bool skip_plugin_check_for_latex =
-      format == "tex" &&
-      (export_pipeline == "model-first" || export_pipeline == "json-first");
-  const bool skip_plugin_check_for_typst =
-      format == "typ" &&
-      (export_pipeline == "model-first" || export_pipeline == "json-first");
+  const bool skip_plugin_check_for_json = format == "json";
+  const bool skip_plugin_check_for_latex = format == "tex";
   const bool skip_plugin_check =
-      skip_plugin_check_for_markdown || skip_plugin_check_for_latex ||
-      skip_plugin_check_for_typst;
+      skip_plugin_check_for_markdown || skip_plugin_check_for_json ||
+      skip_plugin_check_for_latex;
   if (!skip_plugin_check &&
       need_month && m_month_formats_available.count(format) == 0U) {
     std::cerr << RED_COLOR << "Error: " << RESET_COLOR
@@ -330,6 +330,19 @@ auto AppController::handle_export(const std::string& type,
   if (!is_export_format_available(type, values, normalized_format,
                                   normalized_pipeline)) {
     return false;
+  }
+
+  if (normalized_pipeline == "legacy") {
+    static bool legacy_warning_emitted = false;
+    if (!legacy_warning_emitted) {
+      std::cerr
+          << YELLOW_COLOR << "Warning: " << RESET_COLOR
+          << "Export pipeline 'legacy' is transitional and deprecated since "
+          << kLegacyPipelineDeprecatedSince << ". Planned removal target is "
+          << kLegacyPipelineRemovalTarget
+          << ". Prefer 'model-first' (default) or 'json-first'." << std::endl;
+      legacy_warning_emitted = true;
+    }
   }
 
   return m_export_controller->handle_export(type, values, normalized_format,

@@ -1,0 +1,66 @@
+date:2025-09
+remark:
+
+daily
+
+daily_fees
+6.95×4+7.16 哈喽 // 有优惠买的
+
+daily_consumables
+1.55×6+3.58 牙膏
+
+fitness
+
+fitness_diet
+173.01+6.45 蛋白粉
+47.04+6.15 复合维生素 // 我是注释我是注释
+10.99*4-6.35 牛奶
+
+income
+
+income_salary
++9806.37+5.82 工资
+
+meal
+
+meal_low
+404.00+0.28 饭 // 我是注释我是注释
+
+meal_high
+84.23+9.95 醉碳花
+
+meal_drinks
+91.35+1.29 无糖饮料
+117.18+3.83 蜜雪冰城
+
+meal_snacks
+61.18+6.12 冰激凌
+
+meal_fruits
+26.39+2.87 西瓜
+8.18*6-7.33 菠萝
+
+pet
+
+pet_tortoises
+29.58-9.66 小青 // 我是注释我是注释
+5.23-4.02 红耳龟
+12.51+5.55 南石
+
+purchase
+
+purchase_toys
+14.68×4+4.49 手办 // 有优惠买的
+
+purchase_clothes
+34.56+7.44 衣服
+
+web
+
+web_services
+20.18×2-9.73 迷雾
+26.25-7.74 迅雷
+
+web_games
+66.40+9.13 皇室战争通行证
+32.04+3.63 原神月卡 // 有点贵了
