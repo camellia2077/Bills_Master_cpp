@@ -9,6 +9,7 @@
 - 目录地图：`docs/modules/bills_core/module_map.md`
 - 构建与测试：`docs/modules/bills_core/build_and_test.md`
 - ABI 约束：`docs/modules/bills_core/abi_contract.md`
+- 仓库模块规范：`docs/modules/module_standards.md`
 
 ## 目录概览
 
@@ -30,6 +31,10 @@
   - `python tools/verify/verify.py bills-parallel-smoke`
 - 一致性 + 性能门禁：
   - `python tools/verify/verify.py report-consistency-gate`
+- 模块 ON/OFF 双通道检查：
+  - `python tools/verify/verify.py module-mode-check`
+- tools 分层约束检查：
+  - `python tools/verify/verify.py tools-layer-check`
 
 ## 测试目录约定
 

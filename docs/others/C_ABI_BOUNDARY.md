@@ -9,7 +9,7 @@
 - `libs/bills_core`
   - Holds business rules, validation/conversion pipeline, and application use-cases.
   - Must not contain platform-specific code (`_WIN32`, `LoadLibrary`, direct SQLite handles).
-- `products/bills_cli`
+- `apps/bills_cli`
   - Holds CLI presentation, Windows infrastructure adapters, plugin loading, and report exporting.
   - Wires platform implementations into `bills_core` ports.
 

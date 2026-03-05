@@ -15,7 +15,7 @@
   - `rg -n "windows/" "libs/bills_core/src"`
   - `rg -n "LoadLibrary|GetProcAddress|sqlite3_" "libs/bills_core/src"`
 - 结果判定：
-  - 命中需人工复核；若属于真实平台依赖，必须迁回 `products/bills_cli` 适配层。
+  - 命中需人工复核；若属于真实平台依赖，必须迁回 `apps/bills_cli` 适配层。
 
 ## 测试分层（建议）
 
@@ -28,6 +28,7 @@
 - 全量测试（内部 + 产物）：
   - `python tools/verify/verify.py all-tests`
   - 默认为开发模式：不阻塞性能门禁，仅做一致性校验。
+  - 包含模块模式双通道检查：`BILLS_ENABLE_MODULES=OFF/ON`。
   - 若需要阻塞性能门禁：
     - `python tools/verify/verify.py artifact-tests -- --scope full --enforce-performance-gate`
   - Phase 3 验收建议使用该命令（开发期可先不阻塞性能阈值）。
@@ -53,6 +54,13 @@
   - `python tools/verify/verify.py bills-build -- build_fast`
 - 仅构建 log_generator：
   - `python tools/verify/verify.py log-build -- build --mode Debug`
+- 模块模式双通道检查：
+  - `python tools/verify/verify.py module-mode-check`
+  - 可选参数示例：
+    - `python tools/verify/verify.py module-mode-check -- --command build`
+    - `python tools/verify/verify.py module-mode-check -- --compiler clang`
+- tools 分层约束检查：
+  - `python tools/verify/verify.py tools-layer-check`
 - 一致性门禁（含性能阈值）：
   - `python tools/verify/verify.py report-consistency-gate`
   - 默认格式：`md,tex,typ`

@@ -12,9 +12,9 @@
   - C ABI 入口与命令处理。
 - `libs/bills_core/src/ports/`
   - 核心端口抽象（仓储、序列化、数据网关、格式 provider 等）。
-- `products/bills_cli/src/windows/presentation/`
+- `apps/bills_cli/src/windows/presentation/`
   - CLI 命令分发与控制器（非 core）。
-- `products/bills_cli/src/windows/infrastructure/`
+- `apps/bills_cli/src/windows/infrastructure/`
   - 文件系统、sqlite、插件加载等适配实现（非 core）。
 
 ## 改动定位建议

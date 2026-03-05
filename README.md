@@ -7,7 +7,7 @@
 - `.github/`：协作与流水线配置（workflow、issue/pr 模板）。
 - `cmake/`：跨模块 CMake 基础能力（后续集中到根级）。
 - `docs/`：文档中心。
-- `products/`：产品可执行项目（如 `bills_cli`）。
+- `apps/`：产品可执行项目（如 `bills_cli`）。
 - `libs/`：核心库与领域能力（如 `bills_core`）。
 - `tools/`：工程脚本与工具（`verify/`、`build/`）。
 - `tests/`：统一测试资产（`suites/`、`baseline/`、`fixtures/`、`output/`）。

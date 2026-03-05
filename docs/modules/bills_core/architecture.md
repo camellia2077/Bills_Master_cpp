@@ -5,7 +5,7 @@
 在保持 `libs/bills_core/src` 功能稳定前提下，保持“核心业务逻辑可测试、ABI 边界清晰、平台适配可替换”。
 当前分层收口目标：
 - `libs/bills_core` 仅承载平台无关业务能力（use case、ports、核心报表编排与渲染）。
-- `products/bills_cli` 仅承载 presentation + infrastructure adapters（Windows/SQLite/插件装配与运行时 IO）。
+- `apps/bills_cli` 仅承载 presentation + infrastructure adapters（Windows/SQLite/插件装配与运行时 IO）。
 
 ## 分层建议
 

@@ -4,6 +4,7 @@
 
 ## modules
 
+- `docs/modules/module_standards.md`
 - `docs/modules/bills_core/architecture.md`
 - `docs/modules/bills_core/module_map.md`
 - `docs/modules/bills_core/build_and_test.md`
