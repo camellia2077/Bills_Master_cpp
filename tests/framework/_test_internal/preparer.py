@@ -8,10 +8,41 @@ from . import constants
 
 class TestPreparer:
     """预处理类：负责所有测试开始前的准备工作。"""
+    _RUNTIME_SIDECAR_EXTS = {".dll", ".exe", ".pdb", ".manifest"}
+
     def __init__(self, base_dir):
         self.base_dir = base_dir
         self.exe_name = "bill_master_cli.exe"
         self.local_plugins_dir = os.path.join(self.base_dir, "plugins")
+
+    def _copy_exe_sidecars(self):
+        """复制 exe 运行时附属文件到测试根目录（不含主 exe）。"""
+        copied_files = []
+        main_exe_lower = self.exe_name.lower()
+        for entry in os.scandir(config.BUILD_DIR):
+            if not entry.is_file():
+                continue
+            name_lower = entry.name.lower()
+            if name_lower == main_exe_lower:
+                continue
+            ext = os.path.splitext(name_lower)[1]
+            if ext not in self._RUNTIME_SIDECAR_EXTS:
+                continue
+
+            dest_path = os.path.join(self.base_dir, entry.name)
+            shutil.copy(entry.path, dest_path)
+            copied_files.append(entry.name)
+
+        if copied_files:
+            copied_files_str = ", ".join(sorted(copied_files))
+            print(
+                f"  {constants.GREEN}已复制 exe 相关文件到 tests: "
+                f"{len(copied_files)} 个 ({copied_files_str}){constants.RESET}"
+            )
+        else:
+            print(
+                f"  {constants.YELLOW}未发现额外 exe 相关文件，跳过附属文件复制。{constants.RESET}"
+            )
 
     def prepare_runtime_env(self):
         """准备完整的运行时环境，包括可执行文件、配置文件和所有插件。"""
@@ -30,6 +61,9 @@ class TestPreparer:
             return False
         shutil.copy(source_exe_path, dest_exe_path)
         print(f"  {constants.GREEN}已复制可执行文件: {self.exe_name}{constants.RESET}")
+
+        # --- 步骤1.1: 复制 exe 相关附属文件到 tests 根目录 ---
+        self._copy_exe_sidecars()
 
         # --- 步骤2: 复制 config 文件夹 ---
         source_config_dir = os.path.join(config.BUILD_DIR, "config")

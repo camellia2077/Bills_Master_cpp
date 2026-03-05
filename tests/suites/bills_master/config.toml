@@ -2,7 +2,7 @@
 
 [paths]
 # 项目产物 (exe, dll) 所在的目录
-build_dir = '../../../../products/bills_cli/build_fast/bin'
+build_dir = '../../../../test/output/artifact_bills_tracer/workspace'
 # 存放原始 .txt 账单文件的目录
 bills_dir = '../../../fixtures/bills_output_from_config'
 # 预处理后 .json 文件所在的目录
@@ -22,10 +22,7 @@ run_tests = true
 
 [plugins]
 # 需要复制的插件 DLL 名称
-plugin_dlls = [
-    "md_month_formatter.dll",
-    "md_year_formatter.dll"
-]
+plugin_dlls = []
 
 # --- 测试相关的具体设置 ---
 [settings]

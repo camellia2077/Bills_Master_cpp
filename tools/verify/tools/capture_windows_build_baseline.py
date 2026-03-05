@@ -13,14 +13,14 @@ from pathlib import Path
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Capture Windows build baseline for products/bills_cli using the "
+            "Capture Windows build baseline for apps/bills_cli using the "
             "unified verify entry."
         )
     )
     parser.add_argument(
         "--app",
         default="bills_cli",
-        help="App name under products/<app> (default: bills_cli).",
+        help="App name under apps/<app> (default: bills_cli).",
     )
     parser.add_argument(
         "--profile",
@@ -33,7 +33,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--build-dir",
         default="build_fast",
-        help="Build directory name under products/<app> (default: build_fast).",
+        help="Build directory name under apps/<app> (default: build_fast).",
     )
     parser.add_argument(
         "--output",
@@ -161,7 +161,7 @@ def collect_binary_imports(bin_dir: Path, artifacts: list[dict[str, object]]) ->
 def main() -> int:
     args = parse_args()
     repo_root = Path(__file__).resolve().parents[2]
-    app_dir = repo_root / "products" / args.app
+    app_dir = repo_root / "apps" / args.app
     build_dir = app_dir / args.build_dir
     bin_dir = build_dir / "bin"
     output_path = Path(args.output)

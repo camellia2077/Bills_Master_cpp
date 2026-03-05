@@ -10,7 +10,11 @@ from bills_master_builder.task_splitter import split_tidy_logs
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[1]
-PROJECT_DIR = REPO_ROOT / "products" / "bills_cli"
+PROJECT_DIR = REPO_ROOT / "apps" / "bills_cli"
+ARTIFACT_WORKSPACE_DIR = (
+    REPO_ROOT / "test" / "output" / "artifact_bills_tracer" / "workspace"
+)
+RUNTIME_SIDECAR_EXTS = {".dll", ".exe", ".manifest", ".pdb"}
 
 
 def run_command(command: list[str], cwd: Path) -> None:
@@ -26,6 +30,48 @@ def run_command(command: list[str], cwd: Path) -> None:
     except subprocess.CalledProcessError as exc:
         print(f"\n!!! A build step failed with exit code {exc.returncode}.")
         sys.exit(exc.returncode)
+
+
+def replace_path(src: Path, dst: Path) -> None:
+    if not src.exists():
+        return
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if dst.exists():
+        if dst.is_dir():
+            shutil.rmtree(dst)
+        else:
+            dst.unlink()
+    if src.is_dir():
+        shutil.copytree(src, dst)
+    else:
+        shutil.copy2(src, dst)
+
+
+def sync_runtime_artifacts(build_dir: Path) -> None:
+    build_bin_dir = build_dir / "bin"
+    if not build_bin_dir.exists():
+        print(f"==> Skip artifact sync: missing directory {build_bin_dir}")
+        return
+
+    ARTIFACT_WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
+    for stale in ARTIFACT_WORKSPACE_DIR.iterdir():
+        if stale.is_file() and stale.suffix.lower() in RUNTIME_SIDECAR_EXTS:
+            stale.unlink()
+
+    copied_files: list[str] = []
+    for entry in sorted(build_bin_dir.iterdir(), key=lambda p: p.name.lower()):
+        if not entry.is_file():
+            continue
+        if entry.suffix.lower() not in RUNTIME_SIDECAR_EXTS:
+            continue
+        shutil.copy2(entry, ARTIFACT_WORKSPACE_DIR / entry.name)
+        copied_files.append(entry.name)
+
+    replace_path(build_bin_dir / "config", ARTIFACT_WORKSPACE_DIR / "config")
+    print(
+        "==> Synced runtime artifacts to "
+        f"{ARTIFACT_WORKSPACE_DIR} ({len(copied_files)} files + config)"
+    )
 
 
 def read_cache_home_directory(cache_file: Path) -> Path | None:
@@ -90,7 +136,7 @@ def read_cache_bool_option(cache_file: Path, key: str) -> bool | None:
 
 def ensure_cmake_configured(
     build_dir: Path, generator: str, build_type: str, compiler: str,
-    tidy_enabled: bool = True
+    tidy_enabled: bool = True, core_shared: bool = True
 ) -> None:
     if not build_dir.exists():
         print(f"==> Creating build directory: {build_dir}")
@@ -100,11 +146,13 @@ def ensure_cmake_configured(
     if cache_file.is_file():
         cached_home = read_cache_home_directory(cache_file)
         cached_tidy_enabled = read_cache_bool_option(cache_file, "BILLS_ENABLE_TIDY")
+        cached_core_shared = read_cache_bool_option(cache_file, "BILLS_CORE_BUILD_SHARED")
         if (
             cached_home is not None
             and cached_home.resolve() == PROJECT_DIR.resolve()
             and cache_matches_compiler(cache_file, compiler)
             and cached_tidy_enabled == tidy_enabled
+            and cached_core_shared == core_shared
         ):
             print("==> Using existing CMake configuration.")
             return
@@ -127,6 +175,7 @@ def ensure_cmake_configured(
     if compiler:
         cmake_args.append(f"-DBILL_COMPILER={compiler}")
     cmake_args.append(f"-DBILLS_ENABLE_TIDY={'ON' if tidy_enabled else 'OFF'}")
+    cmake_args.append(f"-DBILLS_CORE_BUILD_SHARED={'ON' if core_shared else 'OFF'}")
 
     run_command(cmake_args, cwd=PROJECT_DIR)
 
@@ -182,6 +231,7 @@ def run_build(
     build_type: str,
     extra_args: list[str] | None = None,
     tidy_enabled: bool = True,
+    core_shared: bool = True,
 ) -> list[str]:
     ensure_cmake_configured(
         build_dir=build_dir,
@@ -189,6 +239,7 @@ def run_build(
         build_type=build_type,
         compiler="clang",
         tidy_enabled=tidy_enabled,
+        core_shared=core_shared,
     )
 
     log_lines, success = run_build_capture(
@@ -196,6 +247,7 @@ def run_build(
     )
     if not success:
         sys.exit(1)
+    sync_runtime_artifacts(build_dir)
     return log_lines
 
 
@@ -208,6 +260,7 @@ def run_tidy(extra_args: list[str] | None = None) -> None:
         build_type="Debug",
         compiler="clang",
         tidy_enabled=True,
+        core_shared=True,
     )
 
     print("==> Running clang-tidy checks...")
@@ -261,6 +314,7 @@ def main() -> int:
             build_type="Release",
             extra_args=extra_args,
             tidy_enabled=False,
+            core_shared=True,
         )
     elif args.command == "build_fast":
         run_build(
@@ -268,6 +322,7 @@ def main() -> int:
             build_type="Debug",
             extra_args=extra_args,
             tidy_enabled=False,
+            core_shared=True,
         )
     elif args.command == "tidy":
         run_tidy(extra_args=extra_args)

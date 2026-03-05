@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build products/bills_cli and then run CLI tests from tests/."""
+"""Build apps/bills_cli and then run CLI tests from tests/."""
 
 from __future__ import annotations
 
@@ -20,8 +20,8 @@ from pathlib import Path
 FORMAT_CONFIG = {
     "md": {
         "cmake_option": "ENABLE_FMT_MD",
-        "targets": ["md_month_formatter", "md_year_formatter"],
-        "dlls": ["md_month_formatter.dll", "md_year_formatter.dll"],
+        "targets": [],
+        "dlls": [],
     },
     "rst": {
         "cmake_option": "ENABLE_FMT_RST",
@@ -44,7 +44,10 @@ TEST_SUMMARY_FILENAME = "test_summary.json"
 PYTHON_TEST_LOG_FILENAME = "test_python_output.log"
 DEFAULT_OUTPUT_PROJECT = "bills_tracer"
 DEFAULT_OUTPUT_GROUP = "artifact"
-DEFAULT_BUILD_ROOT = "products/bills_cli/build_cli_test"
+DEFAULT_BUILD_ROOT = "apps/bills_cli/build_cli_test"
+ARTIFACT_WORKSPACE_RELATIVE = Path(
+    "test/output/artifact_bills_tracer/workspace"
+)
 DEFAULT_BUILD_DIR_MODE = "isolated"
 DEFAULT_MAX_RUNS = 20
 RUNS_DIR_NAME = "runs"
@@ -54,6 +57,7 @@ ORPHAN_LOCK_RECLAIM_SECONDS = 120
 
 CLEANUP_FILES = ["bills.sqlite3"]
 CLEANUP_DIRS = ["build", "plugins", "config", "output"]
+RUNTIME_SIDECAR_EXTS = {".dll", ".exe", ".manifest", ".pdb"}
 
 
 def run_command(command: list[str], cwd: Path | None = None,
@@ -343,6 +347,33 @@ def replace_path(src: Path, dst: Path) -> None:
         shutil.copy2(src, dst)
 
 
+def sync_runtime_workspace(build_bin_dir: Path, workspace_dir: Path) -> None:
+    if not build_bin_dir.exists():
+        raise FileNotFoundError(
+            f"Build output directory not found: {build_bin_dir}"
+        )
+
+    workspace_dir.mkdir(parents=True, exist_ok=True)
+    for stale in workspace_dir.iterdir():
+        if stale.is_file() and stale.suffix.lower() in RUNTIME_SIDECAR_EXTS:
+            stale.unlink()
+
+    copied_files: list[str] = []
+    for entry in sorted(build_bin_dir.iterdir(), key=lambda p: p.name.lower()):
+        if not entry.is_file():
+            continue
+        if entry.suffix.lower() not in RUNTIME_SIDECAR_EXTS:
+            continue
+        shutil.copy2(entry, workspace_dir / entry.name)
+        copied_files.append(entry.name)
+
+    replace_path(build_bin_dir / "config", workspace_dir / "config")
+    print(
+        "==> Synced runtime artifacts to "
+        f"{workspace_dir} ({len(copied_files)} files + config)"
+    )
+
+
 def sync_latest_project_outputs(project_output_root: Path, run_output_dir: Path) -> None:
     lock_dir = project_output_root / LATEST_SYNC_LOCK_DIR_NAME
     with directory_lock(lock_dir):
@@ -515,6 +546,7 @@ def build_cli(source_dir: Path, build_dir: Path, generator: str,
             generator,
             f"-DCMAKE_BUILD_TYPE={build_type}",
             "-DBILL_COMPILER=clang",
+            "-DBILLS_CORE_BUILD_SHARED=ON",
             *cmake_defines,
         ]
         run_command(configure_cmd)
@@ -569,7 +601,7 @@ def main() -> int:
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parents[2]
-    source_dir = repo_root / "products" / "bills_cli"
+    source_dir = repo_root / "apps" / "bills_cli"
     export_formats = parse_formats(args.formats)
     output_project_name = sanitize_segment(args.output_project)
     explicit_build_dir = args.build_dir.strip()
@@ -584,6 +616,7 @@ def main() -> int:
         generator=args.generator,
     )
     build_bin_dir = build_dir / "bin"
+    artifact_workspace_dir = (repo_root / ARTIFACT_WORKSPACE_RELATIVE).resolve()
     bills_dir = repo_root / args.bills_dir
     test_root = repo_root / "tests"
     project_output_root = (
@@ -625,10 +658,14 @@ def main() -> int:
             plugin_targets=plugin_targets,
             cmake_defines=format_defines,
         )
-        write_runtime_export_formats_config(build_bin_dir, export_formats)
+        sync_runtime_workspace(build_bin_dir, artifact_workspace_dir)
+        write_runtime_export_formats_config(artifact_workspace_dir, export_formats)
     except subprocess.CalledProcessError as exc:
         print(f"Build failed with exit code {exc.returncode}.")
         return exc.returncode
+    except FileNotFoundError as exc:
+        print(f"Build failed: {exc}")
+        return 2
 
     temp_dir = repo_root / "temp"
     temp_dir.mkdir(parents=True, exist_ok=True)
@@ -652,6 +689,7 @@ def main() -> int:
                 "export_pipeline": args.export_pipeline,
                 "formats": export_formats,
                 "build_dir": build_dir.as_posix(),
+                "artifact_workspace_dir": artifact_workspace_dir.as_posix(),
                 "runtime_base_dir": runtime_base_dir.as_posix(),
                 "run_output_dir": run_output_dir.as_posix(),
                 "created_at": datetime.now().isoformat(timespec="seconds"),
@@ -659,7 +697,7 @@ def main() -> int:
         )
         write_temp_test_config(
             config_path=temp_config_path,
-            build_bin_dir=build_bin_dir,
+            build_bin_dir=artifact_workspace_dir,
             bills_dir=bills_dir,
             import_dir=import_dir,
             runtime_base_dir=runtime_base_dir,
@@ -721,6 +759,7 @@ def main() -> int:
                     "export_pipeline": args.export_pipeline,
                     "formats": export_formats,
                     "build_dir": build_dir.as_posix(),
+                    "artifact_workspace_dir": artifact_workspace_dir.as_posix(),
                     "runtime_base_dir": runtime_base_dir.as_posix(),
                     "run_output_dir": run_output_dir.as_posix(),
                     "completed_at": datetime.now().isoformat(timespec="seconds"),
@@ -745,6 +784,7 @@ def main() -> int:
                 "export_pipeline": args.export_pipeline,
                 "formats": export_formats,
                 "build_dir": build_dir.as_posix(),
+                "artifact_workspace_dir": artifact_workspace_dir.as_posix(),
                 "runtime_base_dir": runtime_base_dir.as_posix(),
                 "run_output_dir": run_output_dir.as_posix(),
                 "completed_at": datetime.now().isoformat(timespec="seconds"),
@@ -767,6 +807,7 @@ def main() -> int:
                 "export_pipeline": args.export_pipeline,
                 "formats": export_formats,
                 "build_dir": build_dir.as_posix(),
+                "artifact_workspace_dir": artifact_workspace_dir.as_posix(),
                 "runtime_base_dir": runtime_base_dir.as_posix(),
                 "run_output_dir": run_output_dir.as_posix(),
                 "completed_at": datetime.now().isoformat(timespec="seconds"),
