@@ -38,6 +38,12 @@
   - `tests/output/runtime/`
 - 若存在 `test_summary.json`、`pipeline_summary.json`、日志文件，优先基于这些结果判断是否通过
 
+## Temporary Files
+
+- 所有临时文件统一放到根目录 `temp/`
+- 不要把临时日志、临时脚本、临时配置写到其他源码目录、文档目录或测试目录
+- 若命令或脚本需要生成临时文件，优先显式指定到 `temp/`
+
 ## Default Workflow
 
 - 先改代码
