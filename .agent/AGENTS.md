@@ -1,48 +1,46 @@
-# Verify 约束
+# Project Agent Rules
 
-## 开发环境
+本文件定义 agent 在本项目中的默认执行方式。
 
-- 操作系统：Windows
-- Shell：`pwsh`（PowerShell `7.5.4`）
+## Terminal
 
-每次修改代码后，必须执行编译和测试，统一通过 `tools/verify/verify.py` 触发，不允许跳过。
+- 终端统一使用 `pwsh`（PowerShell 7.5.4）
+- 不要假设默认 shell 是 `cmd`、旧版 `powershell` 或 `bash`
+- 需要执行命令时，优先使用适合 `pwsh` 的写法
 
-仅当本次变更为纯文档修改时可例外（不涉及任何代码、构建脚本、配置脚本改动）：
-- 文档范围：`docs/**`、`*.md`
-- 纯文档改动可跳过编译与测试
+## Build And Test Entry
 
-## 统一入口
+- 本项目的 Python 构建、编译、测试入口统一在根目录 `tests/` 相关链路与 `tools/verify/verify.py`
+- agent 不需要手工拼接零散编译命令，优先通过 Python 入口触发构建与测试
+- 常用入口：
+  - `python tools/verify/verify.py bills-build -- build_fast`
+  - `python tools/verify/verify.py bills`
+  - `python tools/verify/verify.py log-cli-test`
+  - 其他测试若已接入 `tools/verify/verify.py`，优先走该入口
 
-- 默认（推荐）：`python tools/verify/verify.py`
-  - 等价于 `bills` 工作流（编译 + CLI 测试）。
-- 并行冒烟（推荐用于流水线一致性）：`python tools/verify/verify.py bills-parallel-smoke`
-  - 并发执行两套：
-    - `model-first`
-    - `json-first`
-  - 自动校验：
-    - 两套 `test_summary.json` 都为成功
-    - 两套导出产物做项目间快照对比（默认 `md`）
-- 一致性门禁（Phase 5.3）：`python tools/verify/verify.py report-consistency-gate`
-  - 默认执行：
-    - `formats=md,tex,typ`
-    - `compare-scope=all`
-    - 性能门禁：`model-first` 相比 `json-first` 回归不超过 `+10%`
-- 仅编译 `bills_master`：`python tools/verify/verify.py bills-build -- build_fast`
-- 仅编译 `log_generator`：`python tools/verify/verify.py log-build -- build --mode Debug`
+## Execution Rules
 
-并行冒烟可选参数：
+- 修改代码后，优先运行对应的 Python 验证入口
+- agent 的职责是：
+  - 调用 Python 入口发起构建/测试
+  - 读取终端输出
+  - 读取测试结果文件或 summary
+  - 基于结果继续修复或向用户汇报
+- agent 不需要替用户手工操作测试工作区，只需要关注命令输出与最终测试结果
 
-- `--model-project <name>`：指定 model-first 输出项目名。
-- `--json-project <name>`：指定 json-first 输出项目名。
-- `--formats <list>`：导出格式，默认 `md`。
-- `--compare-scope all|md|json|tex|typ`：对比范围，默认 `md`。
-- `--build-dir-mode isolated|shared`：构建目录策略，默认 `isolated`。
-- `--enforce-performance-gate`：启用性能回归门禁。
-- `--max-performance-regression <ratio>`：最大允许回归比例，默认 `0.10`（+10%）。
-- 其他参数会透传到两套 `build_then_cli_test.py`（如 `--single-year` 等）。
+## Result Reading
 
-## 执行规则
+- 优先查看终端输出中的失败信息、错误栈、summary
+- 若测试流程生成结果文件，优先读取：
+  - `tests/output/`
+  - `tests/output/artifact/`
+  - `tests/output/logic/`
+  - `tests/output/runtime/`
+- 若存在 `test_summary.json`、`pipeline_summary.json`、日志文件，优先基于这些结果判断是否通过
 
-- 任何代码修改后，至少执行一次对应的 `verify` 命令并确保返回码为 `0`。
-- 若 `verify` 失败，先修复问题，再重复执行，直到通过。
-- 若仅修改文档（`docs/**`、`*.md`），可不执行 `verify`。
+## Default Workflow
+
+- 先改代码
+- 再运行对应 Python 入口
+- 再读取输出与 summary
+- 最后只向用户汇报有效结果、失败原因和下一步动作
