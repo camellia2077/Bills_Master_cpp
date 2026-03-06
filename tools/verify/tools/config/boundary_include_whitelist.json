@@ -359,16 +359,16 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/config/json_bill_config_loader.cpp": [
+    "libs/bills_io/src/bills_io/adapters/config/toml_bill_config_loader.cpp": [
       {
-        "header": "bills_io/adapters/config/json_bill_config_loader.hpp",
+        "header": "bills_io/adapters/config/toml_bill_config_loader.hpp",
         "owner": "phase4-boundary-whitelist",
         "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
         "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/config/json_bill_config_loader.hpp": [
+    "libs/bills_io/src/bills_io/adapters/config/toml_bill_config_loader.hpp": [
       {
         "header": "billing/conversion/validator/config/bills_config.hpp",
         "owner": "phase4-boundary-whitelist",
@@ -384,23 +384,23 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/config/json_config_provider.cpp": [
+    "libs/bills_io/src/bills_io/adapters/config/toml_config_provider.cpp": [
       {
-        "header": "bills_io/adapters/config/json_bill_config_loader.hpp",
+        "header": "bills_io/adapters/config/toml_bill_config_loader.hpp",
         "owner": "phase4-boundary-whitelist",
         "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
         "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
         "tier": "long-term"
       },
       {
-        "header": "bills_io/adapters/config/json_config_provider.hpp",
+        "header": "bills_io/adapters/config/toml_config_provider.hpp",
         "owner": "phase4-boundary-whitelist",
         "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
         "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
         "tier": "long-term"
       },
       {
-        "header": "bills_io/adapters/config/json_modifier_config_loader.hpp",
+        "header": "bills_io/adapters/config/toml_modifier_config_loader.hpp",
         "owner": "phase4-boundary-whitelist",
         "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
         "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
@@ -428,7 +428,7 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/config/json_config_provider.hpp": [
+    "libs/bills_io/src/bills_io/adapters/config/toml_config_provider.hpp": [
       {
         "header": "ports/config_provider.hpp",
         "owner": "phase4-boundary-whitelist",
@@ -437,16 +437,16 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/config/json_modifier_config_loader.cpp": [
+    "libs/bills_io/src/bills_io/adapters/config/toml_modifier_config_loader.cpp": [
       {
-        "header": "bills_io/adapters/config/json_modifier_config_loader.hpp",
+        "header": "bills_io/adapters/config/toml_modifier_config_loader.hpp",
         "owner": "phase4-boundary-whitelist",
         "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
         "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/config/json_modifier_config_loader.hpp": [
+    "libs/bills_io/src/bills_io/adapters/config/toml_modifier_config_loader.hpp": [
       {
         "header": "billing/conversion/modifier/_shared_structures/bills_data_structures.hpp",
         "owner": "phase4-boundary-whitelist",
@@ -643,53 +643,81 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/plugins/common/dynamic_month_report_formatter_provider.cpp": [
+    "libs/bills_io/src/bills_io/adapters/reports/builtin_month_report_formatter_provider.cpp": [
       {
-        "header": "bills_io/adapters/plugins/common/dynamic_month_report_formatter_provider.hpp",
+        "header": "bills_io/adapters/reports/builtin_month_report_formatter_provider.hpp",
         "owner": "phase4-boundary-whitelist",
-        "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
-        "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
+        "reason": "IO adapter keep quoted include at boundary layer.",
+        "window": "Long-term keep for adapter boundary include policy.",
+        "tier": "long-term"
+      },
+      {
+        "header": "reports/formatters/month/md/month_md_format.hpp",
+        "owner": "phase4-boundary-whitelist",
+        "reason": "IO adapter composes built-in formatter implementations for current build.",
+        "window": "Long-term keep for adapter boundary include policy.",
+        "tier": "long-term"
+      },
+      {
+        "header": "reports/formatters/month/rst/month_rst_format.hpp",
+        "owner": "phase4-boundary-whitelist",
+        "reason": "IO adapter composes built-in formatter implementations for current build.",
+        "window": "Long-term keep for adapter boundary include policy.",
+        "tier": "long-term"
+      },
+      {
+        "header": "reports/formatters/month/tex/month_tex_format.hpp",
+        "owner": "phase4-boundary-whitelist",
+        "reason": "IO adapter composes built-in formatter implementations for current build.",
+        "window": "Long-term keep for adapter boundary include policy.",
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/plugins/common/dynamic_month_report_formatter_provider.hpp": [
-      {
-        "header": "bills_io/adapters/plugins/common/plugin_loader.hpp",
-        "owner": "phase4-boundary-whitelist",
-        "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
-        "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
-        "tier": "long-term"
-      },
+    "libs/bills_io/src/bills_io/adapters/reports/builtin_month_report_formatter_provider.hpp": [
       {
         "header": "ports/month_report_formatter_provider.hpp",
         "owner": "phase4-boundary-whitelist",
-        "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
-        "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
+        "reason": "IO adapter keep quoted include at boundary layer.",
+        "window": "Long-term keep for adapter boundary include policy.",
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/plugins/common/dynamic_yearly_report_formatter_provider.cpp": [
+    "libs/bills_io/src/bills_io/adapters/reports/builtin_yearly_report_formatter_provider.cpp": [
       {
-        "header": "bills_io/adapters/plugins/common/dynamic_yearly_report_formatter_provider.hpp",
+        "header": "bills_io/adapters/reports/builtin_yearly_report_formatter_provider.hpp",
         "owner": "phase4-boundary-whitelist",
-        "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
-        "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
-        "tier": "long-term"
-      }
-    ],
-    "libs/bills_io/src/bills_io/adapters/plugins/common/dynamic_yearly_report_formatter_provider.hpp": [
-      {
-        "header": "bills_io/adapters/plugins/common/plugin_loader.hpp",
-        "owner": "phase4-boundary-whitelist",
-        "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
-        "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
+        "reason": "IO adapter keep quoted include at boundary layer.",
+        "window": "Long-term keep for adapter boundary include policy.",
         "tier": "long-term"
       },
       {
+        "header": "reports/formatters/year/md/year_md_format.hpp",
+        "owner": "phase4-boundary-whitelist",
+        "reason": "IO adapter composes built-in formatter implementations for current build.",
+        "window": "Long-term keep for adapter boundary include policy.",
+        "tier": "long-term"
+      },
+      {
+        "header": "reports/formatters/year/rst/year_rst_format.hpp",
+        "owner": "phase4-boundary-whitelist",
+        "reason": "IO adapter composes built-in formatter implementations for current build.",
+        "window": "Long-term keep for adapter boundary include policy.",
+        "tier": "long-term"
+      },
+      {
+        "header": "reports/formatters/year/tex/year_tex_format.hpp",
+        "owner": "phase4-boundary-whitelist",
+        "reason": "IO adapter composes built-in formatter implementations for current build.",
+        "window": "Long-term keep for adapter boundary include policy.",
+        "tier": "long-term"
+      }
+    ],
+    "libs/bills_io/src/bills_io/adapters/reports/builtin_yearly_report_formatter_provider.hpp": [
+      {
         "header": "ports/yearly_report_formatter_provider.hpp",
         "owner": "phase4-boundary-whitelist",
-        "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
-        "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
+        "reason": "IO adapter keep quoted include at boundary layer.",
+        "window": "Long-term keep for adapter boundary include policy.",
         "tier": "long-term"
       }
     ]

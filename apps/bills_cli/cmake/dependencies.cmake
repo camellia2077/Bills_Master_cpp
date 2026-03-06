@@ -1,5 +1,6 @@
 # --- 查找外部依赖 ---
 find_package(nlohmann_json REQUIRED)
+find_package(tomlplusplus CONFIG REQUIRED)
 
 include(FetchContent)
 
@@ -36,6 +37,7 @@ endif()
 # 定义通用的链接库
 set(COMMON_LINK_LIBRARIES
     nlohmann_json::nlohmann_json
+    tomlplusplus::tomlplusplus
     stdc++exp
 )
 

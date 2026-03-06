@@ -22,8 +22,8 @@ namespace fs = std::filesystem;
 
 namespace constants {
 inline constexpr const char* kAbiVersion = "1.0.0";
-inline constexpr const char* kValidatorConfigName = "Validator_Config.json";
-inline constexpr const char* kModifierConfigName = "Modifier_Config.json";
+inline constexpr const char* kValidatorConfigName = "validator_config.toml";
+inline constexpr const char* kModifierConfigName = "modifier_config.toml";
 inline constexpr const char* kDefaultConvertOutputDir = "output/txt2josn";
 inline constexpr int kResponseSchemaVersion = 2;
 inline constexpr int kCapabilitiesSchemaVersion = 1;

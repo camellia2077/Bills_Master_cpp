@@ -36,9 +36,6 @@ class AppController {
   auto normalize_format(std::string format_name) const -> std::string;
   auto normalize_export_pipeline(std::string pipeline_name) const
       -> std::string;
-  auto infer_export_requirements(const std::string& type,
-                                 const std::vector<std::string>& values) const
-      -> std::pair<bool, bool>;
   auto is_export_format_available(const std::string& type,
                                   const std::vector<std::string>& values,
                                   const std::string& format_str,
@@ -48,10 +45,7 @@ class AppController {
   std::string m_db_path;
   std::string m_config_path;
   std::string m_modified_output_dir;
-  std::vector<std::string> m_plugin_files;
   std::set<std::string> m_enabled_formats;
-  std::set<std::string> m_month_formats_available;
-  std::set<std::string> m_year_formats_available;
   std::string m_export_base_dir;
   std::map<std::string, std::string> m_format_folder_names;
   std::unique_ptr<WorkflowController> m_workflow_controller;

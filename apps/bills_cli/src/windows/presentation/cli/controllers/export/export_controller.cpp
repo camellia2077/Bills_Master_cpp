@@ -10,11 +10,9 @@
 #include "common/common_utils.hpp"  // 确保包含颜色定义
 
 ExportController::ExportController(
-    std::string db_path, const std::vector<std::string>& plugin_files,
-    std::string export_base_dir,
+    std::string db_path, std::string export_base_dir,
     const std::map<std::string, std::string>& format_folder_names)
     : m_db_path(std::move(db_path)),
-      m_plugin_files(plugin_files),
       m_export_base_dir(std::move(export_base_dir)),
       m_format_folder_names(format_folder_names) {}
 
@@ -30,10 +28,8 @@ auto ExportController::handle_export(const std::string& type,
     auto db_session = bills::io::CreateReportDbSession(m_db_path);
     auto report_data_gateway =
         bills::io::CreateReportDataGateway(db_session->GetConnectionHandle());
-    auto month_formatter_provider =
-        bills::io::CreateMonthReportFormatterProvider(m_plugin_files);
-    auto year_formatter_provider =
-        bills::io::CreateYearlyReportFormatterProvider(m_plugin_files);
+    auto month_formatter_provider = bills::io::CreateMonthReportFormatterProvider();
+    auto year_formatter_provider = bills::io::CreateYearlyReportFormatterProvider();
     ReportExportService report_export_service(
         std::move(report_data_gateway), std::move(month_formatter_provider),
         std::move(year_formatter_provider), m_export_base_dir,

@@ -29,7 +29,30 @@ set(SERIALIZATION_SOURCES
 set(REPORTS_SOURCES
     "${REPORTS_DIR}/standard_json/standard_report_assembler.cpp"
     "${REPORTS_DIR}/standard_json/standard_report_json_serializer.cpp"
+    "${REPORTS_DIR}/formatters/month/base_month_report_formatter.cpp"
+    "${REPORTS_DIR}/formatters/year/base_yearly_report_formatter.cpp"
 )
+
+if(ENABLE_FMT_MD)
+    list(APPEND REPORTS_SOURCES
+        "${REPORTS_DIR}/formatters/month/md/month_md_format.cpp"
+        "${REPORTS_DIR}/formatters/year/md/year_md_format.cpp"
+    )
+endif()
+
+if(ENABLE_FMT_RST)
+    list(APPEND REPORTS_SOURCES
+        "${REPORTS_DIR}/formatters/month/rst/month_rst_format.cpp"
+        "${REPORTS_DIR}/formatters/year/rst/year_rst_format.cpp"
+    )
+endif()
+
+if(ENABLE_FMT_TEX)
+    list(APPEND REPORTS_SOURCES
+        "${REPORTS_DIR}/formatters/month/tex/month_tex_format.cpp"
+        "${REPORTS_DIR}/formatters/year/tex/year_tex_format.cpp"
+    )
+endif()
 
 set(ABI_SOURCES
     "${ABI_DIR}/bills_core_abi.cpp"

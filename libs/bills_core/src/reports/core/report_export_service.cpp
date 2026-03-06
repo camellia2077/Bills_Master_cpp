@@ -43,8 +43,6 @@ using bills::core::modules::reports::YearlyReportData;
 namespace {
 constexpr std::size_t kYearLength = 4U;
 const std::regex kIsoMonthRegex(R"(^(\d{4})-(0[1-9]|1[0-2])$)");
-constexpr const char* kMonthFormatterSuffix = "_month_formatter";
-constexpr const char* kYearFormatterSuffix = "_year_formatter";
 
 enum class StandardRenderMode {
   kNone,
@@ -198,11 +196,9 @@ auto ReportExportService::export_yearly_report(const std::string& year_str,
     } else {
       auto formatter = m_year_formatter_provider->CreateFormatter(format_name);
       if (!formatter) {
-        std::string expected_plugin_name = format_name + kYearFormatterSuffix;
         throw std::runtime_error(
             "Yearly formatter for '" + format_name +
-            "' is not available. Please ensure that the plugin '" +
-            expected_plugin_name + "' is available in the plugins directory.");
+            "' is not available in the current build.");
       }
       report = formatter->format_report(yearly_data);
     }
@@ -252,11 +248,9 @@ auto ReportExportService::export_monthly_report(const std::string& month_str,
     } else {
       auto formatter = m_month_formatter_provider->CreateFormatter(format_name);
       if (!formatter) {
-        std::string expected_plugin_name = format_name + kMonthFormatterSuffix;
         throw std::runtime_error(
             "Monthly formatter for '" + format_name +
-            "' is not available. Please ensure that the plugin '" +
-            expected_plugin_name + "' is available in the plugins directory.");
+            "' is not available in the current build.");
       }
       report = formatter->format_report(monthly_data);
     }

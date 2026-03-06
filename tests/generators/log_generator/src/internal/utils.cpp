@@ -8,7 +8,7 @@ void show_version(const std::string& version, const std::string& last_update) {
 
 void show_help(const char* app_name) {
     std::cerr << "Usage: " << app_name << " [options]\n\n"
-              << "A pseudo-random bill file generator based on a JSON configuration.\n\n"
+              << "A pseudo-random bill file generator for fixture data generation.\n\n"
               << "Options:\n"
               << "  -s, --single <year>    Generate bills for a single specified year.\n"
               << "  -d, --double <start_year> <end_year>\n"

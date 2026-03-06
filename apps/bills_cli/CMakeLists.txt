@@ -27,10 +27,27 @@ option(BILLS_ENABLE_TIDY
     OFF
 )
 
-# Export format switches (Phase 3 / Step 3.1): default to MD-only build.
-option(ENABLE_FMT_MD "Enable Markdown formatter plugins" ON)
-option(ENABLE_FMT_RST "Enable reStructuredText formatter plugins" OFF)
-option(ENABLE_FMT_TEX "Enable LaTeX formatter plugins" OFF)
+# Export format switches: built-in report formatter selection.
+option(ENABLE_FMT_MD "Enable built-in Markdown report formatters" ON)
+option(ENABLE_FMT_RST "Enable built-in reStructuredText report formatters" OFF)
+option(ENABLE_FMT_TEX "Enable built-in LaTeX report formatters" OFF)
+
+set(BILLS_FORMAT_COMPILE_DEFINITIONS)
+if(ENABLE_FMT_MD)
+    list(APPEND BILLS_FORMAT_COMPILE_DEFINITIONS BILLS_FMT_MD_ENABLED=1)
+else()
+    list(APPEND BILLS_FORMAT_COMPILE_DEFINITIONS BILLS_FMT_MD_ENABLED=0)
+endif()
+if(ENABLE_FMT_RST)
+    list(APPEND BILLS_FORMAT_COMPILE_DEFINITIONS BILLS_FMT_RST_ENABLED=1)
+else()
+    list(APPEND BILLS_FORMAT_COMPILE_DEFINITIONS BILLS_FMT_RST_ENABLED=0)
+endif()
+if(ENABLE_FMT_TEX)
+    list(APPEND BILLS_FORMAT_COMPILE_DEFINITIONS BILLS_FMT_TEX_ENABLED=1)
+else()
+    list(APPEND BILLS_FORMAT_COMPILE_DEFINITIONS BILLS_FMT_TEX_ENABLED=0)
+endif()
 
 # 将模块路径添加到CMake的搜索路径中
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -57,7 +74,7 @@ include(cmake/source_files.cmake)
 include(cmake/targets.cmake)
 
 # 定义插件构建逻辑并加载所有插件
-include(cmake/plugins.cmake)
+include(cmake/report_formatters.cmake)
 
 # --- 代码格式化工具 ---
 include(AddFormatTarget)

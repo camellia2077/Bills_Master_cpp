@@ -1,8 +1,0 @@
-# reports/plugins/month_formatters/month_tex/CMakeLists.txt
-create_formatter_plugin("tex_month_formatter"
-    "${CMAKE_CURRENT_SOURCE_DIR}/month_tex_format.cpp"
-    # Add the new base class implementation
-    "${CMAKE_SOURCE_DIR}/src/reports/plugins/month_formatters/base_month_report_formatter.cpp"
-    # ReportSorter is now used by the base class, so it still needs to be linked
-    "${CMAKE_SOURCE_DIR}/../../libs/bills_core/src/reports/monthly_report/report_sorter.cpp"
-)

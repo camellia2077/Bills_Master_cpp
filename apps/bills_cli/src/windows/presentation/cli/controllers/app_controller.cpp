@@ -14,7 +14,7 @@
 #include "common/cli_version.hpp"
 #include "common/common_utils.hpp"
 #include "export/export_controller.hpp"
-#include "nlohmann/json.hpp"
+#include <toml++/toml.hpp>
 #include "workflow/workflow_controller.hpp"
 #if BILLS_CORE_MODULES_ENABLED
 import bill.core.common.version;
@@ -26,22 +26,31 @@ import bill.core.common.version;
 #endif
 
 namespace fs = std::filesystem;
-using Json = nlohmann::json;
-
 namespace {
-constexpr const char* kExportFormatConfigName = "Export_Formats.json";
-constexpr const char* kMonthPluginSuffix = "_month_formatter.dll";
-constexpr const char* kYearPluginSuffix = "_year_formatter.dll";
+constexpr const char* kExportFormatConfigName = "export_formats.toml";
 constexpr const char* kLegacyPipelineDeprecatedSince = "2026-03-05";
 constexpr const char* kLegacyPipelineRemovalTarget = "2026-06-30";
 
-auto is_embedded_format(std::string format_name) -> bool {
+auto is_builtin_export_format(std::string format_name) -> bool {
   std::ranges::transform(format_name, format_name.begin(),
                          [](unsigned char ch) -> char {
                            return static_cast<char>(std::tolower(ch));
                          });
-  return format_name == "md" || format_name == "markdown" ||
-         format_name == "json";
+  if (format_name == "json" || format_name == "md" ||
+      format_name == "markdown") {
+    return true;
+  }
+#if BILLS_FMT_RST_ENABLED
+  if (format_name == "rst") {
+    return true;
+  }
+#endif
+#if BILLS_FMT_TEX_ENABLED
+  if (format_name == "tex" || format_name == "latex") {
+    return true;
+  }
+#endif
+  return false;
 }
 
 auto GetExecutableDirectory() -> fs::path {
@@ -86,7 +95,6 @@ AppController::AppController(std::string db_path,
               << make_output_error.message() << std::endl;
   }
 
-  fs::path plugin_dir = GetExecutableDirectory() / "plugins";
   fs::path exe_dir = GetExecutableDirectory();
 
   fs::path config_path_resolved = config_path;
@@ -95,33 +103,6 @@ AppController::AppController(std::string db_path,
   }
   m_config_path = config_path_resolved.string();
   m_enabled_formats = load_enabled_formats(m_config_path);
-  for (const auto& format : m_enabled_formats) {
-    if (is_embedded_format(format)) {
-      m_month_formats_available.insert(format);
-      m_year_formats_available.insert(format);
-      continue;
-    }
-
-    const fs::path month_plugin = plugin_dir / (format + kMonthPluginSuffix);
-    if (fs::is_regular_file(month_plugin)) {
-      m_plugin_files.push_back(month_plugin.string());
-      m_month_formats_available.insert(format);
-    } else {
-      std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR
-                << "Month formatter plugin not found for format '" << format
-                << "': " << month_plugin.string() << std::endl;
-    }
-
-    const fs::path year_plugin = plugin_dir / (format + kYearPluginSuffix);
-    if (fs::is_regular_file(year_plugin)) {
-      m_plugin_files.push_back(year_plugin.string());
-      m_year_formats_available.insert(format);
-    } else {
-      std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR
-                << "Year formatter plugin not found for format '" << format
-                << "': " << year_plugin.string() << std::endl;
-    }
-  }
 
   m_export_base_dir = "output/exported_files";
   m_format_folder_names = {{"md", "Markdown_bills"},
@@ -131,7 +112,7 @@ AppController::AppController(std::string db_path,
   m_workflow_controller =
       std::make_unique<WorkflowController>(m_config_path, m_modified_output_dir);
   m_export_controller = std::make_unique<ExportController>(
-      m_db_path, m_plugin_files, m_export_base_dir, m_format_folder_names);
+      m_db_path, m_export_base_dir, m_format_folder_names);
 }
 
 AppController::~AppController() = default;
@@ -150,26 +131,21 @@ auto AppController::load_enabled_formats(const std::string& config_path)
       return enabled_formats;
     }
 
-    std::ifstream input(config_file);
-    if (!input) {
-      throw std::runtime_error("Unable to open file.");
-    }
+    const toml::table config_toml = toml::parse_file(config_file.string());
+    const toml::array* format_list =
+        config_toml["enabled_formats"].as_array();
 
-    Json config_json;
-    input >> config_json;
-    const Json format_list =
-        config_json.value("enabled_formats", Json::array());
-
-    if (!format_list.is_array()) {
+    if (format_list == nullptr) {
       throw std::runtime_error(
-          "'enabled_formats' must be a JSON array in " + config_file.string());
+          "'enabled_formats' must be a TOML array in " + config_file.string());
     }
 
-    for (const auto& item : format_list) {
-      if (!item.is_string()) {
+    for (const auto& item : *format_list) {
+      const auto value = item.value<std::string>();
+      if (!value.has_value()) {
         continue;
       }
-      const std::string normalized = normalize_format(item.get<std::string>());
+      const std::string normalized = normalize_format(*value);
       if (!normalized.empty()) {
         enabled_formats.insert(normalized);
       }
@@ -220,35 +196,12 @@ auto AppController::normalize_export_pipeline(std::string pipeline_name) const
   return pipeline_name;
 }
 
-auto AppController::infer_export_requirements(
-    const std::string& type, const std::vector<std::string>& values) const
-    -> std::pair<bool, bool> {
-  const std::string type_normalized = normalize_format(type);
-  bool need_month = false;
-  bool need_year = false;
-
-  if (type_normalized == "all") {
-    need_month = true;
-    need_year = true;
-  } else if (type_normalized == "all_months" || type_normalized == "month") {
-    need_month = true;
-  } else if (type_normalized == "all_years" || type_normalized == "year") {
-    need_year = true;
-  } else if (type_normalized == "date") {
-    if (values.size() == 1U && values[0].size() == 4U) {
-      need_year = true;
-    } else {
-      need_month = true;
-    }
-  }
-
-  return {need_month, need_year};
-}
-
 auto AppController::is_export_format_available(
     const std::string& type, const std::vector<std::string>& values,
     const std::string& format_str,
     const std::string& export_pipeline) const -> bool {
+  (void)type;
+  (void)values;
   (void)export_pipeline;
   const std::string format = normalize_format(format_str);
   if (m_enabled_formats.count(format) == 0U) {
@@ -260,27 +213,10 @@ auto AppController::is_export_format_available(
               << std::endl;
     return false;
   }
-
-  const auto [need_month, need_year] = infer_export_requirements(type, values);
-  const bool skip_plugin_check_for_markdown = is_embedded_format(format);
-  const bool skip_plugin_check_for_json = format == "json";
-  const bool skip_plugin_check_for_latex = format == "tex";
-  const bool skip_plugin_check =
-      skip_plugin_check_for_markdown || skip_plugin_check_for_json ||
-      skip_plugin_check_for_latex;
-  if (!skip_plugin_check &&
-      need_month && m_month_formats_available.count(format) == 0U) {
+  if (!is_builtin_export_format(format)) {
     std::cerr << RED_COLOR << "Error: " << RESET_COLOR
-              << "Month formatter plugin for format '" << format
-              << "' is not available in runtime plugins directory."
-              << std::endl;
-    return false;
-  }
-  if (!skip_plugin_check &&
-      need_year && m_year_formats_available.count(format) == 0U) {
-    std::cerr << RED_COLOR << "Error: " << RESET_COLOR
-              << "Year formatter plugin for format '" << format
-              << "' is not available in runtime plugins directory."
+              << "Format '" << format
+              << "' is enabled in config but not available in this build."
               << std::endl;
     return false;
   }

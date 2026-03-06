@@ -4,7 +4,7 @@
 
 #include <string>
 
-#include "common/result.hpp"
+#include "common/Result.hpp"
 #include "billing/conversion/modifier/_shared_structures/bills_data_structures.hpp"
 #include "billing/conversion/validator/config/bills_config.hpp"
 
@@ -21,5 +21,4 @@ class ConfigProvider {
 };
 
 #endif  // CONFIG_PROVIDER_HPP
-
 

@@ -1,0 +1,54 @@
+[[categories]]
+parent_item = "meal"
+description = "Meal expenses"
+sub_items = ["meal_low", "meal_high", "meal_snacks", "meal_fruits", "meal_takeouts", "meal_drinks"]
+
+[[categories]]
+parent_item = "fitness"
+description = "Fitness expenses"
+sub_items = ["fitness_supplies", "fitness_equipments", "fitness_gym-membership", "fitness_diet"]
+
+[[categories]]
+parent_item = "web"
+description = "Web and online services"
+sub_items = ["web_games", "web_services", "web_donates", "web_sources"]
+
+[[categories]]
+parent_item = "purchase"
+description = "Shopping expenses"
+sub_items = ["purchase_toys", "purchase_glasses", "purchase_books", "purchase_shoes", "purchase_digitals", "purchase_home", "purchase_clothes"]
+
+[[categories]]
+parent_item = "daily"
+description = "Daily expenses"
+sub_items = ["daily_consumables", "daily_fees", "daily_others"]
+
+[[categories]]
+parent_item = "pet"
+description = "Pet expenses"
+sub_items = ["pet_fish", "pet_equipments", "pet_fodder", "pet_plants", "pet_tortoises", "pet_cats", "pet_medicines"]
+
+[[categories]]
+parent_item = "trip"
+description = "Travel expenses"
+sub_items = ["trip_bus", "trip_train", "trip_taxi"]
+
+[[categories]]
+parent_item = "dress"
+description = "Clothing and personal care"
+sub_items = ["dress_enamel", "dress_makeups", "dress_socks", "dress_shoes", "dress_sextoy", "dress_clothes"]
+
+[[categories]]
+parent_item = "other"
+description = "Other expenses"
+sub_items = ["other_travels", "other_gifts", "other_accidents", "other_entertainments"]
+
+[[categories]]
+parent_item = "income"
+description = "Income"
+sub_items = ["income_salary", "income_refunds", "imcone_gift-money"]
+
+[[categories]]
+parent_item = "hospital"
+description = "Medical expenses"
+sub_items = ["hospital_tooth", "hospital_check-up", "hospital_drugs"]

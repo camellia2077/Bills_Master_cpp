@@ -13,8 +13,7 @@
 class ExportController {
  public:
   explicit ExportController(
-      std::string db_path, const std::vector<std::string>& plugin_files,
-      std::string export_base_dir,
+      std::string db_path, std::string export_base_dir,
       const std::map<std::string, std::string>& format_folder_names);
 
   bool handle_export(const std::string& type,
@@ -24,7 +23,6 @@ class ExportController {
 
  private:
   std::string m_db_path;
-  std::vector<std::string> m_plugin_files;
   std::string m_export_base_dir;
   std::map<std::string, std::string> m_format_folder_names;
 };

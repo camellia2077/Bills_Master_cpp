@@ -2,8 +2,10 @@
 #  资源复制目标定义
 # ==============================================================================
 add_custom_target(copy_config ALL
+    COMMAND ${CMAKE_COMMAND} -E remove_directory
+    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/config"
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${SOURCE_ROOT}/config"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../config"
     "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/config"
     COMMENT "Copying config directory to output"
 )
@@ -20,7 +22,10 @@ target_include_directories(bills_core PRIVATE
     "${CORE_SOURCE_ROOT}"
     "${SOURCE_ROOT}"
 )
-target_compile_definitions(bills_core PRIVATE BILLS_CORE_ABI_BUILD)
+target_compile_definitions(bills_core PRIVATE
+    BILLS_CORE_ABI_BUILD
+    ${BILLS_FORMAT_COMPILE_DEFINITIONS}
+)
 target_link_libraries(bills_core PRIVATE
     ${COMMON_LINK_LIBRARIES}
     sqlite3_amalgamation
@@ -47,6 +52,7 @@ if(BILLS_CORE_BUILD_SHARED)
     target_compile_definitions(bills_core_runtime PRIVATE
         BILLS_CORE_ABI_BUILD
         BILLS_CORE_SHARED
+        ${BILLS_FORMAT_COMPILE_DEFINITIONS}
     )
     target_link_libraries(bills_core_runtime PRIVATE
         ${COMMON_LINK_LIBRARIES}
@@ -68,6 +74,9 @@ target_include_directories(bill_master_cli PRIVATE
     "${SOURCE_ROOT}"
     "${CORE_SOURCE_ROOT}"
     "${CLI_PRESENTATION_DIR}"
+)
+target_compile_definitions(bill_master_cli PRIVATE
+    ${BILLS_FORMAT_COMPILE_DEFINITIONS}
 )
 target_link_libraries(bill_master_cli PRIVATE
     ${COMMON_LINK_LIBRARIES}

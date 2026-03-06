@@ -20,26 +20,18 @@ from pathlib import Path
 FORMAT_CONFIG = {
     "json": {
         "cmake_option": "",
-        "targets": [],
-        "dlls": [],
     },
     "md": {
         "cmake_option": "ENABLE_FMT_MD",
-        "targets": [],
-        "dlls": [],
     },
     "rst": {
         "cmake_option": "ENABLE_FMT_RST",
-        "targets": ["rst_month_formatter", "rst_year_formatter"],
-        "dlls": ["rst_month_formatter.dll", "rst_year_formatter.dll"],
     },
     "tex": {
         "cmake_option": "ENABLE_FMT_TEX",
-        "targets": [],
-        "dlls": [],
     },
 }
-RUNTIME_EXPORT_FORMATS_FILENAME = "Export_Formats.json"
+RUNTIME_EXPORT_FORMATS_FILENAME = "export_formats.toml"
 TEST_SUMMARY_FILENAME = "test_summary.json"
 PYTHON_TEST_LOG_FILENAME = "test_python_output.log"
 DEFAULT_OUTPUT_PROJECT = "bills_tracer"
@@ -55,7 +47,7 @@ LOCK_OWNER_FILENAME = ".lock_owner.json"
 ORPHAN_LOCK_RECLAIM_SECONDS = 120
 
 CLEANUP_FILES = ["bills.sqlite3"]
-CLEANUP_DIRS = ["build", "plugins", "config", "output"]
+CLEANUP_DIRS = ["build", "config", "output"]
 RUNTIME_SIDECAR_EXTS = {".dll", ".exe", ".manifest", ".pdb"}
 
 
@@ -440,20 +432,6 @@ def parse_formats(raw_formats: str) -> list[str]:
     return deduped
 
 
-def selected_plugin_targets(formats: list[str]) -> list[str]:
-    targets: list[str] = []
-    for fmt in formats:
-        targets.extend(FORMAT_CONFIG[fmt]["targets"])
-    return targets
-
-
-def selected_plugin_dlls(formats: list[str]) -> list[str]:
-    dlls: list[str] = []
-    for fmt in formats:
-        dlls.extend(FORMAT_CONFIG[fmt]["dlls"])
-    return dlls
-
-
 def cmake_format_defines(formats: list[str]) -> list[str]:
     enabled = set(formats)
     defines: list[str] = []
@@ -471,9 +449,8 @@ def write_runtime_export_formats_config(
     config_dir = build_bin_dir / "config"
     config_dir.mkdir(parents=True, exist_ok=True)
     config_path = config_dir / RUNTIME_EXPORT_FORMATS_FILENAME
-    config_payload = {"enabled_formats": export_formats}
     config_path.write_text(
-        json.dumps(config_payload, ensure_ascii=False, indent=2),
+        f"enabled_formats = {to_toml_list(export_formats)}\n",
         encoding="utf-8",
     )
 
@@ -495,7 +472,6 @@ def write_temp_test_config(
     runtime_run_id: str,
     runtime_output_dir: Path,
     runtime_summary_path: Path,
-    plugin_dlls: list[str],
     run_export_all_tasks: bool,
     export_formats: list[str],
     ingest_mode: str,
@@ -523,9 +499,6 @@ run_cleanup = true
 run_prepare_env = true
 run_tests = true
 
-[plugins]
-plugin_dlls = {to_toml_list(plugin_dlls)}
-
 [settings]
 run_export_all_tasks = {str(run_export_all_tasks).lower()}
 ingest_mode = '{ingest_mode}'
@@ -549,7 +522,7 @@ range_end = '{range_end}'
 
 def build_cli(source_dir: Path, build_dir: Path, generator: str,
               build_type: str, target: str,
-              plugin_targets: list[str], cmake_defines: list[str]) -> None:
+              cmake_defines: list[str]) -> None:
     lock_dir = build_dir.parent / f"{build_dir.name}.lock"
     with directory_lock(lock_dir):
         prepare_build_dir(build_dir, source_dir)
@@ -568,8 +541,7 @@ def build_cli(source_dir: Path, build_dir: Path, generator: str,
         ]
         run_command(configure_cmd)
 
-        build_targets = [target, *plugin_targets]
-        build_cmd = ["cmake", "--build", str(build_dir), "--target", *build_targets]
+        build_cmd = ["cmake", "--build", str(build_dir), "--target", target]
         run_command(build_cmd)
 
 
@@ -670,8 +642,6 @@ def main() -> int:
         print(f"Error: test runner not found: {test_runner}")
         return 2
 
-    plugin_targets = selected_plugin_targets(export_formats)
-    plugin_dlls = selected_plugin_dlls(export_formats)
     format_defines = cmake_format_defines(export_formats)
 
     try:
@@ -681,7 +651,6 @@ def main() -> int:
             generator=args.generator,
             build_type=args.build_type,
             target=args.target,
-            plugin_targets=plugin_targets,
             cmake_defines=format_defines,
         )
         sync_runtime_workspace(build_bin_dir, runtime_workspace_dir)
@@ -734,7 +703,6 @@ def main() -> int:
             runtime_run_id=run_id,
             runtime_output_dir=run_output_dir,
             runtime_summary_path=summary_path,
-            plugin_dlls=plugin_dlls,
             run_export_all_tasks=args.run_export_all,
             export_formats=export_formats,
             ingest_mode=args.ingest_mode,

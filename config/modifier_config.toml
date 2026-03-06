@@ -1,0 +1,9 @@
+metadata_prefixes = ["date:", "remark:"]
+
+[auto_renewal_rules]
+enabled = false
+
+[[auto_renewal_rules.rules]]
+header_location = "web_service"
+amount = 25.0
+description = "Xunlei Super VIP"

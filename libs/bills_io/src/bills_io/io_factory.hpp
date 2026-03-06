@@ -31,15 +31,9 @@ namespace bills::io {
     -> std::unique_ptr<SqliteReportDbSession>;
 [[nodiscard]] auto CreateReportDataGateway(sqlite3* db_connection)
     -> std::unique_ptr<ReportDataGateway>;
-[[nodiscard]] auto CreateMonthReportFormatterProvider(
-    const std::vector<std::string>& plugin_file_paths,
-    std::function<std::unique_ptr<IMonthReportFormatter>(std::string_view)>
-        fallback_factory = {})
+[[nodiscard]] auto CreateMonthReportFormatterProvider()
     -> std::unique_ptr<MonthReportFormatterProvider>;
-[[nodiscard]] auto CreateYearlyReportFormatterProvider(
-    const std::vector<std::string>& plugin_file_paths,
-    std::function<std::unique_ptr<IYearlyReportFormatter>(std::string_view)>
-        fallback_factory = {})
+[[nodiscard]] auto CreateYearlyReportFormatterProvider()
     -> std::unique_ptr<YearlyReportFormatterProvider>;
 
 }  // namespace bills::io

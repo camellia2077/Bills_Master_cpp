@@ -3,10 +3,6 @@
 
 #include <stdexcept>
 
-namespace {
-constexpr const char* kMonthFormatterSuffix = "_month_formatter";
-}  // namespace
-
 MonthlyReportGenerator::MonthlyReportGenerator(
     ReportDataGateway* report_data_gateway,
     MonthReportFormatterProvider* formatter_provider)
@@ -27,11 +23,9 @@ auto MonthlyReportGenerator::generate(int year, int month,
   auto formatter = formatter_provider_->CreateFormatter(format_name);
 
   if (!formatter) {
-    std::string expected_plugin_name = format_name + kMonthFormatterSuffix;
     throw std::runtime_error(
         "Monthly formatter for '" + format_name +
-        "' is not available. Please ensure that the plugin '" +
-        expected_plugin_name + "' is available in the plugins directory.");
+        "' is not available in the current build.");
   }
 
   return formatter->format_report(data);

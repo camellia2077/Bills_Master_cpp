@@ -1,10 +1,9 @@
 # ==============================================================================
-#  源文件收集
+#  婧愭枃浠舵敹闆�
 # ==============================================================================
 set(CORE_SOURCE_ROOT      "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/bills_core/src")
 set(CONVERSION_DIR        "${CORE_SOURCE_ROOT}/billing/conversion")
 set(CORE_REPORTS_DIR      "${CORE_SOURCE_ROOT}/reports")
-set(CLI_REPORTS_DIR       "${SOURCE_ROOT}/reports")
 set(CORE_ABI_DIR          "${CORE_SOURCE_ROOT}/abi")
 set(APPLICATION_DIR       "${CORE_SOURCE_ROOT}/application")
 set(CONFIG_VALIDATOR_DIR  "${CORE_SOURCE_ROOT}/config_validator")
@@ -14,9 +13,6 @@ set(FILEHANDLER_DIR       "${WINDOWS_INFRA_DIR}/file_handler")
 set(COMMAND_HANDLER_DIR   "${CLI_PRESENTATION_DIR}/command_handler")
 set(CONTROLLERS_DIR       "${CLI_PRESENTATION_DIR}/controllers")
 
-
-
-# controllers
 set(CONTROLLER_SOURCES
     "${CONTROLLERS_DIR}/app_controller.cpp"
     "${CONTROLLERS_DIR}/export/export_controller.cpp"
@@ -41,7 +37,6 @@ set(COMMAND_HANDLER_SOURCES
     "${COMMAND_HANDLER_DIR}/commands/query_command.cpp"
     "${COMMAND_HANDLER_DIR}/commands/simple_command.cpp"
 )
-
 
 set(CONVERSION_SOURCES
     "${CONVERSION_DIR}/bills_processing_pipeline.cpp"
@@ -70,7 +65,30 @@ set(REPORTS_CORE_SOURCES
     "${CORE_REPORTS_DIR}/monthly_report/monthly_report_generator.cpp"
     "${CORE_REPORTS_DIR}/monthly_report/report_sorter.cpp"
     "${CORE_REPORTS_DIR}/yearly_report/yearly_report_generator.cpp"
+    "${CORE_REPORTS_DIR}/formatters/month/base_month_report_formatter.cpp"
+    "${CORE_REPORTS_DIR}/formatters/year/base_yearly_report_formatter.cpp"
 )
+
+if(ENABLE_FMT_MD)
+    list(APPEND REPORTS_CORE_SOURCES
+        "${CORE_REPORTS_DIR}/formatters/month/md/month_md_format.cpp"
+        "${CORE_REPORTS_DIR}/formatters/year/md/year_md_format.cpp"
+    )
+endif()
+
+if(ENABLE_FMT_RST)
+    list(APPEND REPORTS_CORE_SOURCES
+        "${CORE_REPORTS_DIR}/formatters/month/rst/month_rst_format.cpp"
+        "${CORE_REPORTS_DIR}/formatters/year/rst/year_rst_format.cpp"
+    )
+endif()
+
+if(ENABLE_FMT_TEX)
+    list(APPEND REPORTS_CORE_SOURCES
+        "${CORE_REPORTS_DIR}/formatters/month/tex/month_tex_format.cpp"
+        "${CORE_REPORTS_DIR}/formatters/year/tex/year_tex_format.cpp"
+    )
+endif()
 
 set(ABI_SOURCES
     "${CORE_ABI_DIR}/bills_core_abi.cpp"
@@ -83,19 +101,10 @@ set(ABI_SOURCES
 
 set(ADAPTER_SOURCES)
 
-# reports
-set(REPORTS_SOURCES
-    "${CLI_REPORTS_DIR}/plugins/month_formatters/base_month_report_formatter.cpp"
-    "${CLI_REPORTS_DIR}/plugins/year_formatters/base_yearly_report_formatter.cpp"
-    "${CLI_REPORTS_DIR}/plugins/month_formatters/month_md/month_md_format.cpp"
-    "${CLI_REPORTS_DIR}/plugins/year_formatters/year_md/year_md_format.cpp"
-)
-
 set(FILEHANDLER_SOURCES
     "${FILEHANDLER_DIR}/file_handler.cpp"
 )
 
-# --- core 源码：业务规则 + 用例 + 配置校验 ---
 set(CORE_SOURCES
     ${CONFIG_VALIDATOR_SOURCES}
     ${CONVERSION_SOURCES}
@@ -105,11 +114,9 @@ set(CORE_SOURCES
     ${ABI_SOURCES}
 )
 
-# --- 平台源码：表现层 + IO 适配 + 导出 ---
 set(PLATFORM_SOURCES
     ${COMMAND_HANDLER_SOURCES}
     ${ADAPTER_SOURCES}
-    ${REPORTS_SOURCES}
     ${FILEHANDLER_SOURCES}
     ${CONTROLLER_SOURCES}
 )

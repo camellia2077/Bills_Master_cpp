@@ -6,7 +6,7 @@
 #include <string>
 
 #include "common/process_stats.hpp"
-#include "common/result.hpp"
+#include "common/Result.hpp"
 #include "billing/conversion/modifier/_shared_structures/bills_data_structures.hpp"
 #include "billing/conversion/validator/config/bills_config.hpp"
 
@@ -44,5 +44,4 @@ class WorkflowUseCase {
 };
 
 #endif  // WORKFLOW_USE_CASE_HPP
-
 
