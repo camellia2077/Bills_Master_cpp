@@ -5,6 +5,20 @@ import shutil
 from pathlib import Path
 
 from ..core.context import Context
+from ..core.path_display import display_command, display_path
+
+
+def normalize_checks_filter(checks_filter: list[str] | None) -> list[str]:
+    if not checks_filter:
+        return []
+    normalized: list[str] = []
+    for pattern in checks_filter:
+        text = str(pattern).strip()
+        if not text or text == "-*":
+            continue
+        if text not in normalized:
+            normalized.append(text)
+    return ["-*", *normalized]
 
 
 def run_clang_tidy(
@@ -14,6 +28,8 @@ def run_clang_tidy(
     files: list[Path],
     output_log: Path,
     fix: bool = False,
+    checks_filter: list[str] | None = None,
+    extra_args: list[str] | None = None,
 ) -> int:
     clang_tidy = shutil.which("clang-tidy")
     if not clang_tidy:
@@ -26,19 +42,27 @@ def run_clang_tidy(
 
     output_log.parent.mkdir(parents=True, exist_ok=True)
     returncode = 0
+    effective_checks_filter = normalize_checks_filter(checks_filter)
     with output_log.open("w", encoding="utf-8") as handle:
         total = len(files)
         for index, file_path in enumerate(files, start=1):
             command = [clang_tidy]
             if fix:
                 command.append("-fix")
+            if effective_checks_filter:
+                command.append(f"-checks={','.join(effective_checks_filter)}")
+            if extra_args:
+                command.extend(extra_args)
             command.extend(
                 ["-p", str(compile_commands_dir.resolve()), str(file_path.resolve())]
             )
-            header = f"[{index}/{total}] Analyzing: {file_path.resolve()}\n"
+            header = (
+                f"[{index}/{total}] Analyzing: "
+                f"{display_path(file_path, resolve=True)}\n"
+            )
             handle.write(header)
             print(header, end="")
-            print(f"==> Running: {' '.join(command)}")
+            print(f"==> Running: {display_command(command)}")
             process = subprocess.Popen(
                 command,
                 cwd=ctx.repo_root,
