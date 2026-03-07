@@ -16,7 +16,7 @@ id = "model_first_run"
 name = "Run bills_tracer model-first"
 command = [
   "{python}",
-  "tools/build/bills_tracer_flow.py",
+  "tools/flows/bills_tracer_flow.py",
   "--export-pipeline",
   "model-first",
   "--output-project",
@@ -24,7 +24,7 @@ command = [
   "--run-tag",
   "parallel_model",
   "--formats",
-  "md",
+  "md,json,tex,rst",
   "--build-dir-mode",
   "isolated",
 ]
@@ -33,7 +33,7 @@ timeout_seconds = 7200
 retries = 0
 depends_on = []
 artifacts = [
-  "tests/output/artifact/bills_tracer_model_first/test_summary.json",
+  "tests/output/artifact/bills_tracer_model_first/latest/test_summary.json",
 ]
 
 [[steps]]
@@ -41,7 +41,7 @@ id = "json_first_run"
 name = "Run bills_tracer json-first"
 command = [
   "{python}",
-  "tools/build/bills_tracer_flow.py",
+  "tools/flows/bills_tracer_flow.py",
   "--export-pipeline",
   "json-first",
   "--output-project",
@@ -49,7 +49,7 @@ command = [
   "--run-tag",
   "parallel_json",
   "--formats",
-  "md",
+  "md,json,tex,rst",
   "--build-dir-mode",
   "isolated",
 ]
@@ -58,7 +58,7 @@ timeout_seconds = 7200
 retries = 0
 depends_on = []
 artifacts = [
-  "tests/output/artifact/bills_tracer_json_first/test_summary.json",
+  "tests/output/artifact/bills_tracer_json_first/latest/test_summary.json",
 ]
 
 [[steps]]
@@ -73,7 +73,7 @@ command = [
   "bills_tracer_model_first",
   "bills_tracer_json_first",
   "--compare-scope",
-  "md",
+  "all",
 ]
 cwd = "{repo_root}"
 timeout_seconds = 1800

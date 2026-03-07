@@ -11,7 +11,7 @@ echo "==> Repo root: $REPO_ROOT"
 echo ""
 
 echo "==> Starting the Python fast build script (Debug)..."
-python3 "$REPO_ROOT/tools/build/build_bills_master.py" build_fast "$@"
+python3 "$REPO_ROOT/tools/flows/build_bills_master.py" build_fast "$@"
 
 echo ""
 echo "==> Fast build finished."

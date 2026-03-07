@@ -13,14 +13,14 @@ SUNSET_DATE = "2026-06-30"
 
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
-    flow_entry = repo_root / "tools" / "build" / "bills_tracer_flow.py"
+    flow_entry = repo_root / "tools" / "flows" / "bills_tracer_flow.py"
     forwarded_args = sys.argv[1:]
     print(
-        "[DEPRECATED] `tools/build/build_then_cli_test.py` is a compatibility "
+        "[DEPRECATED] `tools/flows/build_then_cli_test.py` is a compatibility "
         f"entry (deprecated since {DEPRECATION_START_DATE}) and is planned for "
         f"removal after {SUNSET_DATE}. "
         "Use `python tools/verify/verify.py bills -- ...` or "
-        "`python tools/build/bills_tracer_flow.py ...`.",
+        "`python tools/flows/bills_tracer_flow.py ...`.",
         file=sys.stderr,
     )
     command = [sys.executable, str(flow_entry), *forwarded_args]

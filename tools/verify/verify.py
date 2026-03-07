@@ -128,19 +128,22 @@ def run_bills_workflow(
     python_exe: str,
     forwarded: list[str],
 ) -> int:
+    effective_forwarded = list(forwarded)
+    if "--formats" not in effective_forwarded:
+        effective_forwarded = [*effective_forwarded, "--formats", "md,json,tex,rst"]
     output_project = detect_output_project(forwarded)
-    flow_entry = repo_root / "tools" / "build" / "bills_tracer_flow.py"
+    flow_entry = repo_root / "tools" / "flows" / "bills_tracer_flow.py"
     steps = [
         {
             "id": "bills_tracer",
             "name": "Run bills tracer flow",
-            "command": [python_exe, str(flow_entry), *forwarded],
+            "command": [python_exe, str(flow_entry), *effective_forwarded],
             "cwd": "{repo_root}",
             "timeout_seconds": 7200,
             "depends_on": [],
             "artifacts": [
-                f"tests/output/artifact/{output_project}/test_summary.json",
-                f"tests/output/artifact/{output_project}/test_python_output.log",
+                f"tests/output/artifact/{output_project}/latest/test_summary.json",
+                f"tests/output/artifact/{output_project}/latest/test_python_output.log",
             ],
         }
     ]
@@ -163,9 +166,20 @@ def resolve_project_output_root(
     return repo_root / "tests" / "output" / preferred_group / project
 
 
+def resolve_project_latest_output_root(
+    repo_root: Path,
+    project: str,
+    preferred_group: str = "artifact",
+) -> Path:
+    root = resolve_project_output_root(repo_root, project, preferred_group)
+    if preferred_group == "artifact":
+        return root / "latest"
+    return root
+
+
 def load_test_summary(repo_root: Path, project: str) -> dict | None:
     summary_path = (
-        resolve_project_output_root(repo_root, project) / "test_summary.json"
+        resolve_project_latest_output_root(repo_root, project) / "test_summary.json"
     )
     if not summary_path.exists():
         print(f"[ERROR] Missing test summary: {summary_path}")
@@ -199,7 +213,8 @@ def validate_test_summary(repo_root: Path, project: str) -> int:
 
 def load_python_test_duration_seconds(repo_root: Path, project: str) -> float | None:
     log_path = (
-        resolve_project_output_root(repo_root, project) / "test_python_output.log"
+        resolve_project_latest_output_root(repo_root, project)
+        / "test_python_output.log"
     )
     if not log_path.exists():
         print(f"[ERROR] Missing python test log: {log_path}")
@@ -334,12 +349,12 @@ def run_bills_parallel_smoke(
     )
     parser.add_argument(
         "--formats",
-        default="md",
+        default="md,json,tex,rst",
     )
     parser.add_argument(
         "--compare-scope",
-        default="md",
-        choices=["all", "md", "json", "tex"],
+        default="all",
+        choices=["all", "md", "json", "tex", "rst"],
     )
     parser.add_argument(
         "--build-dir-mode",
@@ -368,7 +383,7 @@ def run_bills_parallel_smoke(
         print("[ERROR] --max-performance-regression must be >= 0.")
         return 2
 
-    flow_entry = repo_root / "tools" / "build" / "bills_tracer_flow.py"
+    flow_entry = repo_root / "tools" / "flows" / "bills_tracer_flow.py"
 
     model_cmd = [
         python_exe,
@@ -563,7 +578,7 @@ def run_logic_tests(
         return 2
 
     if not args.skip_core_build:
-        core_build_entry = repo_root / "tools" / "build" / "build_bills_core.py"
+        core_build_entry = repo_root / "tools" / "flows" / "build_bills_core.py"
         build_code = run([python_exe, str(core_build_entry), "build_fast", "--shared"])
         if build_code != 0:
             return build_code
@@ -609,7 +624,7 @@ def run_module_mode_check(
     )
     args, passthrough = parser.parse_known_args(forwarded)
 
-    core_build_entry = repo_root / "tools" / "build" / "build_bills_core.py"
+    core_build_entry = repo_root / "tools" / "flows" / "build_bills_core.py"
     base_cmd = [
         python_exe,
         str(core_build_entry),
@@ -706,7 +721,7 @@ def run_artifact_tests(
             "--json-project",
             "bills_gate_json_first",
             "--formats",
-            "md,json,tex",
+            "md,json,tex,rst",
             "--compare-scope",
             "all",
             "--build-dir-mode",
@@ -969,7 +984,7 @@ def main() -> int:
             "--json-project",
             "bills_gate_json_first",
             "--formats",
-            "md,json,tex",
+            "md,json,tex,rst",
             "--compare-scope",
             "all",
             "--build-dir-mode",
@@ -987,13 +1002,13 @@ def main() -> int:
         )
 
     if args.workflow == "bills-build":
-        entry = repo_root / "tools" / "build" / "build_bills_master.py"
+        entry = repo_root / "tools" / "flows" / "build_bills_master.py"
         if not forwarded:
             forwarded = ["build_fast"]
         return run([python_exe, str(entry), *forwarded])
 
     if args.workflow == "core-build":
-        entry = repo_root / "tools" / "build" / "build_bills_core.py"
+        entry = repo_root / "tools" / "flows" / "build_bills_core.py"
         if not forwarded:
             forwarded = ["build_fast", "--shared"]
         return run([python_exe, str(entry), *forwarded])
@@ -1080,7 +1095,7 @@ def main() -> int:
                 forwarded=[],
                 default_config="tools/verify/pipelines/log_generator_build.toml",
             )
-        entry = repo_root / "tools" / "build" / "log_generator_flow.py"
+        entry = repo_root / "tools" / "flows" / "log_generator_flow.py"
         return run([python_exe, str(entry), *forwarded])
 
     raise AssertionError(f"Unhandled workflow: {args.workflow}")
@@ -1088,4 +1103,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

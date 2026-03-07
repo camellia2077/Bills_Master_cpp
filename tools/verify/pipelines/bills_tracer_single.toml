@@ -14,12 +14,12 @@ PYTHONUNBUFFERED = "1"
 [[steps]]
 id = "run_bills_tracer"
 name = "Run bills_tracer default workflow"
-command = ["{python}", "tools/build/bills_tracer_flow.py"]
+command = ["{python}", "tools/flows/bills_tracer_flow.py", "--formats", "md,json,tex,rst"]
 cwd = "{repo_root}"
 timeout_seconds = 7200
 retries = 0
 depends_on = []
 artifacts = [
-  "tests/output/artifact/bills_tracer/test_summary.json",
-  "tests/output/artifact/bills_tracer/test_python_output.log",
+  "tests/output/artifact/bills_tracer/latest/test_summary.json",
+  "tests/output/artifact/bills_tracer/latest/test_python_output.log",
 ]

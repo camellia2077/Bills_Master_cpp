@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 
 def analyze_large_python_files(target_dir, min_lines=200):
@@ -59,9 +60,8 @@ def analyze_large_python_files(target_dir, min_lines=200):
 
 
 if __name__ == "__main__":
-    # 修改为你想要扫描的 Python 项目路径
-    target_path = r"C:\Computer\my_github\github_cpp\time_tracer\time_tracer_cpp\test"
-    # target_path = r"tests"
+    repo_root = Path(__file__).resolve().parents[3]
+    target_path = str(repo_root / "tests")
     threshold = 200
 
     print(f"正在扫描 Python 项目: {target_path} ...\n")

@@ -48,8 +48,8 @@ def normalize_module_name(node: ast.AST) -> tuple[str, int] | None:
 
 def detect_layer(relative_path: Path) -> str:
     normalized = relative_path.as_posix()
-    if normalized.startswith("tools/build/"):
-        return "build"
+    if normalized.startswith("tools/flows/"):
+        return "flows"
     if normalized.startswith("tools/verify/"):
         return "verify"
     return "other"
@@ -61,10 +61,10 @@ def check_import_rule(layer: str, import_name: str) -> str | None:
             "tools 脚本不应直接 import 业务层模块（apps/libs/tests）；"
             "应通过 CLI/子进程边界调用。"
         )
-    if layer == "build" and import_name.startswith("tools.verify"):
-        return "tools/build 不应依赖 tools/verify。"
-    if layer == "verify" and import_name.startswith("tools.build"):
-        return "tools/verify 不应直接依赖 tools/build（应通过子进程调用脚本）。"
+    if layer == "flows" and import_name.startswith("tools.verify"):
+        return "tools/flows 不应依赖 tools/verify。"
+    if layer == "verify" and import_name.startswith(("tools.build", "tools.flows")):
+        return "tools/verify 不应直接依赖 tools/flows（应通过子进程调用脚本）。"
     return None
 
 
@@ -168,4 +168,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

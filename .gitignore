@@ -9,14 +9,6 @@ __pycache__/
 build_*/
 temp/
 
-# Keep repository-managed sources under tools/build tracked.
-!tools/build/
-!tools/build/**
-# But still ignore local build artifacts generated inside migrated tools.
-tools/build/**/build/
-tools/build/**/build_*/
-tools/build/**/__pycache__/
-
 bills_output_from_config/
 output/
 tests/output/

@@ -34,14 +34,15 @@ FORMAT_CONFIG = {
 RUNTIME_EXPORT_FORMATS_FILENAME = "export_formats.toml"
 TEST_SUMMARY_FILENAME = "test_summary.json"
 PYTHON_TEST_LOG_FILENAME = "test_python_output.log"
+RUN_MANIFEST_FILENAME = "run_manifest.json"
 DEFAULT_OUTPUT_PROJECT = "bills_tracer"
 DEFAULT_OUTPUT_GROUP = "artifact"
 RUNTIME_OUTPUT_GROUP = "runtime"
 DEFAULT_BUILD_ROOT = "apps/bills_cli/build_cli_test"
-LEGACY_OUTPUT_ROOT_RELATIVE = Path("test/output")
 DEFAULT_BUILD_DIR_MODE = "isolated"
 DEFAULT_MAX_RUNS = 20
 RUNS_DIR_NAME = "runs"
+LATEST_DIR_NAME = "latest"
 LATEST_SYNC_LOCK_DIR_NAME = ".latest_sync.lock"
 LOCK_OWNER_FILENAME = ".lock_owner.json"
 ORPHAN_LOCK_RECLAIM_SECONDS = 120
@@ -365,36 +366,46 @@ def sync_runtime_workspace(build_bin_dir: Path, workspace_dir: Path) -> None:
     )
 
 
-def legacy_workspace_dir(repo_root: Path, output_project: str) -> Path:
-    return (
-        repo_root
-        / LEGACY_OUTPUT_ROOT_RELATIVE
-        / f"artifact_{output_project}"
-        / "workspace"
-    ).resolve()
-
-
-def sync_legacy_workspace(runtime_workspace_dir: Path, legacy_workspace: Path) -> None:
-    if legacy_workspace == runtime_workspace_dir:
-        return
-    replace_path(runtime_workspace_dir, legacy_workspace)
-    print(f"==> Synced compatibility workspace: {legacy_workspace}")
-
-
 def sync_latest_project_outputs(project_output_root: Path, run_output_dir: Path) -> None:
     lock_dir = project_output_root / LATEST_SYNC_LOCK_DIR_NAME
     with directory_lock(lock_dir):
+        latest_output_root = project_output_root / LATEST_DIR_NAME
+        if latest_output_root.exists():
+            shutil.rmtree(latest_output_root, ignore_errors=True)
+        latest_output_root.mkdir(parents=True, exist_ok=True)
+        for legacy_name in [
+            TEST_SUMMARY_FILENAME,
+            PYTHON_TEST_LOG_FILENAME,
+            RUN_MANIFEST_FILENAME,
+            "logs",
+            "txt2josn",
+            "exported_files",
+        ]:
+            legacy_path = project_output_root / legacy_name
+            if not legacy_path.exists():
+                continue
+            if legacy_path.is_dir():
+                shutil.rmtree(legacy_path, ignore_errors=True)
+            else:
+                legacy_path.unlink(missing_ok=True)
         replace_path(
             run_output_dir / TEST_SUMMARY_FILENAME,
-            project_output_root / TEST_SUMMARY_FILENAME,
+            latest_output_root / TEST_SUMMARY_FILENAME,
         )
         replace_path(
             run_output_dir / PYTHON_TEST_LOG_FILENAME,
-            project_output_root / PYTHON_TEST_LOG_FILENAME,
+            latest_output_root / PYTHON_TEST_LOG_FILENAME,
         )
-        replace_path(run_output_dir / "logs", project_output_root / "logs")
-        replace_path(run_output_dir / "txt2josn", project_output_root / "txt2josn")
-        replace_path(run_output_dir / "exported_files", project_output_root / "exported_files")
+        replace_path(
+            run_output_dir / RUN_MANIFEST_FILENAME,
+            latest_output_root / RUN_MANIFEST_FILENAME,
+        )
+        replace_path(run_output_dir / "logs", latest_output_root / "logs")
+        replace_path(run_output_dir / "txt2josn", latest_output_root / "txt2josn")
+        replace_path(
+            run_output_dir / "exported_files",
+            latest_output_root / "exported_files",
+        )
         (project_output_root / "latest_run.txt").write_text(
             run_output_dir.name,
             encoding="utf-8",
@@ -570,10 +581,10 @@ def main() -> int:
         default="model-first",
         choices=["legacy", "model-first", "json-first"],
     )
-    parser.add_argument("--single-year", default="2024")
-    parser.add_argument("--single-month", default="2024-01")
-    parser.add_argument("--range-start", default="2024-01")
-    parser.add_argument("--range-end", default="2024-12")
+    parser.add_argument("--single-year", default="2025")
+    parser.add_argument("--single-month", default="2025-01")
+    parser.add_argument("--range-start", default="2025-03")
+    parser.add_argument("--range-end", default="2025-04")
     parser.add_argument("--python", default=sys.executable)
     parser.add_argument("--output-project", default=DEFAULT_OUTPUT_PROJECT)
     parser.add_argument(
@@ -614,10 +625,6 @@ def main() -> int:
         test_root / "output" / RUNTIME_OUTPUT_GROUP / output_project_name
     )
     runtime_workspace_dir = (runtime_project_root / "workspace").resolve()
-    compatibility_workspace_dir = legacy_workspace_dir(
-        repo_root,
-        output_project_name,
-    )
     test_runner = test_root / "suites" / "artifact" / "bills_master" / "run_tests.py"
     runtime_base_dir = make_runtime_base_dir(
         runtime_project_root=runtime_project_root,
@@ -655,7 +662,6 @@ def main() -> int:
         )
         sync_runtime_workspace(build_bin_dir, runtime_workspace_dir)
         write_runtime_export_formats_config(runtime_workspace_dir, export_formats)
-        sync_legacy_workspace(runtime_workspace_dir, compatibility_workspace_dir)
     except subprocess.CalledProcessError as exc:
         print(f"Build failed with exit code {exc.returncode}.")
         return exc.returncode
@@ -686,9 +692,6 @@ def main() -> int:
                 "formats": export_formats,
                 "build_dir": build_dir.as_posix(),
                 "runtime_workspace_dir": runtime_workspace_dir.as_posix(),
-                "compatibility_workspace_dir": (
-                    compatibility_workspace_dir.as_posix()
-                ),
                 "runtime_base_dir": runtime_base_dir.as_posix(),
                 "run_output_dir": run_output_dir.as_posix(),
                 "created_at": datetime.now().isoformat(timespec="seconds"),
@@ -758,9 +761,6 @@ def main() -> int:
                     "formats": export_formats,
                     "build_dir": build_dir.as_posix(),
                     "runtime_workspace_dir": runtime_workspace_dir.as_posix(),
-                    "compatibility_workspace_dir": (
-                        compatibility_workspace_dir.as_posix()
-                    ),
                     "runtime_base_dir": runtime_base_dir.as_posix(),
                     "run_output_dir": run_output_dir.as_posix(),
                     "completed_at": datetime.now().isoformat(timespec="seconds"),
@@ -786,9 +786,6 @@ def main() -> int:
                 "formats": export_formats,
                 "build_dir": build_dir.as_posix(),
                 "runtime_workspace_dir": runtime_workspace_dir.as_posix(),
-                "compatibility_workspace_dir": (
-                    compatibility_workspace_dir.as_posix()
-                ),
                 "runtime_base_dir": runtime_base_dir.as_posix(),
                 "run_output_dir": run_output_dir.as_posix(),
                 "completed_at": datetime.now().isoformat(timespec="seconds"),
@@ -813,9 +810,6 @@ def main() -> int:
                 "formats": export_formats,
                 "build_dir": build_dir.as_posix(),
                 "runtime_workspace_dir": runtime_workspace_dir.as_posix(),
-                "compatibility_workspace_dir": (
-                    compatibility_workspace_dir.as_posix()
-                ),
                 "runtime_base_dir": runtime_base_dir.as_posix(),
                 "run_output_dir": run_output_dir.as_posix(),
                 "completed_at": datetime.now().isoformat(timespec="seconds"),

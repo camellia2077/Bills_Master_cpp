@@ -6,16 +6,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-from bills_master_builder.task_splitter import split_tidy_logs
-
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[1]
 PROJECT_DIR = REPO_ROOT / "apps" / "bills_cli"
 RUNTIME_WORKSPACE_DIR = (
     REPO_ROOT / "tests" / "output" / "runtime" / "bills_tracer" / "workspace"
-)
-LEGACY_WORKSPACE_DIR = (
-    REPO_ROOT / "test" / "output" / "artifact_bills_tracer" / "workspace"
 )
 RUNTIME_SIDECAR_EXTS = {".dll", ".exe", ".manifest", ".pdb"}
 
@@ -75,8 +70,6 @@ def sync_runtime_artifacts(build_dir: Path) -> None:
         "==> Synced runtime artifacts to "
         f"{RUNTIME_WORKSPACE_DIR} ({len(copied_files)} files + config)"
     )
-    replace_path(RUNTIME_WORKSPACE_DIR, LEGACY_WORKSPACE_DIR)
-    print(f"==> Synced compatibility workspace: {LEGACY_WORKSPACE_DIR}")
 
 
 def read_cache_home_directory(cache_file: Path) -> Path | None:
@@ -141,7 +134,7 @@ def read_cache_bool_option(cache_file: Path, key: str) -> bool | None:
 
 def ensure_cmake_configured(
     build_dir: Path, generator: str, build_type: str, compiler: str,
-    tidy_enabled: bool = True, core_shared: bool = True
+    tidy_enabled: bool = False, core_shared: bool = True
 ) -> None:
     if not build_dir.exists():
         print(f"==> Creating build directory: {build_dir}")
@@ -235,7 +228,7 @@ def run_build(
     build_dir: Path,
     build_type: str,
     extra_args: list[str] | None = None,
-    tidy_enabled: bool = True,
+    tidy_enabled: bool = False,
     core_shared: bool = True,
 ) -> list[str]:
     ensure_cmake_configured(
@@ -274,14 +267,32 @@ def run_tidy(extra_args: list[str] | None = None) -> None:
     )
 
     if log_lines:
-        tasks_dir = build_dir / "tasks"
-        count = split_tidy_logs(log_lines, tasks_dir)
-        print(f"==> Created {count} task log files in {tasks_dir}")
+        print(
+            "==> Legacy task splitting into "
+            f"{build_dir / 'tasks'} is disabled."
+        )
+        print(
+            "==> Use `python tools/run.py tidy` + "
+            "`python tools/run.py tidy-split` to generate the canonical queue "
+            "under `temp/tidy/tasks`."
+        )
     else:
         print("==> No build output captured; skipping task split.")
 
     if not success:
         sys.exit(1)
+
+
+def normalize_cmake_build_extra_args(extra_args: list[str] | None) -> list[str]:
+    if not extra_args:
+        return []
+
+    normalized = list(extra_args)
+    while len(normalized) > 1 and normalized[0] == "--" and normalized[1] == "--":
+        normalized.pop(0)
+    if normalized == ["--"]:
+        return []
+    return normalized
 
 
 def main() -> int:
@@ -309,9 +320,7 @@ def main() -> int:
 
     extra_args: list[str] = []
     if hasattr(args, "extra"):
-        extra_args = args.extra
-        if extra_args == ["--"]:
-            extra_args = []
+        extra_args = normalize_cmake_build_extra_args(args.extra)
 
     if args.command == "build":
         run_build(

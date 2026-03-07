@@ -41,6 +41,8 @@ def should_compare_source(source_rel: str, compare_scope: str) -> bool:
         return suffix == ".json"
     if compare_scope == "tex":
         return suffix == ".tex"
+    if compare_scope == "rst":
+        return suffix == ".rst"
     return False
 
 
@@ -159,7 +161,10 @@ def collect_scoped_files(root: Path, compare_scope: str) -> dict[str, Path]:
 
 
 def resolve_project_output_root(repo_root: Path, project: str, output_group: str) -> Path:
-    return repo_root / "tests" / "output" / output_group / project
+    root = repo_root / "tests" / "output" / output_group / project
+    if output_group == "artifact":
+        return root / "latest"
+    return root
 
 
 def main() -> int:
@@ -191,7 +196,7 @@ def main() -> int:
     parser.add_argument(
         "--compare-scope",
         default="all",
-        choices=["all", "md", "json", "tex"],
+        choices=["all", "md", "json", "tex", "rst"],
         help="Limit comparison to selected file type.",
     )
     args = parser.parse_args()

@@ -14,7 +14,7 @@ PYTHONUNBUFFERED = "1"
 [[steps]]
 id = "build"
 name = "Build log_generator debug"
-command = ["{python}", "tools/build/log_generator_flow.py", "build", "--mode", "Debug"]
+command = ["{python}", "tools/flows/log_generator_flow.py", "build", "--mode", "Debug"]
 cwd = "{repo_root}"
 timeout_seconds = 1800
 retries = 0
@@ -28,7 +28,7 @@ id = "generate"
 name = "Generate dataset to artifact"
 command = [
   "{python}",
-  "tools/build/log_generator_flow.py",
+  "tools/flows/log_generator_flow.py",
   "generate",
   "--mode",
   "Debug",

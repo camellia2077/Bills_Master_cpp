@@ -53,7 +53,13 @@ def sha256(path: Path) -> str:
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
     source_root = (
-        repo_root / "tests" / "output" / "artifact" / "bills_tracer" / "exported_files"
+        repo_root
+        / "tests"
+        / "output"
+        / "artifact"
+        / "bills_tracer"
+        / "latest"
+        / "exported_files"
     )
     baseline_root = repo_root / "tests" / "baseline" / "report_snapshots"
 

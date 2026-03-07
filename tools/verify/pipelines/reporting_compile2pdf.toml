@@ -12,7 +12,7 @@ root = "tests/output/logic/pipeline_runner/reporting_compile2pdf"
 PYTHONUNBUFFERED = "1"
 
 [reporting.input]
-source_directory = "tests/output/artifact/bills_tracer/exported_files"
+source_directory = "tests/output/artifact/bills_tracer/latest/exported_files"
 
 [reporting.output]
 output_directory = "tests/output/artifact/reporting/compile2pdf"
@@ -47,7 +47,7 @@ artifacts = [
 ]
 
 [steps.env]
-BILLS_COMPILE2PDF_SOURCE = "{repo_root}/tests/output/artifact/bills_tracer/exported_files"
+BILLS_COMPILE2PDF_SOURCE = "{repo_root}/tests/output/artifact/bills_tracer/latest/exported_files"
 BILLS_COMPILE2PDF_OUTPUT = "{repo_root}/tests/output/artifact/reporting/compile2pdf"
 BILLS_COMPILE2PDF_TYPES = ""
 BILLS_COMPILE2PDF_MD_COMPILERS = "pandoc"

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 
 def analyze_large_files(target_dir, min_lines=350):
@@ -43,10 +44,8 @@ def analyze_large_files(target_dir, min_lines=350):
 
 
 if __name__ == "__main__":
-    # 使用 r 前缀处理 Windows 路径中的反斜杠
-    target_path = (
-        r"C:\Computer\my_github\github_cpp\time_tracer\time_tracer_cpp\apps\tracer_android"
-    )
+    repo_root = Path(__file__).resolve().parents[3]
+    target_path = str(repo_root / "apps")
     threshold = 350
 
     print(f"正在扫描: {target_path} ...\n")

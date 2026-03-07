@@ -11,7 +11,7 @@ echo "==> Repo root: $REPO_ROOT"
 echo ""
 
 echo "==> Starting the Python build script (Release)..."
-python3 "$REPO_ROOT/tools/build/build_bills_master.py" build "$@"
+python3 "$REPO_ROOT/tools/flows/build_bills_master.py" build "$@"
 
 echo ""
 echo "==> Build finished."

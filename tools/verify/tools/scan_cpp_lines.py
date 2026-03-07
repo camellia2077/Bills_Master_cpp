@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 
 def analyze_large_cpp_files(target_dir, min_lines=350):
@@ -44,7 +45,8 @@ def analyze_large_cpp_files(target_dir, min_lines=350):
 
 
 if __name__ == "__main__":
-    target_path = r"C:\Computer\my_github\github_cpp\bills_master\Bills_Master_cpp\libs\bills_core\src"
+    repo_root = Path(__file__).resolve().parents[3]
+    target_path = str(repo_root / "libs" / "bills_core" / "src")
     threshold = 350
 
     print(f"正在扫描 C++ 项目: {target_path} ...\n")
