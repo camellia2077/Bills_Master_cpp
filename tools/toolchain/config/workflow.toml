@@ -1,0 +1,46 @@
+[build]
+default_target = "bills"
+
+[tidy]
+max_lines = 150
+max_diags = 12
+batch_size = 10
+jobs = 0
+parse_workers = 0
+full_every = 3
+neighbor_scope = "none"
+keep_going = true
+auto_full_on_no_such_file = true
+auto_full_on_glob_mismatch = true
+
+[tidy.fix_strategy]
+auto_fix = [
+  "modernize-use-nullptr",
+  "modernize-use-override",
+  "modernize-use-using",
+  "modernize-loop-convert",
+  "modernize-raw-string-literal",
+  "readability-braces-around-statements",
+  "readability-else-after-return",
+  "readability-redundant-control-flow",
+]
+safe_refactor = [
+  "bugprone-easily-swappable-parameters",
+  "readability-function-cognitive-complexity",
+  "bugprone-branch-clone",
+  "performance-for-range-copy",
+  "modernize-pass-by-value",
+  "readability-identifier-naming",
+]
+nolint_allowed = [
+  "readability-function-cognitive-complexity",
+  "bugprone-easily-swappable-parameters",
+  "cppcoreguidelines-avoid-magic-numbers",
+]
+manual_only = [
+  "clang-diagnostic-error",
+  "clang-diagnostic-*",
+  "clang-analyzer-*",
+  "cppcoreguidelines-pro-type-reinterpret-cast",
+  "concurrency-*",
+]

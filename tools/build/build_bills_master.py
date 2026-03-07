@@ -310,8 +310,8 @@ def main() -> int:
     extra_args: list[str] = []
     if hasattr(args, "extra"):
         extra_args = args.extra
-        if extra_args and extra_args[0] == "--":
-            extra_args = extra_args[1:]
+        if extra_args == ["--"]:
+            extra_args = []
 
     if args.command == "build":
         run_build(
