@@ -4,10 +4,20 @@
 #include <string>
 #include <vector>
 
-#include <nlohmann/json.hpp>
+struct GeneratorDetailConfig {
+  std::string description;
+  double min_cost = 0.0;
+  double max_cost = 0.0;
+};
+
+struct GeneratorCategoryConfig {
+  std::string parent_category;
+  std::string sub_category;
+  std::vector<GeneratorDetailConfig> details;
+};
 
 struct GeneratorConfigData {
-  nlohmann::json categories;
+  std::vector<GeneratorCategoryConfig> categories;
   double comment_probability = 0.0;
   std::vector<std::string> comments;
 };

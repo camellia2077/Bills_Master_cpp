@@ -63,8 +63,10 @@
 - log_generator 完整命令行测试（构建 + CLI 参数覆盖）：
   - `python tools/verify/verify.py log-cli-test`
   - 默认由 TOML runner 执行 `tools/verify/pipelines/log_generator_cli.toml`。
+  - 运行时配置文件默认位于 `tests/generators/log_generator/build_debug/bin/config/config.toml`。
 - 生成 log_generator 测试输入（默认落盘到 artifact）：
   - `python tools/build/log_generator_flow.py generate --mode Debug --start-year 2024 --end-year 2024`
+  - 生成命令会将 `config.toml` 复制到独立 runtime 目录后再执行生成器。
 - 显式将 log_generator 数据提升到 fixtures（默认不会覆盖夹具）：
   - `python tools/build/log_generator_flow.py promote-fixtures`
 - 模块模式双通道检查：

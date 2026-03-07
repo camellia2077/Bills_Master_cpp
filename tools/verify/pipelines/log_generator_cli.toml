@@ -21,7 +21,7 @@ retries = 0
 depends_on = []
 artifacts = [
   "tests/generators/log_generator/build_debug/bin/generator.exe",
-  "tests/generators/log_generator/build_debug/bin/config/config.json",
+  "tests/generators/log_generator/build_debug/bin/config/config.toml",
 ]
 
 [[steps]]
@@ -33,7 +33,7 @@ command = [
   "--generator",
   "tests/generators/log_generator/build_debug/bin/generator.exe",
   "--config",
-  "tests/generators/log_generator/build_debug/bin/config/config.json",
+  "tests/generators/log_generator/build_debug/bin/config/config.toml",
 ]
 cwd = "{repo_root}"
 timeout_seconds = 1200

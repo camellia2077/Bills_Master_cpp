@@ -46,6 +46,7 @@
     - `tests/output/logic/<project>/...`（逻辑测试与 runner 元数据）
 - `tests/generators/log_generator/`（测试输入数据生成器）
   - 默认产物：`tests/output/artifact/log_generator/`
+  - 默认配置：`tests/generators/log_generator/src/config/config.toml`
   - 显式同步夹具：`python tools/build/log_generator_flow.py promote-fixtures`
 - `tools/reporting/compile2pdf/`（报表产物转 PDF）
 - `tools/reporting/graph_generator/`（报表图表生成）

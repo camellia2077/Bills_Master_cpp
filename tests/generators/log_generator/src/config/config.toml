@@ -1,0 +1,195 @@
+[comment_options]
+probability = 0.3
+comments = [
+  "这是对这项物品描述的注释你可以无视我",
+  "我是注释我是注释",
+  "有优惠买的",
+  "有点贵了",
+  "家庭必需品",
+]
+
+[[categories]]
+parent_category = "meal"
+sub_category = "meal_low"
+
+[[categories.details]]
+description = "饭"
+min_cost = 350.0
+max_cost = 600.0
+
+[[categories]]
+parent_category = "meal"
+sub_category = "meal_high"
+
+[[categories.details]]
+description = "醉碳花"
+min_cost = 75.0
+max_cost = 90.0
+
+[[categories.details]]
+description = "德克士"
+min_cost = 80.0
+max_cost = 120.0
+
+[[categories.details]]
+description = "火锅自助"
+min_cost = 60.0
+max_cost = 120.0
+
+[[categories]]
+parent_category = "meal"
+sub_category = "meal_drinks"
+
+[[categories.details]]
+description = "蜜雪冰城"
+min_cost = 30.0
+max_cost = 120.0
+
+[[categories.details]]
+description = "无糖饮料"
+min_cost = 80.0
+max_cost = 120.0
+
+[[categories]]
+parent_category = "meal"
+sub_category = "meal_snacks"
+
+[[categories.details]]
+description = "蛋挞"
+min_cost = 15.0
+max_cost = 50.0
+
+[[categories.details]]
+description = "冰激凌"
+min_cost = 20.0
+max_cost = 120.0
+
+[[categories]]
+parent_category = "meal"
+sub_category = "meal_fruits"
+
+[[categories.details]]
+description = "菠萝"
+min_cost = 40.0
+max_cost = 50.0
+
+[[categories.details]]
+description = "西瓜"
+min_cost = 20.0
+max_cost = 40.0
+
+[[categories]]
+parent_category = "fitness"
+sub_category = "fitness_diet"
+
+[[categories.details]]
+description = "牛奶"
+min_cost = 30.0
+max_cost = 60.0
+
+[[categories.details]]
+description = "蛋白粉"
+min_cost = 100.0
+max_cost = 200.0
+
+[[categories.details]]
+description = "复合维生素"
+min_cost = 30.0
+max_cost = 60.0
+
+[[categories]]
+parent_category = "pet"
+sub_category = "pet_tortoises"
+
+[[categories.details]]
+description = "小青"
+min_cost = 25.0
+max_cost = 60.0
+
+[[categories.details]]
+description = "南石"
+min_cost = 10.0
+max_cost = 15.0
+
+[[categories.details]]
+description = "红耳龟"
+min_cost = 5.0
+max_cost = 10.0
+
+[[categories]]
+parent_category = "purchase"
+sub_category = "purchase_toys"
+
+[[categories.details]]
+description = "手办"
+min_cost = 25.0
+max_cost = 60.0
+
+[[categories.details]]
+description = "勋章"
+min_cost = 5.0
+max_cost = 15.0
+
+[[categories]]
+parent_category = "purchase"
+sub_category = "purchase_clothes"
+
+[[categories.details]]
+description = "衣服"
+min_cost = 25.0
+max_cost = 40.0
+
+[[categories]]
+parent_category = "daily"
+sub_category = "daily_fees"
+
+[[categories.details]]
+description = "哈喽"
+min_cost = 25.0
+max_cost = 30.0
+
+[[categories]]
+parent_category = "daily"
+sub_category = "daily_consumables"
+
+[[categories.details]]
+description = "牙膏"
+min_cost = 5.0
+max_cost = 10.0
+
+[[categories]]
+parent_category = "income"
+sub_category = "income_salary"
+
+[[categories.details]]
+description = "工资"
+min_cost = 8000.0
+max_cost = 15000.0
+
+[[categories]]
+parent_category = "web"
+sub_category = "web_services"
+
+[[categories.details]]
+description = "迅雷"
+min_cost = 25.0
+max_cost = 30.0
+
+[[categories.details]]
+description = "迷雾"
+min_cost = 40.1
+max_cost = 40.7
+
+[[categories]]
+parent_category = "web"
+sub_category = "web_games"
+
+[[categories.details]]
+description = "原神月卡"
+min_cost = 30.0
+max_cost = 35.0
+
+[[categories.details]]
+description = "皇室战争通行证"
+min_cost = 65.0
+max_cost = 70.0

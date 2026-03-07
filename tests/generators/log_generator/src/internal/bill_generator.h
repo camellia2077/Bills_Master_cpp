@@ -5,11 +5,12 @@
 #include <string>
 #include <vector>
 
-#include <nlohmann/json.hpp>
+#include "config_io.h"
 
 class BillGenerator {
  public:
-  BillGenerator(nlohmann::json categories, double comment_probability,
+  BillGenerator(std::vector<GeneratorCategoryConfig> categories,
+                double comment_probability,
                 std::vector<std::string> comments);
   auto generate_bill_content(int year, int month) const -> std::string;
 
@@ -17,7 +18,7 @@ class BillGenerator {
   auto random_double(double min, double max) const -> double;
   auto random_int(int min, int max) const -> int;
 
-  nlohmann::json categories_;
+  std::vector<GeneratorCategoryConfig> categories_;
   double comment_probability_ = 0.0;
   std::vector<std::string> comments_;
   mutable std::mt19937 random_engine_;

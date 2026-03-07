@@ -83,7 +83,7 @@ def resolve_generator_config(explicit_path: str) -> Path:
         / "build_debug"
         / "bin"
         / "config"
-        / "config.json"
+        / "config.toml"
     )
     require(default_path.is_file(), f"default generator config not found: {default_path}")
     return default_path
@@ -115,7 +115,7 @@ def run_cli_tests(generator_path: Path, config_path: Path) -> dict:
 
     with tempfile.TemporaryDirectory(prefix="log_generator_cli_") as temp_dir:
         runtime_dir = Path(temp_dir)
-        shutil.copy2(config_path, runtime_dir / "config.json")
+        shutil.copy2(config_path, runtime_dir / "config.toml")
 
         run_case(
             "help",
@@ -265,7 +265,7 @@ def main() -> int:
     parser.add_argument(
         "--config",
         default="",
-        help="Path to config.json. Defaults to build_debug/bin/config/config.json.",
+        help="Path to config.toml. Defaults to build_debug/bin/config/config.toml.",
     )
     parser.add_argument(
         "--summary",

@@ -13,6 +13,7 @@
 #include "internal/utils.h"
 
 auto main(int argc, char* argv[]) -> int {
+  constexpr char kGeneratorConfigName[] = "config.toml";
   const ProgramOptions options = parse_arguments(argc, argv);
   if (options.action == Action::SHOW_HELP) {
     show_help(argv[0]);
@@ -32,7 +33,7 @@ auto main(int argc, char* argv[]) -> int {
 
   GeneratorConfigData config_data;
   std::string error_message;
-  if (!load_generator_config("config.json", config_data, error_message)) {
+  if (!load_generator_config(kGeneratorConfigName, config_data, error_message)) {
     std::cerr << "Error: " << error_message << std::endl;
     return 1;
   }

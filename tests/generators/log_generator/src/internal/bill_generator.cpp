@@ -6,7 +6,8 @@
 #include <sstream>
 #include <utility>
 
-BillGenerator::BillGenerator(nlohmann::json categories, double comment_probability,
+BillGenerator::BillGenerator(std::vector<GeneratorCategoryConfig> categories,
+                             double comment_probability,
                              std::vector<std::string> comments)
     : categories_(std::move(categories)),
       comment_probability_(comment_probability),
@@ -20,9 +21,10 @@ auto BillGenerator::generate_bill_content(int year, int month) const
          << month << "\n";
   output << "remark:\n\n";
 
-  std::map<std::string, std::vector<nlohmann::json>> grouped_by_parent;
+  std::map<std::string, std::vector<const GeneratorCategoryConfig*>>
+      grouped_by_parent;
   for (const auto& sub_item : categories_) {
-    grouped_by_parent[sub_item["parent_category"]].push_back(sub_item);
+    grouped_by_parent[sub_item.parent_category].push_back(&sub_item);
   }
 
   for (auto parent_iter = grouped_by_parent.begin();
@@ -32,14 +34,9 @@ auto BillGenerator::generate_bill_content(int year, int month) const
     output << parent_name << "\n";
 
     for (const auto& sub_config : sub_items) {
-      output << "\n" << sub_config["sub_category"].get<std::string>() << "\n";
+      output << "\n" << sub_config->sub_category << "\n";
 
-      std::vector<nlohmann::json> details_vector;
-      if (sub_config.contains("details")) {
-        for (const auto& detail_item : sub_config["details"]) {
-          details_vector.push_back(detail_item);
-        }
-      }
+      std::vector<GeneratorDetailConfig> details_vector = sub_config->details;
       if (details_vector.empty()) {
         continue;
       }
@@ -50,7 +47,7 @@ auto BillGenerator::generate_bill_content(int year, int month) const
 
       for (int detail_index = 0; detail_index < generate_count; ++detail_index) {
         const auto& item = details_vector[detail_index];
-        const double cost = random_double(item["min_cost"], item["max_cost"]);
+        const double cost = random_double(item.min_cost, item.max_cost);
         const double adjustment = random_double(-10.0, 10.0);
 
         if (parent_name == "income") {
@@ -69,8 +66,7 @@ auto BillGenerator::generate_bill_content(int year, int month) const
 
         output << std::showpos << std::fixed << std::setprecision(2)
                << adjustment;
-        output << std::noshowpos << " "
-               << item["description"].get<std::string>();
+        output << std::noshowpos << " " << item.description;
 
         if (!comments_.empty() &&
             random_double(0.0, 1.0) < comment_probability_) {

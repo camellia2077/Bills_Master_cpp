@@ -15,8 +15,8 @@ def _resolve_generator_executable(build_bin_dir: Path) -> Path:
 
 def _resolve_generator_config(build_bin_dir: Path, project_dir: Path) -> Path | None:
     candidates = [
-        build_bin_dir / "config" / "config.json",
-        project_dir / "src" / "config" / "config.json",
+        build_bin_dir / "config" / "config.toml",
+        project_dir / "src" / "config" / "config.toml",
     ]
     for candidate in candidates:
         if candidate.exists():
@@ -46,14 +46,14 @@ def run_generate_to_artifact(
 
     config_src = _resolve_generator_config(build_bin_dir, project_dir)
     if config_src is None:
-        print("[ERROR] 未找到 log_generator 配置文件 config.json。")
+        print("[ERROR] 未找到 log_generator 配置文件 config.toml。")
         return 2
 
     run_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     runtime_root = repo_root / "tests" / "output" / "runtime" / output_project
     runtime_run_dir = runtime_root / "runs" / run_id
     runtime_run_dir.mkdir(parents=True, exist_ok=True)
-    replace_path(config_src, runtime_run_dir / "config.json")
+    replace_path(config_src, runtime_run_dir / "config.toml")
 
     run_command(
         [str(generator_exe), "--double", str(start_year), str(end_year)],
