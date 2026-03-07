@@ -1,5 +1,6 @@
-#ifndef REPORTS_STANDARD_JSON_STANDARD_REPORT_JSON_SERIALIZER_HPP
-#define REPORTS_STANDARD_JSON_STANDARD_REPORT_JSON_SERIALIZER_HPP
+// reports/standard_json/standard_report_json_serializer.hpp
+#ifndef REPORTS_STANDARD_JSON_STANDARD_REPORT_JSON_SERIALIZER_H_
+#define REPORTS_STANDARD_JSON_STANDARD_REPORT_JSON_SERIALIZER_H_
 
 #include <string>
 
@@ -13,4 +14,4 @@ class StandardReportJsonSerializer {
   [[nodiscard]] static auto ToString(const StandardReport& report) -> std::string;
 };
 
-#endif  // REPORTS_STANDARD_JSON_STANDARD_REPORT_JSON_SERIALIZER_HPP
+#endif  // REPORTS_STANDARD_JSON_STANDARD_REPORT_JSON_SERIALIZER_H_

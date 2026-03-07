@@ -1,4 +1,4 @@
-// reports/core/ReportExportService.cpp
+// reports/core/report_export_service.cpp
 #include "report_export_service.hpp"
 
 #include <algorithm>
@@ -10,6 +10,8 @@
 #include <utility>
 
 #include "common/common_utils.hpp"
+
+namespace terminal = common::terminal;
 #include "standard_json_latex_renderer.hpp"
 #include "standard_json_markdown_renderer.hpp"
 #if BILLS_CORE_MODULES_ENABLED
@@ -211,7 +213,7 @@ auto ReportExportService::export_yearly_report(const std::string& year_str,
     return true;
   } catch (const std::exception& e) {
     if (!suppress_output) {
-      std::cerr << RED_COLOR << "Query Failed: " << RESET_COLOR << e.what()
+      std::cerr << terminal::kRed << "Query Failed: " << terminal::kReset << e.what()
                 << std::endl;
     }
     return false;
@@ -263,7 +265,7 @@ auto ReportExportService::export_monthly_report(const std::string& month_str,
     return true;
   } catch (const std::exception& e) {
     if (!suppress_output) {
-      std::cerr << RED_COLOR << "Query Failed: " << RESET_COLOR << e.what()
+      std::cerr << terminal::kRed << "Query Failed: " << terminal::kReset << e.what()
                 << std::endl;
     }
     return false;
@@ -283,7 +285,7 @@ auto ReportExportService::export_by_date(const std::string& date_str,
     return export_monthly_report(date_str, format_name, false,
                                  export_pipeline);
   }
-  std::cerr << RED_COLOR << "Error:" << RESET_COLOR
+  std::cerr << terminal::kRed << "Error:" << terminal::kReset
             << " Invalid date format for export: '" << date_str
             << "'. Please use YYYY or YYYY-MM.\n";
   return false;
@@ -297,7 +299,7 @@ auto ReportExportService::export_by_date_range(
   try {
     pipeline = normalize_export_pipeline(export_pipeline);
   } catch (const std::exception& e) {
-    std::cerr << RED_COLOR << "Error:" << RESET_COLOR << " " << e.what()
+    std::cerr << terminal::kRed << "Error:" << terminal::kReset << " " << e.what()
               << "\n";
     return false;
   }
@@ -309,7 +311,7 @@ auto ReportExportService::export_by_date_range(
   if (!parse_iso_month(start_date, start_year, start_month) ||
       !parse_iso_month(end_date, end_year, end_month) ||
       month_key(start_year, start_month) > month_key(end_year, end_month)) {
-    std::cerr << RED_COLOR << "Error:" << RESET_COLOR
+    std::cerr << terminal::kRed << "Error:" << terminal::kReset
               << " Invalid date range. Use YYYY-MM format and ensure start_date "
                  "is not after end_date.\n";
     return false;
@@ -337,7 +339,7 @@ auto ReportExportService::export_by_date_range(
     }
 
     if (months_to_export.empty()) {
-      std::cout << YELLOW_COLOR << "Warning:" << RESET_COLOR
+      std::cout << terminal::kYellow << "Warning:" << terminal::kReset
                 << " No data found within the specified date range.\n";
       return true;
     }
@@ -346,14 +348,14 @@ auto ReportExportService::export_by_date_range(
       std::cout << "Exporting report for " << month << "...";
       if (export_monthly_report(month, format_name, true, pipeline)) {
         stats.success++;
-        std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
+        std::cout << terminal::kGreen << " OK\n" << terminal::kReset;
       } else {
         stats.failure++;
-        std::cout << RED_COLOR << " FAILED\n" << RESET_COLOR;
+        std::cout << terminal::kRed << " FAILED\n" << terminal::kReset;
       }
     }
   } catch (const std::exception& e) {
-    std::cerr << RED_COLOR << "An unexpected error occurred: " << RESET_COLOR
+    std::cerr << terminal::kRed << "An unexpected error occurred: " << terminal::kReset
               << e.what() << std::endl;
     stats.failure++;
   }
@@ -369,7 +371,7 @@ auto ReportExportService::export_all_monthly_reports(
   try {
     pipeline = normalize_export_pipeline(export_pipeline);
   } catch (const std::exception& e) {
-    std::cerr << RED_COLOR << "Error:" << RESET_COLOR << " " << e.what()
+    std::cerr << terminal::kRed << "Error:" << terminal::kReset << " " << e.what()
               << "\n";
     return false;
   }
@@ -381,7 +383,7 @@ auto ReportExportService::export_all_monthly_reports(
     std::vector<std::string> all_months =
         m_report_data_gateway->ListAvailableMonths();
     if (all_months.empty()) {
-      std::cout << YELLOW_COLOR << "Warning: " << RESET_COLOR
+      std::cout << terminal::kYellow << "Warning: " << terminal::kReset
                 << "No data found.\n";
       return true;
     }
@@ -390,14 +392,14 @@ auto ReportExportService::export_all_monthly_reports(
       std::cout << "Exporting report for " << month << "...";
       if (export_monthly_report(month, format_name, true, pipeline)) {
         stats.success++;
-        std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
+        std::cout << terminal::kGreen << " OK\n" << terminal::kReset;
       } else {
         stats.failure++;
-        std::cout << RED_COLOR << " FAILED\n" << RESET_COLOR;
+        std::cout << terminal::kRed << " FAILED\n" << terminal::kReset;
       }
     }
   } catch (const std::exception& e) {
-    std::cerr << RED_COLOR << "\nAn unexpected error occurred: " << RESET_COLOR
+    std::cerr << terminal::kRed << "\nAn unexpected error occurred: " << terminal::kReset
               << e.what() << std::endl;
     return false;
   }
@@ -412,7 +414,7 @@ auto ReportExportService::export_all_yearly_reports(
   try {
     pipeline = normalize_export_pipeline(export_pipeline);
   } catch (const std::exception& e) {
-    std::cerr << RED_COLOR << "Error:" << RESET_COLOR << " " << e.what()
+    std::cerr << terminal::kRed << "Error:" << terminal::kReset << " " << e.what()
               << "\n";
     return false;
   }
@@ -424,7 +426,7 @@ auto ReportExportService::export_all_yearly_reports(
     std::vector<std::string> all_months =
         m_report_data_gateway->ListAvailableMonths();
     if (all_months.empty()) {
-      std::cout << YELLOW_COLOR << "Warning: " << RESET_COLOR
+      std::cout << terminal::kYellow << "Warning: " << terminal::kReset
                 << "No data found.\n";
       return true;
     }
@@ -440,14 +442,14 @@ auto ReportExportService::export_all_yearly_reports(
       std::cout << "Exporting summary for " << year << "...";
       if (export_yearly_report(year, format_name, true, pipeline)) {
         stats.success++;
-        std::cout << GREEN_COLOR << " OK\n" << RESET_COLOR;
+        std::cout << terminal::kGreen << " OK\n" << terminal::kReset;
       } else {
         stats.failure++;
-        std::cout << RED_COLOR << " FAILED\n" << RESET_COLOR;
+        std::cout << terminal::kRed << " FAILED\n" << terminal::kReset;
       }
     }
   } catch (const std::exception& e) {
-    std::cerr << RED_COLOR << "\nAn unexpected error occurred: " << RESET_COLOR
+    std::cerr << terminal::kRed << "\nAn unexpected error occurred: " << terminal::kReset
               << e.what() << std::endl;
     return false;
   }
@@ -462,7 +464,7 @@ auto ReportExportService::export_all_reports(const std::string& format_name,
   try {
     pipeline = normalize_export_pipeline(export_pipeline);
   } catch (const std::exception& e) {
-    std::cerr << RED_COLOR << "Error:" << RESET_COLOR << " " << e.what()
+    std::cerr << terminal::kRed << "Error:" << terminal::kReset << " " << e.what()
               << "\n";
     return false;
   }
@@ -475,12 +477,13 @@ auto ReportExportService::export_all_reports(const std::string& format_name,
 
   if (overall_success) {
     std::cout << "\n"
-              << GREEN_COLOR << "Success: " << RESET_COLOR
+              << terminal::kGreen << "Success: " << terminal::kReset
               << "Full report export completed.\n";
   } else {
     std::cout << "\n"
-              << RED_COLOR << "Failed: " << RESET_COLOR
+              << terminal::kRed << "Failed: " << terminal::kReset
               << "Full report export completed with errors.\n";
   }
   return overall_success;
 }
+

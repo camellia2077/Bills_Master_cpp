@@ -1,6 +1,6 @@
 // reports/formatters/month/md/month_md_config.hpp
-#ifndef MONTH_MD_CONFIG_HPP
-#define MONTH_MD_CONFIG_HPP
+#ifndef REPORTS_FORMATTERS_MONTH_MD_MONTH_MD_CONFIG_H_
+#define REPORTS_FORMATTERS_MONTH_MD_MONTH_MD_CONFIG_H_
 
 #include <string>
 
@@ -35,4 +35,4 @@ struct MonthMdConfig {
   char fill_char = '0';
 };
 
-#endif  // MONTH_MD_CONFIG_HPP
+#endif  // REPORTS_FORMATTERS_MONTH_MD_MONTH_MD_CONFIG_H_

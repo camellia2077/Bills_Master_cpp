@@ -1,6 +1,6 @@
 // reports/formatters/month/rst/month_rst_config.hpp
-#ifndef MONTH_RST_CONFIG_HPP
-#define MONTH_RST_CONFIG_HPP
+#ifndef REPORTS_FORMATTERS_MONTH_RST_MONTH_RST_CONFIG_H_
+#define REPORTS_FORMATTERS_MONTH_RST_MONTH_RST_CONFIG_H_
 
 #include <string>
 
@@ -31,4 +31,4 @@ struct MonthRstConfig {
   int precision = 2;
 };
 
-#endif  // MONTH_RST_CONFIG_HPP
+#endif  // REPORTS_FORMATTERS_MONTH_RST_MONTH_RST_CONFIG_H_

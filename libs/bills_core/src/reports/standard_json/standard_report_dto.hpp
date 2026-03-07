@@ -1,5 +1,6 @@
-#ifndef REPORTS_STANDARD_JSON_STANDARD_REPORT_DTO_HPP
-#define REPORTS_STANDARD_JSON_STANDARD_REPORT_DTO_HPP
+// reports/standard_json/standard_report_dto.hpp
+#ifndef REPORTS_STANDARD_JSON_STANDARD_REPORT_DTO_H_
+#define REPORTS_STANDARD_JSON_STANDARD_REPORT_DTO_H_
 
 #include <string>
 #include <vector>
@@ -52,4 +53,4 @@ struct StandardReport {
   std::vector<StandardMonthlySummaryItem> monthly_summary;
 };
 
-#endif  // REPORTS_STANDARD_JSON_STANDARD_REPORT_DTO_HPP
+#endif  // REPORTS_STANDARD_JSON_STANDARD_REPORT_DTO_H_

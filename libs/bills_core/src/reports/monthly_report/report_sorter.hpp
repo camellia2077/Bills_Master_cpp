@@ -1,6 +1,6 @@
-﻿// reports/monthly_report/ReportSorter.hpp
-#ifndef REPORT_SORTER_HPP
-#define REPORT_SORTER_HPP
+// reports/monthly_report/report_sorter.hpp
+#ifndef REPORTS_MONTHLY_REPORT_REPORT_SORTER_H_
+#define REPORTS_MONTHLY_REPORT_REPORT_SORTER_H_
 
 #include <string>
 #include <vector>
@@ -32,4 +32,4 @@ class ReportSorter {
   sort_report_data(const MonthlyReportData& data);
 };
 
-#endif  // REPORT_SORTER_HPP
+#endif  // REPORTS_MONTHLY_REPORT_REPORT_SORTER_H_

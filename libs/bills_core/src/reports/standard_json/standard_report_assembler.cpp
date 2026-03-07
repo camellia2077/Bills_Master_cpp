@@ -1,3 +1,4 @@
+// reports/standard_json/standard_report_assembler.cpp
 #include "reports/standard_json/standard_report_assembler.hpp"
 
 #include <chrono>
@@ -6,24 +7,25 @@
 #include <sstream>
 
 namespace {
+constexpr int kLastMonthOfYear = 12;
 
-auto now_utc_iso8601() -> std::string {
-  const auto now = std::chrono::system_clock::now();
-  const std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+auto NowUtcIso8601() -> std::string {
+  const auto kNow = std::chrono::system_clock::now();
+  const std::time_t kNowTime = std::chrono::system_clock::to_time_t(kNow);
   std::tm utc_tm {};
-#if defined(_WIN32)
-  gmtime_s(&utc_tm, &now_time);
+#ifdef _WIN32
+  gmtime_s(&utc_tm, &kNowTime);
 #else
-  gmtime_r(&now_time, &utc_tm);
+  gmtime_r(&kNowTime, &utc_tm);
 #endif
   std::ostringstream output;
   output << std::put_time(&utc_tm, "%Y-%m-%dT%H:%M:%SZ");
   return output.str();
 }
 
-auto month_to_text(const int year, const int month) -> std::string {
+auto MonthToText(const int kYear, const int kMonth) -> std::string {
   std::ostringstream output;
-  output << year << "-" << std::setw(2) << std::setfill('0') << month;
+  output << kYear << "-" << std::setw(2) << std::setfill('0') << kMonth;
   return output.str();
 }
 
@@ -33,8 +35,8 @@ auto StandardReportAssembler::FromMonthly(const MonthlyReportData& data)
     -> StandardReport {
   StandardReport report;
   report.report_type = "monthly";
-  report.generated_at_utc = now_utc_iso8601();
-  report.period_start = month_to_text(data.year, data.month);
+  report.generated_at_utc = NowUtcIso8601();
+  report.period_start = MonthToText(data.year, data.month);
   report.period_end = report.period_start;
   report.remark = data.remark;
   report.data_found = data.data_found;
@@ -52,16 +54,16 @@ auto StandardReportAssembler::FromMonthly(const MonthlyReportData& data)
       sub_item.name = sub_name;
       sub_item.subtotal = sub_data.sub_total;
 
-      for (const auto& tx : sub_data.transactions) {
-        StandardTransactionItem tx_item;
-        tx_item.parent_category = tx.parent_category;
-        tx_item.sub_category = tx.sub_category;
-        tx_item.transaction_type = tx.transaction_type;
-        tx_item.description = tx.description;
-        tx_item.source = tx.source;
-        tx_item.comment = tx.comment;
-        tx_item.amount = tx.amount;
-        sub_item.transactions.push_back(std::move(tx_item));
+      for (const auto& transaction : sub_data.transactions) {
+        StandardTransactionItem transaction_item;
+        transaction_item.parent_category = transaction.parent_category;
+        transaction_item.sub_category = transaction.sub_category;
+        transaction_item.transaction_type = transaction.transaction_type;
+        transaction_item.description = transaction.description;
+        transaction_item.source = transaction.source;
+        transaction_item.comment = transaction.comment;
+        transaction_item.amount = transaction.amount;
+        sub_item.transactions.push_back(std::move(transaction_item));
       }
 
       parent_item.sub_categories.push_back(std::move(sub_item));
@@ -77,9 +79,9 @@ auto StandardReportAssembler::FromYearly(const YearlyReportData& data)
     -> StandardReport {
   StandardReport report;
   report.report_type = "yearly";
-  report.generated_at_utc = now_utc_iso8601();
-  report.period_start = month_to_text(data.year, 1);
-  report.period_end = month_to_text(data.year, 12);
+  report.generated_at_utc = NowUtcIso8601();
+  report.period_start = MonthToText(data.year, 1);
+  report.period_end = MonthToText(data.year, kLastMonthOfYear);
   report.data_found = data.data_found;
   report.total_income = data.total_income;
   report.total_expense = data.total_expense;

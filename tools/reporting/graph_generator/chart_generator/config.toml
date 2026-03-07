@@ -1,8 +1,8 @@
 # config.toml
 
 [database]
-# 将此路径修改为您数据库文件的实际位置
-path = 'C:\Computer\my_github\github_cpp\bills_master\my_test\output\bills.sqlite3'
+# 相对路径基于当前 config.toml 所在目录解析
+path = '../../../../tests/output/runtime/bills_tracer/workspace/bills.sqlite3'
 
 [visualization]
 # Matplotlib 使用的字体列表。程序会依次尝试，直到找到可用字体。

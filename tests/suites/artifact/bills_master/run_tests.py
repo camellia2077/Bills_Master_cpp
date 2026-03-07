@@ -17,6 +17,12 @@ from framework._test_internal.preparer import TestPreparer
 from framework._test_internal.tasks import DateExportTasks, ExportTasks, ImportTasks, QueryTasks
 
 SUMMARY_FILENAME = "test_summary.json"
+FORMAT_OUTPUT_SPECS = {
+    "json": ("standard_json", ".json"),
+    "md": ("Markdown_bills", ".md"),
+    "tex": ("LaTeX_bills", ".tex"),
+    "rst": ("reST_bills", ".rst"),
+}
 
 
 def write_summary_file(summary_path: Path, summary_payload: dict) -> None:
@@ -43,6 +49,7 @@ def build_summary(
         "success": success_count,
         "failed": failed_count,
         "note": note,
+        "export_formats": list(config.EXPORT_FORMATS),
     }
 
 
@@ -57,14 +64,14 @@ def resolve_run_output_root(project_output_root: Path) -> Path:
     runtime_output = str(getattr(config, "RUNTIME_OUTPUT_DIR", "")).strip()
     if runtime_output:
         return Path(runtime_output).resolve()
-    return project_output_root
+    return project_output_root / "latest"
 
 
 def resolve_summary_path(project_output_root: Path) -> Path:
     runtime_summary = str(getattr(config, "RUNTIME_SUMMARY_PATH", "")).strip()
     if runtime_summary:
         return Path(runtime_summary).resolve()
-    return project_output_root / SUMMARY_FILENAME
+    return project_output_root / "latest" / SUMMARY_FILENAME
 
 
 def archive_project_outputs(run_output_root: Path, runtime_base_dir: Path) -> None:
@@ -82,6 +89,31 @@ def archive_project_outputs(run_output_root: Path, runtime_base_dir: Path) -> No
         shutil.move(str(source_dir), str(target_dir))
 
 
+def validate_export_outputs(run_output_root: Path) -> list[str]:
+    exported_root = run_output_root / "exported_files"
+    if not exported_root.exists():
+        return [f"missing exported_files directory: {exported_root}"]
+
+    errors: list[str] = []
+    for fmt in config.EXPORT_FORMATS:
+        normalized = str(fmt).strip().lower()
+        folder_name, extension = FORMAT_OUTPUT_SPECS.get(
+            normalized,
+            (f"{normalized}_bills", f".{normalized}"),
+        )
+        format_root = exported_root / folder_name
+        if not format_root.exists():
+            errors.append(f"missing format directory for {normalized}: {format_root}")
+            continue
+
+        matching_files = sorted(path for path in format_root.rglob("*") if path.is_file() and path.suffix.lower() == extension)
+        if not matching_files:
+            errors.append(
+                f"no exported {normalized} files with extension {extension} under {format_root}"
+            )
+    return errors
+
+
 def main():
     if os.name == "nt":
         os.system("color")
@@ -89,7 +121,7 @@ def main():
 
     runtime_base_dir = resolve_runtime_base_dir()
     test_root = str(runtime_base_dir)
-    project_output_root = TEST_ROOT / "output" / config.OUTPUT_PROJECT
+    project_output_root = TEST_ROOT / "output" / "artifact" / config.OUTPUT_PROJECT
     run_output_root = resolve_run_output_root(project_output_root)
     summary_path = resolve_summary_path(project_output_root)
     preparer = TestPreparer(test_root)
@@ -132,6 +164,23 @@ def main():
             runtime_base_dir, preparer, run_output_root
         )
         archive_project_outputs(run_output_root, runtime_base_dir)
+        if final_result:
+            export_errors = validate_export_outputs(run_output_root)
+            summary_payload["validated_export_outputs"] = len(export_errors) == 0
+            if export_errors:
+                final_result = False
+                summary_payload["ok"] = False
+                summary_payload["note"] = "; ".join(export_errors)
+                print(
+                    f"{constants.RED}[FAILED] Export output validation failed:{constants.RESET}"
+                )
+                for error in export_errors:
+                    print(f"  - {error}")
+            else:
+                print(
+                    f"{constants.GREEN}[OK] Export output validation passed for formats: "
+                    f"{', '.join(config.EXPORT_FORMATS)}{constants.RESET}"
+                )
         write_summary_file(summary_path, summary_payload)
         if not final_result:
             sys.exit(1)

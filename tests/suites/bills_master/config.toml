@@ -13,7 +13,7 @@ run_export_all_tasks = true
 ingest_mode = "stepwise"
 ingest_write_json = false
 export_pipeline = "model-first"
-export_formats = ["md"]
+export_formats = ["md", "json", "tex", "rst"]
 output_project = "bills_tracer"
 
 [cleanup]
@@ -28,7 +28,7 @@ dirs_to_delete = [
 ]
 
 [test_dates]
-single_year = "2021"
-single_month = "2022-01"
-range_start = "2024-03"
-range_end = "2024-04"
+single_year = "2025"
+single_month = "2025-01"
+range_start = "2025-03"
+range_end = "2025-04"

@@ -1,6 +1,6 @@
 // reports/formatters/year/base_yearly_report_formatter.hpp
-#ifndef BASE_YEARLY_REPORT_FORMATTER_HPP
-#define BASE_YEARLY_REPORT_FORMATTER_HPP
+#ifndef REPORTS_FORMATTERS_YEAR_BASE_YEARLY_REPORT_FORMATTER_H_
+#define REPORTS_FORMATTERS_YEAR_BASE_YEARLY_REPORT_FORMATTER_H_
 
 #include <iomanip>
 #include <sstream>
@@ -24,4 +24,4 @@ class BaseYearlyReportFormatter : public IYearlyReportFormatter {
   virtual std::string generate_footer(const YearlyReportData& data) const = 0;
 };
 
-#endif  // BASE_YEARLY_REPORT_FORMATTER_HPP
+#endif  // REPORTS_FORMATTERS_YEAR_BASE_YEARLY_REPORT_FORMATTER_H_

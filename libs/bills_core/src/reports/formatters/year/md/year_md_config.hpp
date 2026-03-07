@@ -1,6 +1,6 @@
 // reports/formatters/year/md/year_md_config.hpp
-#ifndef YEAR_MD_CONFIG_HPP
-#define YEAR_MD_CONFIG_HPP
+#ifndef REPORTS_FORMATTERS_YEAR_MD_YEAR_MD_CONFIG_H_
+#define REPORTS_FORMATTERS_YEAR_MD_YEAR_MD_CONFIG_H_
 
 #include <string>
 
@@ -24,4 +24,4 @@ struct YearMdConfig {
   char fill_char = '0';
 };
 
-#endif  // YEAR_MD_CONFIG_HPP
+#endif  // REPORTS_FORMATTERS_YEAR_MD_YEAR_MD_CONFIG_H_

@@ -1,3 +1,4 @@
+// reports/core/standard_json_markdown_renderer.cpp
 #include "standard_json_markdown_renderer.hpp"
 
 #include <algorithm>
@@ -31,31 +32,31 @@ struct MonthlyCategory {
   std::vector<MonthlySubCategory> sub_categories;
 };
 
-auto strip_month_hyphen(const std::string& period_start) -> std::string {
+auto StripMonthHyphen(const std::string& period_start) -> std::string {
   std::string output;
   output.reserve(period_start.size());
-  for (const char ch : period_start) {
-    if (ch != '-') {
-      output.push_back(ch);
+  for (const char kCh : period_start) {
+    if (kCh != '-') {
+      output.push_back(kCh);
     }
   }
   return output;
 }
 
-auto render_monthly(const Json& root) -> std::string {
+auto RenderMonthly(const Json& root) -> std::string {
   const Json& scope = root.at("scope");
   const Json& summary = root.at("summary");
   const Json& items = root.at("items");
 
-  const bool data_found = scope.value("data_found", false);
-  const std::string period_start = scope.value("period_start", "");
-  const std::string remark = scope.value("remark", "");
-  const double total_income = summary.value("total_income", 0.0);
-  const double total_expense = summary.value("total_expense", 0.0);
-  const double balance = summary.value("balance", 0.0);
+  const bool kDataFound = scope.value("data_found", false);
+  const std::string kPeriodStart = scope.value("period_start", "");
+  const std::string kRemark = scope.value("remark", "");
+  const double kTotalIncome = summary.value("total_income", 0.0);
+  const double kTotalExpense = summary.value("total_expense", 0.0);
+  const double kBalance = summary.value("balance", 0.0);
 
-  if (!data_found) {
-    return "未找到 " + period_start + " 的账单记录。";
+  if (!kDataFound) {
+    return "未找到 " + kPeriodStart + " 的账单记录。";
   }
 
   std::vector<MonthlyCategory> categories;
@@ -69,10 +70,10 @@ auto render_monthly(const Json& root) -> std::string {
       sub.name = sub_json.value("name", "");
       sub.subtotal = sub_json.value("subtotal", 0.0);
       for (const auto& tx_json : sub_json.at("transactions")) {
-        MonthlyTransaction tx;
-        tx.amount = tx_json.value("amount", 0.0);
-        tx.description = tx_json.value("description", "");
-        sub.transactions.push_back(std::move(tx));
+        MonthlyTransaction transaction;
+        transaction.amount = tx_json.value("amount", 0.0);
+        transaction.description = tx_json.value("description", "");
+        sub.transactions.push_back(std::move(transaction));
       }
       std::ranges::sort(sub.transactions,
                         [](const MonthlyTransaction& left,
@@ -92,46 +93,47 @@ auto render_monthly(const Json& root) -> std::string {
 
   std::ostringstream output;
   output << std::fixed << std::setprecision(2);
-  output << "\n# DATE:" << strip_month_hyphen(period_start) << "\n";
-  output << "# INCOME:CNY" << total_income << "\n";
-  output << "# EXPENSE:CNY" << total_expense << "\n";
-  output << "# BALANCE:CNY" << balance << "\n";
-  output << "# REMARK:" << remark << "\n";
+  output << "\n# DATE:" << StripMonthHyphen(kPeriodStart) << "\n";
+  output << "# INCOME:CNY" << kTotalIncome << "\n";
+  output << "# EXPENSE:CNY" << kTotalExpense << "\n";
+  output << "# BALANCE:CNY" << kBalance << "\n";
+  output << "# REMARK:" << kRemark << "\n";
 
   for (const auto& category : categories) {
-    const double parent_pct =
-        (total_expense != 0.0) ? std::abs(category.total / total_expense * 100.0)
+    const double kParentPct =
+        (kTotalExpense != 0.0) ? std::abs(category.total / kTotalExpense * 100.0)
                                : 0.0;
     output << "\n# " << category.name << "\n";
     output << "总计:CNY" << category.total << "\n";
-    output << "占比:" << parent_pct << "%\n";
+    output << "占比:" << kParentPct << "%\n";
 
     for (const auto& sub : category.sub_categories) {
-      const double sub_pct =
+      const double kSubPct =
           (category.total != 0.0) ? std::abs(sub.subtotal / category.total * 100.0)
                                   : 0.0;
       output << "\n## " << sub.name << "\n";
-      output << "小计:CNY" << sub.subtotal << "(占比:" << sub_pct << "%)\n";
-      for (const auto& tx : sub.transactions) {
-        output << "- CNY" << tx.amount << " " << tx.description << "\n";
+      output << "小计:CNY" << sub.subtotal << "(占比:" << kSubPct << "%)\n";
+      for (const auto& transaction : sub.transactions) {
+        output << "- CNY" << transaction.amount << " "
+               << transaction.description << "\n";
       }
     }
   }
   return output.str();
 }
 
-auto render_yearly(const Json& root) -> std::string {
+auto RenderYearly(const Json& root) -> std::string {
   const Json& scope = root.at("scope");
   const Json& summary = root.at("summary");
   const Json& items = root.at("items");
 
-  const bool data_found = scope.value("data_found", false);
-  const std::string period_start = scope.value("period_start", "");
-  const std::string year_str =
-      (period_start.size() >= 4U) ? period_start.substr(0U, 4U) : "0000";
+  const bool kDataFound = scope.value("data_found", false);
+  const std::string kPeriodStart = scope.value("period_start", "");
+  const std::string kYearStr =
+      (kPeriodStart.size() >= 4U) ? kPeriodStart.substr(0U, 4U) : "0000";
 
-  if (!data_found) {
-    return "未找到 " + year_str + " 年的账单记录。";
+  if (!kDataFound) {
+    return "未找到 " + kYearStr + " 年的账单记录。";
   }
 
   struct YearlyMonthItem {
@@ -155,21 +157,21 @@ auto render_yearly(const Json& root) -> std::string {
     return left.month < right.month;
   });
 
-  const double total_income = summary.value("total_income", 0.0);
-  const double total_expense = summary.value("total_expense", 0.0);
-  const double balance = summary.value("balance", 0.0);
+  const double kTotalIncome = summary.value("total_income", 0.0);
+  const double kTotalExpense = summary.value("total_expense", 0.0);
+  const double kBalance = summary.value("balance", 0.0);
 
   std::ostringstream output;
   output << std::fixed << std::setprecision(2);
-  output << "\n## " << year_str << "年 总览\n";
-  output << "- **年总收入:** " << total_income << " CNY\n";
-  output << "- **年总支出:** " << total_expense << " CNY\n";
-  output << "- **年终结余:** " << balance << " CNY\n";
+  output << "\n## " << kYearStr << "年 总览\n";
+  output << "- **年总收入:** " << kTotalIncome << " CNY\n";
+  output << "- **年总支出:** " << kTotalExpense << " CNY\n";
+  output << "- **年终结余:** " << kBalance << " CNY\n";
   output << "\n## 每月明细\n\n";
   output << "| 月份 | 收入 (CNY) | 支出 (CNY) | 结余 (CNY) |\n";
   output << "| :--- | :--- | :--- | :--- |\n";
   for (const auto& month_item : months) {
-    output << "| " << year_str << "-" << std::setw(2) << std::setfill('0')
+    output << "| " << kYearStr << "-" << std::setw(2) << std::setfill('0')
            << month_item.month << " | " << month_item.income << " | "
            << month_item.expense << " | " << month_item.balance << " |\n";
   }
@@ -181,13 +183,13 @@ auto render_yearly(const Json& root) -> std::string {
 
 auto StandardJsonMarkdownRenderer::render(const StandardReport& standard_report)
     -> std::string {
-  const Json root = StandardReportJsonSerializer::ToJson(standard_report);
-  const std::string report_type = root.at("meta").value("report_type", "");
-  if (report_type == "monthly") {
-    return render_monthly(root);
+  const Json kRoot = StandardReportJsonSerializer::ToJson(standard_report);
+  const std::string kReportType = kRoot.at("meta").value("report_type", "");
+  if (kReportType == "monthly") {
+    return RenderMonthly(kRoot);
   }
-  if (report_type == "yearly") {
-    return render_yearly(root);
+  if (kReportType == "yearly") {
+    return RenderYearly(kRoot);
   }
 
   throw std::runtime_error("Unsupported report_type in standard report JSON.");
@@ -195,13 +197,13 @@ auto StandardJsonMarkdownRenderer::render(const StandardReport& standard_report)
 
 auto StandardJsonMarkdownRenderer::render(const std::string& standard_report_json)
     -> std::string {
-  const Json root = Json::parse(standard_report_json);
-  const std::string report_type = root.at("meta").value("report_type", "");
-  if (report_type == "monthly") {
-    return render_monthly(root);
+  const Json kRoot = Json::parse(standard_report_json);
+  const std::string kReportType = kRoot.at("meta").value("report_type", "");
+  if (kReportType == "monthly") {
+    return RenderMonthly(kRoot);
   }
-  if (report_type == "yearly") {
-    return render_yearly(root);
+  if (kReportType == "yearly") {
+    return RenderYearly(kRoot);
   }
 
   throw std::runtime_error("Unsupported report_type in standard report JSON.");

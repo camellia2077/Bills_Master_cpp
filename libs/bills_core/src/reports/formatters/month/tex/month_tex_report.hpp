@@ -1,7 +1,7 @@
 // reports/formatters/month/tex/month_tex_report.hpp
 
-#ifndef MONTH_TEX_REPORT_HPP
-#define MONTH_TEX_REPORT_HPP
+#ifndef REPORTS_FORMATTERS_MONTH_TEX_MONTH_TEX_REPORT_H_
+#define REPORTS_FORMATTERS_MONTH_TEX_MONTH_TEX_REPORT_H_
 
 #include <string>
 
@@ -34,4 +34,4 @@ struct MonthTexReport {
   std::string transaction_separator = "---";
 };
 
-#endif  // MONTH_TEX_REPORT_HPP
+#endif  // REPORTS_FORMATTERS_MONTH_TEX_MONTH_TEX_REPORT_H_

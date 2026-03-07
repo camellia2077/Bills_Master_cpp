@@ -1,6 +1,6 @@
 // reports/formatters/month/base_month_report_formatter.hpp
-#ifndef BASE_MONTH_REPORT_FORMATTER_HPP
-#define BASE_MONTH_REPORT_FORMATTER_HPP
+#ifndef REPORTS_FORMATTERS_MONTH_BASE_MONTH_REPORT_FORMATTER_H_
+#define REPORTS_FORMATTERS_MONTH_BASE_MONTH_REPORT_FORMATTER_H_
 
 #include <sstream>
 #include <string>
@@ -74,4 +74,4 @@ class BaseMonthReportFormatter : public IMonthReportFormatter {
   virtual std::string generate_footer(const MonthlyReportData& data) const = 0;
 };
 
-#endif  // BASE_MONTH_REPORT_FORMATTER_HPP
+#endif  // REPORTS_FORMATTERS_MONTH_BASE_MONTH_REPORT_FORMATTER_H_

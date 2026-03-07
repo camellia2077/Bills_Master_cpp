@@ -1,4 +1,4 @@
-﻿// reports/yearly_report/YearlyReportGenerator.cpp
+// reports/yearly_report/yearly_report_generator.cpp
 #include "yearly_report_generator.hpp"
 
 #include <stdexcept>

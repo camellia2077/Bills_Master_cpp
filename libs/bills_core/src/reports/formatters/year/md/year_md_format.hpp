@@ -1,27 +1,29 @@
 // reports/formatters/year/md/year_md_format.hpp
-#ifndef YEAR_MD_FORMAT_HPP
-#define YEAR_MD_FORMAT_HPP
+#ifndef REPORTS_FORMATTERS_YEAR_MD_YEAR_MD_FORMAT_H_
+#define REPORTS_FORMATTERS_YEAR_MD_YEAR_MD_FORMAT_H_
 
 #include "year_md_config.hpp"
 #include "reports/formatters/year/base_yearly_report_formatter.hpp"
 
 class YearMdFormat : public BaseYearlyReportFormatter {
- private:
-  YearMdConfig config;
-
  public:
-  explicit YearMdFormat(const YearMdConfig& config = YearMdConfig());
+  explicit YearMdFormat(YearMdConfig config = YearMdConfig());
 
  protected:
-  std::string get_no_data_message(int year) const override;
-  std::string generate_header(const YearlyReportData& data) const override;
-  std::string generate_summary(const YearlyReportData& data) const override;
-  std::string generate_monthly_breakdown_header() const override;
-  // --- 【核心修改】: 更新函数签名 ---
-  std::string generate_monthly_item(
-      int year, int month, const MonthlySummary& summary) const override;
-  // --- 修改结束 ---
-  std::string generate_footer(const YearlyReportData& data) const override;
+  auto get_no_data_message(int year) const -> std::string override;
+  auto generate_header(const YearlyReportData& data) const
+      -> std::string override;
+  auto generate_summary(const YearlyReportData& data) const
+      -> std::string override;
+  auto generate_monthly_breakdown_header() const -> std::string override;
+  auto generate_monthly_item(int year, int month,
+                             const MonthlySummary& summary) const
+      -> std::string override;
+  auto generate_footer(const YearlyReportData& data) const
+      -> std::string override;
+
+ private:
+  YearMdConfig config;
 };
 
-#endif  // YEAR_MD_FORMAT_HPP
+#endif  // REPORTS_FORMATTERS_YEAR_MD_YEAR_MD_FORMAT_H_

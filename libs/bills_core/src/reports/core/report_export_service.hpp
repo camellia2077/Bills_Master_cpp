@@ -1,6 +1,6 @@
-// reports/core/ReportExportService.hpp
-#ifndef REPORT_EXPORT_SERVICE_HPP
-#define REPORT_EXPORT_SERVICE_HPP
+// reports/core/report_export_service.hpp
+#ifndef REPORTS_CORE_REPORT_EXPORT_SERVICE_H_
+#define REPORTS_CORE_REPORT_EXPORT_SERVICE_H_
 
 #include <map>
 #include <memory>
@@ -59,4 +59,4 @@ class ReportExportService {
   std::unique_ptr<ReportExporter> m_report_exporter;
 };
 
-#endif  // REPORT_EXPORT_SERVICE_HPP
+#endif  // REPORTS_CORE_REPORT_EXPORT_SERVICE_H_

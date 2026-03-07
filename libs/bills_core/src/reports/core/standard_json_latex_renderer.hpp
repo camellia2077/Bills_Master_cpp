@@ -1,5 +1,6 @@
-#ifndef STANDARD_JSON_LATEX_RENDERER_HPP
-#define STANDARD_JSON_LATEX_RENDERER_HPP
+// reports/core/standard_json_latex_renderer.hpp
+#ifndef REPORTS_CORE_STANDARD_JSON_LATEX_RENDERER_H_
+#define REPORTS_CORE_STANDARD_JSON_LATEX_RENDERER_H_
 
 #include <string>
 
@@ -11,4 +12,4 @@ class StandardJsonLatexRenderer {
   static auto render(const std::string& standard_report_json) -> std::string;
 };
 
-#endif  // STANDARD_JSON_LATEX_RENDERER_HPP
+#endif  // REPORTS_CORE_STANDARD_JSON_LATEX_RENDERER_H_

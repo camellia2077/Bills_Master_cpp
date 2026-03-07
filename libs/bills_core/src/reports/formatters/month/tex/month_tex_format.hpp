@@ -1,6 +1,6 @@
 // reports/formatters/month/tex/month_tex_format.hpp
-#ifndef MONTH_TEX_FORMAT_HPP
-#define MONTH_TEX_FORMAT_HPP
+#ifndef REPORTS_FORMATTERS_MONTH_TEX_MONTH_TEX_FORMAT_H_
+#define REPORTS_FORMATTERS_MONTH_TEX_MONTH_TEX_FORMAT_H_
 
 #include "month_tex_report.hpp"
 #include "reports/formatters/month/base_month_report_formatter.hpp"
@@ -26,4 +26,4 @@ class MonthTexFormat : public BaseMonthReportFormatter {
   MonthTexReport m_config;
 };
 
-#endif  // MONTH_TEX_FORMAT_HPP
+#endif  // REPORTS_FORMATTERS_MONTH_TEX_MONTH_TEX_FORMAT_H_

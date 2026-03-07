@@ -1,4 +1,4 @@
-// reports/core/ReportExporter.cpp
+// reports/core/report_exporter.cpp
 #include "report_exporter.hpp"
 
 #include <fstream>
@@ -6,6 +6,8 @@
 #include <stdexcept>
 
 #include "common/common_utils.hpp"  // For color definitions
+
+namespace terminal = common::terminal;
 
 ReportExporter::ReportExporter(
     const std::string& export_base_dir,
@@ -57,7 +59,7 @@ void ReportExporter::export_yearly(const std::string& report_content,
 
   save_report(report_content, output_path);
   std::cout << "\n"
-            << GREEN_COLOR << "Success: " << RESET_COLOR
+            << terminal::kGreen << "Success: " << terminal::kReset
             << "Report also saved to " << output_path.string() << "\n";
 }
 
@@ -81,7 +83,7 @@ void ReportExporter::export_monthly(const std::string& report_content,
 
   save_report(report_content, output_path);
   std::cout << "\n"
-            << GREEN_COLOR << "Success: " << RESET_COLOR
+            << terminal::kGreen << "Success: " << terminal::kReset
             << "Report also saved to " << output_path.string() << "\n";
 }
 
@@ -90,7 +92,7 @@ void ReportExporter::export_yearly_standard_json(
   fs::path target_dir = m_export_base_dir / "standard_json" / "years";
   fs::path output_path = target_dir / (year_str + ".json");
   save_report(report_content, output_path);
-  std::cout << GREEN_COLOR << "Info: " << RESET_COLOR
+  std::cout << terminal::kGreen << "Info: " << terminal::kReset
             << "Standard report JSON saved to " << output_path.string() << "\n";
 }
 
@@ -100,6 +102,7 @@ void ReportExporter::export_monthly_standard_json(
       m_export_base_dir / "standard_json" / "months" / month_str.substr(0, 4);
   fs::path output_path = target_dir / (month_str + ".json");
   save_report(report_content, output_path);
-  std::cout << GREEN_COLOR << "Info: " << RESET_COLOR
+  std::cout << terminal::kGreen << "Info: " << terminal::kReset
             << "Standard report JSON saved to " << output_path.string() << "\n";
 }
+

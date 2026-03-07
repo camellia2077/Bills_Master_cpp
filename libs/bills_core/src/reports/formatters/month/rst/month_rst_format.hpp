@@ -1,6 +1,6 @@
 // reports/formatters/month/rst/month_rst_format.hpp
-#ifndef MONTH_RST_FORMAT_HPP
-#define MONTH_RST_FORMAT_HPP
+#ifndef REPORTS_FORMATTERS_MONTH_RST_MONTH_RST_FORMAT_H_
+#define REPORTS_FORMATTERS_MONTH_RST_MONTH_RST_FORMAT_H_
 
 #include "month_rst_config.hpp"
 #include "reports/formatters/month/base_month_report_formatter.hpp"
@@ -25,4 +25,4 @@ class MonthRstFormat : public BaseMonthReportFormatter {
   MonthRstConfig config;
 };
 
-#endif  // MONTH_RST_FORMAT_HPP
+#endif  // REPORTS_FORMATTERS_MONTH_RST_MONTH_RST_FORMAT_H_

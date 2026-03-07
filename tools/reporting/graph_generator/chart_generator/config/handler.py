@@ -1,5 +1,6 @@
 # chart_generator/config/handler.py
 
+from pathlib import Path
 import tomllib
 
 # [核心修改] AppConfig 类保持不变
@@ -21,18 +22,25 @@ def load_and_validate_config():
     Returns:
         AppConfig: 一个包含已验证配置的对象。
     """
+    config_path = Path(__file__).resolve().parents[1] / "config.toml"
     try:
-        with open("config.toml", "rb") as f:
+        with config_path.open("rb") as f:
             config_data = tomllib.load(f)
     except FileNotFoundError:
-        raise FileNotFoundError("错误: 未在项目根目录找到 config.toml 配置文件。")
+        raise FileNotFoundError(
+            f"错误: 未找到配置文件: {config_path}"
+        )
 
     # 从解析后的 TOML 数据中提取配置
-    db_path = config_data.get("database", {}).get("path")
+    db_path_value = config_data.get("database", {}).get("path")
     font_list = config_data.get("visualization", {}).get("font_list", [])
 
-    if not db_path or not db_path.strip():
+    if not db_path_value or not str(db_path_value).strip():
         raise ValueError("错误: 在 config.toml 中 [database] -> 'path' 的值不能为空。")
-    
-    print("Configuration loaded and validated successfully from config.toml.")
-    return AppConfig(db_path, font_list)
+
+    db_path = Path(str(db_path_value).strip())
+    if not db_path.is_absolute():
+        db_path = (config_path.parent / db_path).resolve()
+
+    print(f"Configuration loaded and validated successfully from {config_path.name}.")
+    return AppConfig(str(db_path), font_list)

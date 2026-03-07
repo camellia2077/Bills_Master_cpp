@@ -1,6 +1,6 @@
-// reports/yearly_report/YearlyReportGenerator.hpp
-#ifndef YEARLY_REPORT_GENERATOR_HPP
-#define YEARLY_REPORT_GENERATOR_HPP
+// reports/yearly_report/yearly_report_generator.hpp
+#ifndef REPORTS_YEARLY_REPORT_YEARLY_REPORT_GENERATOR_H_
+#define REPORTS_YEARLY_REPORT_YEARLY_REPORT_GENERATOR_H_
 
 #include <string>
 
@@ -19,4 +19,4 @@ class YearlyReportGenerator {
   YearlyReportFormatterProvider* formatter_provider_;
 };
 
-#endif  // YEARLY_REPORT_GENERATOR_HPP
+#endif  // REPORTS_YEARLY_REPORT_YEARLY_REPORT_GENERATOR_H_

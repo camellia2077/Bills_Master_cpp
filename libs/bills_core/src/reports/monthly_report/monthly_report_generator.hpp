@@ -1,6 +1,6 @@
-// reports/monthly_report/MonthlyReportGenerator.hpp
-#ifndef MONTHLY_REPORT_GENERATOR_HPP
-#define MONTHLY_REPORT_GENERATOR_HPP
+// reports/monthly_report/monthly_report_generator.hpp
+#ifndef REPORTS_MONTHLY_REPORT_MONTHLY_REPORT_GENERATOR_H_
+#define REPORTS_MONTHLY_REPORT_MONTHLY_REPORT_GENERATOR_H_
 
 #include <string>
 
@@ -19,4 +19,4 @@ class MonthlyReportGenerator {
   MonthReportFormatterProvider* formatter_provider_;
 };
 
-#endif  // MONTHLY_REPORT_GENERATOR_HPP
+#endif  // REPORTS_MONTHLY_REPORT_MONTHLY_REPORT_GENERATOR_H_

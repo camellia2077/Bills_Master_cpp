@@ -1,6 +1,6 @@
 // reports/formatters/year/tex/yearly_tex_config.hpp
-#ifndef YEARLY_TEX_CONFIG_HPP
-#define YEARLY_TEX_CONFIG_HPP
+#ifndef REPORTS_FORMATTERS_YEAR_TEX_YEARLY_TEX_CONFIG_H_
+#define REPORTS_FORMATTERS_YEAR_TEX_YEARLY_TEX_CONFIG_H_
 
 #include <string>
 
@@ -30,4 +30,4 @@ struct YearlyTexConfig {
   // --- 结束 ---
 };
 
-#endif  // YEARLY_TEX_CONFIG_HPP
+#endif  // REPORTS_FORMATTERS_YEAR_TEX_YEARLY_TEX_CONFIG_H_

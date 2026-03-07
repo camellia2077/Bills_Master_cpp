@@ -1,28 +1,30 @@
 // reports/formatters/month/md/month_md_format.hpp
-#ifndef MONTH_MD_FORMAT_HPP
-#define MONTH_MD_FORMAT_HPP
+#ifndef REPORTS_FORMATTERS_MONTH_MD_MONTH_MD_FORMAT_H_
+#define REPORTS_FORMATTERS_MONTH_MD_MONTH_MD_FORMAT_H_
 
 #include "month_md_config.hpp"
 #include "reports/formatters/month/base_month_report_formatter.hpp"
 
-// 2. Inherit from the new base class
 class MonthMdFormat : public BaseMonthReportFormatter {
  public:
-  explicit MonthMdFormat(const MonthMdConfig& config = MonthMdConfig());
+  explicit MonthMdFormat(MonthMdConfig config = MonthMdConfig());
 
  protected:
-  // 3. Implement the pure virtual functions from the base class
-  std::string get_no_data_message(const MonthlyReportData& data) const override;
-  std::string generate_header(const MonthlyReportData& data) const override;
-  std::string generate_summary(const MonthlyReportData& data) const override;
-  std::string generate_body(
+  auto get_no_data_message(const MonthlyReportData& data) const
+      -> std::string override;
+  auto generate_header(const MonthlyReportData& data) const
+      -> std::string override;
+  auto generate_summary(const MonthlyReportData& data) const
+      -> std::string override;
+  auto generate_body(
       const MonthlyReportData& data,
       const std::vector<std::pair<std::string, ParentCategoryData>>&
-          sorted_parents) const override;
-  std::string generate_footer(const MonthlyReportData& data) const override;
+          sorted_parents) const -> std::string override;
+  auto generate_footer(const MonthlyReportData& data) const
+      -> std::string override;
 
  private:
-  MonthMdConfig config;  // Keep the config object
+  MonthMdConfig config;
 };
 
-#endif  // MONTH_MD_FORMAT_HPP
+#endif  // REPORTS_FORMATTERS_MONTH_MD_MONTH_MD_FORMAT_H_

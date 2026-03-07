@@ -1,6 +1,6 @@
 // reports/formatters/year/tex/year_tex_format.hpp
-#ifndef YEAR_TEX_FORMAT_HPP
-#define YEAR_TEX_FORMAT_HPP
+#ifndef REPORTS_FORMATTERS_YEAR_TEX_YEAR_TEX_FORMAT_H_
+#define REPORTS_FORMATTERS_YEAR_TEX_YEAR_TEX_FORMAT_H_
 
 #include "yearly_tex_config.hpp"
 #include "reports/formatters/year/base_yearly_report_formatter.hpp"
@@ -25,4 +25,4 @@ class YearTexFormat : public BaseYearlyReportFormatter {
   std::string generate_footer(const YearlyReportData& data) const override;
 };
 
-#endif  // YEAR_TEX_FORMAT_HPP
+#endif  // REPORTS_FORMATTERS_YEAR_TEX_YEAR_TEX_FORMAT_H_

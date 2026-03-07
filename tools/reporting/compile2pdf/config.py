@@ -23,7 +23,15 @@ _REPO_ROOT = _SCRIPT_DIR.parents[2]
 # 1. 源文件夹的父目录（可用环境变量覆盖）
 SOURCE_DIRECTORY = os.environ.get(
     "BILLS_COMPILE2PDF_SOURCE",
-    str(_REPO_ROOT / "tests" / "output" / "artifact" / "bills_tracer" / "exported_files"),
+    str(
+        _REPO_ROOT
+        / "tests"
+        / "output"
+        / "artifact"
+        / "bills_tracer"
+        / "latest"
+        / "exported_files"
+    ),
 )
 
 # 2. 统一的输出目录（可用环境变量覆盖）

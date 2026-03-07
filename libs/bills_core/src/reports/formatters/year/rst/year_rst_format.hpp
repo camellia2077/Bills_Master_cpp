@@ -1,6 +1,6 @@
 // reports/formatters/year/rst/year_rst_format.hpp
-#ifndef YEAR_RST_FORMAT_HPP
-#define YEAR_RST_FORMAT_HPP
+#ifndef REPORTS_FORMATTERS_YEAR_RST_YEAR_RST_FORMAT_H_
+#define REPORTS_FORMATTERS_YEAR_RST_YEAR_RST_FORMAT_H_
 
 #include "reports/formatters/year/base_yearly_report_formatter.hpp"
 
@@ -17,4 +17,4 @@ class YearRstFormat : public BaseYearlyReportFormatter {
   std::string generate_footer(const YearlyReportData& data) const override;
 };
 
-#endif  // YEAR_RST_FORMAT_HPP
+#endif  // REPORTS_FORMATTERS_YEAR_RST_YEAR_RST_FORMAT_H_

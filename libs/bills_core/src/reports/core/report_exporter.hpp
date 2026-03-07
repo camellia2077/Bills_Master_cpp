@@ -1,6 +1,6 @@
-// reports/core/ReportExporter.hpp
-#ifndef REPORT_EXPORTER_HPP
-#define REPORT_EXPORTER_HPP
+// reports/core/report_exporter.hpp
+#ifndef REPORTS_CORE_REPORT_EXPORTER_H_
+#define REPORTS_CORE_REPORT_EXPORTER_H_
 
 #include <filesystem>
 #include <map>
@@ -34,4 +34,4 @@ class ReportExporter {
   static std::string get_display_format_name(const std::string& short_name);
 };
 
-#endif  // REPORT_EXPORTER_HPP
+#endif  // REPORTS_CORE_REPORT_EXPORTER_H_

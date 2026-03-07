@@ -1,1 +1,1 @@
-enabled_formats = ["md"]
+enabled_formats = ["md", "json", "tex", "rst"]

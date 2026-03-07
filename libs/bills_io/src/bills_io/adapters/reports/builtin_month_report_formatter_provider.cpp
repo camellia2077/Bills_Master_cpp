@@ -1,3 +1,4 @@
+// bills_io/adapters/reports/builtin_month_report_formatter_provider.cpp
 #include "bills_io/adapters/reports/builtin_month_report_formatter_provider.hpp"
 
 #include <algorithm>
@@ -15,10 +16,10 @@
 #endif
 
 namespace {
-auto normalize_format(std::string format_name) -> std::string {
+auto NormalizeFormat(std::string format_name) -> std::string {
   std::ranges::transform(format_name, format_name.begin(),
-                         [](unsigned char ch) -> char {
-                           return static_cast<char>(std::tolower(ch));
+                         [](unsigned char character) -> char {
+                           return static_cast<char>(std::tolower(character));
                          });
   return format_name;
 }
@@ -26,20 +27,20 @@ auto normalize_format(std::string format_name) -> std::string {
 
 auto BuiltinMonthReportFormatterProvider::CreateFormatter(
     std::string_view format_name) -> std::unique_ptr<IMonthReportFormatter> {
-  const std::string normalized = normalize_format(std::string(format_name));
+  const std::string kNormalized = NormalizeFormat(std::string(format_name));
 
 #if BILLS_FMT_MD_ENABLED
-  if (normalized == "md" || normalized == "markdown") {
+  if (kNormalized == "md" || kNormalized == "markdown") {
     return std::make_unique<MonthMdFormat>();
   }
 #endif
 #if BILLS_FMT_RST_ENABLED
-  if (normalized == "rst") {
+  if (kNormalized == "rst") {
     return std::make_unique<MonthRstFormat>();
   }
 #endif
 #if BILLS_FMT_TEX_ENABLED
-  if (normalized == "tex" || normalized == "latex") {
+  if (kNormalized == "tex" || kNormalized == "latex") {
     return std::make_unique<MonthTexFormat>();
   }
 #endif
