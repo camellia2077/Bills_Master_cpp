@@ -60,8 +60,8 @@
 - 目标：
   - 工具链脚本与业务代码解耦，通过 CLI/子进程边界交互，而非 Python import 直连。
 - 规则：
-  - `tools/build/*` 不得 import `tools.verify.*`。
-  - `tools/verify/*` 不得 import `tools.build.*`（应调用脚本入口）。
+  - `tools/flows/*` 不得 import `tools.verify.*`。
+  - `tools/verify/*` 不得 import `tools.flows.*`（应调用脚本入口）。
   - `tools/*` 不得直接 import `apps.*`、`libs.*`、`tests.*`。
 - 门禁：
   - `python tools/verify/verify.py tools-layer-check`

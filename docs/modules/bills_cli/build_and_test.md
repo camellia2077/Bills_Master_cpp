@@ -13,5 +13,5 @@
 
 ## 失败排查
 
-- 查看 `tests/output/artifact/<project>/test_summary.json`
-- 查看 `tests/output/artifact/<project>/logs/` 细分步骤日志
+- 查看 `tests/output/artifact/<project>/latest/test_summary.json`
+- 查看 `tests/output/artifact/<project>/latest/logs/` 细分步骤日志

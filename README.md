@@ -9,7 +9,7 @@
 - `docs/`：文档中心。
 - `apps/`：产品可执行项目（如 `bills_cli`）。
 - `libs/`：核心库与领域能力（如 `bills_core`）。
-- `tools/`：工程脚本与工具（`verify/`、`build/`）。
+- `tools/`：工程脚本与工具（`toolchain/`、`verify/`、`flows/`）。
 - `tests/`：统一测试资产（`suites/`、`baseline/`、`fixtures/`、`output/`）。
 - `third_party/`：第三方源码与依赖镜像（后续接入）。
 
@@ -25,3 +25,4 @@
 - 目录重构按 `temp/folder-structure.md` 线性推进。
 - `Phase 0` 基线快照已记录在 `temp/phase0_baseline_snapshot.md`。
 - 文档总入口：`docs/README.md`。
+- clang-tidy / toolchain SOP：`docs/toolchain_sop.md`。

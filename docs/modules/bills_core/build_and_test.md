@@ -65,10 +65,10 @@
   - 默认由 TOML runner 执行 `tools/verify/pipelines/log_generator_cli.toml`。
   - 运行时配置文件默认位于 `tests/generators/log_generator/build_debug/bin/config/config.toml`。
 - 生成 log_generator 测试输入（默认落盘到 artifact）：
-  - `python tools/build/log_generator_flow.py generate --mode Debug --start-year 2024 --end-year 2024`
+  - `python tools/flows/log_generator_flow.py generate --mode Debug --start-year 2024 --end-year 2024`
   - 生成命令会将 `config.toml` 复制到独立 runtime 目录后再执行生成器。
 - 显式将 log_generator 数据提升到 fixtures（默认不会覆盖夹具）：
-  - `python tools/build/log_generator_flow.py promote-fixtures`
+  - `python tools/flows/log_generator_flow.py promote-fixtures`
 - 模块模式双通道检查：
   - `python tools/verify/verify.py module-mode-check`
   - 可选参数示例：
@@ -88,12 +88,12 @@
   - `python tools/verify/verify.py bills` 已切到 TOML runner 驱动（命令兼容保持不变）。
   - `python tools/verify/verify.py bills-parallel-smoke` / `report-consistency-gate` 也由 TOML pipeline 编排。
 - Phase 4 收敛说明：
-  - `python tools/build/build_log_generator.py` 为兼容壳层，已改为直接转发 `tools/build/log_generator_flow.py`。
+  - `python tools/flows/build_log_generator.py` 为兼容壳层，已改为直接转发 `tools/flows/log_generator_flow.py`。
   - `promote-fixtures` 为显式步骤，执行记录落在 `tests/output/artifact/log_generator/last_promote.json`。
 - Phase 6 兼容入口下线窗口：
-  - `tools/build/build_then_cli_test.py`、`tools/build/build_log_generator.py` 自 `2026-03-05` 起输出弃用提示。
+  - `tools/flows/build_then_cli_test.py`、`tools/flows/build_log_generator.py` 自 `2026-03-05` 起输出弃用提示。
   - 计划下线日期：`2026-06-30`。
-  - 推荐入口：`python tools/verify/verify.py`（工作流）或 `tools/build/*_flow.py`（底层流程）。
+  - 推荐入口：`python tools/verify/verify.py`（工作流）或 `tools/flows/*_flow.py`（底层流程）。
 - Phase 5（reporting workflow，独立于核心门禁）：
   - compile2pdf：`python tools/verify/verify.py reporting-compile2pdf`
   - graph_generator：`python tools/verify/verify.py reporting-graph`
@@ -103,19 +103,20 @@
 ## 测试结果读取（给 agent）
 
 - 汇总 JSON：
-  - `tests/output/artifact/<project>/test_summary.json`
+  - `tests/output/artifact/<project>/latest/test_summary.json`
   - 关键字段：`ok`、`total`、`success`、`failed`
 - Python 运行日志：
-  - `tests/output/artifact/<project>/test_python_output.log`
+  - `tests/output/artifact/<project>/latest/test_python_output.log`
   - 包含开始时间、结束时间、return code、stdout/stderr。
 - 单次运行产物（并行场景）：
   - `tests/output/artifact/<project>/runs/<run_id>/`
-- 运行时工作区（兼容旧路径镜像）：
+- 运行时工作区：
   - `tests/output/runtime/<project>/workspace`
+  - `tests/output/runtime/<project>/runs/<run_id>/`
 
 ## 失败排查
 
 - 单步骤日志目录：
-  - `tests/output/artifact/<project>/logs/`（latest）
+  - `tests/output/artifact/<project>/latest/logs/`（latest）
   - `tests/output/artifact/<project>/runs/<run_id>/logs/`（run 级）
 - 先看 `test_summary.json` 判定失败步数，再看对应日志文件。

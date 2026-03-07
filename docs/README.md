@@ -38,16 +38,22 @@
 
 ## tools
 
+- `docs/toolchain_sop.md`（clang-tidy / toolchain SOP 主文档）
+- `docs/toolchain_tidy_automation.md`（toolchain Python 代码地图，面向 agent / 维护者）
 - 统一入口（推荐）：
   - `python tools/verify/verify.py`
+  - `python tools/run.py`
   - 构建/测试输出目录模型：
-    - `tests/output/runtime/<project>/workspace`（运行时 exe/dll/config）
-    - `tests/output/artifact/<project>/runs/<run_id>/...`（日志与导出产物）
-    - `tests/output/logic/<project>/...`（逻辑测试与 runner 元数据）
+    - `tests/output/runtime/<project>/workspace`（最新 exe/dll/config）
+    - `tests/output/runtime/<project>/runs/<run_id>/...`（单次运行沙箱与运行期产物）
+    - `tests/output/artifact/<project>/latest/...`（最新 summary/logs/exported_files 快照）
+    - `tests/output/artifact/<project>/runs/<run_id>/...`（单次测试归档）
+    - `tests/output/logic/<project>/...`（流程 runner 元数据）
+- `tools/toolchain/`（统一 Python toolchain 实现，含 tidy SOP 编排）
 - `tests/generators/log_generator/`（测试输入数据生成器）
   - 默认产物：`tests/output/artifact/log_generator/`
   - 默认配置：`tests/generators/log_generator/src/config/config.toml`
-  - 显式同步夹具：`python tools/build/log_generator_flow.py promote-fixtures`
+  - 显式同步夹具：`python tools/flows/log_generator_flow.py promote-fixtures`
 - `tools/reporting/compile2pdf/`（报表产物转 PDF）
 - `tools/reporting/graph_generator/`（报表图表生成）
   - 统一入口（独立 workflow）：
@@ -57,5 +63,5 @@
 
 ## 兼容脚本下线窗口（Phase 6）
 
-- 旧入口 `tools/build/build_then_cli_test.py`、`tools/build/build_log_generator.py` 自 `2026-03-05` 起进入弃用窗口。
-- 计划下线日期：`2026-06-30`（到期后仅保留 `tools/verify/verify.py` 与 `*flow.py` 入口）。
+- 旧入口 `tools/flows/build_then_cli_test.py`、`tools/flows/build_log_generator.py` 自 `2026-03-05` 起进入弃用窗口。
+- 计划下线日期：`2026-06-30`，到期后仅保留 `tools/verify/verify.py` 与 `*flow.py` 入口。

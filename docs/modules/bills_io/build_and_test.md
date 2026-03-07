@@ -14,5 +14,5 @@
 
 ## 失败排查
 
-- 先看 `tests/output/artifact/<project>/test_summary.json`
-- 再看 `tests/output/artifact/<project>/logs/*.log`
+- 先看 `tests/output/artifact/<project>/latest/test_summary.json`
+- 再看 `tests/output/artifact/<project>/latest/logs/*.log`
