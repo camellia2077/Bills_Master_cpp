@@ -11,8 +11,12 @@ class TidyPaths:
     root: Path
     run_root: Path
     raw_root: Path
+    state_root: Path
+    batch_state_dir: Path
     latest_build_log: Path
+    latest_diagnostics_path: Path
     latest_summary: Path
+    latest_state_path: Path
     tasks_dir: Path
     tasks_done_dir: Path
     tasks_manifest: Path
@@ -29,18 +33,23 @@ class TidyPaths:
     compile_commands_path: Path
 
 
-def resolve_tidy_paths(ctx: Context, build_dir_name: str | None = None) -> TidyPaths:
-    normalized_build_dir_name = (build_dir_name or "").strip() or "build_tidy"
+def resolve_tidy_paths(ctx: Context) -> TidyPaths:
     root = ctx.temp_root / "tidy"
     run_root = root / "runs"
     raw_root = root / "raw"
-    build_dir = ctx.repo_root / "apps" / "bills_cli" / normalized_build_dir_name
+    state_root = root / "state"
+    batch_state_dir = state_root / "batches"
+    build_dir = ctx.repo_root / "apps" / "bills_cli" / "build_tidy"
     paths = TidyPaths(
         root=root,
         run_root=run_root,
         raw_root=raw_root,
+        state_root=state_root,
+        batch_state_dir=batch_state_dir,
         latest_build_log=raw_root / "build.log",
+        latest_diagnostics_path=raw_root / "diagnostics.jsonl",
         latest_summary=raw_root / "summary.json",
+        latest_state_path=state_root / "latest.json",
         tasks_dir=root / "tasks",
         tasks_done_dir=root / "tasks_done",
         tasks_manifest=root / "tasks" / "manifest.json",
@@ -60,6 +69,8 @@ def resolve_tidy_paths(ctx: Context, build_dir_name: str | None = None) -> TidyP
         paths.root,
         paths.run_root,
         paths.raw_root,
+        paths.state_root,
+        paths.batch_state_dir,
         paths.tasks_dir,
         paths.tasks_done_dir,
         paths.refresh_dir,

@@ -12,8 +12,11 @@ from ..commands.tidy_fix import run as run_tidy_fix
 from ..commands.tidy_list import run as run_tidy_list
 from ..commands.tidy_loop import run as run_tidy_loop
 from ..commands.tidy_next import run as run_tidy_next
+from ..commands.tidy_recheck import run as run_tidy_recheck
 from ..commands.tidy_refresh import run as run_tidy_refresh
+from ..commands.tidy_scope import run as run_tidy_scope
 from ..commands.tidy_show import run as run_tidy_show
+from ..commands.tidy_status import run as run_tidy_status
 from ..commands.tidy_split import run as run_tidy_split
 from ..commands.verify import run as run_verify
 
@@ -26,7 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     build_parser = subparsers.add_parser(
         "build",
-        help="Forward to existing build helpers under tools/build.",
+        help="Forward to existing build helpers under tools/flows.",
         description=(
             "Build one of the supported targets. "
             "Extra arguments are forwarded to the underlying build entry."
@@ -84,15 +87,40 @@ def build_parser() -> argparse.ArgumentParser:
     )
     format_parser.set_defaults(handler=run_format)
 
+    tidy_scope_parser = subparsers.add_parser(
+        "tidy-scope",
+        help="Show the resolved clang-format/clang-tidy scope.",
+        description="Print the effective source roots, excludes, header filter, and file counts from workflow.toml.",
+    )
+    tidy_scope_parser.add_argument(
+        "--include-optional",
+        action="store_true",
+        help="Include optional roots such as tests/generators/log_generator/src.",
+    )
+    tidy_scope_parser.add_argument(
+        "--show-files",
+        action="store_true",
+        help="Print every resolved file in the current scope.",
+    )
+    tidy_scope_parser.set_defaults(handler=run_tidy_scope)
+
     tidy_parser = subparsers.add_parser(
         "tidy",
         help="Run clang-tidy and capture raw logs.",
         description="Run clang-tidy through the existing bills build helper and capture raw logs for later splitting.",
     )
     tidy_parser.add_argument(
-        "--build-dir",
-        default="build_tidy",
-        help="Build directory name under apps/bills_cli (default: build_tidy).",
+        "--jobs",
+        type=int,
+        default=None,
+        help="Parallel Ninja jobs for full tidy build, e.g. 16.",
+    )
+    tidy_keep_going_group = tidy_parser.add_mutually_exclusive_group()
+    tidy_keep_going_group.add_argument(
+        "--keep-going", dest="keep_going", action="store_true", default=None
+    )
+    tidy_keep_going_group.add_argument(
+        "--no-keep-going", dest="keep_going", action="store_false"
     )
     tidy_parser.add_argument(
         "forwarded",
@@ -218,13 +246,41 @@ def build_parser() -> argparse.ArgumentParser:
     tidy_show_parser.add_argument("--batch-id", required=True)
     tidy_show_parser.set_defaults(handler=run_tidy_show)
 
+    tidy_status_parser = subparsers.add_parser(
+        "tidy-status",
+        help="Show global or per-batch tidy SOP state.",
+        description=(
+            "Read the canonical tidy state and print queue progress, "
+            "phase history, remaining diagnostics, and numbering context."
+        ),
+    )
+    tidy_status_parser.add_argument("--batch-id", default=None)
+    tidy_status_parser.set_defaults(handler=run_tidy_status)
+
     tidy_fix_parser = subparsers.add_parser(
         "tidy-fix",
         help="Run clang-tidy -fix on one batch or explicit paths.",
         description="Apply clang-tidy -fix to the files in a batch or to explicit source paths.",
     )
     tidy_fix_parser.add_argument("--batch-id", default=None)
+    tidy_fix_parser.add_argument(
+        "--checks",
+        nargs="*",
+        default=None,
+        help="Optional clang-tidy check filter used for fix-only passes.",
+    )
     tidy_fix_parser.add_argument("paths", nargs="*")
     tidy_fix_parser.set_defaults(handler=run_tidy_fix)
+
+    tidy_recheck_parser = subparsers.add_parser(
+        "tidy-recheck",
+        help="Run targeted clang-tidy recheck for one batch.",
+        description=(
+            "Run targeted clang-tidy on the batch source files, persist "
+            "structured remaining diagnostics, and refresh batch status."
+        ),
+    )
+    tidy_recheck_parser.add_argument("--batch-id", required=True)
+    tidy_recheck_parser.set_defaults(handler=run_tidy_recheck)
 
     return parser

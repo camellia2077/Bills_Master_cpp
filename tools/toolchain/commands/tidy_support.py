@@ -3,11 +3,16 @@ from __future__ import annotations
 from pathlib import Path
 
 from ..core.context import Context
+from ..core.path_display import display_path
 from ..services.tidy_paths import TidyPaths, resolve_tidy_paths
 from ..services.tidy_queue import max_indices, rewrite_pending_tasks, split_log_to_tasks
 from ..services.tidy_runtime import (
+    copy_build_log_to_run,
     copy_build_log_to_raw,
+    copy_compile_commands_to_run,
     extract_task_source_files,
+    new_tidy_run_dir,
+    write_diagnostics_jsonl,
     write_latest_tidy_summary,
     write_tidy_result,
 )
@@ -18,41 +23,66 @@ from .common import normalize_forwarded_args, resolve_keep_going
 def run_tidy_build(
     ctx: Context,
     *,
-    build_dir_name: str = "build_tidy",
     forwarded: list[str] | None = None,
+    jobs: int | None = None,
     keep_going: bool | None = None,
     stage: str = "tidy",
 ) -> tuple[int, TidyPaths]:
-    if build_dir_name.strip() and build_dir_name.strip() != "build_tidy":
-        print(
-            f"[WARN] bills_tracer tidy currently uses `build_tidy`; "
-            f"requested `{build_dir_name}` will be ignored."
-        )
-
-    paths = resolve_tidy_paths(ctx, "build_tidy")
+    paths = resolve_tidy_paths(ctx)
     command = [
         ctx.python_executable,
-        str(ctx.build_entry("build_bills_master.py")),
+        str(ctx.flow_entry("build_bills_master.py")),
         "tidy",
     ]
     normalized = normalize_forwarded_args(forwarded or [])
+    build_args: list[str] = []
+    effective_jobs = jobs if jobs is not None else ctx.config.tidy.jobs
+    if effective_jobs is not None and effective_jobs > 0:
+        build_args.extend(["-j", str(effective_jobs)])
     if resolve_keep_going(ctx, keep_going):
-        command.extend(["--", "-k", "0", *normalized])
-    else:
-        command.extend(normalized)
+        build_args.extend(["-k", "0"])
+    if build_args or normalized:
+        command.append("--")
+        command.extend([*build_args, *normalized])
 
     result = ctx.process_runner.run(command, cwd=ctx.repo_root)
+    run_dir = new_tidy_run_dir(paths)
     copied = copy_build_log_to_raw(paths)
+    run_log_path = copy_build_log_to_run(paths, run_dir)
+    compile_commands_copy = copy_compile_commands_to_run(paths, run_dir)
+    diagnostics_count = 0
+    if paths.latest_build_log.exists():
+        log_content = paths.latest_build_log.read_text(encoding="utf-8", errors="replace")
+        diagnostics_count = write_diagnostics_jsonl(
+            log_content=log_content,
+            output_path=paths.latest_diagnostics_path,
+        )
+        write_diagnostics_jsonl(
+            log_content=log_content,
+            output_path=run_dir / "raw" / "diagnostics.jsonl",
+        )
     write_latest_tidy_summary(
         paths,
         stage=stage,
         status="ok" if result.returncode == 0 else "failed",
         exit_code=result.returncode,
         extra={
+            "run_id": run_dir.name,
+            "run_dir": str(run_dir),
             "build_dir": str(paths.build_dir),
             "build_log_copied": copied,
+            "run_build_log": (str(run_log_path) if run_log_path is not None else None),
+            "run_compile_commands": (
+                str(compile_commands_copy) if compile_commands_copy is not None else None
+            ),
+            "diagnostics_count": diagnostics_count,
+            "jobs": effective_jobs,
             "keep_going": resolve_keep_going(ctx, keep_going),
         },
+    )
+    (run_dir / "summary.json").write_text(
+        paths.latest_summary.read_text(encoding="utf-8"),
+        encoding="utf-8",
     )
     write_tidy_result(
         ctx,
@@ -75,7 +105,10 @@ def split_captured_log(
     stage: str = "tidy-split",
 ) -> tuple[int, dict]:
     if not paths.latest_build_log.exists():
-        print(f"[ERROR] Missing raw tidy log: {paths.latest_build_log}")
+        print(
+            f"[ERROR] Missing raw tidy log: "
+            f"{display_path(paths.latest_build_log, resolve=True)}"
+        )
         write_latest_tidy_summary(
             paths,
             stage=stage,

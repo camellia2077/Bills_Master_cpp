@@ -1,12 +1,39 @@
 [build]
 default_target = "bills"
 
+[scope]
+default_roots = [
+  "apps/bills_cli/src",
+  "libs/bills_core/src",
+  "libs/bills_io/src",
+]
+optional_roots = [
+  "tests/generators/log_generator/src",
+]
+exclude_segments = [
+  ".git",
+  "build",
+  "build_fast",
+  "build_tidy",
+  "build_debug",
+  "temp",
+]
+header_filter_roots = [
+  "apps/bills_cli/src",
+  "libs/bills_core/src",
+  "libs/bills_io/src",
+]
+
+[verify.windows]
+dll_search_dirs = [
+  "C:/msys64/ucrt64/bin",
+]
+
 [tidy]
 max_lines = 150
 max_diags = 12
 batch_size = 10
-jobs = 0
-parse_workers = 0
+jobs = 16
 full_every = 3
 neighbor_scope = "none"
 keep_going = true
@@ -44,3 +71,28 @@ manual_only = [
   "cppcoreguidelines-pro-type-reinterpret-cast",
   "concurrency-*",
 ]
+
+[tidy.safe_fix_prepass]
+checks = [
+  "modernize-use-nullptr",
+  "modernize-use-override",
+  "modernize-use-using",
+  "modernize-loop-convert",
+  "modernize-raw-string-literal",
+  "readability-braces-around-statements",
+  "readability-else-after-return",
+  "readability-redundant-control-flow",
+  "modernize-use-trailing-return-type",
+  "modernize-use-nodiscard",
+]
+
+[tidy.suppression]
+mode = "suggest_only"
+allowed_checks = [
+  "readability-function-cognitive-complexity",
+  "bugprone-easily-swappable-parameters",
+  "cppcoreguidelines-avoid-magic-numbers",
+]
+
+[tidy.status]
+explain_closed_ranges = true

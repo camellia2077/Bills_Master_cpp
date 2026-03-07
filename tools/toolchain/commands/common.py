@@ -6,9 +6,10 @@ from ..core.context import Context
 
 
 def normalize_forwarded_args(forwarded: list[str]) -> list[str]:
-    if forwarded and forwarded[0] == "--":
-        return forwarded[1:]
-    return list(forwarded)
+    normalized = list(forwarded)
+    while normalized and normalized[0] == "--":
+        normalized = normalized[1:]
+    return normalized
 
 
 def forward_python_entry(
@@ -23,18 +24,6 @@ def forward_python_entry(
     command = [ctx.python_executable, str(entry), *command_args]
     result = ctx.process_runner.run(command, cwd=ctx.repo_root)
     return result.returncode
-
-
-def run_python_command(
-    ctx: Context,
-    command: list[str],
-    *,
-    cwd: Path | None = None,
-) -> int:
-    result = ctx.process_runner.run(command, cwd=ctx.repo_root if cwd is None else cwd)
-    return result.returncode
-
-
 def run_verify_workflow(
     ctx: Context,
     workflow: str,
@@ -51,11 +40,3 @@ def run_verify_workflow(
 
 def resolve_keep_going(ctx: Context, keep_going: bool | None) -> bool:
     return ctx.config.tidy.keep_going if keep_going is None else keep_going
-
-
-def report_unimplemented(command_name: str) -> int:
-    print(
-        f"[TODO] `{command_name}` is reserved by the unified toolchain skeleton "
-        "and will be implemented in a later phase."
-    )
-    return 2

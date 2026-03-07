@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 
 from ..core.context import Context
-from .fix_strategy import resolve_primary_strategy
+from .fix_strategy import summarize_checks
 from .task_sorter import calculate_priority_score
 from .tidy_log_parser import extract_diagnostics, generate_text_summary, group_sections
 from .timestamps import utc_now_iso
@@ -31,6 +31,8 @@ def split_log_to_tasks(
                 max_lines=effective_max_lines,
                 max_diags=effective_max_diags,
                 strategy_cfg=ctx.config.tidy.fix_strategy,
+                safe_fix_patterns=ctx.config.tidy.safe_fix_prepass.checks,
+                suppression_allowed_patterns=ctx.config.tidy.suppression.allowed_checks,
             )
         )
     tasks.sort(key=lambda item: (item["score"], item["size"]))
@@ -77,6 +79,10 @@ def rewrite_pending_tasks(
             "checks": task["checks"],
             "diagnostic_count": len(task["diagnostics"]),
             "primary_fix_strategy": task["primary_fix_strategy"],
+            "safe_fix_checks_present": list(task.get("safe_fix_checks_present", [])),
+            "suppression_candidates_present": list(
+                task.get("suppression_candidates_present", [])
+            ),
             "content_path": _relpath(tasks_dir.parent, task_path),
         }
         manifest_tasks.append(entry)
@@ -88,12 +94,18 @@ def rewrite_pending_tasks(
                 "checks": set(),
                 "files": set(),
                 "primary_fix_strategy": set(),
+                "safe_fix_checks_present": set(),
+                "suppression_candidates_present": set(),
             },
         )
         summary["task_count"] += 1
         summary["checks"].update(task["checks"])
         summary["files"].add(task["source_file"])
         summary["primary_fix_strategy"].add(task["primary_fix_strategy"])
+        summary["safe_fix_checks_present"].update(task.get("safe_fix_checks_present", []))
+        summary["suppression_candidates_present"].update(
+            task.get("suppression_candidates_present", [])
+        )
 
     del batch_summaries
     return write_manifest_from_entries(
@@ -129,6 +141,8 @@ def write_manifest_from_entries(
                 "checks": set(),
                 "files": set(),
                 "primary_fix_strategy": set(),
+                "safe_fix_checks_present": set(),
+                "suppression_candidates_present": set(),
             },
         )
         summary["task_count"] += 1
@@ -139,6 +153,10 @@ def write_manifest_from_entries(
         strategy = str(entry.get("primary_fix_strategy", "")).strip()
         if strategy:
             summary["primary_fix_strategy"].add(strategy)
+        summary["safe_fix_checks_present"].update(entry.get("safe_fix_checks_present", []))
+        summary["suppression_candidates_present"].update(
+            entry.get("suppression_candidates_present", [])
+        )
 
     payload = {
         "generated_at": utc_now_iso(),
@@ -153,6 +171,10 @@ def write_manifest_from_entries(
                 "checks": sorted(item["checks"]),
                 "files": sorted(item["files"]),
                 "primary_fix_strategy": sorted(item["primary_fix_strategy"]),
+                "safe_fix_checks_present": sorted(item["safe_fix_checks_present"]),
+                "suppression_candidates_present": sorted(
+                    item["suppression_candidates_present"]
+                ),
             }
             for batch_id, item in sorted(batch_summaries.items())
         ],
@@ -263,6 +285,8 @@ def _process_section(
     max_lines: int,
     max_diags: int,
     strategy_cfg,
+    safe_fix_patterns: list[str],
+    suppression_allowed_patterns: list[str],
 ) -> list[dict]:
     diagnostics = extract_diagnostics(section_lines)
     if not diagnostics:
@@ -277,6 +301,12 @@ def _process_section(
             return
         source_file = str(batch[0]["file"])
         checks = sorted({str(item["check"]) for item in batch})
+        strategy_summary = summarize_checks(
+            checks,
+            strategy_cfg=strategy_cfg,
+            safe_fix_patterns=safe_fix_patterns,
+            suppression_allowed_patterns=suppression_allowed_patterns,
+        )
         summary = generate_text_summary(batch)
         original_lines: list[str] = []
         for diagnostic in batch:
@@ -296,7 +326,11 @@ def _process_section(
                 "diagnostics": batch,
                 "source_file": source_file,
                 "checks": checks,
-                "primary_fix_strategy": resolve_primary_strategy(checks, strategy_cfg),
+                "primary_fix_strategy": strategy_summary.primary_strategy,
+                "safe_fix_checks_present": strategy_summary.safe_fix_checks_present,
+                "suppression_candidates_present": (
+                    strategy_summary.suppression_candidates_present
+                ),
                 "score": calculate_priority_score(batch, source_file),
             }
         )

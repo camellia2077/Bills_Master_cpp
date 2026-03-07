@@ -21,12 +21,17 @@ def run_format_command(
         print("[ERROR] `clang-format` not found in PATH.")
         return 2
 
-    files = discover_source_files(ctx.repo_root, explicit_paths=explicit_paths)
+    files = discover_source_files(
+        ctx.repo_root,
+        scope_config=ctx.config.scope,
+        explicit_paths=explicit_paths,
+    )
     if not files:
         print("[WARN] No source files matched the format scope.")
         return 0
 
     run_dir = _make_run_dir(ctx.temp_root / "format" / "runs")
+    run_id = run_dir.name
     output_log = run_dir / "output.log"
 
     changed_files: list[str] = []
@@ -58,7 +63,9 @@ def run_format_command(
 
     finished_at = utc_now_iso()
     summary = {
+        "run_id": run_id,
         "ok": len(failed_files) == 0,
+        "status": "ok" if not failed_files else "failed",
         "mode": "check" if check else "apply",
         "checked_files": checked_files,
         "changed_files": changed_files,

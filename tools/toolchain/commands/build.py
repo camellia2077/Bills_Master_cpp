@@ -33,7 +33,7 @@ def run(args, ctx: Context) -> int:
     spec = BUILD_TARGETS[target]
     return forward_python_entry(
         ctx,
-        ctx.build_entry(spec.entry_name),
+        ctx.flow_entry(spec.entry_name),
         forwarded=args.forwarded,
         default_args=spec.default_args,
     )

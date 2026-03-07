@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from ..core.config import TidyFixStrategyConfig
 
 STRATEGY_AUTO_FIX = "auto_fix"
@@ -14,6 +16,13 @@ ALL_STRATEGIES = (
     STRATEGY_MANUAL_ONLY,
 )
 
+
+@dataclass(frozen=True)
+class CheckStrategySummary:
+    primary_strategy: str
+    safe_fix_checks_present: list[str]
+    suppression_candidates_present: list[str]
+
 _PRIMARY_PRIORITY = {
     STRATEGY_MANUAL_ONLY: 4,
     STRATEGY_SAFE_REFACTOR: 3,
@@ -23,13 +32,13 @@ _PRIMARY_PRIORITY = {
 
 
 def resolve_fix_strategy(check_name: str, strategy_cfg: TidyFixStrategyConfig) -> str:
-    if _matches_any(check_name, strategy_cfg.manual_only):
+    if matches_any_pattern(check_name, strategy_cfg.manual_only):
         return STRATEGY_MANUAL_ONLY
-    if _matches_any(check_name, strategy_cfg.auto_fix):
+    if matches_any_pattern(check_name, strategy_cfg.auto_fix):
         return STRATEGY_AUTO_FIX
-    if _matches_any(check_name, strategy_cfg.safe_refactor):
+    if matches_any_pattern(check_name, strategy_cfg.safe_refactor):
         return STRATEGY_SAFE_REFACTOR
-    if _matches_any(check_name, strategy_cfg.nolint_allowed):
+    if matches_any_pattern(check_name, strategy_cfg.nolint_allowed):
         return STRATEGY_NOLINT_ALLOWED
     return STRATEGY_MANUAL_ONLY
 
@@ -41,7 +50,30 @@ def resolve_primary_strategy(checks: list[str], strategy_cfg: TidyFixStrategyCon
     return max(strategies, key=lambda item: _PRIMARY_PRIORITY.get(item, 0))
 
 
-def _matches_any(check_name: str, patterns: list[str]) -> bool:
+def summarize_checks(
+    checks: list[str],
+    *,
+    strategy_cfg: TidyFixStrategyConfig,
+    safe_fix_patterns: list[str],
+    suppression_allowed_patterns: list[str],
+) -> CheckStrategySummary:
+    normalized_checks = [str(check).strip() for check in checks if str(check).strip()]
+    return CheckStrategySummary(
+        primary_strategy=resolve_primary_strategy(normalized_checks, strategy_cfg),
+        safe_fix_checks_present=[
+            check
+            for check in normalized_checks
+            if matches_any_pattern(check, safe_fix_patterns)
+        ],
+        suppression_candidates_present=[
+            check
+            for check in normalized_checks
+            if matches_any_pattern(check, suppression_allowed_patterns)
+        ],
+    )
+
+
+def matches_any_pattern(check_name: str, patterns: list[str]) -> bool:
     for pattern in patterns:
         if _match_pattern(check_name, pattern):
             return True

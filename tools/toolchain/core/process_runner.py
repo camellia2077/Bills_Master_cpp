@@ -4,6 +4,8 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from .path_display import display_command
+
 
 @dataclass(frozen=True)
 class ProcessResult:
@@ -20,7 +22,7 @@ class ProcessRunner:
         cwd: Path,
         check: bool = False,
     ) -> ProcessResult:
-        print(f"==> Running: {' '.join(command)}")
+        print(f"==> Running: {display_command(command)}")
         completed = subprocess.run(command, cwd=cwd, check=False)
         result = ProcessResult(
             command=list(command),

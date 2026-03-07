@@ -36,8 +36,8 @@ class Context:
             process_runner=ProcessRunner(),
         )
 
-    def build_entry(self, relative_path: str) -> Path:
-        return self.tools_root / "build" / relative_path
+    def flow_entry(self, relative_path: str) -> Path:
+        return self.tools_root / "flows" / relative_path
 
     def verify_entry(self) -> Path:
         return self.tools_root / "verify" / "verify.py"

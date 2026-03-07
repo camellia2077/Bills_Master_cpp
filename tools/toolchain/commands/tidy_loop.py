@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 from ..core.context import Context
+from ..core.path_display import display_path
 from ..services.fix_strategy import STRATEGY_AUTO_FIX, STRATEGY_NOLINT_ALLOWED
 from ..services.tidy_paths import resolve_tidy_paths
 from ..services.tidy_queue import load_batch_tasks, next_open_batch
@@ -83,7 +84,10 @@ def run(args, ctx: Context) -> int:
         json.dumps(summary, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-    print(f"--- tidy-loop: summary -> {loop_dir / 'loop_summary.json'}")
+    print(
+        f"--- tidy-loop: summary -> "
+        f"{display_path(loop_dir / 'loop_summary.json', resolve=True)}"
+    )
     if status in {"completed", "stopped_manual"}:
         return 0
     return 1
