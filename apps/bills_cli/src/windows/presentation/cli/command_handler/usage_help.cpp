@@ -1,4 +1,4 @@
-// command_handler/usage_help.cpp
+// windows/presentation/cli/command_handler/usage_help.cpp
 
 #include "usage_help.hpp"
 
@@ -8,8 +8,10 @@
 
 #include "common/common_utils.hpp"  // Required for color codes
 
+namespace terminal = common::terminal;
+
 void print_help(const char* program_name) {
-  std::string command_color = CYAN_COLOR;
+  std::string command_color(terminal::kCyan);
 
   std::println(
       "Bill Master - A command-line tool for processing bill files.\n");
@@ -18,49 +20,49 @@ void print_help(const char* program_name) {
       "[--export-pipeline <legacy|model-first|json-first>]\n",
       program_name);
 
-  std::cout << GREEN_COLOR << "--- Core Commands ---\n" << RESET_COLOR;
+  std::cout << terminal::kGreen << "--- Core Commands ---\n" << terminal::kReset;
 
-  std::println("{}--validate, -v{} <path>", command_color, RESET_COLOR);
+  std::println("{}--validate, -v{} <path>", command_color, terminal::kReset);
   std::println(
       "  Validates the format of one or more bill files at the given path.\n");
 
-  std::println("{}--modify, -m{} <path>", command_color, RESET_COLOR);
+  std::println("{}--modify, -m{} <path>", command_color, terminal::kReset);
   std::println("  Converts bill files to JSON (legacy alias of --convert).\n");
 
-  std::println("{}--convert, -c{} <path>", command_color, RESET_COLOR);
+  std::println("{}--convert, -c{} <path>", command_color, terminal::kReset);
   std::println("  Converts bill files to JSON for persistence.\n");
 
-  std::println("{}--import, -i{} <path>", command_color, RESET_COLOR);
+  std::println("{}--import, -i{} <path>", command_color, terminal::kReset);
   std::println("  Parses and inserts bill data into the database.\n");
 
   std::println("{}--ingest, -I{} <path> [--json|-j]", command_color,
-               RESET_COLOR);
+               terminal::kReset);
   std::println(
       "  Validates, converts, and inserts bill files. Use --json to persist "
       "JSON locally.\n");
 
   // [新增] 添加 full-workflow 的帮助说明
-  std::println("{}--full-workflow, -F{} <path>", command_color, RESET_COLOR);
+  std::println("{}--full-workflow, -F{} <path>", command_color, terminal::kReset);
   std::println(
       "  Runs the full workflow (validate, convert, import) for bill files.\n");
 
-  std::cout << GREEN_COLOR << "--- Query & Export ---\n" << RESET_COLOR;
+  std::cout << terminal::kGreen << "--- Query & Export ---\n" << terminal::kReset;
 
-  std::println("{}--query year, -q y{} <year>", command_color, RESET_COLOR);
+  std::println("{}--query year, -q y{} <year>", command_color, terminal::kReset);
   std::println("  Queries and exports the annual summary.");
   std::println("  Example: {} -q y 2024 --format tex\n", program_name);
 
-  std::println("{}--query month, -q m{} <month>", command_color, RESET_COLOR);
+  std::println("{}--query month, -q m{} <month>", command_color, terminal::kReset);
   std::println("  Queries and exports the monthly details (format: YYYY-MM).");
   std::println("  Example: {} -q m 2024-07\n", program_name);
 
-  std::println("{}--export all, -e a{}", command_color, RESET_COLOR);
+  std::println("{}--export all, -e a{}", command_color, terminal::kReset);
   std::println(
       "  Exports all reports. Use optional --type <month|year> to filter.");
   std::println("  Example: {} -e a --type month --format tex\n", program_name);
 
   std::println("{}--export date, -e d{} <date1> [date2]", command_color,
-               RESET_COLOR);
+               terminal::kReset);
   std::println("  Exports reports for a specific date or date range.");
   std::println(
       "  - Single date: YYYY (all months in year), YYYY-MM (single month).");
@@ -71,7 +73,7 @@ void print_help(const char* program_name) {
   std::println("  Example (range):  {} -e d 2024-04 2024-07 -f md\n",
                program_name);
 
-  std::cout << GREEN_COLOR << "--- Options ---\n" << RESET_COLOR;
+  std::cout << terminal::kGreen << "--- Options ---\n" << terminal::kReset;
 
   std::println("  --format, -f <format>");
   std::println(
@@ -92,7 +94,7 @@ void print_help(const char* program_name) {
       "Defaults to 'model-first'.");
   std::println("    Example: --export-pipeline model-first\n");
 
-  std::cout << GREEN_COLOR << "--- General ---\n" << RESET_COLOR;
+  std::cout << terminal::kGreen << "--- General ---\n" << terminal::kReset;
 
   std::println("  -h, --help");
   std::println("    Shows this help message.");
@@ -100,3 +102,4 @@ void print_help(const char* program_name) {
   std::println("  -V, --version");
   std::println("    Shows the program version.");
 }
+

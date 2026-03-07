@@ -5,6 +5,8 @@
 #include "controllers/app_controller.hpp"
 #include "usage_help.hpp"
 
+namespace terminal = common::terminal;
+
 // 引入所有具体的命令类
 #include <iostream>
 #include <print>
@@ -23,7 +25,7 @@ auto ICommandDeleter::operator()(ICommand* command) const -> void {
 void CommandDispatcher::register_commands(const std::string& format,
                                           const std::string& type_filter,
                                           const std::string& export_pipeline) {
-  auto make_command = []<typename T, typename... Args>(Args&&... args) {
+  auto make_command = []<typename T, typename... Args>(Args&&... args) -> auto {
     return CommandPtr(new T(std::forward<Args>(args)...));
   };
 
@@ -137,12 +139,12 @@ auto CommandDispatcher::run(int argc, char* argv[]) -> int {
 
     // 4. 如果命令未找到
     std::println(stderr, "{}Error: {}Unknown or incomplete command '{}'.\n",
-                 RED_COLOR, RESET_COLOR, command_name);
+                 terminal::kRed, terminal::kReset, command_name);
     print_help(argv[0]);
     return 1;
 
   } catch (const std::exception& e) {
-    std::println(stderr, "\n{}Critical Error: {}{}", RED_COLOR, RESET_COLOR,
+    std::println(stderr, "\n{}Critical Error: {}{}", terminal::kRed, terminal::kReset,
                  e.what());
     return 1;
   }

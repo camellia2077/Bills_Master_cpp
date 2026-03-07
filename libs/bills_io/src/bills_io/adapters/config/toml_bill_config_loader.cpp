@@ -1,4 +1,4 @@
-// adapters/config/TomlBillConfigLoader.cpp
+// bills_io/adapters/config/toml_bill_config_loader.cpp
 
 #include "bills_io/adapters/config/toml_bill_config_loader.hpp"
 

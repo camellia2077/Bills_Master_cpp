@@ -1,4 +1,4 @@
-// adapters/config/TomlConfigProvider.cpp
+// bills_io/adapters/config/toml_config_provider.cpp
 
 #include "bills_io/adapters/config/toml_config_provider.hpp"
 

@@ -1,6 +1,6 @@
-// adapters/serialization/JsonBillSerializer.hpp
-#ifndef JSON_BILL_SERIALIZER_HPP
-#define JSON_BILL_SERIALIZER_HPP
+// adapters/serialization/json_bill_serializer.hpp
+#ifndef ADAPTERS_SERIALIZATION_JSON_BILL_SERIALIZER_H_
+#define ADAPTERS_SERIALIZATION_JSON_BILL_SERIALIZER_H_
 
 #include "ports/bills_serializer.hpp"
 
@@ -11,4 +11,4 @@ class JsonBillSerializer : public BillSerializer {
                  const std::string& file_path) override;
 };
 
-#endif  // JSON_BILL_SERIALIZER_HPP
+#endif  // ADAPTERS_SERIALIZATION_JSON_BILL_SERIALIZER_H_

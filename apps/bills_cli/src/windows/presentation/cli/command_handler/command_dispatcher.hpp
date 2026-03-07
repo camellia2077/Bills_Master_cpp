@@ -1,6 +1,6 @@
-// command_handler/CommandDispatcher.hpp
-#ifndef COMMAND_DISPATCHER_HPP
-#define COMMAND_DISPATCHER_HPP
+// windows/presentation/cli/command_handler/command_dispatcher.hpp
+#ifndef WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMAND_DISPATCHER_H_
+#define WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMAND_DISPATCHER_H_
 
 #include <map>
 #include <memory>
@@ -35,4 +35,4 @@ class CommandDispatcher {
   std::map<std::string, CommandPtr> m_commands;
 };
 
-#endif  // COMMAND_DISPATCHER_HPP
+#endif  // WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMAND_DISPATCHER_H_

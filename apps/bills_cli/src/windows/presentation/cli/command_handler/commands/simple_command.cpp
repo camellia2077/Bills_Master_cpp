@@ -1,4 +1,4 @@
-// command_handler/commands/SimpleCommand.cpp
+// windows/presentation/cli/command_handler/commands/simple_command.cpp
 #include "simple_command.hpp"
 
 #include <stdexcept>

@@ -1,5 +1,6 @@
-#ifndef DOMAIN_BILL_BILL_RECORD_HPP
-#define DOMAIN_BILL_BILL_RECORD_HPP
+// domain/bill/bill_record.hpp
+#ifndef DOMAIN_BILL_BILL_RECORD_H_
+#define DOMAIN_BILL_BILL_RECORD_H_
 
 #include <string>
 #include <vector>
@@ -25,4 +26,4 @@ struct ParsedBill {
   double balance;
 };
 
-#endif  // DOMAIN_BILL_BILL_RECORD_HPP
+#endif  // DOMAIN_BILL_BILL_RECORD_H_

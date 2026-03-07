@@ -1,7 +1,7 @@
-// windows/infrastructure/adapters/db/BillInserter.hpp
+// bills_io/adapters/db/bill_inserter.hpp
 
-#ifndef BILL_INSERTER_HPP
-#define BILL_INSERTER_HPP
+#ifndef BILLS_IO_ADAPTERS_DB_BILL_INSERTER_H_
+#define BILLS_IO_ADAPTERS_DB_BILL_INSERTER_H_
 
 #include <string>
 
@@ -26,5 +26,5 @@ class BillInserter {
   std::string m_db_path;  // 只存储数据库路径，而不是连接句柄
 };
 
-#endif  // BILL_INSERTER_HPP
+#endif  // BILLS_IO_ADAPTERS_DB_BILL_INSERTER_H_
 

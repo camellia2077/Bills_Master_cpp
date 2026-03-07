@@ -15,12 +15,19 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools.toolchain.core.config import load_toolchain_config
+
+
+WORKFLOW_TOML_PATH = REPO_ROOT / "tools" / "toolchain" / "config" / "workflow.toml"
 
 
 def run_build(build_mode: str) -> None:
     command = [
         sys.executable,
-        str(REPO_ROOT / "tools" / "build" / "build_bills_core.py"),
+        str(REPO_ROOT / "tools" / "flows" / "build_bills_core.py"),
         build_mode,
         "--shared",
     ]
@@ -106,7 +113,7 @@ class AbiClient:
         if gpp_path:
             candidates.append(Path(gpp_path).resolve().parent)
 
-        candidates.append(Path("C:/msys64/ucrt64/bin"))
+        candidates.extend(load_windows_dll_search_dirs())
 
         seen: set[str] = set()
         for candidate in candidates:
@@ -120,6 +127,19 @@ class AbiClient:
                 self._dll_dirs.append(os.add_dll_directory(str(candidate)))
             except (FileNotFoundError, OSError):
                 continue
+
+
+def load_windows_dll_search_dirs() -> list[Path]:
+    config = load_toolchain_config(WORKFLOW_TOML_PATH)
+    resolved: list[Path] = []
+    for item in config.verify.windows.dll_search_dirs:
+        candidate = Path(item.strip())
+        if not str(candidate).strip():
+            continue
+        if not candidate.is_absolute():
+            candidate = (WORKFLOW_TOML_PATH.parent / candidate).resolve()
+        resolved.append(candidate)
+    return resolved
 
 
 def require(condition: bool, message: str) -> None:
@@ -214,7 +234,7 @@ def run_fixture_command_tests(
     response_schema_version: int,
     error_code_schema_version: int,
 ) -> None:
-    fixture_config_dir = REPO_ROOT / "tests" / "fixtures" / "config"
+    fixture_config_dir = REPO_ROOT / "tests" / "config"
     require(fixture_config_dir.is_dir(), f"Fixture config dir missing: {fixture_config_dir}")
 
     fixture_txt = select_fixture_txt_path()
@@ -570,7 +590,7 @@ def main() -> int:
     parser.add_argument(
         "--skip-build",
         action="store_true",
-        help="Skip invoking tools/build/build_bills_core.py.",
+        help="Skip invoking tools/flows/build_bills_core.py.",
     )
     parser.add_argument(
         "--smoke-loops",

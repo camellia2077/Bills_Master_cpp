@@ -1,6 +1,6 @@
-// command_handler/commands/interface/ICommand.hpp
-#ifndef I_COMMAND_HPP
-#define I_COMMAND_HPP
+// windows/presentation/cli/command_handler/commands/interface/i_command.hpp
+#ifndef WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMANDS_INTERFACE_I_COMMAND_H_
+#define WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMANDS_INTERFACE_I_COMMAND_H_
 
 #include <string>
 #include <vector>
@@ -21,4 +21,4 @@ class ICommand {
                        AppController& controller) = 0;
 };
 
-#endif  // I_COMMAND_HPP
+#endif  // WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMANDS_INTERFACE_I_COMMAND_H_

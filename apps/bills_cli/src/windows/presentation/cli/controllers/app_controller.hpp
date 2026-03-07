@@ -1,6 +1,6 @@
-// controllers/AppController.hpp
-#ifndef APP_CONTROLLER_HPP
-#define APP_CONTROLLER_HPP
+// windows/presentation/cli/controllers/app_controller.hpp
+#ifndef WINDOWS_PRESENTATION_CLI_CONTROLLERS_APP_CONTROLLER_H_
+#define WINDOWS_PRESENTATION_CLI_CONTROLLERS_APP_CONTROLLER_H_
 
 #include <memory>
 #include <map>
@@ -52,4 +52,4 @@ class AppController {
   std::unique_ptr<ExportController> m_export_controller;
 };
 
-#endif  // APP_CONTROLLER_HPP
+#endif  // WINDOWS_PRESENTATION_CLI_CONTROLLERS_APP_CONTROLLER_H_

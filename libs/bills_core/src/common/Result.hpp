@@ -1,6 +1,6 @@
-// common/result.hpp
-#ifndef RESULT_HPP
-#define RESULT_HPP
+// common/Result.hpp
+#ifndef COMMON_RESULT_H_
+#define COMMON_RESULT_H_
 
 #include <expected>
 #include <string>
@@ -26,4 +26,4 @@ inline auto FormatError(const Error& error) -> std::string {
   return error.context_ + ": " + error.message_;
 }
 
-#endif  // RESULT_HPP
+#endif  // COMMON_RESULT_H_

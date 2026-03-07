@@ -1,6 +1,6 @@
-// command_handler/commands/QueryCommand.hpp
-#ifndef QUERY_COMMAND_HPP
-#define QUERY_COMMAND_HPP
+// windows/presentation/cli/command_handler/commands/query_command.hpp
+#ifndef WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMANDS_QUERY_COMMAND_H_
+#define WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMANDS_QUERY_COMMAND_H_
 
 #include "command_handler/commands/interface/i_command.hpp"
 
@@ -15,4 +15,4 @@ class QueryCommand : public ICommand {
   std::string m_export_pipeline;
 };
 
-#endif  // QUERY_COMMAND_HPP
+#endif  // WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMANDS_QUERY_COMMAND_H_

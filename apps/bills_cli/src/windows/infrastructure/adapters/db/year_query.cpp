@@ -1,4 +1,4 @@
-// windows/infrastructure/adapters/db/YearQuery.cpp
+// windows/infrastructure/adapters/db/year_query.cpp
 
 #include "year_query.hpp"
 

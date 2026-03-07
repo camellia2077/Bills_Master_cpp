@@ -1,4 +1,4 @@
-// adapters/db/SqliteBillRepository.cpp
+// bills_io/adapters/db/sqlite_bill_repository.cpp
 
 #include "sqlite_bill_repository.hpp"
 

@@ -1,7 +1,7 @@
 # ==============================================================================
 #  资源复制目标定义
 # ==============================================================================
-add_custom_target(copy_config ALL
+add_custom_target(copy_config
     COMMAND ${CMAKE_COMMAND} -E remove_directory
     "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/config"
     COMMAND ${CMAKE_COMMAND} -E copy_directory

@@ -1,4 +1,4 @@
-// db_insert/parser/BillJsonParser.cpp
+// db_insert/parser/bill_json_parser.cpp
 
 #include "bill_json_parser.hpp"
 #include <fstream>

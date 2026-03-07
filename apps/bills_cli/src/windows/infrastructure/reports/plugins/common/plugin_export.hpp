@@ -1,5 +1,6 @@
-#ifndef PLUGIN_EXPORT_HPP
-#define PLUGIN_EXPORT_HPP
+// windows/infrastructure/reports/plugins/common/plugin_export.hpp
+#ifndef WINDOWS_INFRASTRUCTURE_REPORTS_PLUGINS_COMMON_PLUGIN_EXPORT_H_
+#define WINDOWS_INFRASTRUCTURE_REPORTS_PLUGINS_COMMON_PLUGIN_EXPORT_H_
 
 #ifdef _WIN32
 #define REPORT_PLUGIN_EXPORT __declspec(dllexport)
@@ -7,4 +8,4 @@
 #define REPORT_PLUGIN_EXPORT __attribute__((visibility("default")))
 #endif
 
-#endif  // PLUGIN_EXPORT_HPP
+#endif  // WINDOWS_INFRASTRUCTURE_REPORTS_PLUGINS_COMMON_PLUGIN_EXPORT_H_

@@ -1,6 +1,6 @@
 // ports/bills_content_reader.hpp
-#ifndef BILL_CONTENT_READER_HPP
-#define BILL_CONTENT_READER_HPP
+#ifndef PORTS_BILLS_CONTENT_READER_H_
+#define PORTS_BILLS_CONTENT_READER_H_
 
 #include <string>
 
@@ -10,4 +10,4 @@ class BillContentReader {
   virtual auto Read(const std::string& file_path) -> std::string = 0;
 };
 
-#endif  // BILL_CONTENT_READER_HPP
+#endif  // PORTS_BILLS_CONTENT_READER_H_

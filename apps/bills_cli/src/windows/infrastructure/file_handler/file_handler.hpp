@@ -1,7 +1,7 @@
-// file_handler/FileHandler.hpp
+// windows/infrastructure/file_handler/file_handler.hpp
 
-#ifndef FILE_HANDLER_HPP
-#define FILE_HANDLER_HPP
+#ifndef WINDOWS_INFRASTRUCTURE_FILE_HANDLER_FILE_HANDLER_H_
+#define WINDOWS_INFRASTRUCTURE_FILE_HANDLER_FILE_HANDLER_H_
 
 #include <filesystem>
 #include <string>
@@ -48,4 +48,4 @@ class FileHandler {
   static void create_directories(const fs::path& dir_path);
 };
 
-#endif  // FILE_HANDLER_HPP
+#endif  // WINDOWS_INFRASTRUCTURE_FILE_HANDLER_FILE_HANDLER_H_

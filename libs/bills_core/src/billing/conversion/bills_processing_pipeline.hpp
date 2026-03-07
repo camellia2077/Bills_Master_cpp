@@ -1,6 +1,6 @@
-// conversion/bills_processing_pipeline.hpp
-#ifndef BILL_PROCESSING_PIPELINE_HPP
-#define BILL_PROCESSING_PIPELINE_HPP
+// billing/conversion/bills_processing_pipeline.hpp
+#ifndef BILLING_CONVERSION_BILLS_PROCESSING_PIPELINE_H_
+#define BILLING_CONVERSION_BILLS_PROCESSING_PIPELINE_H_
 
 #include <memory>
 #include <string>
@@ -33,6 +33,6 @@ class BillProcessingPipeline {
   std::unique_ptr<BillConverter> m_converter;
 };
 
-#endif  // BILL_PROCESSING_PIPELINE_HPP
+#endif  // BILLING_CONVERSION_BILLS_PROCESSING_PIPELINE_H_
 
 

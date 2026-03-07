@@ -1,3 +1,4 @@
+// abi/internal/handlers/validate_handler.cpp
 #include <cstddef>
 #include <exception>
 #include <string>
@@ -25,14 +26,14 @@ using Config = core_abi::Config;
 #endif
 
 auto handle_validate_command(const Json& request) -> std::string {
-  const Json params = request.value("params", Json::object());
-  if (!params.is_object()) {
+  const Json kParams = request.value("params", Json::object());
+  if (!kParams.is_object()) {
     return core_abi::make_response(false, core_abi::error_code::kParamInvalidRequest,
                                    "'params' must be a JSON object.");
   }
 
-  const std::string input_path = params.value("input_path", "");
-  if (input_path.empty()) {
+  const std::string kInputPath = kParams.value("input_path", "");
+  if (kInputPath.empty()) {
     return core_abi::make_response(
         false, core_abi::error_code::kParamInvalidRequest,
         "Validate requires non-empty 'params.input_path'.");
@@ -40,11 +41,11 @@ auto handle_validate_command(const Json& request) -> std::string {
 
   BillConfig validator_config{BillValidationRules{}};
   Config modifier_config{};
-  const std::string config_error =
-      core_abi::read_and_validate_configs(params, validator_config, modifier_config);
-  if (!config_error.empty()) {
+  const std::string kConfigError =
+      core_abi::read_and_validate_configs(kParams, validator_config, modifier_config);
+  if (!kConfigError.empty()) {
     Json data;
-    data["detail"] = config_error;
+    data["detail"] = kConfigError;
     return core_abi::make_response(
         false, core_abi::error_code::kParamInvalidConfig,
         "Failed to load/validate configuration.", std::move(data));
@@ -52,7 +53,7 @@ auto handle_validate_command(const Json& request) -> std::string {
 
   std::vector<fs::path> files;
   try {
-    files = core_abi::list_txt_files(fs::path(input_path));
+    files = core_abi::list_txt_files(fs::path(kInputPath));
   } catch (const std::exception& ex) {
     Json data;
     data["detail"] = ex.what();
@@ -63,7 +64,7 @@ auto handle_validate_command(const Json& request) -> std::string {
 
   if (files.empty()) {
     Json data;
-    data["input_path"] = input_path;
+    data["input_path"] = kInputPath;
     return core_abi::make_response(
         false, core_abi::error_code::kBusinessNoInputFiles,
         "No .txt files found under input_path.", std::move(data));
@@ -79,10 +80,10 @@ auto handle_validate_command(const Json& request) -> std::string {
     Json item;
     item["path"] = file.string();
     try {
-      const std::string content = core_abi::read_text_file(file);
-      const bool ok = pipeline.validate_content(content, file.string());
-      item["ok"] = ok;
-      if (ok) {
+      const std::string kContent = core_abi::read_text_file(file);
+      const bool kOk = pipeline.validate_content(kContent, file.string());
+      item["ok"] = kOk;
+      if (kOk) {
         ++success;
       } else {
         ++failure;
@@ -96,7 +97,7 @@ auto handle_validate_command(const Json& request) -> std::string {
   }
 
   Json data;
-  data["input_path"] = input_path;
+  data["input_path"] = kInputPath;
   data["processed"] = files.size();
   data["success"] = success;
   data["failure"] = failure;

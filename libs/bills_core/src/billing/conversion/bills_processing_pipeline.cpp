@@ -1,4 +1,4 @@
-// conversion/bills_processing_pipeline.cpp
+// billing/conversion/bills_processing_pipeline.cpp
 #include "billing/conversion/bills_processing_pipeline.hpp"
 
 #include "billing/conversion/validator/result/validation_result.hpp"

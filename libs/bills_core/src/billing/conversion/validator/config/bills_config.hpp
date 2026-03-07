@@ -1,6 +1,6 @@
-// conversion/validator/config/bills_config.hpp
-#ifndef BILL_CONFIG_HPP
-#define BILL_CONFIG_HPP
+// billing/conversion/validator/config/bills_config.hpp
+#ifndef BILLING_CONVERSION_VALIDATOR_CONFIG_BILLS_CONFIG_H_
+#define BILLING_CONVERSION_VALIDATOR_CONFIG_BILLS_CONFIG_H_
 
 #include <set>
 #include <string>
@@ -28,4 +28,4 @@ class BillConfig {
   std::set<std::string> all_parent_titles_;
 };
 
-#endif  // BILL_CONFIG_HPP
+#endif  // BILLING_CONVERSION_VALIDATOR_CONFIG_BILLS_CONFIG_H_

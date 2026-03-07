@@ -1,7 +1,7 @@
-// conversion/modifier/processor/bills_content_transformer.hpp
+// billing/conversion/modifier/processor/bills_content_transformer.hpp
 
-#ifndef BILL_CONTENT_TRANSFORMER_HPP
-#define BILL_CONTENT_TRANSFORMER_HPP
+#ifndef BILLING_CONVERSION_MODIFIER_PROCESSOR_BILLS_CONTENT_TRANSFORMER_H_
+#define BILLING_CONVERSION_MODIFIER_PROCESSOR_BILLS_CONTENT_TRANSFORMER_H_
 
 #include <string>
 #include <vector>
@@ -32,6 +32,6 @@ class BillContentTransformer {
       const std::string& str);
 };
 
-#endif  // BILL_CONTENT_TRANSFORMER_HPP
+#endif  // BILLING_CONVERSION_MODIFIER_PROCESSOR_BILLS_CONTENT_TRANSFORMER_H_
 
 

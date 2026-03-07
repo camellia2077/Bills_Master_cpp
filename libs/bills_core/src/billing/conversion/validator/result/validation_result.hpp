@@ -1,6 +1,6 @@
-// conversion/validator/result/validation_result.hpp
-#ifndef VALIDATION_RESULT_HPP
-#define VALIDATION_RESULT_HPP
+// billing/conversion/validator/result/validation_result.hpp
+#ifndef BILLING_CONVERSION_VALIDATOR_RESULT_VALIDATION_RESULT_H_
+#define BILLING_CONVERSION_VALIDATOR_RESULT_VALIDATION_RESULT_H_
 
 #include <string>
 #include <vector>
@@ -44,4 +44,4 @@ class ValidationResult {
   std::vector<std::string> warnings;
 };
 
-#endif  // VALIDATION_RESULT_HPP
+#endif  // BILLING_CONVERSION_VALIDATOR_RESULT_VALIDATION_RESULT_H_

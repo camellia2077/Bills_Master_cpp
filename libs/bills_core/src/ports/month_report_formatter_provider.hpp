@@ -1,5 +1,6 @@
-#ifndef MONTH_REPORT_FORMATTER_PROVIDER_HPP
-#define MONTH_REPORT_FORMATTER_PROVIDER_HPP
+// ports/month_report_formatter_provider.hpp
+#ifndef PORTS_MONTH_REPORT_FORMATTER_PROVIDER_H_
+#define PORTS_MONTH_REPORT_FORMATTER_PROVIDER_H_
 
 #include <memory>
 #include <string_view>
@@ -14,4 +15,4 @@ class MonthReportFormatterProvider {
       -> std::unique_ptr<IMonthReportFormatter> = 0;
 };
 
-#endif  // MONTH_REPORT_FORMATTER_PROVIDER_HPP
+#endif  // PORTS_MONTH_REPORT_FORMATTER_PROVIDER_H_

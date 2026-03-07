@@ -1,6 +1,6 @@
 // application/use_cases/workflow_use_case.hpp
-#ifndef WORKFLOW_USE_CASE_HPP
-#define WORKFLOW_USE_CASE_HPP
+#ifndef APPLICATION_USE_CASES_WORKFLOW_USE_CASE_H_
+#define APPLICATION_USE_CASES_WORKFLOW_USE_CASE_H_
 
 #include <filesystem>
 #include <string>
@@ -43,5 +43,5 @@ class WorkflowUseCase {
   OutputPathBuilder& output_path_builder_;
 };
 
-#endif  // WORKFLOW_USE_CASE_HPP
+#endif  // APPLICATION_USE_CASES_WORKFLOW_USE_CASE_H_
 

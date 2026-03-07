@@ -1,4 +1,4 @@
-// windows/infrastructure/adapters/db/MonthQuery.cpp
+// windows/infrastructure/adapters/db/month_query.cpp
 
 #include "month_query.hpp"
 

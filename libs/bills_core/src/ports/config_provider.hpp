@@ -1,6 +1,6 @@
 // ports/config_provider.hpp
-#ifndef CONFIG_PROVIDER_HPP
-#define CONFIG_PROVIDER_HPP
+#ifndef PORTS_CONFIG_PROVIDER_H_
+#define PORTS_CONFIG_PROVIDER_H_
 
 #include <string>
 
@@ -20,5 +20,5 @@ class ConfigProvider {
       -> Result<ConfigBundle> = 0;
 };
 
-#endif  // CONFIG_PROVIDER_HPP
+#endif  // PORTS_CONFIG_PROVIDER_H_
 

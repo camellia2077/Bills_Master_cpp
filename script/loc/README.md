@@ -1,12 +1,12 @@
-# LOC Scanner (for Agent)
+# LOC Scanner
 
-本目录提供统一的代码行数扫描工具，入口只有一个：
+统一代码行数扫描入口：
 
 - `python script/loc/run.py`
 
-## 1. 基本用法
+## 基本用法
 
-从仓库根目录执行：
+在仓库根目录执行：
 
 ```bash
 python script/loc/run.py --lang <cpp|kt|py|rs> [paths ...] [--over N | --under [N] | --dir-over-files [N]] [--dir-max-depth N] [--log-file <path>]
@@ -14,123 +14,81 @@ python script/loc/run.py --lang <cpp|kt|py|rs> [paths ...] [--over N | --under [
 
 参数说明：
 
-- `--lang`：语言类型，必填，支持 `cpp` / `kt` / `py` / `rs`。
-- `paths`：可选，扫描目录列表，支持相对路径和绝对路径。
-- `--over N`：扫描“大文件”。
-- `--under [N]`：扫描“小文件”；不传 `N` 时使用 TOML 里的默认小文件阈值。
-- `--dir-over-files [N]`：扫描“目录内代码文件数超过 N”的目录；不传 `N` 时使用 TOML 的 `default_dir_over_files`。
-- `--dir-max-depth N`：目录扫描最大深度（相对输入根目录，`0` 表示仅根目录）；仅对 `--dir-over-files` 生效。
-- `-t/--threshold N`：兼容参数，等价 `--over N`。
-- `--log-file`：可选，自定义日志文件路径（相对路径相对 `script/loc/` 目录）。
-- `--config`：可选，指定配置文件路径，默认 `script/loc/scan_lines.toml`。
+- `--lang`：语言类型，必填，支持 `cpp` / `kt` / `py` / `rs`
+- `paths`：可选，扫描目录列表；未传时使用 `scan_lines.toml` 中该语言的 `default_paths`
+- `--over N`：扫描大文件
+- `--under [N]`：扫描小文件；不传 `N` 时使用 TOML 中的 `default_under_threshold`
+- `--dir-over-files [N]`：扫描目录内代码文件数超过 `N` 的目录；不传 `N` 时使用 TOML 中的 `default_dir_over_files`
+- `--dir-max-depth N`：目录扫描最大深度，仅对 `--dir-over-files` 生效
+- `-t/--threshold N`：兼容参数，等价于 `--over N`
+- `--log-file`：自定义日志文件路径；相对路径相对 `script/loc/`
+- `--config`：指定配置文件路径，默认是 `script/loc/scan_lines.toml`
 
-## 2. 默认行为
+## 当前默认配置
 
-如果不传 `paths`，会自动读取 `scan_lines.toml` 中该语言的 `default_paths`：
+`bills_tracer` 当前已配置的默认扫描路径：
 
-- `cpp` -> `apps/tracer_core`
-- `kt` -> `apps/tracer_android`
-- `py` -> `test`, `scripts`
-- `rs` -> `apps/tracer_cli/windows/rust_cli/src`
+- `cpp` -> `apps/bills_cli/src`, `libs/bills_core/src`, `libs/bills_io/src`, `tests/generators/log_generator/src`
+- `py` -> `tools`, `tests`, `script`
 
-目录文件数扫描默认阈值（`--dir-over-files` 不带 `N` 时生效）：
+如果仓库后续新增 Kotlin / Rust 代码，可继续在 `script/loc/scan_lines.toml` 中补对应语言节。
 
-- `cpp` -> `20`（包含声明与实现文件，按 `extensions` 统计）
-- `kt` -> `15`
+当前目录热点扫描默认阈值：
+
+- `cpp` -> `16`
 - `py` -> `10`
-- `rs` -> `12`
 
-如果传多个路径，输出会按路径分段打印（每个路径一个 `[SCAN]` 区块）。
+## 日志输出
 
-## 3. 日志输出
-
-每次执行都会写日志，便于 agent 回看完整输出。
-
-默认日志路径：
+每次执行都会写日志，默认输出到：
 
 - `script/loc/logs/scan_cpp.json`
-- `script/loc/logs/scan_kt.json`
 - `script/loc/logs/scan_py.json`
+- `script/loc/logs/scan_kt.json`
 - `script/loc/logs/scan_rs.json`
 
-可用 `--log-file` 覆盖，例如：
+可通过 `--log-file` 覆盖，例如：
 
 ```bash
 python script/loc/run.py --lang py --under 120 --log-file logs/loc_scan_py.json
 ```
 
-## 4. 常用命令模板（Agent）
+## 常用命令
 
-扫描 Python 大文件（默认路径）：
+扫描 Python 大文件：
 
 ```bash
 python script/loc/run.py --lang py --over 200
 ```
 
-扫描 Kotlin 小文件（默认小文件阈值）：
+扫描 C++ 大文件：
 
 ```bash
-python script/loc/run.py --lang kt --under
+python script/loc/run.py --lang cpp --over 350
 ```
 
-扫描 C++，指定绝对路径：
+扫描多个路径：
 
 ```bash
-python script/loc/run.py --lang cpp "C:/abs/path/to/project" --over 300
+python script/loc/run.py --lang py tests tools --under 80
 ```
 
-扫描多个路径（分开打印）：
+扫描目录热点：
 
 ```bash
-python script/loc/run.py --lang py test scripts --under 80
+python script/loc/run.py --lang py --dir-over-files --dir-max-depth 2
 ```
 
-扫描目录中文件过多的热点目录（按 Python 扩展名过滤）：
-
-```bash
-python script/loc/run.py --lang py --dir-over-files 25 --dir-max-depth 2
-```
-
-扫描目录中文件过多的热点目录（使用语言默认阈值）：
-
-```bash
-python script/loc/run.py --lang py --dir-over-files
-```
-
-Windows 快捷入口（bat 与 `run.py` 同目录）：
-
-```bat
-script\loc\run.py --lang py
-script\loc\run.py --lang kt
-script\loc\run.py --lang cpp
-script\loc\run.py --lang rs
-```
-
-可追加参数透传给 `run.py`，例如：
-
-```bat
-python script\loc\run.py --lang py --dir-over-files --dir-max-depth 2
-```
-
-目录文件数量扫描专用 bat（默认使用 `--dir-over-files`）：
-
-```bat
-python script\loc\run.py --lang py --dir-over-files
-python script\loc\run.py --lang kt --dir-over-files
-python script\loc\run.py --lang cpp --dir-over-files
-python script\loc\run.py --lang rs --dir-over-files
-```
-
-## 5. 配置文件
+## 配置文件
 
 配置文件：`script/loc/scan_lines.toml`
 
-建议只在这里维护：
+建议统一在这里维护：
 
-- 默认扫描路径（`default_paths`）
-- 文件扩展名（`extensions`）
-- 忽略目录和前缀（`ignore_dirs` / `ignore_prefixes`）
-- 默认阈值（`default_over_threshold` / `default_under_threshold`）
-- 目录文件阈值（`default_dir_over_files`）
-- `over_inclusive`（`over` 是否按 `>=`）
-- 目录扫描也复用 `extensions`、`ignore_dirs`、`ignore_prefixes`
+- 默认扫描路径 `default_paths`
+- 文件扩展名 `extensions`
+- 忽略目录 `ignore_dirs`
+- 忽略前缀 `ignore_prefixes`
+- 默认阈值 `default_over_threshold` / `default_under_threshold`
+- 目录热点阈值 `default_dir_over_files`
+- 比较方式 `over_inclusive`

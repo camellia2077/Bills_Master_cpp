@@ -1,6 +1,6 @@
-// controllers/export/ExportController.hpp
-#ifndef EXPORT_CONTROLLER_HPP
-#define EXPORT_CONTROLLER_HPP
+// windows/presentation/cli/controllers/export/export_controller.hpp
+#ifndef WINDOWS_PRESENTATION_CLI_CONTROLLERS_EXPORT_EXPORT_CONTROLLER_H_
+#define WINDOWS_PRESENTATION_CLI_CONTROLLERS_EXPORT_EXPORT_CONTROLLER_H_
 
 #include <map>
 #include <string>
@@ -27,4 +27,4 @@ class ExportController {
   std::map<std::string, std::string> m_format_folder_names;
 };
 
-#endif  // EXPORT_CONTROLLER_HPP
+#endif  // WINDOWS_PRESENTATION_CLI_CONTROLLERS_EXPORT_EXPORT_CONTROLLER_H_

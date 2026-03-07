@@ -1,7 +1,7 @@
-// conversion/modifier/processor/bills_parser.hpp
+// billing/conversion/modifier/processor/bills_parser.hpp
 
-#ifndef BILL_PARSER_HPP
-#define BILL_PARSER_HPP
+#ifndef BILLING_CONVERSION_MODIFIER_PROCESSOR_BILLS_PARSER_H_
+#define BILLING_CONVERSION_MODIFIER_PROCESSOR_BILLS_PARSER_H_
 
 #include <string>
 #include <vector>
@@ -38,6 +38,6 @@ class BillParser {
       const std::string& content_line);
 };
 
-#endif  // BILL_PARSER_HPP
+#endif  // BILLING_CONVERSION_MODIFIER_PROCESSOR_BILLS_PARSER_H_
 
 

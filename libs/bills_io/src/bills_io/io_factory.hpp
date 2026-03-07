@@ -1,5 +1,6 @@
-#ifndef BILLS_IO_IO_FACTORY_HPP
-#define BILLS_IO_IO_FACTORY_HPP
+// bills_io/io_factory.hpp
+#ifndef BILLS_IO_IO_FACTORY_H_
+#define BILLS_IO_IO_FACTORY_H_
 
 #include <functional>
 #include <memory>
@@ -38,4 +39,4 @@ namespace bills::io {
 
 }  // namespace bills::io
 
-#endif  // BILLS_IO_IO_FACTORY_HPP
+#endif  // BILLS_IO_IO_FACTORY_H_

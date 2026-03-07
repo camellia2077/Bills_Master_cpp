@@ -27,10 +27,15 @@ set(SERIALIZATION_SOURCES
 )
 
 set(REPORTS_SOURCES
+    "${REPORTS_DIR}/core/report_export_service.cpp"
+    "${REPORTS_DIR}/core/report_exporter.cpp"
+    "${REPORTS_DIR}/core/standard_json_latex_renderer.cpp"
+    "${REPORTS_DIR}/core/standard_json_markdown_renderer.cpp"
     "${REPORTS_DIR}/standard_json/standard_report_assembler.cpp"
     "${REPORTS_DIR}/standard_json/standard_report_json_serializer.cpp"
     "${REPORTS_DIR}/formatters/month/base_month_report_formatter.cpp"
     "${REPORTS_DIR}/formatters/year/base_yearly_report_formatter.cpp"
+    "${REPORTS_DIR}/monthly_report/report_sorter.cpp"
 )
 
 if(ENABLE_FMT_MD)

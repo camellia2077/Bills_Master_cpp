@@ -1,3 +1,4 @@
+// modules/core_build_info_import_smoke.cpp
 import bill.core.build_info;
 
 namespace {

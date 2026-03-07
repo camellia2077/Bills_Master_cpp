@@ -19,13 +19,13 @@ using Json = abi::Json;
 
 }  // namespace
 
-const char* bills_core_get_abi_version() { return abi::constants::kAbiVersion; }
+auto bills_core_get_abi_version() -> const char* { return abi::constants::kAbiVersion; }
 
-const char* bills_core_get_capabilities_json() {
+auto bills_core_get_capabilities_json() -> const char* {
   return abi::allocate_owned_string(abi::make_capabilities_json());
 }
 
-const char* bills_core_invoke_json(const char* request_json_utf8) {
+auto bills_core_invoke_json(const char* request_json_utf8) -> const char* {
   if (request_json_utf8 == nullptr) {
     return abi::allocate_owned_string(
         abi::make_response(false, abi::error_code::kParamInvalidArgument,

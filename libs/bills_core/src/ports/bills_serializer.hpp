@@ -1,6 +1,6 @@
 // ports/bills_serializer.hpp
-#ifndef BILL_SERIALIZER_HPP
-#define BILL_SERIALIZER_HPP
+#ifndef PORTS_BILLS_SERIALIZER_H_
+#define PORTS_BILLS_SERIALIZER_H_
 
 #include <string>
 
@@ -14,6 +14,6 @@ class BillSerializer {
                          const std::string& file_path) = 0;
 };
 
-#endif  // BILL_SERIALIZER_HPP
+#endif  // PORTS_BILLS_SERIALIZER_H_
 
 

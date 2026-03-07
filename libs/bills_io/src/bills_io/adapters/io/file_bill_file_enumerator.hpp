@@ -1,5 +1,6 @@
-#ifndef BILLS_IO_FILE_BILL_FILE_ENUMERATOR_HPP
-#define BILLS_IO_FILE_BILL_FILE_ENUMERATOR_HPP
+// bills_io/adapters/io/file_bill_file_enumerator.hpp
+#ifndef BILLS_IO_ADAPTERS_IO_FILE_BILL_FILE_ENUMERATOR_H_
+#define BILLS_IO_ADAPTERS_IO_FILE_BILL_FILE_ENUMERATOR_H_
 
 #include "ports/bills_file_enumerator.hpp"
 
@@ -10,4 +11,4 @@ class FileBillFileEnumerator : public BillFileEnumerator {
       -> std::vector<std::filesystem::path> override;
 };
 
-#endif  // BILLS_IO_FILE_BILL_FILE_ENUMERATOR_HPP
+#endif  // BILLS_IO_ADAPTERS_IO_FILE_BILL_FILE_ENUMERATOR_H_

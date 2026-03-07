@@ -1,6 +1,6 @@
-// adapters/config/TomlModifierConfigLoader.hpp
-#ifndef TOML_MODIFIER_CONFIG_LOADER_HPP
-#define TOML_MODIFIER_CONFIG_LOADER_HPP
+// bills_io/adapters/config/toml_modifier_config_loader.hpp
+#ifndef BILLS_IO_ADAPTERS_CONFIG_TOML_MODIFIER_CONFIG_LOADER_H_
+#define BILLS_IO_ADAPTERS_CONFIG_TOML_MODIFIER_CONFIG_LOADER_H_
 
 #include <toml++/toml.hpp>
 
@@ -11,4 +11,4 @@ class TomlModifierConfigLoader {
   static auto Load(const toml::table& config_toml) -> Config;
 };
 
-#endif  // TOML_MODIFIER_CONFIG_LOADER_HPP
+#endif  // BILLS_IO_ADAPTERS_CONFIG_TOML_MODIFIER_CONFIG_LOADER_H_

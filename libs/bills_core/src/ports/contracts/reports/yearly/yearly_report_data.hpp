@@ -1,5 +1,6 @@
-#ifndef PORTS_CONTRACTS_REPORTS_YEARLY_YEARLY_REPORT_DATA_HPP
-#define PORTS_CONTRACTS_REPORTS_YEARLY_YEARLY_REPORT_DATA_HPP
+// ports/contracts/reports/yearly/yearly_report_data.hpp
+#ifndef PORTS_CONTRACTS_REPORTS_YEARLY_YEARLY_REPORT_DATA_H_
+#define PORTS_CONTRACTS_REPORTS_YEARLY_YEARLY_REPORT_DATA_H_
 
 #include <map>
 
@@ -19,4 +20,4 @@ struct YearlyReportData {
   std::map<int, MonthlySummary> monthly_summary;
 };
 
-#endif  // PORTS_CONTRACTS_REPORTS_YEARLY_YEARLY_REPORT_DATA_HPP
+#endif  // PORTS_CONTRACTS_REPORTS_YEARLY_YEARLY_REPORT_DATA_H_

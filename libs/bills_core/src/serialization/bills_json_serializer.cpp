@@ -5,6 +5,7 @@
 #include <cctype>
 #include <fstream>
 #include <iomanip>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
@@ -13,6 +14,17 @@
 namespace {
 constexpr int kIndentSpaces = 4;
 constexpr int kMoneyPrecision = 2;
+constexpr std::size_t kIsoMonthLength = 7U;
+constexpr std::size_t kYearDigits = 4U;
+constexpr std::size_t kMonthStart = 5U;
+constexpr std::size_t kMonthDigits = 2U;
+constexpr int kMinMonth = 1;
+constexpr int kMaxMonth = 12;
+
+struct IsoMonth {
+  int year = 0;
+  int month = 0;
+};
 
 auto FormatMoney(double value) -> nlohmann::json {
   std::stringstream money_stream;
@@ -20,28 +32,34 @@ auto FormatMoney(double value) -> nlohmann::json {
   return nlohmann::json::parse(money_stream.str());
 }
 
-auto is_ascii_digit(char character) -> bool {
+auto IsAsciiDigit(char character) -> bool {
   return std::isdigit(static_cast<unsigned char>(character)) != 0;
 }
 
-auto parse_iso_month(const std::string& date, int& year, int& month) -> bool {
-  if (date.size() != 7U || date[4] != '-') {
-    return false;
+auto ParseIsoMonth(const std::string& date) -> std::optional<IsoMonth> {
+  if (date.size() != kIsoMonthLength || date[kYearDigits] != '-') {
+    return std::nullopt;
   }
-  if (!is_ascii_digit(date[0]) || !is_ascii_digit(date[1]) ||
-      !is_ascii_digit(date[2]) || !is_ascii_digit(date[3]) ||
-      !is_ascii_digit(date[5]) || !is_ascii_digit(date[6])) {
-    return false;
+  if (!IsAsciiDigit(date[0]) || !IsAsciiDigit(date[1]) ||
+      !IsAsciiDigit(date[2]) || !IsAsciiDigit(date[3]) ||
+      !IsAsciiDigit(date[kMonthStart]) ||
+      !IsAsciiDigit(date[kMonthStart + 1U])) {
+    return std::nullopt;
   }
 
+  IsoMonth parsed_date;
   try {
-    year = std::stoi(date.substr(0U, 4U));
-    month = std::stoi(date.substr(5U, 2U));
+    parsed_date.year = std::stoi(date.substr(0U, kYearDigits));
+    parsed_date.month = std::stoi(date.substr(kMonthStart, kMonthDigits));
   } catch (...) {
-    return false;
+    return std::nullopt;
   }
 
-  return month >= 1 && month <= 12;
+  if (parsed_date.month < kMinMonth || parsed_date.month > kMaxMonth) {
+    return std::nullopt;
+  }
+
+  return parsed_date;
 }
 }  // namespace
 
@@ -89,9 +107,12 @@ auto BillJsonSerializer::deserialize(const nlohmann::json& data) -> ParsedBill {
     bill_data.total_expense = data.at("total_expense").get<double>();
     bill_data.balance = data.at("balance").get<double>();
 
-    if (!parse_iso_month(kDateStr, bill_data.year, bill_data.month)) {
+    const auto kParsedMonth = ParseIsoMonth(kDateStr);
+    if (!kParsedMonth.has_value()) {
       throw std::runtime_error("JSON中的日期格式无效，必须为 YYYY-MM 格式。");
     }
+    bill_data.year = kParsedMonth->year;
+    bill_data.month = kParsedMonth->month;
 
     const auto& categories = data.at("categories");
     for (const auto& parent_item : categories.items()) {

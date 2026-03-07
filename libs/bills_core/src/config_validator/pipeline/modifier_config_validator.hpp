@@ -1,6 +1,6 @@
 // config_validator/pipeline/modifier_config_validator.hpp
-#ifndef MODIFIER_CONFIG_VALIDATOR_HPP
-#define MODIFIER_CONFIG_VALIDATOR_HPP
+#ifndef CONFIG_VALIDATOR_PIPELINE_MODIFIER_CONFIG_VALIDATOR_H_
+#define CONFIG_VALIDATOR_PIPELINE_MODIFIER_CONFIG_VALIDATOR_H_
 
 #include <string>
 
@@ -12,4 +12,4 @@ class ModifierConfigValidator {
                        std::string& error_message);
 };
 
-#endif  // MODIFIER_CONFIG_VALIDATOR_HPP
+#endif  // CONFIG_VALIDATOR_PIPELINE_MODIFIER_CONFIG_VALIDATOR_H_

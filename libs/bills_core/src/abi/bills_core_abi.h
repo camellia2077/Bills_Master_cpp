@@ -1,5 +1,6 @@
-#ifndef BILLS_CORE_ABI_H
-#define BILLS_CORE_ABI_H
+// abi/bills_core_abi.h
+#ifndef ABI_BILLS_CORE_ABI_H_
+#define ABI_BILLS_CORE_ABI_H_
 
 #if defined(_WIN32) && defined(BILLS_CORE_SHARED)
 #if defined(BILLS_CORE_ABI_BUILD)
@@ -27,4 +28,4 @@ BILLS_CORE_ABI_EXPORT void bills_core_free_string(const char* owned_utf8_str);
 }
 #endif
 
-#endif  // BILLS_CORE_ABI_H
+#endif  // ABI_BILLS_CORE_ABI_H_

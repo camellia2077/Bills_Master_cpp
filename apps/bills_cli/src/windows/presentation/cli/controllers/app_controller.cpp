@@ -1,4 +1,4 @@
-// controllers/AppController.cpp
+// windows/presentation/cli/controllers/app_controller.cpp
 #include "app_controller.hpp"
 
 #include <algorithm>
@@ -13,6 +13,8 @@
 
 #include "common/cli_version.hpp"
 #include "common/common_utils.hpp"
+
+namespace terminal = common::terminal;
 #include "export/export_controller.hpp"
 #include <toml++/toml.hpp>
 #include "workflow/workflow_controller.hpp"
@@ -90,7 +92,7 @@ AppController::AppController(std::string db_path,
   std::error_code make_output_error;
   fs::create_directories("output", make_output_error);
   if (make_output_error) {
-    std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR
+    std::cerr << terminal::kYellow << "Warning: " << terminal::kReset
               << "Failed to ensure output directory exists: "
               << make_output_error.message() << std::endl;
   }
@@ -125,7 +127,7 @@ auto AppController::load_enabled_formats(const std::string& config_path)
   try {
     if (!fs::is_regular_file(config_file)) {
       enabled_formats.insert("md");
-      std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR
+      std::cerr << terminal::kYellow << "Warning: " << terminal::kReset
                 << "Export format config not found: " << config_file.string()
                 << ". Falling back to default format set: md." << std::endl;
       return enabled_formats;
@@ -151,7 +153,7 @@ auto AppController::load_enabled_formats(const std::string& config_path)
       }
     }
   } catch (const std::exception& ex) {
-    std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR
+    std::cerr << terminal::kYellow << "Warning: " << terminal::kReset
               << "Failed to load export formats from " << config_file.string()
               << ". Reason: " << ex.what()
               << ". Falling back to default format set: md." << std::endl;
@@ -161,7 +163,7 @@ auto AppController::load_enabled_formats(const std::string& config_path)
 
   if (enabled_formats.empty()) {
     enabled_formats.insert("md");
-    std::cerr << YELLOW_COLOR << "Warning: " << RESET_COLOR
+    std::cerr << terminal::kYellow << "Warning: " << terminal::kReset
               << "No formats configured in " << config_file.string()
               << ". Falling back to default format set: md." << std::endl;
   }
@@ -205,7 +207,7 @@ auto AppController::is_export_format_available(
   (void)export_pipeline;
   const std::string format = normalize_format(format_str);
   if (m_enabled_formats.count(format) == 0U) {
-    std::cerr << RED_COLOR << "Error: " << RESET_COLOR
+    std::cerr << terminal::kRed << "Error: " << terminal::kReset
               << "Format '" << format
               << "' is not enabled. Enabled formats: "
               << JoinFormats(m_enabled_formats)
@@ -214,7 +216,7 @@ auto AppController::is_export_format_available(
     return false;
   }
   if (!is_builtin_export_format(format)) {
-    std::cerr << RED_COLOR << "Error: " << RESET_COLOR
+    std::cerr << terminal::kRed << "Error: " << terminal::kReset
               << "Format '" << format
               << "' is enabled in config but not available in this build."
               << std::endl;
@@ -256,7 +258,7 @@ auto AppController::handle_export(const std::string& type,
   if (normalized_pipeline != "legacy" &&
       normalized_pipeline != "model-first" &&
       normalized_pipeline != "json-first") {
-    std::cerr << RED_COLOR << "Error: " << RESET_COLOR
+    std::cerr << terminal::kRed << "Error: " << terminal::kReset
               << "Unknown value for --export-pipeline: '" << export_pipeline
               << "'. Use 'legacy', 'model-first', or 'json-first'."
               << std::endl;
@@ -272,7 +274,7 @@ auto AppController::handle_export(const std::string& type,
     static bool legacy_warning_emitted = false;
     if (!legacy_warning_emitted) {
       std::cerr
-          << YELLOW_COLOR << "Warning: " << RESET_COLOR
+          << terminal::kYellow << "Warning: " << terminal::kReset
           << "Export pipeline 'legacy' is transitional and deprecated since "
           << kLegacyPipelineDeprecatedSince << ". Planned removal target is "
           << kLegacyPipelineRemovalTarget
@@ -300,3 +302,4 @@ void AppController::display_version() {
   std::cout << "CLI Last Updated: " << bills::cli::version::kLastUpdated
             << std::endl;
 }
+

@@ -1,6 +1,6 @@
-// conversion/convert/bills_converter.hpp
-#ifndef BILL_CONVERTER_HPP
-#define BILL_CONVERTER_HPP
+// billing/conversion/convert/bills_converter.hpp
+#ifndef BILLING_CONVERSION_CONVERT_BILLS_CONVERTER_H_
+#define BILLING_CONVERSION_CONVERT_BILLS_CONVERTER_H_
 
 #include <string>
 
@@ -17,6 +17,6 @@ class BillConverter {
   Config m_config;
 };
 
-#endif  // BILL_CONVERTER_HPP
+#endif  // BILLING_CONVERSION_CONVERT_BILLS_CONVERTER_H_
 
 

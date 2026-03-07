@@ -1,6 +1,6 @@
 // ports/bills_file_enumerator.hpp
-#ifndef BILL_FILE_ENUMERATOR_HPP
-#define BILL_FILE_ENUMERATOR_HPP
+#ifndef PORTS_BILLS_FILE_ENUMERATOR_H_
+#define PORTS_BILLS_FILE_ENUMERATOR_H_
 
 #include <filesystem>
 #include <string_view>
@@ -14,4 +14,4 @@ class BillFileEnumerator {
       -> std::vector<std::filesystem::path> = 0;
 };
 
-#endif  // BILL_FILE_ENUMERATOR_HPP
+#endif  // PORTS_BILLS_FILE_ENUMERATOR_H_

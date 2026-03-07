@@ -1,7 +1,7 @@
 // pch.hpp
 #pragma once
-#ifndef PCH_HPP
-#define PCH_HPP
+#ifndef PCH_H_
+#define PCH_H_
 
 // ===================================================================
 //  1. C++ 标准库 (Standard Library)

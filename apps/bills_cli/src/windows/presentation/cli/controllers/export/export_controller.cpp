@@ -1,4 +1,4 @@
-// controllers/export/ExportController.cpp
+// windows/presentation/cli/controllers/export/export_controller.cpp
 
 #include "export_controller.hpp"
 
@@ -8,6 +8,8 @@
 
 #include "bills_io/io_factory.hpp"
 #include "common/common_utils.hpp"  // 确保包含颜色定义
+
+namespace terminal = common::terminal;
 
 ExportController::ExportController(
     std::string db_path, std::string export_base_dir,
@@ -78,9 +80,10 @@ auto ExportController::handle_export(const std::string& type,
       throw std::runtime_error("Unknown export type: " + type);
     }
   } catch (const std::exception& e) {
-    std::cerr << RED_COLOR << "Export failed: " << RESET_COLOR << e.what()
+    std::cerr << terminal::kRed << "Export failed: " << terminal::kReset << e.what()
               << std::endl;
     return false;
   }
   return success;
 }
+

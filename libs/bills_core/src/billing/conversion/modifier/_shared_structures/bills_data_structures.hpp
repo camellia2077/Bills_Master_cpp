@@ -1,7 +1,7 @@
-// conversion/modifier/_shared_structures/bills_data_structures.hpp
+// billing/conversion/modifier/_shared_structures/bills_data_structures.hpp
 
-#ifndef BILL_DATA_STRUCTURES_HPP
-#define BILL_DATA_STRUCTURES_HPP
+#ifndef BILLING_CONVERSION_MODIFIER_SHARED_STRUCTURES_BILLS_DATA_STRUCTURES_H_
+#define BILLING_CONVERSION_MODIFIER_SHARED_STRUCTURES_BILLS_DATA_STRUCTURES_H_
 
 #include <map>
 #include <string>
@@ -26,4 +26,4 @@ struct Config {
   std::map<std::string, std::map<std::string, std::string>> display_name_maps;
 };
 
-#endif  // BILL_DATA_STRUCTURES_HPP
+#endif  // BILLING_CONVERSION_MODIFIER_SHARED_STRUCTURES_BILLS_DATA_STRUCTURES_H_

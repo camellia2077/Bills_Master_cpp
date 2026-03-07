@@ -1,6 +1,6 @@
-// windows/infrastructure/adapters/db/YearQuery.hpp
-#ifndef YEAR_QUERY_HPP
-#define YEAR_QUERY_HPP
+// windows/infrastructure/adapters/db/year_query.hpp
+#ifndef WINDOWS_INFRASTRUCTURE_ADAPTERS_DB_YEAR_QUERY_H_
+#define WINDOWS_INFRASTRUCTURE_ADAPTERS_DB_YEAR_QUERY_H_
 
 #include <sqlite3.h>
 
@@ -17,5 +17,5 @@ class YearQuery {
   sqlite3* m_db;
 };
 
-#endif  // YEAR_QUERY_HPP
+#endif  // WINDOWS_INFRASTRUCTURE_ADAPTERS_DB_YEAR_QUERY_H_
 

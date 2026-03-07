@@ -1,5 +1,6 @@
-#ifndef SQLITE_REPORT_DB_SESSION_HPP
-#define SQLITE_REPORT_DB_SESSION_HPP
+// bills_io/adapters/db/sqlite_report_db_session.hpp
+#ifndef BILLS_IO_ADAPTERS_DB_SQLITE_REPORT_DB_SESSION_H_
+#define BILLS_IO_ADAPTERS_DB_SQLITE_REPORT_DB_SESSION_H_
 
 #include <sqlite3.h>
 
@@ -20,4 +21,4 @@ class SqliteReportDbSession final {
   sqlite3* db_connection_ = nullptr;
 };
 
-#endif  // SQLITE_REPORT_DB_SESSION_HPP
+#endif  // BILLS_IO_ADAPTERS_DB_SQLITE_REPORT_DB_SESSION_H_

@@ -1,6 +1,6 @@
 // serialization/bills_json_serializer.hpp
-#ifndef BILL_JSON_SERIALIZER_HPP
-#define BILL_JSON_SERIALIZER_HPP
+#ifndef SERIALIZATION_BILLS_JSON_SERIALIZER_H_
+#define SERIALIZATION_BILLS_JSON_SERIALIZER_H_
 
 #include <string>
 
@@ -19,6 +19,6 @@ class BillJsonSerializer {
   static nlohmann::ordered_json to_json(const ParsedBill& bill_data);
 };
 
-#endif  // BILL_JSON_SERIALIZER_HPP
+#endif  // SERIALIZATION_BILLS_JSON_SERIALIZER_H_
 
 

@@ -1,10 +1,11 @@
-// conversion/modifier/processor/bills_parser.cpp
+// billing/conversion/modifier/processor/bills_parser.cpp
 
 #include "bills_parser.hpp"
 
 #include <algorithm>
 #include <cctype>
 #include <iomanip>
+#include <optional>
 #include <ranges>
 #include <regex>
 #include <sstream>
@@ -19,39 +20,56 @@ constexpr std::string_view kDefaultSource = "manually_add";
 constexpr std::string_view kIncomeType = "Income";
 constexpr std::string_view kExpenseType = "Expense";
 constexpr std::size_t kExpectedMatchSize = 3U;
+constexpr std::size_t kIsoMonthLength = 7U;
+constexpr std::size_t kYearDigits = 4U;
+constexpr std::size_t kMonthStart = 5U;
+constexpr std::size_t kMonthDigits = 2U;
+constexpr int kMinMonth = 1;
+constexpr int kMaxMonth = 12;
 
-auto is_ascii_digit(char character) -> bool {
+struct IsoYearMonth {
+  int year = 0;
+  int month = 0;
+};
+
+auto IsAsciiDigit(char character) -> bool {
   return std::isdigit(static_cast<unsigned char>(character)) != 0;
 }
 
-auto parse_iso_year_month(const std::string& date, int& year, int& month)
-    -> bool {
-  if (date.size() != 7U || date[4] != '-') {
-    return false;
+auto ParseIsoYearMonth(const std::string& date) -> std::optional<IsoYearMonth> {
+  if (date.size() != kIsoMonthLength || date[kYearDigits] != '-') {
+    return std::nullopt;
   }
 
-  if (!is_ascii_digit(date[0]) || !is_ascii_digit(date[1]) ||
-      !is_ascii_digit(date[2]) || !is_ascii_digit(date[3])) {
-    return false;
+  if (!IsAsciiDigit(date[0]) || !IsAsciiDigit(date[1]) ||
+      !IsAsciiDigit(date[2]) || !IsAsciiDigit(date[3])) {
+    return std::nullopt;
   }
 
+  IsoYearMonth parsed_date;
   try {
-    year = std::stoi(date.substr(0U, 4U));
+    parsed_date.year = std::stoi(date.substr(0U, kYearDigits));
   } catch (...) {
-    return false;
+    return std::nullopt;
   }
 
-  if (!is_ascii_digit(date[5]) || !is_ascii_digit(date[6])) {
-    return false;
+  if (!IsAsciiDigit(date[kMonthStart]) ||
+      !IsAsciiDigit(date[kMonthStart + 1U])) {
+    return std::nullopt;
   }
-  month = std::stoi(date.substr(5U, 2U));
+  parsed_date.month = std::stoi(date.substr(kMonthStart, kMonthDigits));
 
-  return month >= 1 && month <= 12;
+  if (parsed_date.month < kMinMonth || parsed_date.month > kMaxMonth) {
+    return std::nullopt;
+  }
+
+  return parsed_date;
 }
 }  // namespace
 
 BillParser::BillParser(const Config& config) : m_config(config) {}
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity) -- parser keeps the bill text-to-structure flow in one place.
 auto BillParser::parse(const std::vector<std::string>& lines) const
     -> ParsedBill {
   ParsedBill bill_data{};
@@ -127,12 +145,14 @@ auto BillParser::parse(const std::vector<std::string>& lines) const
           sub_item.contents,
           [](const std::string& left_value,
              const std::string& right_value) -> bool {
-            double val_a = _get_numeric_value_from_content(left_value);
-            double val_b = _get_numeric_value_from_content(right_value);
-            if (val_a > val_b) {
+            const double kLeftAmount =
+                _get_numeric_value_from_content(left_value);
+            const double kRightAmount =
+                _get_numeric_value_from_content(right_value);
+            if (kLeftAmount > kRightAmount) {
               return true;
             }
-            if (val_a < val_b) {
+            if (kLeftAmount < kRightAmount) {
               return false;
             }
             return left_value < right_value;
@@ -165,9 +185,12 @@ auto BillParser::parse(const std::vector<std::string>& lines) const
   bill_data.balance = bill_data.total_income + bill_data.total_expense;
 
   if (!bill_data.date.empty()) {
-    if (!parse_iso_year_month(bill_data.date, bill_data.year, bill_data.month)) {
+    const auto kParsedDate = ParseIsoYearMonth(bill_data.date);
+    if (!kParsedDate.has_value()) {
       throw std::runtime_error("账单日期格式无效，必须为 YYYY-MM。");
     }
+    bill_data.year = kParsedDate->year;
+    bill_data.month = kParsedDate->month;
 
     std::ostringstream normalized_date_stream;
     normalized_date_stream << bill_data.year << "-" << std::setw(2)
@@ -179,12 +202,11 @@ auto BillParser::parse(const std::vector<std::string>& lines) const
 }
 
 auto BillParser::_is_metadata_line(const std::string& line) const -> bool {
-  for (const auto& prefix : m_config.metadata_prefixes) {
-    if (line.starts_with(prefix)) {
-      return true;
-    }
-  }
-  return false;
+  return std::ranges::any_of(
+      m_config.metadata_prefixes,
+      [&line](const std::string& prefix) -> bool {
+        return line.starts_with(prefix);
+      });
 }
 
 auto BillParser::_is_parent_title(const std::string& line) -> bool {
@@ -196,9 +218,9 @@ auto BillParser::_is_title(const std::string& line) -> bool {
     return false;
   }
   for (char character : line) {
-    const auto unsigned_character = static_cast<unsigned char>(character);
-    if (std::isspace(unsigned_character) == 0) {
-      return std::isalpha(unsigned_character) != 0;
+    const auto kUnsignedCharacter = static_cast<unsigned char>(character);
+    if (std::isspace(kUnsignedCharacter) == 0) {
+      return std::isalpha(kUnsignedCharacter) != 0;
     }
   }
   return false;

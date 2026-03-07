@@ -1,3 +1,4 @@
+// abi/internal/handlers/query_handler.cpp
 #include <algorithm>
 #include <cstddef>
 #include <cctype>
@@ -35,16 +36,20 @@ namespace fs = core_abi::fs;
 #endif
 
 namespace {
+constexpr int kMinSupportedYear = 1900;
+constexpr int kMaxSupportedYear = 9999;
+constexpr int kMinSupportedMonth = 1;
+constexpr int kMaxSupportedMonth = 12;
 
-auto to_ascii_lower(std::string value) -> std::string {
-  std::transform(value.begin(), value.end(), value.begin(),
-                 [](unsigned char ch) -> char {
-                   return static_cast<char>(std::tolower(ch));
-                 });
+auto ToAsciiLower(std::string value) -> std::string {
+  std::ranges::transform(value, value.begin(),
+                         [](unsigned char character) -> char {
+                           return static_cast<char>(std::tolower(character));
+                         });
   return value;
 }
 
-auto parse_year_string(const std::string& raw, int& year) -> bool {
+auto ParseYearString(const std::string& raw, int& year) -> bool {
   if (raw.size() != 4U) {
     return false;
   }
@@ -53,10 +58,10 @@ auto parse_year_string(const std::string& raw, int& year) -> bool {
   } catch (...) {
     return false;
   }
-  return year >= 1900 && year <= 9999;
+  return year >= kMinSupportedYear && year <= kMaxSupportedYear;
 }
 
-auto parse_month_string(const std::string& raw, int& year, int& month) -> bool {
+auto ParseMonthString(const std::string& raw, int& year, int& month) -> bool {
   static const std::regex kIsoMonthRegex(R"(^(\d{4})-(0[1-9]|1[0-2])$)");
   std::smatch match;
   if (!std::regex_match(raw, match, kIsoMonthRegex) || match.size() != 3U) {
@@ -69,36 +74,38 @@ auto parse_month_string(const std::string& raw, int& year, int& month) -> bool {
     return false;
   }
 
-  return year >= 1900 && year <= 9999 && month >= 1 && month <= 12;
+  return year >= kMinSupportedYear && year <= kMaxSupportedYear &&
+         month >= kMinSupportedMonth && month <= kMaxSupportedMonth;
 }
 
 }  // namespace
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity) -- query assembly keeps validation, aggregation, and response shaping together.
 auto handle_query_command(const Json& request) -> std::string {
-  const Json params = request.value("params", Json::object());
-  if (!params.is_object()) {
+  const Json kParams = request.value("params", Json::object());
+  if (!kParams.is_object()) {
     return core_abi::make_response(false, core_abi::error_code::kParamInvalidRequest,
                                    "'params' must be a JSON object.");
   }
 
-  const std::string query_type_raw = params.value("type", "");
-  const std::string query_value = params.value("value", "");
-  const std::string input_path =
-      params.value("input_path",
+  const std::string kQueryTypeRaw = kParams.value("type", "");
+  const std::string kQueryValue = kParams.value("value", "");
+  const std::string kInputPath =
+      kParams.value("input_path",
                    std::string(core_abi::constants::kDefaultConvertOutputDir));
 
-  if (query_type_raw.empty() || query_value.empty()) {
+  if (kQueryTypeRaw.empty() || kQueryValue.empty()) {
     return core_abi::make_response(
         false, core_abi::error_code::kParamInvalidRequest,
         "Query requires non-empty 'params.type' and 'params.value'.");
   }
 
-  const std::string query_type = to_ascii_lower(query_type_raw);
-  const bool is_year_query = (query_type == "year" || query_type == "y");
-  const bool is_month_query = (query_type == "month" || query_type == "m");
-  if (!is_year_query && !is_month_query) {
+  const std::string kQueryType = ToAsciiLower(kQueryTypeRaw);
+  const bool kIsYearQuery = (kQueryType == "year" || kQueryType == "y");
+  const bool kIsMonthQuery = (kQueryType == "month" || kQueryType == "m");
+  if (!kIsYearQuery && !kIsMonthQuery) {
     Json data;
-    data["type"] = query_type_raw;
+    data["type"] = kQueryTypeRaw;
     data["supported_types"] = {"year", "month"};
     return core_abi::make_response(
         false, core_abi::error_code::kParamInvalidRequest,
@@ -108,15 +115,15 @@ auto handle_query_command(const Json& request) -> std::string {
   int query_year = 0;
   int query_month = 0;
   bool parsed = false;
-  if (is_year_query) {
-    parsed = parse_year_string(query_value, query_year);
+  if (kIsYearQuery) {
+    parsed = ParseYearString(kQueryValue, query_year);
   } else {
-    parsed = parse_month_string(query_value, query_year, query_month);
+    parsed = ParseMonthString(kQueryValue, query_year, query_month);
   }
   if (!parsed) {
     Json data;
-    data["type"] = query_type_raw;
-    data["value"] = query_value;
+    data["type"] = kQueryTypeRaw;
+    data["value"] = kQueryValue;
     return core_abi::make_response(
         false, core_abi::error_code::kParamInvalidRequest,
         "Invalid query value format.", std::move(data));
@@ -124,7 +131,7 @@ auto handle_query_command(const Json& request) -> std::string {
 
   std::vector<fs::path> files;
   try {
-    files = core_abi::list_json_files(fs::path(input_path));
+    files = core_abi::list_json_files(fs::path(kInputPath));
   } catch (const std::exception& ex) {
     Json data;
     data["detail"] = ex.what();
@@ -135,7 +142,7 @@ auto handle_query_command(const Json& request) -> std::string {
 
   if (files.empty()) {
     Json data;
-    data["input_path"] = input_path;
+    data["input_path"] = kInputPath;
     return core_abi::make_response(
         false, core_abi::error_code::kBusinessNoInputFiles,
         "No .json files found under input_path.", std::move(data));
@@ -161,35 +168,35 @@ auto handle_query_command(const Json& request) -> std::string {
     Json item;
     item["path"] = file.string();
     try {
-      const ParsedBill bill_data = BillJsonSerializer::read_from_file(file.string());
-      const bool matched =
-          is_year_query
-              ? (bill_data.year == query_year)
-              : (bill_data.year == query_year && bill_data.month == query_month);
+      const ParsedBill kBillData = BillJsonSerializer::read_from_file(file.string());
+      const bool kMatched =
+          kIsYearQuery
+              ? (kBillData.year == query_year)
+              : (kBillData.year == query_year && kBillData.month == query_month);
       item["ok"] = true;
-      item["matched"] = matched;
+      item["matched"] = kMatched;
 
-      if (matched) {
+      if (kMatched) {
         ++matched_bills;
-        transaction_count += bill_data.transactions.size();
-        total_income += bill_data.total_income;
-        total_expense += bill_data.total_expense;
-        total_balance += bill_data.balance;
+        transaction_count += kBillData.transactions.size();
+        total_income += kBillData.total_income;
+        total_expense += kBillData.total_expense;
+        total_balance += kBillData.balance;
         monthly_report_data.data_found = true;
 
-        item["date"] = bill_data.date;
-        item["year"] = bill_data.year;
-        item["month"] = bill_data.month;
-        item["transaction_count"] = bill_data.transactions.size();
+        item["date"] = kBillData.date;
+        item["year"] = kBillData.year;
+        item["month"] = kBillData.month;
+        item["transaction_count"] = kBillData.transactions.size();
 
-        if (is_year_query) {
-          auto& summary = yearly_monthly_summary[bill_data.month];
-          summary.income += bill_data.total_income;
-          summary.expense += bill_data.total_expense;
+        if (kIsYearQuery) {
+          auto& summary = yearly_monthly_summary[kBillData.month];
+          summary.income += kBillData.total_income;
+          summary.expense += kBillData.total_expense;
         }
 
-        for (const auto& transaction : bill_data.transactions) {
-          if (is_month_query) {
+        for (const auto& transaction : kBillData.transactions) {
+          if (kIsMonthQuery) {
             auto& parent_data = monthly_report_data.aggregated_data[transaction.parent_category];
             parent_data.parent_total += transaction.amount;
             auto& sub_data = parent_data.sub_categories[transaction.sub_category];
@@ -197,8 +204,8 @@ auto handle_query_command(const Json& request) -> std::string {
             sub_data.transactions.push_back(transaction);
           }
 
-          const std::string txn_type = to_ascii_lower(transaction.transaction_type);
-          if (txn_type == "income") {
+          const std::string kTxnType = ToAsciiLower(transaction.transaction_type);
+          if (kTxnType == "income") {
             income_by_parent[transaction.parent_category] += transaction.amount;
           } else {
             expense_by_parent[transaction.parent_category] += transaction.amount;
@@ -216,11 +223,11 @@ auto handle_query_command(const Json& request) -> std::string {
   }
 
   Json data;
-  data["input_path"] = input_path;
-  data["query_type"] = is_year_query ? "year" : "month";
-  data["query_value"] = query_value;
+  data["input_path"] = kInputPath;
+  data["query_type"] = kIsYearQuery ? "year" : "month";
+  data["query_value"] = kQueryValue;
   data["year"] = query_year;
-  if (is_month_query) {
+  if (kIsMonthQuery) {
     data["month"] = query_month;
   }
   data["processed"] = files.size();
@@ -248,7 +255,7 @@ auto handle_query_command(const Json& request) -> std::string {
   category_totals["expense"] = std::move(expense_categories);
   data["category_totals"] = std::move(category_totals);
 
-  if (is_year_query) {
+  if (kIsYearQuery) {
     Json monthly = Json::array();
     for (const auto& [month, summary] : yearly_monthly_summary) {
       Json month_item;
@@ -261,10 +268,10 @@ auto handle_query_command(const Json& request) -> std::string {
     data["monthly_summary"] = std::move(monthly);
   }
 
-  if (is_month_query) {
-    const auto standard_report =
+  if (kIsMonthQuery) {
+    const auto kStandardReport =
         StandardReportAssembler::FromMonthly(monthly_report_data);
-    data["standard_report"] = StandardReportJsonSerializer::ToJson(standard_report);
+    data["standard_report"] = StandardReportJsonSerializer::ToJson(kStandardReport);
   } else {
     YearlyReportData yearly_report_data;
     yearly_report_data.year = query_year;
@@ -274,9 +281,9 @@ auto handle_query_command(const Json& request) -> std::string {
     yearly_report_data.balance = total_balance;
     yearly_report_data.monthly_summary = std::move(yearly_monthly_summary);
 
-    const auto standard_report =
+    const auto kStandardReport =
         StandardReportAssembler::FromYearly(yearly_report_data);
-    data["standard_report"] = StandardReportJsonSerializer::ToJson(standard_report);
+    data["standard_report"] = StandardReportJsonSerializer::ToJson(kStandardReport);
   }
 
   data["files"] = std::move(file_results);

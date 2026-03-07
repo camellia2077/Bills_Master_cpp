@@ -3,11 +3,52 @@
 
 [cpp]
 display_name = "C++"
-default_paths = ["apps/tracer_core","modules"]
+default_paths = [
+  "apps/bills_cli/src",
+  "libs/bills_core/src",
+  "libs/bills_io/src",
+  "tests/generators/log_generator/src",
+]
 extensions = [".cpp", ".h", ".hpp", ".cppm", ".cc", ".cxx", ".c"]
-ignore_dirs = [".git", ".idea", ".vscode", "vs", "bin", "obj", "Debug", "Release"]
+ignore_dirs = [
+  ".git",
+  ".idea",
+  ".vscode",
+  "vs",
+  "bin",
+  "obj",
+  "Debug",
+  "Release",
+  "__pycache__",
+]
 ignore_prefixes = ["build", "cmake", "out"]
 default_over_threshold = 350
 default_under_threshold = 120
 default_dir_over_files = 16
+over_inclusive = false
+
+[py]
+display_name = "Python"
+default_paths = ["tools", "tests", "script"]
+extensions = [".py", ".pyw"]
+ignore_dirs = [
+  ".git",
+  ".idea",
+  ".vscode",
+  "__pycache__",
+  ".pytest_cache",
+  ".mypy_cache",
+  ".tox",
+  ".venv",
+  "venv",
+  "env",
+  ".env",
+  "dist",
+  "build",
+  "output",
+]
+ignore_prefixes = ["build", "out"]
+default_over_threshold = 200
+default_under_threshold = 80
+default_dir_over_files = 10
 over_inclusive = false

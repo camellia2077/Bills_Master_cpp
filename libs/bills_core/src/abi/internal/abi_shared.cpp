@@ -1,3 +1,4 @@
+// abi/internal/abi_shared.cpp
 #include "abi/internal/abi_shared.hpp"
 
 #include <algorithm>
@@ -23,23 +24,23 @@ namespace bills::core::abi {
 
 namespace {
 
-auto resolve_error_layer(const std::string& code) -> std::string_view {
+auto ResolveErrorLayer(const std::string& code) -> std::string_view {
   if (code == error_code::kOk) {
     return "none";
   }
-  if (code.rfind("param.", 0U) == 0U) {
+  if (code.starts_with("param.")) {
     return "param";
   }
-  if (code.rfind("business.", 0U) == 0U) {
+  if (code.starts_with("business.")) {
     return "business";
   }
-  if (code.rfind("system.", 0U) == 0U) {
+  if (code.starts_with("system.")) {
     return "system";
   }
   return "system";
 }
 
-auto list_files_by_extension(const fs::path& input_path,
+auto ListFilesByExtension(const fs::path& input_path,
                              std::string_view extension)
     -> std::vector<fs::path> {
   if (!fs::exists(input_path)) {
@@ -61,9 +62,9 @@ auto list_files_by_extension(const fs::path& input_path,
       if (!entry.is_regular_file()) {
         continue;
       }
-      const fs::path file = entry.path();
-      if (file.extension() == extension) {
-        files.push_back(file);
+      const fs::path kFile = entry.path();
+      if (kFile.extension() == extension) {
+        files.push_back(kFile);
       }
     }
   } else {
@@ -71,16 +72,16 @@ auto list_files_by_extension(const fs::path& input_path,
                              input_path.string());
   }
 
-  std::sort(files.begin(), files.end());
+  std::ranges::sort(files);
   return files;
 }
 
-auto parse_validator_config(const Json& validator_json) -> BillConfig {
+auto ParseValidatorConfig(const Json& validator_json) -> BillConfig {
   BillValidationRules rules;
   for (const auto& category : validator_json.at("categories")) {
-    const std::string parent_title =
+    const std::string kParentTitle =
         category.at("parent_item").get<std::string>();
-    rules.parent_titles.insert(parent_title);
+    rules.parent_titles.insert(kParentTitle);
 
     std::set<std::string> sub_titles;
     const auto& sub_items = category.at("sub_items");
@@ -89,12 +90,12 @@ auto parse_validator_config(const Json& validator_json) -> BillConfig {
         sub_titles.insert(sub_item.get<std::string>());
       }
     }
-    rules.validation_map[parent_title] = std::move(sub_titles);
+    rules.validation_map[kParentTitle] = std::move(sub_titles);
   }
   return BillConfig(std::move(rules));
 }
 
-auto parse_validator_config(const toml::table& validator_toml) -> BillConfig {
+auto ParseValidatorConfig(const toml::table& validator_toml) -> BillConfig {
   BillValidationRules rules;
   if (const toml::array* categories = validator_toml["categories"].as_array();
       categories != nullptr) {
@@ -109,8 +110,8 @@ auto parse_validator_config(const toml::table& validator_toml) -> BillConfig {
         continue;
       }
 
-      const std::string parent_title_value = parent_title->get();
-      rules.parent_titles.insert(parent_title_value);
+      const std::string kParentTitleValue = parent_title->get();
+      rules.parent_titles.insert(kParentTitleValue);
 
       std::set<std::string> sub_titles;
       if (const toml::array* sub_items =
@@ -123,13 +124,14 @@ auto parse_validator_config(const toml::table& validator_toml) -> BillConfig {
         }
       }
 
-      rules.validation_map[parent_title_value] = std::move(sub_titles);
+      rules.validation_map[kParentTitleValue] = std::move(sub_titles);
     }
   }
   return BillConfig(std::move(rules));
 }
 
-auto parse_modifier_config(const Json& modifier_json) -> Config {
+// NOLINTNEXTLINE(readability-function-cognitive-complexity) -- JSON config mapping mirrors the external schema directly.
+auto ParseModifierConfig(const Json& modifier_json) -> Config {
   Config config;
 
   if (modifier_json.contains("auto_renewal_rules")) {
@@ -177,7 +179,7 @@ auto parse_modifier_config(const Json& modifier_json) -> Config {
   return config;
 }
 
-auto read_double(const toml::node* node, double fallback) -> double {
+auto ReadDouble(const toml::node* node, double fallback) -> double {
   if (node == nullptr) {
     return fallback;
   }
@@ -190,7 +192,8 @@ auto read_double(const toml::node* node, double fallback) -> double {
   return fallback;
 }
 
-auto parse_modifier_config(const toml::table& modifier_toml) -> Config {
+// NOLINTNEXTLINE(readability-function-cognitive-complexity) -- TOML config mapping mirrors the external schema directly.
+auto ParseModifierConfig(const toml::table& modifier_toml) -> Config {
   Config config;
 
   if (const toml::table* renewal_config =
@@ -214,7 +217,7 @@ auto parse_modifier_config(const toml::table& modifier_toml) -> Config {
           const auto* description = rule->get_as<std::string>("description");
           config.auto_renewal.rules.push_back(
               {header_location != nullptr ? header_location->get() : "",
-               read_double(rule->get("amount"), 0.0),
+               ReadDouble(rule->get("amount"), 0.0),
                description != nullptr ? description->get() : ""});
         }
       }
@@ -254,7 +257,7 @@ auto parse_modifier_config(const toml::table& modifier_toml) -> Config {
   return config;
 }
 
-auto read_toml_file(const fs::path& file_path) -> toml::table {
+auto ReadTomlFile(const fs::path& file_path) -> toml::table {
   if (!fs::is_regular_file(file_path)) {
     throw std::runtime_error("config file does not exist: " +
                              file_path.string());
@@ -265,24 +268,24 @@ auto read_toml_file(const fs::path& file_path) -> toml::table {
 }  // namespace
 
 auto allocate_owned_string(const std::string& text) -> const char* {
-  const std::size_t buffer_size = text.size() + 1U;
-  auto* buffer = static_cast<char*>(std::malloc(buffer_size));
+  const std::size_t kBufferSize = text.size() + 1U;
+  auto* buffer = static_cast<char*>(std::malloc(kBufferSize));
   if (buffer == nullptr) {
     return nullptr;
   }
-  std::memcpy(buffer, text.c_str(), buffer_size);
+  std::memcpy(buffer, text.c_str(), kBufferSize);
   return buffer;
 }
 
-auto make_response(bool ok, std::string code, std::string message,
+auto make_response(bool is_ok, std::string code, std::string message,
                    Json data) -> std::string {
-  const std::string_view error_layer = resolve_error_layer(code);
+  const std::string_view kErrorLayer = ResolveErrorLayer(code);
   Json response;
-  response["ok"] = ok;
+  response["ok"] = is_ok;
   response["code"] = std::move(code);
   response["message"] = std::move(message);
   response["data"] = std::move(data);
-  response["error_layer"] = error_layer;
+  response["error_layer"] = kErrorLayer;
   response["abi_version"] = constants::kAbiVersion;
   response["response_schema_version"] = constants::kResponseSchemaVersion;
   response["error_code_schema_version"] = constants::kErrorCodeSchemaVersion;
@@ -357,25 +360,26 @@ auto read_text_file(const fs::path& file_path) -> std::string {
 }
 
 auto list_txt_files(const fs::path& input_path) -> std::vector<fs::path> {
-  return list_files_by_extension(input_path, ".txt");
+  return ListFilesByExtension(input_path, ".txt");
 }
 
 auto list_json_files(const fs::path& input_path) -> std::vector<fs::path> {
-  return list_files_by_extension(input_path, ".json");
+  return ListFilesByExtension(input_path, ".json");
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters) -- call sites consistently pass output_dir first, then input_file.
 auto build_convert_output_path(const fs::path& output_dir,
                                const fs::path& input_file) -> fs::path {
   fs::path modified_path = input_file;
   modified_path.replace_extension(".json");
-  const std::string stem = modified_path.stem().string();
+  const std::string kStem = modified_path.stem().string();
 
   fs::path final_output_path;
-  if (stem.length() >= 4U) {
-    const std::string year = stem.substr(0U, 4U);
-    const fs::path target_dir = output_dir / year;
-    fs::create_directories(target_dir);
-    final_output_path = target_dir / modified_path.filename();
+  if (kStem.length() >= 4U) {
+    const std::string kYear = kStem.substr(0U, 4U);
+    const fs::path kTargetDir = output_dir / kYear;
+    fs::create_directories(kTargetDir);
+    final_output_path = kTargetDir / modified_path.filename();
   } else {
     fs::create_directories(output_dir);
     final_output_path = output_dir / modified_path.filename();
@@ -387,8 +391,8 @@ auto read_and_validate_configs(const Json& params, BillConfig& validator_config,
                                Config& modifier_config) -> std::string {
   if (params.contains("validator_config") && params.contains("modifier_config")) {
     try {
-      validator_config = parse_validator_config(params.at("validator_config"));
-      modifier_config = parse_modifier_config(params.at("modifier_config"));
+      validator_config = ParseValidatorConfig(params.at("validator_config"));
+      modifier_config = ParseModifierConfig(params.at("modifier_config"));
     } catch (const std::exception& ex) {
       return std::string("Failed to convert inline configs: ") + ex.what();
     }
@@ -398,28 +402,28 @@ auto read_and_validate_configs(const Json& params, BillConfig& validator_config,
   fs::path validator_path;
   fs::path modifier_path;
 
-  const std::string config_dir = params.value("config_dir", "");
-  if (!config_dir.empty()) {
-    validator_path = fs::path(config_dir) / constants::kValidatorConfigName;
-    modifier_path = fs::path(config_dir) / constants::kModifierConfigName;
+  const std::string kConfigDir = params.value("config_dir", "");
+  if (!kConfigDir.empty()) {
+    validator_path = fs::path(kConfigDir) / constants::kValidatorConfigName;
+    modifier_path = fs::path(kConfigDir) / constants::kModifierConfigName;
   } else {
-    const std::string validator_config_path =
+    const std::string kValidatorConfigPath =
         params.value("validator_config_path", "");
-    const std::string modifier_config_path =
+    const std::string kModifierConfigPath =
         params.value("modifier_config_path", "");
-    if (validator_config_path.empty() || modifier_config_path.empty()) {
+    if (kValidatorConfigPath.empty() || kModifierConfigPath.empty()) {
       return "Provide either 'config_dir' or both "
              "'validator_config_path' and 'modifier_config_path'.";
     }
-    validator_path = fs::path(validator_config_path);
-    modifier_path = fs::path(modifier_config_path);
+    validator_path = fs::path(kValidatorConfigPath);
+    modifier_path = fs::path(kModifierConfigPath);
   }
 
   toml::table validator_toml;
   toml::table modifier_toml;
   try {
-    validator_toml = read_toml_file(validator_path);
-    modifier_toml = read_toml_file(modifier_path);
+    validator_toml = ReadTomlFile(validator_path);
+    modifier_toml = ReadTomlFile(modifier_path);
   } catch (const std::exception& ex) {
     return ex.what();
   }
@@ -433,8 +437,8 @@ auto read_and_validate_configs(const Json& params, BillConfig& validator_config,
   }
 
   try {
-    validator_config = parse_validator_config(validator_toml);
-    modifier_config = parse_modifier_config(modifier_toml);
+    validator_config = ParseValidatorConfig(validator_toml);
+    modifier_config = ParseModifierConfig(modifier_toml);
   } catch (const std::exception& ex) {
     return std::string("Failed to convert configs: ") + ex.what();
   }

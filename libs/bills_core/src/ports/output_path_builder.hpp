@@ -1,6 +1,6 @@
 // ports/output_path_builder.hpp
-#ifndef OUTPUT_PATH_BUILDER_HPP
-#define OUTPUT_PATH_BUILDER_HPP
+#ifndef PORTS_OUTPUT_PATH_BUILDER_H_
+#define PORTS_OUTPUT_PATH_BUILDER_H_
 
 #include <filesystem>
 
@@ -12,4 +12,4 @@ class OutputPathBuilder {
       -> std::filesystem::path = 0;
 };
 
-#endif  // OUTPUT_PATH_BUILDER_HPP
+#endif  // PORTS_OUTPUT_PATH_BUILDER_H_

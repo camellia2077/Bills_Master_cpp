@@ -1,6 +1,6 @@
 // ports/bills_repository.hpp
-#ifndef BILL_REPOSITORY_HPP
-#define BILL_REPOSITORY_HPP
+#ifndef PORTS_BILLS_REPOSITORY_H_
+#define PORTS_BILLS_REPOSITORY_H_
 
 #include "domain/bill/bill_record.hpp"
 
@@ -10,6 +10,6 @@ class BillRepository {
   virtual void InsertBill(const ParsedBill& bill_data) = 0;
 };
 
-#endif  // BILL_REPOSITORY_HPP
+#endif  // PORTS_BILLS_REPOSITORY_H_
 
 

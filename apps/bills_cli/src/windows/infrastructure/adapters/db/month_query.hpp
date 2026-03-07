@@ -1,6 +1,6 @@
-// windows/infrastructure/adapters/db/MonthQuery.hpp
-#ifndef MONTH_QUERY_HPP
-#define MONTH_QUERY_HPP
+// windows/infrastructure/adapters/db/month_query.hpp
+#ifndef WINDOWS_INFRASTRUCTURE_ADAPTERS_DB_MONTH_QUERY_H_
+#define WINDOWS_INFRASTRUCTURE_ADAPTERS_DB_MONTH_QUERY_H_
 
 #include <sqlite3.h>
 

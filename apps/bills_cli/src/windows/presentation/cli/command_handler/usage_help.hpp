@@ -1,6 +1,6 @@
-// command_handler/usage_help.hpp
-#ifndef USAGE_HELP_HPP
-#define USAGE_HELP_HPP
+// windows/presentation/cli/command_handler/usage_help.hpp
+#ifndef WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_USAGE_HELP_H_
+#define WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_USAGE_HELP_H_
 
 /**
  * @brief Prints the command-line help message.
@@ -8,4 +8,4 @@
  */
 void print_help(const char* program_name);
 
-#endif  // USAGE_HELP_HPP
+#endif  // WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_USAGE_HELP_H_

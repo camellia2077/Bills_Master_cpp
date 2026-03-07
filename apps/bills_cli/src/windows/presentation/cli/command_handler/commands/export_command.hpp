@@ -1,6 +1,6 @@
-// command_handler/commands/ExportCommand.hpp
-#ifndef EXPORT_COMMAND_HPP
-#define EXPORT_COMMAND_HPP
+// windows/presentation/cli/command_handler/commands/export_command.hpp
+#ifndef WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMANDS_EXPORT_COMMAND_H_
+#define WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMANDS_EXPORT_COMMAND_H_
 
 #include "command_handler/commands/interface/i_command.hpp"
 
@@ -22,4 +22,4 @@ class ExportCommand : public ICommand {
   std::string m_export_pipeline;
 };
 
-#endif  // EXPORT_COMMAND_HPP
+#endif  // WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMANDS_EXPORT_COMMAND_H_

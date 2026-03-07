@@ -1,4 +1,4 @@
-// controllers/workflow/WorkflowController.cpp
+// windows/presentation/cli/controllers/workflow/workflow_controller.cpp
 #include "workflow_controller.hpp"
 
 #include <iostream>
@@ -6,6 +6,8 @@
 
 #include "bills_io/io_factory.hpp"
 #include "common/common_utils.hpp"
+
+namespace terminal = common::terminal;
 
 // 构造函数现在创建并持有 FileHandler，并将其传递给依赖项
 WorkflowController::WorkflowController(const std::string& config_path,
@@ -33,12 +35,12 @@ WorkflowController::~WorkflowController() = default;
 
 auto WorkflowController::ensure_initialized() const -> bool {
   if (m_init_error.has_value()) {
-    std::cerr << RED_COLOR << "错误: " << RESET_COLOR << m_init_error.value()
+    std::cerr << terminal::kRed << "错误: " << terminal::kReset << m_init_error.value()
               << std::endl;
     return false;
   }
   if (!m_use_case) {
-    std::cerr << RED_COLOR << "错误: " << RESET_COLOR
+    std::cerr << terminal::kRed << "错误: " << terminal::kReset
               << "Workflow 用例未初始化。" << std::endl;
     return false;
   }
@@ -51,7 +53,7 @@ auto WorkflowController::handle_validation(const std::string& path) -> bool {
   }
   const auto kResult = m_use_case->Validate(path);
   if (!kResult) {
-    std::cerr << RED_COLOR << "错误: " << RESET_COLOR
+    std::cerr << terminal::kRed << "错误: " << terminal::kReset
               << FormatError(kResult.error()) << std::endl;
     return false;
   }
@@ -64,7 +66,7 @@ auto WorkflowController::handle_convert(const std::string& path) -> bool {
   }
   const auto kResult = m_use_case->Convert(path);
   if (!kResult) {
-    std::cerr << RED_COLOR << "错误: " << RESET_COLOR
+    std::cerr << terminal::kRed << "错误: " << terminal::kReset
               << FormatError(kResult.error()) << std::endl;
     return false;
   }
@@ -80,7 +82,7 @@ auto WorkflowController::handle_ingest(const std::string& path,
   auto repository = bills::io::CreateBillRepository(db_path);
   const auto kResult = m_use_case->Ingest(path, *repository, write_json);
   if (!kResult) {
-    std::cerr << RED_COLOR << "错误: " << RESET_COLOR
+    std::cerr << terminal::kRed << "错误: " << terminal::kReset
               << FormatError(kResult.error()) << std::endl;
     return false;
   }
@@ -96,7 +98,7 @@ auto WorkflowController::handle_import(const std::string& path,
   auto repository = bills::io::CreateBillRepository(db_path);
   const auto kResult = m_use_case->Import(path, *repository);
   if (!kResult) {
-    std::cerr << RED_COLOR << "错误: " << RESET_COLOR
+    std::cerr << terminal::kRed << "错误: " << terminal::kReset
               << FormatError(kResult.error()) << std::endl;
     return false;
   }
@@ -112,9 +114,10 @@ auto WorkflowController::handle_full_workflow(const std::string& path,
   auto repository = bills::io::CreateBillRepository(db_path);
   const auto kResult = m_use_case->FullWorkflow(path, *repository);
   if (!kResult) {
-    std::cerr << RED_COLOR << "错误: " << RESET_COLOR
+    std::cerr << terminal::kRed << "错误: " << terminal::kReset
               << FormatError(kResult.error()) << std::endl;
     return false;
   }
   return kResult->failure == 0;
 }
+

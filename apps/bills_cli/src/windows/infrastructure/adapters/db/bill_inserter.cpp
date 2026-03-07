@@ -1,4 +1,4 @@
-// windows/infrastructure/adapters/db/BillInserter.cpp
+// windows/infrastructure/adapters/db/bill_inserter.cpp
 
 #include "bill_inserter.hpp"
 

@@ -1,7 +1,7 @@
-// db_insert/parser/BillJsonParser.hpp
+// db_insert/parser/bill_json_parser.hpp
 
-#ifndef BILL_JSON_PARSER_HPP
-#define BILL_JSON_PARSER_HPP
+#ifndef DB_INSERT_PARSER_BILL_JSON_PARSER_H_
+#define DB_INSERT_PARSER_BILL_JSON_PARSER_H_
 
 #include <stdexcept>
 #include <string>
@@ -26,5 +26,5 @@ class BillJsonParser {
   ParsedBill parse(const std::string& file_path);
 };
 
-#endif  // BILL_JSON_PARSER_HPP
+#endif  // DB_INSERT_PARSER_BILL_JSON_PARSER_H_
 

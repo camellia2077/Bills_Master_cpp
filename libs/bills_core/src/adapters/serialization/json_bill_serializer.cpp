@@ -1,4 +1,4 @@
-// adapters/serialization/JsonBillSerializer.cpp
+// adapters/serialization/json_bill_serializer.cpp
 
 #include "json_bill_serializer.hpp"
 

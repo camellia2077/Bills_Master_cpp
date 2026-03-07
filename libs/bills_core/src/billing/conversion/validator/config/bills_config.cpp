@@ -1,4 +1,4 @@
-// conversion/validator/config/bills_config.cpp
+// billing/conversion/validator/config/bills_config.cpp
 
 #include "bills_config.hpp"
 

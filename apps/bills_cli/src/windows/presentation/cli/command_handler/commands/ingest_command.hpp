@@ -1,6 +1,6 @@
-// command_handler/commands/IngestCommand.hpp
-#ifndef INGEST_COMMAND_HPP
-#define INGEST_COMMAND_HPP
+// windows/presentation/cli/command_handler/commands/ingest_command.hpp
+#ifndef WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMANDS_INGEST_COMMAND_H_
+#define WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMANDS_INGEST_COMMAND_H_
 
 #include <string>
 #include <vector>
@@ -17,4 +17,4 @@ class IngestCommand : public ICommand {
                          std::string& path, bool& write_json) -> void;
 };
 
-#endif  // INGEST_COMMAND_HPP
+#endif  // WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMANDS_INGEST_COMMAND_H_

@@ -1,4 +1,4 @@
-// windows/infrastructure/adapters/db/DatabaseManager.cpp
+// bills_io/adapters/db/database_manager.cpp
 
 #include "database_manager.hpp"
 

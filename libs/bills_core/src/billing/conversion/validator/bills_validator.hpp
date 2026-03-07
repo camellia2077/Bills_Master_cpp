@@ -1,6 +1,6 @@
-// conversion/validator/bills_validator.hpp
-#ifndef BILL_VALIDATOR_HPP
-#define BILL_VALIDATOR_HPP
+// billing/conversion/validator/bills_validator.hpp
+#ifndef BILLING_CONVERSION_VALIDATOR_BILLS_VALIDATOR_H_
+#define BILLING_CONVERSION_VALIDATOR_BILLS_VALIDATOR_H_
 
 #include <memory>
 #include <string>
@@ -38,6 +38,6 @@ class BillValidator {
   std::unique_ptr<BillConfig> m_config;
 };
 
-#endif  // BILL_VALIDATOR_HPP
+#endif  // BILLING_CONVERSION_VALIDATOR_BILLS_VALIDATOR_H_
 
 

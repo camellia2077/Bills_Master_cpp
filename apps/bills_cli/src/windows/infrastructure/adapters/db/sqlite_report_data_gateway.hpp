@@ -1,5 +1,6 @@
-#ifndef SQLITE_REPORT_DATA_GATEWAY_HPP
-#define SQLITE_REPORT_DATA_GATEWAY_HPP
+// windows/infrastructure/adapters/db/sqlite_report_data_gateway.hpp
+#ifndef WINDOWS_INFRASTRUCTURE_ADAPTERS_DB_SQLITE_REPORT_DATA_GATEWAY_H_
+#define WINDOWS_INFRASTRUCTURE_ADAPTERS_DB_SQLITE_REPORT_DATA_GATEWAY_H_
 
 #include <sqlite3.h>
 
@@ -21,4 +22,4 @@ class SqliteReportDataGateway final : public ReportDataGateway {
   sqlite3* db_connection_ = nullptr;
 };
 
-#endif  // SQLITE_REPORT_DATA_GATEWAY_HPP
+#endif  // WINDOWS_INFRASTRUCTURE_ADAPTERS_DB_SQLITE_REPORT_DATA_GATEWAY_H_

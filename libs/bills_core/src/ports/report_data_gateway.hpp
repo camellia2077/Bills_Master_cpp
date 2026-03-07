@@ -1,5 +1,6 @@
-#ifndef REPORT_DATA_GATEWAY_HPP
-#define REPORT_DATA_GATEWAY_HPP
+// ports/report_data_gateway.hpp
+#ifndef PORTS_REPORT_DATA_GATEWAY_H_
+#define PORTS_REPORT_DATA_GATEWAY_H_
 
 #include <string>
 #include <vector>
@@ -18,4 +19,4 @@ class ReportDataGateway {
       -> std::vector<std::string> = 0;
 };
 
-#endif  // REPORT_DATA_GATEWAY_HPP
+#endif  // PORTS_REPORT_DATA_GATEWAY_H_

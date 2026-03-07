@@ -1,4 +1,4 @@
-// command_handler/commands/QueryCommand.cpp
+// windows/presentation/cli/command_handler/commands/query_command.cpp
 #include "query_command.hpp"
 
 #include <stdexcept>

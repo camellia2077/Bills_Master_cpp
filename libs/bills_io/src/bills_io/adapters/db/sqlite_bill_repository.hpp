@@ -1,6 +1,6 @@
-// adapters/db/SqliteBillRepository.hpp
-#ifndef SQLITE_BILL_REPOSITORY_HPP
-#define SQLITE_BILL_REPOSITORY_HPP
+// bills_io/adapters/db/sqlite_bill_repository.hpp
+#ifndef BILLS_IO_ADAPTERS_DB_SQLITE_BILL_REPOSITORY_H_
+#define BILLS_IO_ADAPTERS_DB_SQLITE_BILL_REPOSITORY_H_
 
 #include <string>
 
@@ -15,4 +15,4 @@ class SqliteBillRepository : public BillRepository {
   std::string db_path_;
 };
 
-#endif  // SQLITE_BILL_REPOSITORY_HPP
+#endif  // BILLS_IO_ADAPTERS_DB_SQLITE_BILL_REPOSITORY_H_

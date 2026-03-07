@@ -1,6 +1,6 @@
-// adapters/io/FileBillContentReader.hpp
-#ifndef FILE_BILL_CONTENT_READER_HPP
-#define FILE_BILL_CONTENT_READER_HPP
+// windows/infrastructure/adapters/io/file_bill_content_reader.hpp
+#ifndef WINDOWS_INFRASTRUCTURE_ADAPTERS_IO_FILE_BILL_CONTENT_READER_H_
+#define WINDOWS_INFRASTRUCTURE_ADAPTERS_IO_FILE_BILL_CONTENT_READER_H_
 
 #include "ports/bills_content_reader.hpp"
 
@@ -9,4 +9,4 @@ class FileBillContentReader : public BillContentReader {
   auto Read(const std::string& file_path) -> std::string override;
 };
 
-#endif  // FILE_BILL_CONTENT_READER_HPP
+#endif  // WINDOWS_INFRASTRUCTURE_ADAPTERS_IO_FILE_BILL_CONTENT_READER_H_

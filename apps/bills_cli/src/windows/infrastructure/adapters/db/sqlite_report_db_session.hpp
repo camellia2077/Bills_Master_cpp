@@ -1,5 +1,6 @@
-#ifndef SQLITE_REPORT_DB_SESSION_HPP
-#define SQLITE_REPORT_DB_SESSION_HPP
+// windows/infrastructure/adapters/db/sqlite_report_db_session.hpp
+#ifndef WINDOWS_INFRASTRUCTURE_ADAPTERS_DB_SQLITE_REPORT_DB_SESSION_H_
+#define WINDOWS_INFRASTRUCTURE_ADAPTERS_DB_SQLITE_REPORT_DB_SESSION_H_
 
 #include <sqlite3.h>
 
@@ -20,4 +21,4 @@ class SqliteReportDbSession final {
   sqlite3* db_connection_ = nullptr;
 };
 
-#endif  // SQLITE_REPORT_DB_SESSION_HPP
+#endif  // WINDOWS_INFRASTRUCTURE_ADAPTERS_DB_SQLITE_REPORT_DB_SESSION_H_

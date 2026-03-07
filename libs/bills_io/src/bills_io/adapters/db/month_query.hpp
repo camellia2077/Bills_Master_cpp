@@ -1,6 +1,6 @@
-// windows/infrastructure/adapters/db/MonthQuery.hpp
-#ifndef MONTH_QUERY_HPP
-#define MONTH_QUERY_HPP
+// bills_io/adapters/db/month_query.hpp
+#ifndef BILLS_IO_ADAPTERS_DB_MONTH_QUERY_H_
+#define BILLS_IO_ADAPTERS_DB_MONTH_QUERY_H_
 
 #include <sqlite3.h>
 

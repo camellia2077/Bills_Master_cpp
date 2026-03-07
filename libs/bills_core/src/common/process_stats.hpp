@@ -1,6 +1,6 @@
 // common/process_stats.hpp
-#ifndef PROCESS_STATS_HPP
-#define PROCESS_STATS_HPP
+#ifndef COMMON_PROCESS_STATS_H_
+#define COMMON_PROCESS_STATS_H_
 
 #include <string>
 
@@ -22,4 +22,4 @@ struct ProcessStats {
   }
 };
 
-#endif  // PROCESS_STATS_HPP
+#endif  // COMMON_PROCESS_STATS_H_

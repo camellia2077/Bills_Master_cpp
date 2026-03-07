@@ -1,5 +1,6 @@
-#ifndef YEARLY_REPORT_FORMATTER_PROVIDER_HPP
-#define YEARLY_REPORT_FORMATTER_PROVIDER_HPP
+// ports/yearly_report_formatter_provider.hpp
+#ifndef PORTS_YEARLY_REPORT_FORMATTER_PROVIDER_H_
+#define PORTS_YEARLY_REPORT_FORMATTER_PROVIDER_H_
 
 #include <memory>
 #include <string_view>
@@ -14,4 +15,4 @@ class YearlyReportFormatterProvider {
       -> std::unique_ptr<IYearlyReportFormatter> = 0;
 };
 
-#endif  // YEARLY_REPORT_FORMATTER_PROVIDER_HPP
+#endif  // PORTS_YEARLY_REPORT_FORMATTER_PROVIDER_H_

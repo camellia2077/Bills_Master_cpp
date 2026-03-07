@@ -1,7 +1,7 @@
-// conversion/modifier/processor/bills_processor.hpp
+// billing/conversion/modifier/processor/bills_processor.hpp
 
-#ifndef BILL_PROCESSOR_HPP
-#define BILL_PROCESSOR_HPP
+#ifndef BILLING_CONVERSION_MODIFIER_PROCESSOR_BILLS_PROCESSOR_H_
+#define BILLING_CONVERSION_MODIFIER_PROCESSOR_BILLS_PROCESSOR_H_
 
 #include <string>
 #include <vector>
@@ -34,6 +34,6 @@ class BillProcessor {
   static bool _is_title(const std::string& line);
 };
 
-#endif  // BILL_PROCESSOR_HPP
+#endif  // BILLING_CONVERSION_MODIFIER_PROCESSOR_BILLS_PROCESSOR_H_
 
 

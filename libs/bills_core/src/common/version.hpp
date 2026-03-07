@@ -1,6 +1,6 @@
 // common/version.hpp
-#ifndef VERSION_HPP
-#define VERSION_HPP
+#ifndef COMMON_VERSION_H_
+#define COMMON_VERSION_H_
 
 #include <string_view>
 
@@ -9,4 +9,4 @@ inline constexpr std::string_view kVersion = "0.4.1";
 inline constexpr std::string_view kLastUpdated = "2026-03-06";
 }  // namespace bills::core::version
 
-#endif  // VERSION_HPP
+#endif  // COMMON_VERSION_H_

@@ -1,6 +1,6 @@
-// controllers/workflow/WorkflowController.hpp
-#ifndef WORKFLOW_CONTROLLER_HPP
-#define WORKFLOW_CONTROLLER_HPP
+// windows/presentation/cli/controllers/workflow/workflow_controller.hpp
+#ifndef WINDOWS_PRESENTATION_CLI_CONTROLLERS_WORKFLOW_WORKFLOW_CONTROLLER_H_
+#define WINDOWS_PRESENTATION_CLI_CONTROLLERS_WORKFLOW_WORKFLOW_CONTROLLER_H_
 
 #include <memory>
 #include <optional>
@@ -40,4 +40,4 @@ class WorkflowController {
   std::optional<std::string> m_init_error;
 };
 
-#endif  // WORKFLOW_CONTROLLER_HPP
+#endif  // WINDOWS_PRESENTATION_CLI_CONTROLLERS_WORKFLOW_WORKFLOW_CONTROLLER_H_

@@ -1,7 +1,7 @@
-// windows/infrastructure/adapters/db/DatabaseManager.hpp
+// bills_io/adapters/db/database_manager.hpp
 
-#ifndef DATABASE_MANAGER_HPP
-#define DATABASE_MANAGER_HPP
+#ifndef BILLS_IO_ADAPTERS_DB_DATABASE_MANAGER_H_
+#define BILLS_IO_ADAPTERS_DB_DATABASE_MANAGER_H_
 
 #include <sqlite3.h>
 
@@ -42,5 +42,5 @@ class DatabaseManager {
   sqlite3* m_db;  // SQLite 数据库连接句柄
 };
 
-#endif  // DATABASE_MANAGER_HPP
+#endif  // BILLS_IO_ADAPTERS_DB_DATABASE_MANAGER_H_
 

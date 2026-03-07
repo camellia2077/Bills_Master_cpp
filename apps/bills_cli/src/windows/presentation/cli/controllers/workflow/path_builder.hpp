@@ -1,6 +1,6 @@
-// controllers/workflow/PathBuilder.hpp
-#ifndef PATH_BUILDER_HPP
-#define PATH_BUILDER_HPP
+// windows/presentation/cli/controllers/workflow/path_builder.hpp
+#ifndef WINDOWS_PRESENTATION_CLI_CONTROLLERS_WORKFLOW_PATH_BUILDER_H_
+#define WINDOWS_PRESENTATION_CLI_CONTROLLERS_WORKFLOW_PATH_BUILDER_H_
 
 #include <filesystem>
 #include <string>
@@ -18,4 +18,4 @@ class PathBuilder : public OutputPathBuilder {
   fs::path m_base_output_dir;
 };
 
-#endif  // PATH_BUILDER_HPP
+#endif  // WINDOWS_PRESENTATION_CLI_CONTROLLERS_WORKFLOW_PATH_BUILDER_H_

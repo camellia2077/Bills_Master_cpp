@@ -1,6 +1,6 @@
-// command_handler/commands/SimpleCommand.hpp
-#ifndef SIMPLE_COMMAND_HPP
-#define SIMPLE_COMMAND_HPP
+// windows/presentation/cli/command_handler/commands/simple_command.hpp
+#ifndef WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMANDS_SIMPLE_COMMAND_H_
+#define WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMANDS_SIMPLE_COMMAND_H_
 
 #include <functional>
 
@@ -20,4 +20,4 @@ class SimpleCommand : public ICommand {
   Action m_action;
 };
 
-#endif  // SIMPLE_COMMAND_HPP
+#endif  // WINDOWS_PRESENTATION_CLI_COMMAND_HANDLER_COMMANDS_SIMPLE_COMMAND_H_
