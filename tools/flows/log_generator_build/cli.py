@@ -3,11 +3,10 @@ import sys
 from pathlib import Path
 
 from .artifact_pipeline import (
-    promote_artifact_to_fixtures,
+    promote_artifact_to_testdata,
     run_generate_to_artifact,
 )
 from .pipeline import run_build, run_target_only
-
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
@@ -17,43 +16,41 @@ from tools.toolchain.services.build_layout import resolve_build_directory
 
 
 def main(config: dict, project_dir, repo_root, argv=None) -> int:
-    parser = argparse.ArgumentParser(description="LogGenerator Build Tool")
+    parser = argparse.ArgumentParser(description="LogGenerator Dist Tool")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    build_parser = subparsers.add_parser("build", help="Build the project")
-    build_parser.add_argument(
+    dist_parser = subparsers.add_parser("dist", help="Prepare the project into dist/cmake")
+    dist_parser.add_argument(
         "--preset",
         choices=["debug", "release"],
         default="debug",
-        help="Build preset to use.",
+        help="Preset to use.",
     )
-    build_parser.add_argument(
-        "extra", nargs="*", help="Extra arguments (e.g. clean)"
-    )
+    dist_parser.add_argument("extra", nargs="*", help="Extra arguments (e.g. clean)")
 
     generate_parser = subparsers.add_parser(
-        "generate", help="Generate txt dataset to build/tests/artifact"
+        "generate", help="Generate txt dataset to dist/tests/artifact"
     )
     generate_parser.add_argument(
         "--preset",
         choices=["debug", "release"],
         default="debug",
-        help="Build preset to use.",
+        help="Preset to use.",
     )
     generate_parser.add_argument("--start-year", type=int, default=2024)
     generate_parser.add_argument("--end-year", type=int, default=2024)
     generate_parser.add_argument("--output-project", default="log_generator")
-    generate_parser.add_argument("--skip-build", action="store_true")
+    generate_parser.add_argument("--skip-dist", action="store_true")
 
     promote_parser = subparsers.add_parser(
-        "promote-fixtures",
-        help="Promote artifact dataset to tests/fixtures",
+        "promote-testdata",
+        help="Promote artifact dataset to testdata",
     )
     promote_parser.add_argument("--output-project", default="log_generator")
     promote_parser.add_argument(
         "--run-id",
         default="",
-        help="Optional run id under build/tests/artifact/<project>/runs/<run_id>.",
+        help="Optional run id under dist/tests/artifact/<project>/runs/<run_id>.",
     )
 
     subparsers.add_parser("format", help="Run clang-format")
@@ -61,7 +58,7 @@ def main(config: dict, project_dir, repo_root, argv=None) -> int:
 
     args = parser.parse_args(argv)
 
-    if args.command == "build":
+    if args.command == "dist":
         spec = resolve_build_directory(
             repo_root,
             target="log-generator",
@@ -85,7 +82,7 @@ def main(config: dict, project_dir, repo_root, argv=None) -> int:
             preset=args.preset,
             scope="shared",
         )
-        if not args.skip_build:
+        if not args.skip_dist:
             run_build(
                 spec.cmake_build_type,
                 spec.build_dir,
@@ -102,8 +99,8 @@ def main(config: dict, project_dir, repo_root, argv=None) -> int:
             end_year=args.end_year,
         )
 
-    if args.command == "promote-fixtures":
-        return promote_artifact_to_fixtures(
+    if args.command == "promote-testdata":
+        return promote_artifact_to_testdata(
             repo_root=repo_root,
             output_project=args.output_project,
             run_id=args.run_id.strip(),

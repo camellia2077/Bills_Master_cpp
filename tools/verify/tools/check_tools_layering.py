@@ -7,7 +7,6 @@ import ast
 from dataclasses import dataclass
 from pathlib import Path
 
-
 IGNORE_DIR_NAMES = {
     ".git",
     ".idea",
@@ -17,7 +16,6 @@ IGNORE_DIR_NAMES = {
     ".venv",
     "env",
     ".env",
-    "build",
     "dist",
 }
 
@@ -58,8 +56,7 @@ def detect_layer(relative_path: Path) -> str:
 def check_import_rule(layer: str, import_name: str) -> str | None:
     if import_name.startswith(("apps", "libs", "tests")):
         return (
-            "tools 脚本不应直接 import 业务层模块（apps/libs/tests）；"
-            "应通过 CLI/子进程边界调用。"
+            "tools 脚本不应直接 import 业务层模块（apps/libs/tests）；应通过 CLI/子进程边界调用。"
         )
     if layer == "flows" and import_name.startswith("tools.verify"):
         return "tools/flows 不应依赖 tools/verify。"

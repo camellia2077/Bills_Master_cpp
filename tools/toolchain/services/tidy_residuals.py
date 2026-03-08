@@ -40,10 +40,7 @@ def classify_residual_diagnostics(
             suggest_nolint_count += 1
         else:
             manual_refactor_count += 1
-        if (
-            count_safe_fix_as_unexpected
-            and matches_any_pattern(check_name, safe_fix_patterns)
-        ):
+        if count_safe_fix_as_unexpected and matches_any_pattern(check_name, safe_fix_patterns):
             unexpected_fixable_count += 1
         classified.append(
             {

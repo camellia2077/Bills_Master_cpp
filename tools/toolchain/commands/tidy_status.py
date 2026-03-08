@@ -47,8 +47,7 @@ def _print_global_status(latest: dict) -> int:
     )
     ranges = numbering.get("already_closed_ranges", [])
     print(
-        "already_closed_ranges="
-        + (",".join(str(item) for item in ranges) if ranges else "<none>")
+        "already_closed_ranges=" + (",".join(str(item) for item in ranges) if ranges else "<none>")
     )
     print(f"next_action={latest.get('next_action') or '<none>'}")
     print(
@@ -91,14 +90,11 @@ def _print_batch_status(paths, batch_id: str) -> int:
     print(f"next_open_batch={numbering.get('next_open_batch') or '<none>'}")
     ranges = numbering.get("already_closed_ranges", [])
     print(
-        "already_closed_ranges="
-        + (",".join(str(item) for item in ranges) if ranges else "<none>")
+        "already_closed_ranges=" + (",".join(str(item) for item in ranges) if ranges else "<none>")
     )
     print(f"source_files={len(source_files)}")
     for phase_name, phase_payload in state.get("phases", {}).items():
-        print(
-            f"- phase={phase_name} status={phase_payload.get('status', 'pending')}"
-        )
+        print(f"- phase={phase_name} status={phase_payload.get('status', 'pending')}")
     remaining = state.get("remaining", {})
     decision = state.get("decision_summary", {})
     print(f"remaining={int(remaining.get('count', 0) or 0)}")

@@ -24,6 +24,8 @@ def forward_python_entry(
     command = [ctx.python_executable, str(entry), *command_args]
     result = ctx.process_runner.run(command, cwd=ctx.repo_root)
     return result.returncode
+
+
 def run_verify_workflow(
     ctx: Context,
     workflow: str,

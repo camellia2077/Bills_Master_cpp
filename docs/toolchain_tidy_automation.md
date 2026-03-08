@@ -32,11 +32,11 @@
 
 ### `tools/verify/`
 
-统一构建/验证入口。`tidy-batch` 里的 baseline verify / build gate 最终都会调用这里。
+统一 dist/验证入口。`tidy-batch` 里的 baseline verify / dist gate 最终都会调用这里。
 
 ### `tools/flows/`
 
-项目已有的 build/test flow 脚本。对 tidy SOP 来说，它们更多是被 `verify` 或其他兼容命令间接调用。
+项目已有的 dist/test flow 脚本。对 tidy SOP 来说，它们更多是被 `verify` 或其他命令间接调用。
 
 ### `temp/tidy/`
 
@@ -77,7 +77,7 @@
   - 把原始日志切成任务
 - `tidy_batch.py`
   - 当前 SOP 总控
-  - 如果要改 phase 顺序、失败分支、build gate 行为，先看这里
+  - 如果要改 phase 顺序、失败分支、dist gate 行为，先看这里
 - `tidy_fix.py`
   - safe-fix / 手动 fix pass 的命令入口
 - `tidy_recheck.py`

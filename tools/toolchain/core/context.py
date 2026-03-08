@@ -19,7 +19,7 @@ class Context:
     process_runner: ProcessRunner
 
     @classmethod
-    def from_repo(cls) -> "Context":
+    def from_repo(cls) -> Context:
         tools_root = Path(__file__).resolve().parents[2]
         repo_root = tools_root.parent
         temp_root = repo_root / "temp"

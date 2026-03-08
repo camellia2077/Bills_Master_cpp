@@ -13,7 +13,6 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from tools.toolchain.services.build_layout import (
-    resolve_artifact_project_root,
     resolve_runtime_project_root,
     resolve_runtime_workspace_dir,
 )
@@ -34,9 +33,7 @@ def resolve_default_db(repo_root: Path) -> Path | None:
         if candidates:
             return candidates[0]
 
-    workspace_db = (
-        resolve_runtime_workspace_dir(repo_root, "bills_tracer") / "bills.sqlite3"
-    )
+    workspace_db = resolve_runtime_workspace_dir(repo_root, "bills_tracer") / "bills.sqlite3"
     if workspace_db.exists():
         return workspace_db
     return None
@@ -51,7 +48,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--db", default="", help="Optional explicit sqlite db path.")
     parser.add_argument(
         "--output-dir",
-        default="build/tests/artifact/reporting/graph_generator",
+        default="dist/tests/artifact/reporting/graph_generator",
     )
     parser.add_argument("--output-name", default="")
     return parser.parse_args()
@@ -70,9 +67,7 @@ def main() -> int:
     repo_root = REPO_ROOT
 
     missing = [
-        module_name
-        for module_name in ("pandas", "matplotlib")
-        if not has_dependency(module_name)
+        module_name for module_name in ("pandas", "matplotlib") if not has_dependency(module_name)
     ]
     if missing:
         print(f"[WARN] Skip graph generation, missing dependencies: {missing}")

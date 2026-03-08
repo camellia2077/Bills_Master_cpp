@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 @dataclass
-class BuildConfig:
+class DistConfig:
     default_target: str = "bills"
 
 
@@ -40,7 +40,7 @@ class ScopeConfig:
     exclude_segments: list[str] = field(
         default_factory=lambda: [
             ".git",
-            "build",
+            "dist",
             "temp",
         ]
     )
@@ -142,16 +142,14 @@ class TidyConfig:
     auto_full_on_no_such_file: bool = True
     auto_full_on_glob_mismatch: bool = True
     fix_strategy: TidyFixStrategyConfig = field(default_factory=TidyFixStrategyConfig)
-    safe_fix_prepass: TidySafeFixPrepassConfig = field(
-        default_factory=TidySafeFixPrepassConfig
-    )
+    safe_fix_prepass: TidySafeFixPrepassConfig = field(default_factory=TidySafeFixPrepassConfig)
     suppression: TidySuppressionConfig = field(default_factory=TidySuppressionConfig)
     status: TidyStatusConfig = field(default_factory=TidyStatusConfig)
 
 
 @dataclass
 class ToolchainConfig:
-    build: BuildConfig = field(default_factory=BuildConfig)
+    dist: DistConfig = field(default_factory=DistConfig)
     verify: VerifyConfig = field(default_factory=VerifyConfig)
     scope: ScopeConfig = field(default_factory=ScopeConfig)
     tidy: TidyConfig = field(default_factory=TidyConfig)
@@ -159,7 +157,11 @@ class ToolchainConfig:
 
 def load_toolchain_config(config_path: Path) -> ToolchainConfig:
     data = _load_toml_dict(config_path)
-    build_data = data.get("build", {})
+    if "build" in data:
+        raise ValueError(
+            "Legacy config section [build] is no longer supported. Rename it to [dist]."
+        )
+    dist_data = data.get("dist", {})
     verify_data = data.get("verify", {})
     scope_data = data.get("scope", {})
     tidy_data = data.get("tidy", {})
@@ -169,10 +171,10 @@ def load_toolchain_config(config_path: Path) -> ToolchainConfig:
     status_data = tidy_data.get("status", {})
 
     config = ToolchainConfig()
-    if isinstance(build_data, dict):
-        default_target = build_data.get("default_target")
+    if isinstance(dist_data, dict):
+        default_target = dist_data.get("default_target")
         if isinstance(default_target, str) and default_target.strip():
-            config.build.default_target = default_target.strip()
+            config.dist.default_target = default_target.strip()
 
     if isinstance(verify_data, dict):
         windows_data = verify_data.get("windows", {})
@@ -206,24 +208,18 @@ def load_toolchain_config(config_path: Path) -> ToolchainConfig:
             config.scope.default_roots,
             allow_empty=True,
         )
-        config.scope.header_filter_roots = (
-            header_filter_roots or list(config.scope.default_roots)
-        )
+        config.scope.header_filter_roots = header_filter_roots or list(config.scope.default_roots)
 
     if isinstance(tidy_data, dict):
         config.tidy.max_lines = _get_int(tidy_data, "max_lines", config.tidy.max_lines)
         config.tidy.max_diags = _get_int(tidy_data, "max_diags", config.tidy.max_diags)
         config.tidy.batch_size = _get_int(tidy_data, "batch_size", config.tidy.batch_size)
         config.tidy.jobs = _get_int(tidy_data, "jobs", config.tidy.jobs)
-        config.tidy.full_every = _get_int(
-            tidy_data, "full_every", config.tidy.full_every
-        )
+        config.tidy.full_every = _get_int(tidy_data, "full_every", config.tidy.full_every)
         config.tidy.neighbor_scope = _get_str(
             tidy_data, "neighbor_scope", config.tidy.neighbor_scope
         )
-        config.tidy.keep_going = _get_bool(
-            tidy_data, "keep_going", config.tidy.keep_going
-        )
+        config.tidy.keep_going = _get_bool(tidy_data, "keep_going", config.tidy.keep_going)
         config.tidy.auto_full_on_no_such_file = _get_bool(
             tidy_data,
             "auto_full_on_no_such_file",

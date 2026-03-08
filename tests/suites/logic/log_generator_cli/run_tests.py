@@ -10,13 +10,10 @@ import sys
 import tempfile
 from pathlib import Path
 
-
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
-
-from tools.toolchain.services.build_layout import resolve_build_directory
 
 SUMMARY_FILENAME = "test_summary.json"
 
@@ -57,6 +54,8 @@ def run_command(
 
 
 def resolve_generator_path(explicit_path: str) -> Path:
+    from tools.toolchain.services.build_layout import resolve_build_directory
+
     if explicit_path.strip():
         path = Path(explicit_path).resolve()
         require(path.is_file(), f"generator executable not found: {path}")
@@ -77,6 +76,8 @@ def resolve_generator_path(explicit_path: str) -> Path:
 
 
 def resolve_generator_config(explicit_path: str) -> Path:
+    from tools.toolchain.services.build_layout import resolve_build_directory
+
     if explicit_path.strip():
         path = Path(explicit_path).resolve()
         require(path.is_file(), f"generator config not found: {path}")
@@ -201,9 +202,7 @@ def run_cli_tests(generator_path: Path, config_path: Path) -> dict:
                 "single year generation should create 12 monthly files.",
             )
             require(
-                read_first_line(
-                    runtime_dir / "bills_output_from_config" / "2024" / "2024-01.txt"
-                )
+                read_first_line(runtime_dir / "bills_output_from_config" / "2024" / "2024-01.txt")
                 == "date:2024-01",
                 "single year output must use ISO date:YYYY-MM format.",
             )
@@ -228,16 +227,12 @@ def run_cli_tests(generator_path: Path, config_path: Path) -> dict:
                 "double range generation should create 12 files for 2025.",
             )
             require(
-                read_first_line(
-                    runtime_dir / "bills_output_from_config" / "2024" / "2024-01.txt"
-                )
+                read_first_line(runtime_dir / "bills_output_from_config" / "2024" / "2024-01.txt")
                 == "date:2024-01",
                 "double range output must use ISO date for 2024-01.",
             )
             require(
-                read_first_line(
-                    runtime_dir / "bills_output_from_config" / "2025" / "2025-12.txt"
-                )
+                read_first_line(runtime_dir / "bills_output_from_config" / "2025" / "2025-12.txt")
                 == "date:2025-12",
                 "double range output must use ISO date for 2025-12.",
             )
@@ -262,23 +257,23 @@ def write_summary(summary_path: Path, payload: dict) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Run log_generator CLI command smoke tests."
-    )
+    from tools.toolchain.services.build_layout import resolve_tests_root
+
+    parser = argparse.ArgumentParser(description="Run log_generator CLI command smoke tests.")
     parser.add_argument(
         "--generator",
         default="",
-        help="Path to generator executable. Defaults to build/log_generator/debug/shared/bin/generator.exe.",
+        help="Path to generator executable. Defaults to dist/cmake/log_generator/debug/shared/bin/generator.exe.",
     )
     parser.add_argument(
         "--config",
         default="",
-        help="Path to config.toml. Defaults to build/log_generator/debug/shared/bin/config/config.toml.",
+        help="Path to config.toml. Defaults to dist/cmake/log_generator/debug/shared/bin/config/config.toml.",
     )
     parser.add_argument(
         "--summary",
         default=str(
-            REPO_ROOT / "build" / "tests" / "logic" / "log_generator_cli" / SUMMARY_FILENAME
+            resolve_tests_root(REPO_ROOT) / "logic" / "log_generator_cli" / SUMMARY_FILENAME
         ),
         help="Summary output path.",
     )

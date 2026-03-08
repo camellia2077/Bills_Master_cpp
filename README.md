@@ -9,8 +9,10 @@
 - `docs/`：文档中心。
 - `apps/`：产品可执行项目（如 `bills_cli`）。
 - `libs/`：核心库与领域能力（如 `bills_core`）。
+- `testdata/`：跨端共享的标准输入数据（当前 canonical bills 数据集）。
+- `dist/`：仓库生成产物根目录（`cmake/`、`tests/`，以及预留给 Android 的 `gradle/`）。
 - `tools/`：工程脚本与工具（`toolchain/`、`verify/`、`flows/`）。
-- `tests/`：统一测试资产（`suites/`、`baseline/`、`fixtures/`、`output/`）。
+- `tests/`：统一测试资产（`suites/`、`baseline/`、`config/`）。
 - `third_party/`：第三方源码与依赖镜像（后续接入）。
 
 ## 治理文件

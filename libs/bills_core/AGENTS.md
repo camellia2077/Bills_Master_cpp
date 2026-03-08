@@ -5,8 +5,9 @@
 ## 必读顺序
 
 1. `libs/bills_core/README.md`
-2. `docs/modules/bills_core/module_map.md`
-3. `docs/modules/bills_core/change_guide.md`
+2. `docs/modules/bills_core/README.md`
+3. `docs/modules/bills_core/module_map.md`
+4. `docs/modules/bills_core/change_guide.md`
 
 ## 约束
 

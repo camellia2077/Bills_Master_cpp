@@ -24,8 +24,6 @@ def calculate_priority_score(warnings: list[dict], file_path: str) -> float:
                 max_check_weight = max(max_check_weight, weight)
                 break
 
-    file_factor = (
-        2.0 if any(file_path.endswith(ext) for ext in [".hpp", ".h", ".hxx"]) else 1.0
-    )
+    file_factor = 2.0 if any(file_path.endswith(ext) for ext in [".hpp", ".h", ".hxx"]) else 1.0
     count_factor = len(warnings) * 0.05
     return (max_check_weight * file_factor) + count_factor

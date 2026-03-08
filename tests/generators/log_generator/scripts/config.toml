@@ -1,4 +1,4 @@
-[build]
+[dist]
 # Optional: "Ninja" or "Unix Makefiles"
 generator = "Ninja"
 

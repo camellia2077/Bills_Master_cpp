@@ -34,7 +34,7 @@ def run(args, ctx: Context) -> int:
 
     if not args.tidy_only:
         command, verify_ret = run_verify_workflow(
-            ctx, "bills-build", ["--preset", "debug", "--scope", "shared"]
+            ctx, "bills-dist", ["--preset", "debug", "--scope", "shared"]
         )
         write_verify_result(paths, command=command, returncode=verify_ret)
         if verify_ret != 0:
@@ -57,9 +57,7 @@ def run(args, ctx: Context) -> int:
     manifest = load_manifest(paths.tasks_manifest)
     pending_logs = list(paths.tasks_dir.rglob("task_*.log"))
     if manifest.get("tasks") or pending_logs:
-        print(
-            f"[ERROR] tidy-close detected {len(manifest.get('tasks', []))} pending task(s)."
-        )
+        print(f"[ERROR] tidy-close detected {len(manifest.get('tasks', []))} pending task(s).")
         write_latest_tidy_summary(
             paths,
             stage="tidy-close",

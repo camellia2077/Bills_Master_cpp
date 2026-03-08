@@ -3,6 +3,26 @@
 统一代码行数扫描入口：
 
 - `python scripts/loc/run.py`
+- `scripts/loc/loc.bat`
+
+## Windows BAT 快捷入口
+
+在 Windows 下也可以直接用这些脚本：
+
+- `scripts/loc/loc.bat`：通用透传入口，等价于 `python scripts/loc/run.py %*`
+- `scripts/loc/scan_py_over.bat`：默认扫描 Python 大文件，等价于 `--lang py --over 200`
+- `scripts/loc/scan_cpp_over.bat`：默认扫描 C++ 大文件，等价于 `--lang cpp --over 350`
+- `scripts/loc/scan_py_dir_over_files.bat`：默认扫描 Python 目录热点，等价于 `--lang py --dir-over-files --dir-max-depth 2`
+- `scripts/loc/scan_cpp_dir_over_files.bat`：默认扫描 C++ 目录热点，等价于 `--lang cpp --dir-over-files --dir-max-depth 2`
+
+示例：
+
+```bat
+scripts\loc\loc.bat --lang py tools tests --over 150
+scripts\loc\scan_py_over.bat
+scripts\loc\scan_py_over.bat tools
+scripts\loc\scan_py_dir_over_files.bat scripts tools
+```
 
 ## 基本用法
 

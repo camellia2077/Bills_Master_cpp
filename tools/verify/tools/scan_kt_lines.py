@@ -4,7 +4,7 @@ from pathlib import Path
 
 def analyze_large_files(target_dir, min_lines=350):
     # 1. 过滤机制：需要跳过的无关/生成目录
-    ignore_dirs = {".git", ".gradle", "build", ".idea", "captures"}
+    ignore_dirs = {".git", ".gradle", "dist", ".idea", "captures"}
     # 2. 过滤机制：只统计有意义的代码文件类型
     valid_extensions = {".kt"}
 

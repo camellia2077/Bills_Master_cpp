@@ -3,9 +3,7 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 
-TASK_START_PATTERN = re.compile(
-    r"^\[(\d+)(?:/(\d+))?\]\s+(?:\[\d+/CHECK\]\s+)?Analyzing:\s+(.+)$"
-)
+TASK_START_PATTERN = re.compile(r"^\[(\d+)(?:/(\d+))?\]\s+(?:\[\d+/CHECK\]\s+)?Analyzing:\s+(.+)$")
 DIAGNOSTIC_LINE_PATTERN = re.compile(
     r"^([A-Za-z]:)?([^:]+):(\d+):(\d+):\s+(warning|error):\s+(.+)$"
 )
@@ -74,11 +72,13 @@ def generate_text_summary(warnings: list[dict]) -> str:
         "=== SUMMARY ===",
         "Files: "
         + ", ".join(
-            f"{name}({count})" for name, count in sorted(file_counts.items(), key=lambda item: -item[1])
+            f"{name}({count})"
+            for name, count in sorted(file_counts.items(), key=lambda item: -item[1])
         ),
         "Types: "
         + ", ".join(
-            f"{name}({count})" for name, count in sorted(check_counts.items(), key=lambda item: -item[1])
+            f"{name}({count})"
+            for name, count in sorted(check_counts.items(), key=lambda item: -item[1])
         ),
         "=" * 15,
         "",

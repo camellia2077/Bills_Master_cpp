@@ -16,7 +16,7 @@ def parse_cli_args(
     if unknown:
         if hasattr(args, "forwarded"):
             existing = list(getattr(args, "forwarded", []))
-            setattr(args, "forwarded", existing + unknown)
+            args.forwarded = existing + unknown
         else:
             parser.error(f"unrecognized arguments: {' '.join(unknown)}")
     return parser, args

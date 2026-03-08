@@ -19,7 +19,7 @@ def analyze_large_cpp_files(target_dir, min_lines=350):
         dirs[:] = [
             d
             for d in dirs
-            if d not in ignore_dirs and not d.lower().startswith(("build", "cmake", "out"))
+            if d not in ignore_dirs and not d.lower().startswith(("dist", "cmake", "out"))
         ]
 
         for file in files:

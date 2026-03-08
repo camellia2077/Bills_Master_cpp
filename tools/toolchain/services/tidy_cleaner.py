@@ -29,24 +29,17 @@ def clean_tasks(
     entries = list(manifest.get("tasks", []))
     normalized_batch = (batch_id or "").strip()
     normalized_task_ids = {
-        str(task_id).strip().zfill(3)
-        for task_id in (task_ids or [])
-        if str(task_id).strip()
+        str(task_id).strip().zfill(3) for task_id in (task_ids or []) if str(task_id).strip()
     }
 
     if not normalized_batch and not normalized_task_ids:
         raise ValueError("clean requires --batch-id or explicit task ids.")
 
     selected_entries = [
-        entry
-        for entry in entries
-        if _matches_task(entry, normalized_batch, normalized_task_ids)
+        entry for entry in entries if _matches_task(entry, normalized_batch, normalized_task_ids)
     ]
     if cluster_by_file and selected_entries:
-        clustered_files = {
-            _path_key(_entry_source_path(ctx, entry))
-            for entry in selected_entries
-        }
+        clustered_files = {_path_key(_entry_source_path(ctx, entry)) for entry in selected_entries}
         selected_entries = [
             entry
             for entry in entries
@@ -57,10 +50,7 @@ def clean_tasks(
     if strict:
         verify_ok, verify_reason = latest_verify_succeeded(paths)
         if not verify_ok:
-            raise ValueError(
-                "strict clean requires a successful verify result "
-                f"({verify_reason})."
-            )
+            raise ValueError(f"strict clean requires a successful verify result ({verify_reason}).")
         verify_mtime = latest_verify_result_mtime(paths)
         if verify_mtime is None:
             raise ValueError("strict clean requires a readable verify result timestamp.")
@@ -175,8 +165,10 @@ def _strict_task_guard(
 def _entry_log_path(paths: TidyPaths, entry: dict) -> Path:
     content_path = str(entry.get("content_path", "")).strip()
     if not content_path:
-        return paths.tasks_dir / str(entry.get("batch_id", "")) / (
-            f"task_{str(entry.get('task_id', '')).zfill(3)}.log"
+        return (
+            paths.tasks_dir
+            / str(entry.get("batch_id", ""))
+            / (f"task_{str(entry.get('task_id', '')).zfill(3)}.log")
         )
     return paths.tasks_dir.parent / content_path
 

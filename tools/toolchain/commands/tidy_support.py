@@ -7,8 +7,8 @@ from ..core.path_display import display_path
 from ..services.tidy_paths import TidyPaths, resolve_tidy_paths
 from ..services.tidy_queue import max_indices, rewrite_pending_tasks, split_log_to_tasks
 from ..services.tidy_runtime import (
-    copy_build_log_to_run,
     copy_build_log_to_raw,
+    copy_build_log_to_run,
     copy_compile_commands_to_run,
     extract_task_source_files,
     new_tidy_run_dir,
@@ -107,10 +107,7 @@ def split_captured_log(
     stage: str = "tidy-split",
 ) -> tuple[int, dict]:
     if not paths.latest_build_log.exists():
-        print(
-            f"[ERROR] Missing raw tidy log: "
-            f"{display_path(paths.latest_build_log, resolve=True)}"
-        )
+        print(f"[ERROR] Missing raw tidy log: {display_path(paths.latest_build_log, resolve=True)}")
         write_latest_tidy_summary(
             paths,
             stage=stage,

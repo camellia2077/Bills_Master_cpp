@@ -1,3 +1,4 @@
+dist/
 build/
 my_test/
 .vscode/
@@ -6,18 +7,52 @@ __pycache__/
 *.pyc
 temp/
 
-tests/fixtures/config/
-tests/fixtures/plugins/
-
 *.log
 *.pdf
 *.rst
-# 忽略所有 .exe 可执行文件
-*.exe
-
-
-# 忽略所有 .tex 可执行文件
 *.tex
-
-# 忽略所有 .typ 文件
 *.typ
+
+# C/C++ / CMake / Ninja build outputs
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exp
+*.ilk
+*.idb
+*.pdb
+*.pch
+*.res
+*.manifest
+*.d
+*.ddi
+*.modmap
+*.check_cache
+*.ninja
+*.rsp
+*.tlog
+*.bin
+*.exe
+*.out
+
+# Java / Android / Gradle build outputs
+*.class
+*.jar
+*.aar
+*.apk
+*.ap_
+*.dex
+
+# Generated build metadata
+.ninja_deps
+.ninja_log
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+CMakeFiles/
+.gradle/
+.cxx/

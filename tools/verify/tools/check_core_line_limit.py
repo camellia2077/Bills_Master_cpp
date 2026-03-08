@@ -6,15 +6,16 @@ import argparse
 import os
 from pathlib import Path
 
-
 VALID_EXTENSIONS = {".c", ".cc", ".cpp", ".cxx", ".h", ".hpp"}
 IGNORE_DIR_NAMES = {".git", ".idea", ".vscode", "bin", "obj", "debug", "release", "vs"}
-IGNORE_DIR_PREFIXES = ("build", "cmake", "out")
+IGNORE_DIR_PREFIXES = ("dist", "cmake", "out")
 
 
 def should_skip_dir(path: Path) -> bool:
     name = path.name.lower()
-    return name in IGNORE_DIR_NAMES or any(name.startswith(prefix) for prefix in IGNORE_DIR_PREFIXES)
+    return name in IGNORE_DIR_NAMES or any(
+        name.startswith(prefix) for prefix in IGNORE_DIR_PREFIXES
+    )
 
 
 def count_file_lines(file_path: Path) -> int:

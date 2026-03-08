@@ -78,7 +78,9 @@ def run_tidy_recheck_pass(
         output_log=log_path,
         fix=False,
     )
-    log_content = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
+    log_content = (
+        log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
+    )
     write_diagnostics_jsonl(log_content=log_content, output_path=diagnostics_path)
     diagnostics = load_diagnostics_jsonl(diagnostics_path)
     classified, decision_summary = classify_residual_diagnostics(
@@ -119,9 +121,7 @@ def execute_tidy_recheck(ctx: Context, *, batch_id: str) -> int:
         normalized_batch,
         status="running",
         source_files=[str(path) for path in source_files],
-        numbering_context=build_numbering_context(
-            paths, current_batch_id=normalized_batch
-        ),
+        numbering_context=build_numbering_context(paths, current_batch_id=normalized_batch),
     )
     update_batch_phase(
         paths,
@@ -175,9 +175,7 @@ def execute_tidy_recheck(ctx: Context, *, batch_id: str) -> int:
             "diagnostics": result.diagnostics,
         },
         decision_summary=result.decision_summary,
-        numbering_context=build_numbering_context(
-            paths, current_batch_id=normalized_batch
-        ),
+        numbering_context=build_numbering_context(paths, current_batch_id=normalized_batch),
     )
     write_tidy_result(
         ctx,
@@ -190,8 +188,7 @@ def execute_tidy_recheck(ctx: Context, *, batch_id: str) -> int:
         next_action=(
             None
             if result.returncode == 0
-            and int(result.decision_summary.get("unexpected_fixable_count", 0) or 0)
-            > 0
+            and int(result.decision_summary.get("unexpected_fixable_count", 0) or 0) > 0
             else (
                 f"Next: python tools/run.py tidy-status --batch-id {normalized_batch}"
                 if result.returncode == 0

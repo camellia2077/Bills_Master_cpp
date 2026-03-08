@@ -193,9 +193,7 @@ def main() -> int:
     parser.add_argument(
         "--output-group",
         default="artifact",
-        help=(
-            "Output group under build/tests (default: artifact)."
-        ),
+        help=("Output group under dist/tests (default: artifact)."),
     )
     parser.add_argument(
         "--compare-projects",
@@ -227,12 +225,10 @@ def main() -> int:
     if args.compare_projects:
         project_a, project_b = args.compare_projects
         project_a_root = (
-            resolve_project_output_root(repo_root, project_a, args.output_group)
-            / "exported_files"
+            resolve_project_output_root(repo_root, project_a, args.output_group) / "exported_files"
         )
         project_b_root = (
-            resolve_project_output_root(repo_root, project_b, args.output_group)
-            / "exported_files"
+            resolve_project_output_root(repo_root, project_b, args.output_group) / "exported_files"
         )
         return compare_between_projects(
             manifest=manifest,
@@ -242,8 +238,7 @@ def main() -> int:
         )
 
     current_root = (
-        resolve_project_output_root(repo_root, args.project, args.output_group)
-        / "exported_files"
+        resolve_project_output_root(repo_root, args.project, args.output_group) / "exported_files"
     )
     return compare_against_baseline(
         manifest=manifest,

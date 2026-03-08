@@ -31,11 +31,10 @@ def run_tidy_fix_pass(
 ) -> TidyFixResult:
     paths = resolve_tidy_paths(ctx)
     if not paths.compile_commands_path.exists():
-        print(
-            "[ERROR] Missing compile_commands.json. "
-            "Run `python tools/run.py tidy` first."
+        print("[ERROR] Missing compile_commands.json. Run `python tools/run.py tidy` first.")
+        log_path = output_log or (
+            paths.refresh_dir / f"{(batch_id or 'manual').strip() or 'manual'}_fix.log"
         )
-        log_path = output_log or (paths.refresh_dir / f"{(batch_id or 'manual').strip() or 'manual'}_fix.log")
         return TidyFixResult(
             returncode=1,
             log_path=log_path,
@@ -81,7 +80,9 @@ def run_tidy_fix_pass(
 
     log_path = output_log or (paths.refresh_dir / f"{normalized_batch or 'manual'}_fix.log")
     before_hashes = {
-        _path_key(file_path): _hash_file(file_path) for file_path in target_files if file_path.exists()
+        _path_key(file_path): _hash_file(file_path)
+        for file_path in target_files
+        if file_path.exists()
     }
     returncode = run_clang_tidy(
         ctx,

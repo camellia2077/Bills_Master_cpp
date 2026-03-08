@@ -19,7 +19,7 @@ class TestPreparer:
     def _copy_exe_sidecars(self):
         copied_files = []
         main_exe_lower = self.exe_name.lower()
-        for entry in os.scandir(config.BUILD_DIR):
+        for entry in os.scandir(config.WORKSPACE_DIR):
             if not entry.is_file():
                 continue
             name_lower = entry.name.lower()
@@ -41,24 +41,20 @@ class TestPreparer:
             )
         else:
             print(
-                f"  {constants.YELLOW}No extra runtime sidecars found; skip copy."
-                f"{constants.RESET}"
+                f"  {constants.YELLOW}No extra runtime sidecars found; skip copy.{constants.RESET}"
             )
 
     def prepare_runtime_env(self):
-        print(
-            f"{constants.CYAN}--- 1. Preparing Runtime Environment ---"
-            f"{constants.RESET}"
-        )
+        print(f"{constants.CYAN}--- 1. Preparing Runtime Environment ---{constants.RESET}")
 
-        if not os.path.exists(config.BUILD_DIR):
+        if not os.path.exists(config.WORKSPACE_DIR):
             print(
-                f"  {constants.RED}Error: build directory not found: "
-                f"'{config.BUILD_DIR}'.{constants.RESET}"
+                f"  {constants.RED}Error: workspace directory not found: "
+                f"'{config.WORKSPACE_DIR}'.{constants.RESET}"
             )
             return False
 
-        source_exe_path = os.path.join(config.BUILD_DIR, self.exe_name)
+        source_exe_path = os.path.join(config.WORKSPACE_DIR, self.exe_name)
         dest_exe_path = os.path.join(self.base_dir, self.exe_name)
         if not os.path.exists(source_exe_path):
             print(
@@ -68,27 +64,21 @@ class TestPreparer:
             return False
 
         shutil.copy(source_exe_path, dest_exe_path)
-        print(
-            f"  {constants.GREEN}Copied executable: "
-            f"{self.exe_name}{constants.RESET}"
-        )
+        print(f"  {constants.GREEN}Copied executable: {self.exe_name}{constants.RESET}")
 
         self._copy_exe_sidecars()
 
-        source_config_dir = os.path.join(config.BUILD_DIR, "config")
+        source_config_dir = os.path.join(config.WORKSPACE_DIR, "config")
         dest_config_dir = os.path.join(self.base_dir, "config")
         if not os.path.exists(source_config_dir):
             print(
-                f"  {constants.RED}Error: config directory not found in build "
+                f"  {constants.RED}Error: config directory not found in workspace "
                 f"output: '{source_config_dir}'.{constants.RESET}"
             )
             return False
 
         shutil.copytree(source_config_dir, dest_config_dir)
-        print(
-            f"  {constants.GREEN}Copied config directory: "
-            f"config{constants.RESET}"
-        )
+        print(f"  {constants.GREEN}Copied config directory: config{constants.RESET}")
 
         print(
             f"  {constants.GREEN}Built-in report formatters need no extra DLL "

@@ -1,13 +1,15 @@
 # database_handler.py
 
 import sqlite3
-import pandas as pd
 import sys
+
+import pandas as pd
+
 
 def fetch_yearly_data(db_path: str, year: int):
     """
     Fetches and aggregates expense data for a specific year.
-    
+
     Returns:
         pd.DataFrame: A DataFrame with monthly expenses, or None if an error occurs.
     """
@@ -35,6 +37,7 @@ def fetch_yearly_data(db_path: str, year: int):
     except sqlite3.Error as e:
         print(f"Database error: {e}", file=sys.stderr)
         return None
+
 
 def fetch_monthly_data(db_path: str, month: str):
     """
@@ -67,6 +70,7 @@ def fetch_monthly_data(db_path: str, month: str):
     except sqlite3.Error as e:
         print(f"Database error: {e}", file=sys.stderr)
         return None
+
 
 # [修改] 获取月度详细消费记录的函数
 def fetch_monthly_details_data(db_path: str, month: str):

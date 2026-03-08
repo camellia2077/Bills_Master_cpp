@@ -8,14 +8,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from tools.toolchain.services.build_layout import resolve_build_directory
-
 
 PROJECT_DIR = REPO_ROOT / "libs" / "bills_core"
 
@@ -25,13 +23,10 @@ def run_command(command: list[str], cwd: Path) -> None:
     try:
         subprocess.run(command, check=True, cwd=cwd)
     except FileNotFoundError:
-        print(
-            f"!!! Error: Command '{command[0]}' not found. "
-            "Is it installed and in your PATH?"
-        )
+        print(f"!!! Error: Command '{command[0]}' not found. Is it installed and in your PATH?")
         sys.exit(1)
     except subprocess.CalledProcessError as exc:
-        print(f"\n!!! A build step failed with exit code {exc.returncode}.")
+        print(f"\n!!! A dist preparation step failed with exit code {exc.returncode}.")
         sys.exit(exc.returncode)
 
 
@@ -105,15 +100,13 @@ def ensure_cmake_configured(
     modules_enabled: bool,
 ) -> None:
     if not build_dir.exists():
-        print(f"==> Creating build directory: {build_dir}")
+        print(f"==> Creating dist directory: {build_dir}")
         build_dir.mkdir(parents=True)
 
     cache_file = build_dir / "CMakeCache.txt"
     if cache_file.is_file():
         cached_home = read_cache_home_directory(cache_file)
-        cached_modules_enabled = read_cache_bool_option(
-            cache_file, "BILLS_ENABLE_MODULES"
-        )
+        cached_modules_enabled = read_cache_bool_option(cache_file, "BILLS_ENABLE_MODULES")
         if cached_home is not None and cached_home.resolve() == PROJECT_DIR.resolve():
             if (
                 cache_matches_compiler(cache_file, compiler)
@@ -123,14 +116,13 @@ def ensure_cmake_configured(
             else:
                 print(
                     "==> Existing CMake cache compiler/module options mismatch. "
-                    "Recreating build directory."
+                    "Recreating dist directory."
                 )
                 shutil.rmtree(build_dir)
                 build_dir.mkdir(parents=True, exist_ok=True)
         else:
             print(
-                "==> Existing CMake cache points to a different source. "
-                "Recreating build directory."
+                "==> Existing CMake cache points to a different source. Recreating dist directory."
             )
             shutil.rmtree(build_dir)
             build_dir.mkdir(parents=True, exist_ok=True)
@@ -184,12 +176,12 @@ def run_build(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build helper for libs/bills_core")
+    parser = argparse.ArgumentParser(description="Dist helper for libs/bills_core")
     parser.add_argument(
         "--preset",
         choices=["debug", "release"],
         default="debug",
-        help="Build preset to use.",
+        help="Dist preset to use.",
     )
     parser.add_argument(
         "--compiler",
@@ -202,13 +194,13 @@ def main() -> int:
         dest="shared",
         action="store_true",
         default=True,
-        help="Build shared library (default).",
+        help="Emit shared library into dist (default).",
     )
     parser.add_argument(
         "--static",
         dest="shared",
         action="store_false",
-        help="Build static library.",
+        help="Emit static library into dist.",
     )
     parser.add_argument(
         "--modules",

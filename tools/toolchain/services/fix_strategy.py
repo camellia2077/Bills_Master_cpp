@@ -23,6 +23,7 @@ class CheckStrategySummary:
     safe_fix_checks_present: list[str]
     suppression_candidates_present: list[str]
 
+
 _PRIMARY_PRIORITY = {
     STRATEGY_MANUAL_ONLY: 4,
     STRATEGY_SAFE_REFACTOR: 3,
@@ -61,9 +62,7 @@ def summarize_checks(
     return CheckStrategySummary(
         primary_strategy=resolve_primary_strategy(normalized_checks, strategy_cfg),
         safe_fix_checks_present=[
-            check
-            for check in normalized_checks
-            if matches_any_pattern(check, safe_fix_patterns)
+            check for check in normalized_checks if matches_any_pattern(check, safe_fix_patterns)
         ],
         suppression_candidates_present=[
             check

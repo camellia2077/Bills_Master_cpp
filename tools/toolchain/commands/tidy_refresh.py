@@ -38,19 +38,13 @@ def execute_refresh(
 ) -> int:
     paths = resolve_tidy_paths(ctx)
     normalized_batch = batch_id.strip()
-    effective_full_every = (
-        ctx.config.tidy.full_every if full_every is None else int(full_every)
-    )
+    effective_full_every = ctx.config.tidy.full_every if full_every is None else int(full_every)
     effective_keep_going = resolve_keep_going(ctx, keep_going)
-    effective_neighbor_scope = (
-        neighbor_scope or ctx.config.tidy.neighbor_scope or "none"
-    )
+    effective_neighbor_scope = neighbor_scope or ctx.config.tidy.neighbor_scope or "none"
 
     state = load_refresh_state(paths.refresh_state_path)
     processed_batches = [
-        str(item)
-        for item in state.get("processed_batches", [])
-        if str(item).strip()
+        str(item) for item in state.get("processed_batches", []) if str(item).strip()
     ]
     already_processed = normalized_batch in processed_batches if normalized_batch else False
     if normalized_batch and not already_processed:
@@ -77,9 +71,7 @@ def execute_refresh(
     _append_unique(full_reasons, detect_auto_full_reasons_from_text(ctx, build_log_text))
 
     touched_files = (
-        collect_touched_files_from_done_batch(paths, normalized_batch)
-        if normalized_batch
-        else []
+        collect_touched_files_from_done_batch(paths, normalized_batch) if normalized_batch else []
     )
     incremental_files: list[Path] = []
     if not full_reasons and normalized_batch:

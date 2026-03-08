@@ -1,0 +1,36 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["tests", "tools"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # 基础风格
+    "F",   # 语法错误
+    "B",   # 逻辑漏洞 (Bugprone)
+    "UP",  # 现代化 (Modernize)
+    "I",   # 排序 Import
+    "A",   # 防止覆盖内置变量
+    "N",   # 命名规范
+]
+ignore = [
+    "E501",  # 交给 ruff format 处理长行
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/suites/artifact/bills_master/run_tests.py" = ["E402"]
+"tests/suites/logic/bills_core_abi/run_tests.py" = ["E402"]
+"tests/suites/logic/log_generator_cli/run_tests.py" = ["E402"]
+"tools/flows/bills_tracer_flow.py" = ["E402"]
+"tools/flows/build_bills_core.py" = ["E402"]
+"tools/flows/build_bills_master.py" = ["E402"]
+"tools/flows/log_generator_flow.py" = ["E402"]
+"tools/flows/log_generator_build/artifact_pipeline.py" = ["E402"]
+"tools/flows/log_generator_build/cli.py" = ["E402"]
+"tools/reporting/graph_generator/run_latest_chart.py" = ["E402"]
+"tools/verify/check_report_snapshots.py" = ["E402"]
+"tools/verify/pipeline_runner.py" = ["E402"]
+"tools/verify/verify.py" = ["E402"]
+"tools/verify/tools/capture_windows_build_baseline.py" = ["E402"]
+"tools/verify/tools/check_boundary_layering.py" = ["E402"]
+"tools/verify/tools/check_import_layering.py" = ["E402"]

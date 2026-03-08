@@ -17,7 +17,6 @@ def analyze_large_python_files(target_dir, min_lines=200):
         ".env",
         ".pytest_cache",
         "dist",
-        "build",
         ".mypy_cache",
         ".tox",
     }

@@ -11,7 +11,6 @@ from ..services.timestamps import utc_now_iso
 from .tidy_batch import execute_tidy_batch
 from .tidy_fix import execute_tidy_fix
 
-
 AUTO_LOOP_STRATEGIES = {STRATEGY_AUTO_FIX, STRATEGY_NOLINT_ALLOWED}
 
 
@@ -84,10 +83,7 @@ def run(args, ctx: Context) -> int:
         json.dumps(summary, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-    print(
-        f"--- tidy-loop: summary -> "
-        f"{display_path(loop_dir / 'loop_summary.json', resolve=True)}"
-    )
+    print(f"--- tidy-loop: summary -> {display_path(loop_dir / 'loop_summary.json', resolve=True)}")
     if status in {"completed", "stopped_manual"}:
         return 0
     return 1

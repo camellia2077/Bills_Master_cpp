@@ -6,9 +6,7 @@ from pathlib import Path
 
 def load_compile_units(compile_commands_path: Path) -> list[Path]:
     try:
-        payload = json.loads(
-            compile_commands_path.read_text(encoding="utf-8", errors="replace")
-        )
+        payload = json.loads(compile_commands_path.read_text(encoding="utf-8", errors="replace"))
     except (OSError, json.JSONDecodeError):
         return []
 
@@ -54,9 +52,7 @@ def resolve_incremental_files(
 
     for touched in touched_files:
         absolute_touched = (
-            touched.resolve()
-            if touched.is_absolute()
-            else (repo_root / touched).resolve()
+            touched.resolve() if touched.is_absolute() else (repo_root / touched).resolve()
         )
         touched_abs.append(absolute_touched)
         matched = match_compile_unit(absolute_touched, compile_by_key)
@@ -69,9 +65,7 @@ def resolve_incremental_files(
         same_dir_units = compile_by_dir.get(path_key(unresolved_path.parent), set())
         selected.update(same_dir_units)
 
-    effective_scope = (
-        neighbor_scope if neighbor_scope in {"none", "dir", "module"} else "none"
-    )
+    effective_scope = neighbor_scope if neighbor_scope in {"none", "dir", "module"} else "none"
     if effective_scope == "dir":
         seed_dirs = {path_key(path.parent) for path in touched_abs}
         seed_dirs.update(path_key(path.parent) for path in selected)

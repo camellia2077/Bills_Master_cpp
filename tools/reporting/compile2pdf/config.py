@@ -23,21 +23,13 @@ _REPO_ROOT = _SCRIPT_DIR.parents[2]
 # 1. 源文件夹的父目录（可用环境变量覆盖）
 SOURCE_DIRECTORY = os.environ.get(
     "BILLS_COMPILE2PDF_SOURCE",
-    str(
-        _REPO_ROOT
-        / "build"
-        / "tests"
-        / "artifact"
-        / "bills_tracer"
-        / "latest"
-        / "exported_files"
-    ),
+    str(_REPO_ROOT / "dist" / "tests" / "artifact" / "bills_tracer" / "latest" / "exported_files"),
 )
 
 # 2. 统一的输出目录（可用环境变量覆盖）
 OUTPUT_DIRECTORY = os.environ.get(
     "BILLS_COMPILE2PDF_OUTPUT",
-    str(_REPO_ROOT / "build" / "tests" / "artifact" / "reporting" / "compile2pdf"),
+    str(_REPO_ROOT / "dist" / "tests" / "artifact" / "reporting" / "compile2pdf"),
 )
 
 # 3. 指定要编译的文档类型（可用环境变量覆盖，逗号分隔）

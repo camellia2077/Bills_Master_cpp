@@ -1,13 +1,13 @@
 [paths]
-build_dir = "../../build/tests/runtime/bills_tracer/workspace"
-bills_dir = "../fixtures/bills"
-import_dir = "../../build/tests/runtime/bills_tracer/runs/manual/output/txt2josn"
+workspace_dir = "../../dist/tests/runtime/bills_tracer/workspace"
+bills_dir = "../../testdata/bills"
+import_dir = "../../dist/tests/runtime/bills_tracer/runs/manual/output/txt2josn"
 
 [runtime]
-base_dir = "../../build/tests/runtime/bills_tracer/runs/manual"
+base_dir = "../../dist/tests/runtime/bills_tracer/runs/manual"
 run_id = "manual"
-output_dir = "../../build/tests/artifact/bills_tracer/latest"
-summary_path = "../../build/tests/artifact/bills_tracer/latest/test_summary.json"
+output_dir = "../../dist/tests/artifact/bills_tracer/latest"
+summary_path = "../../dist/tests/artifact/bills_tracer/latest/test_summary.json"
 
 [run_control]
 run_cleanup = true
@@ -29,7 +29,7 @@ dirs_to_delete = [
   "output/txt2josn",
   "output/exported_files",
   "output/logs",
-  "build",
+  "dist",
   "config",
 ]
 

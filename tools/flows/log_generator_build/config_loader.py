@@ -1,9 +1,9 @@
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 
-def load_toml(file_path: Path) -> Dict[str, Any]:
+def load_toml(file_path: Path) -> dict[str, Any]:
     try:
         import tomllib
 
@@ -26,9 +26,19 @@ def load_toml(file_path: Path) -> Dict[str, Any]:
         sys.exit(1)
 
 
-def load_config(config_path: Path) -> Dict[str, Any]:
+def load_config(config_path: Path) -> dict[str, Any]:
     if not config_path.is_file():
         print(f"!!! Error: Configuration file not found at {config_path}")
         sys.exit(1)
 
-    return load_toml(config_path)
+    config = load_toml(config_path)
+    if "build" in config:
+        print(
+            "!!! Error: Legacy [build] section is no longer supported in "
+            f"{config_path}. Rename it to [dist]."
+        )
+        sys.exit(1)
+    if not isinstance(config.get("dist"), dict):
+        print(f"!!! Error: Missing required [dist] section in {config_path}.")
+        sys.exit(1)
+    return config

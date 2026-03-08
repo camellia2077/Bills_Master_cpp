@@ -2,26 +2,26 @@ schema_version = 1
 
 [pipeline]
 name = "log_generator_cli"
-description = "Build log_generator and run full CLI command tests."
+description = "Prepare log_generator dist and run full CLI command tests."
 default_timeout_seconds = 1800
 
 [output]
-root = "build/tests/logic/pipeline_runner/log_generator_cli"
+root = "dist/tests/logic/pipeline_runner/log_generator_cli"
 
 [env]
 PYTHONUNBUFFERED = "1"
 
 [[steps]]
-id = "build"
-name = "Build log_generator debug"
-command = ["{python}", "tools/flows/log_generator_flow.py", "build", "--preset", "debug"]
+id = "dist"
+name = "Prepare log_generator debug dist"
+command = ["{python}", "tools/flows/log_generator_flow.py", "dist", "--preset", "debug"]
 cwd = "{repo_root}"
 timeout_seconds = 1800
 retries = 0
 depends_on = []
 artifacts = [
-  "build/log_generator/debug/shared/bin/generator.exe",
-  "build/log_generator/debug/shared/bin/config/config.toml",
+  "dist/cmake/log_generator/debug/shared/bin/generator.exe",
+  "dist/cmake/log_generator/debug/shared/bin/config/config.toml",
 ]
 
 [[steps]]
@@ -31,14 +31,16 @@ command = [
   "{python}",
   "tests/suites/logic/log_generator_cli/run_tests.py",
   "--generator",
-  "build/log_generator/debug/shared/bin/generator.exe",
+  "dist/cmake/log_generator/debug/shared/bin/generator.exe",
   "--config",
-  "build/log_generator/debug/shared/bin/config/config.toml",
+  "dist/cmake/log_generator/debug/shared/bin/config/config.toml",
 ]
 cwd = "{repo_root}"
 timeout_seconds = 1200
 retries = 0
-depends_on = ["build"]
+depends_on = ["dist"]
 artifacts = [
-  "build/tests/logic/log_generator_cli/test_summary.json",
+  "dist/tests/logic/log_generator_cli/test_summary.json",
 ]
+
+

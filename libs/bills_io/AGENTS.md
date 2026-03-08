@@ -5,8 +5,9 @@
 ## 必读顺序
 
 1. `libs/bills_io/README.md`
-2. `docs/modules/bills_io/module_map.md`
-3. `docs/modules/bills_io/change_guide.md`
+2. `docs/modules/bills_io/README.md`
+3. `docs/modules/bills_io/module_map.md`
+4. `docs/modules/bills_io/change_guide.md`
 
 ## 约束
 

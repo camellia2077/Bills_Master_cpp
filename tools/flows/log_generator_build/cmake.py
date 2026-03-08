@@ -29,22 +29,20 @@ def ensure_cmake_configured(
         home_line = ""
         for line in cache_text.splitlines():
             if line.startswith(home_prefix):
-                home_line = line[len(home_prefix):].strip()
+                home_line = line[len(home_prefix) :].strip()
                 break
         if home_line:
             cached_source = Path(home_line).resolve()
             if cached_source != src_path:
                 print(
                     "==> Existing CMake cache points to another source directory. "
-                    "Cleaning build directory for reconfigure..."
+                    "Cleaning dist directory for reconfigure..."
                 )
                 shutil.rmtree(build_dir)
                 reconfigure = True
 
     if reconfigure:
-        print(
-            f"==> Configuring build directory '{build_dir.name}'..."
-        )
+        print(f"==> Configuring dist directory '{build_dir.name}'...")
         build_dir.mkdir(parents=True, exist_ok=True)
         cmake_command = [
             "cmake",
@@ -59,7 +57,7 @@ def ensure_cmake_configured(
             cmake_command.insert(-1, f"-DBILL_COMPILER={compiler}")
         run_command(cmake_command, cwd=build_dir)
     else:
-        print(f"==> Entered existing build directory: {build_dir.resolve()}")
+        print(f"==> Reusing existing dist directory: {build_dir.resolve()}")
 
 
 def build_target(build_dir: Path, target: str | None = None) -> None:

@@ -21,7 +21,7 @@ SOURCE_EXTENSIONS = {".cpp", ".cc", ".cxx", ".hpp", ".h", ".hxx"}
 COMPILE_UNIT_EXTENSIONS = {".cpp", ".cc", ".cxx"}
 EXCLUDED_SEGMENTS = {
     ".git",
-    "build",
+    "dist",
     "temp",
 }
 
@@ -84,15 +84,11 @@ def resolve_source_roots(
         return _unique_strings(roots)
 
     configured_roots = (
-        list(scope_config.default_roots)
-        if scope_config is not None
-        else list(DEFAULT_SOURCE_ROOTS)
+        list(scope_config.default_roots) if scope_config is not None else list(DEFAULT_SOURCE_ROOTS)
     )
     if include_optional_roots:
         configured_roots.extend(
-            scope_config.optional_roots
-            if scope_config is not None
-            else OPTIONAL_SOURCE_ROOTS
+            scope_config.optional_roots if scope_config is not None else OPTIONAL_SOURCE_ROOTS
         )
     return _unique_strings(configured_roots)
 

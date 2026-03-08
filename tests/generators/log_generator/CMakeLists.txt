@@ -28,4 +28,4 @@ include(AddTidyFixTarget)
 # --- 用户反馈信息 ---
 message(STATUS "Project configured successfully. Executable will be named 'generator'.")
 message(STATUS "To build, run: cmake --build .")
-message(STATUS "The output will be in the 'build/bin' directory.")
+message(STATUS "The output will be in the configured dist/cmake/.../bin directory.")

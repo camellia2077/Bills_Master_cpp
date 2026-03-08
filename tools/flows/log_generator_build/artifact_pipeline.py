@@ -8,7 +8,6 @@ from pathlib import Path
 from .io_ops import replace_path, write_json_file
 from .utils import run_command
 
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -16,7 +15,6 @@ if str(REPO_ROOT) not in sys.path:
 from tools.toolchain.services.build_layout import (
     resolve_artifact_project_root,
     resolve_artifact_run_dir,
-    resolve_runtime_project_root,
     resolve_runtime_run_dir,
 )
 
@@ -54,7 +52,7 @@ def run_generate_to_artifact(
     generator_exe = _resolve_generator_executable(build_bin_dir)
     if not generator_exe.exists():
         print(f"[ERROR] 生成器可执行文件不存在: {generator_exe}")
-        print("Hint: 先执行 build 命令编译 log_generator。")
+        print("Hint: 先执行 dist 命令准备 log_generator。")
         return 2
 
     config_src = _resolve_generator_config(build_bin_dir, project_dir)
@@ -63,7 +61,6 @@ def run_generate_to_artifact(
         return 2
 
     run_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    runtime_root = resolve_runtime_project_root(repo_root, output_project)
     runtime_run_dir = resolve_runtime_run_dir(repo_root, output_project, run_id)
     runtime_run_dir.mkdir(parents=True, exist_ok=True)
     replace_path(config_src, runtime_run_dir / "config.toml")
@@ -104,7 +101,7 @@ def run_generate_to_artifact(
     return 0
 
 
-def promote_artifact_to_fixtures(
+def promote_artifact_to_testdata(
     *,
     repo_root: Path,
     output_project: str,
@@ -121,15 +118,15 @@ def promote_artifact_to_fixtures(
         print("Hint: 先执行 generate 命令，或指定正确的 --run-id。")
         return 2
 
-    fixtures_dir = repo_root / "tests" / "fixtures" / "bills"
-    replace_path(source_dir, fixtures_dir)
+    testdata_dir = repo_root / "testdata" / "bills"
+    replace_path(source_dir, testdata_dir)
     write_json_file(
         artifact_root / "last_promote.json",
         {
             "source_dir": source_dir.as_posix(),
-            "target_dir": fixtures_dir.as_posix(),
+            "target_dir": testdata_dir.as_posix(),
             "promoted_at": datetime.now().isoformat(timespec="seconds"),
         },
     )
-    print(f"==> Promoted dataset to fixtures: {fixtures_dir}")
+    print(f"==> Promoted dataset to testdata: {testdata_dir}")
     return 0

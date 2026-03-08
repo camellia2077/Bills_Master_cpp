@@ -8,7 +8,7 @@
 - `docs/modules/bills_cli/module_map.md`
 - `docs/modules/bills_cli/change_guide.md`
 - `docs/modules/bills_cli/architecture.md`
-- `docs/modules/bills_cli/build_and_test.md`
+- `docs/modules/bills_cli/dist_and_test.md`
 - `docs/modules/module_standards.md`
 
 ## 本地验证

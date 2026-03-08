@@ -1,9 +1,11 @@
-import os
-import sys
+import importlib
 import json
+import os
 import shutil
+import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 TEST_SUITE_DIR = Path(__file__).resolve().parent
 TEST_ROOT = TEST_SUITE_DIR.parents[2]
@@ -13,12 +15,47 @@ if str(TEST_ROOT) not in sys.path:
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from framework._test_internal import app_config as config
-from framework._test_internal import constants
-from framework._test_internal.executor import CommandExecutor
-from framework._test_internal.preparer import TestPreparer
-from framework._test_internal.tasks import DateExportTasks, ExportTasks, ImportTasks, QueryTasks
-from tools.toolchain.services.build_layout import resolve_artifact_project_root
+config: Any = None
+constants: Any = None
+resolve_artifact_project_root: Any = None
+CommandExecutor: Any = None
+TestPreparer: Any = None
+DateExportTasks: Any = None
+ExportTasks: Any = None
+ImportTasks: Any = None
+QueryTasks: Any = None
+
+
+def _bootstrap_imports() -> None:
+    global config
+    global constants
+    global resolve_artifact_project_root
+    global CommandExecutor
+    global TestPreparer
+    global DateExportTasks
+    global ExportTasks
+    global ImportTasks
+    global QueryTasks
+
+    build_layout = importlib.import_module("tools.toolchain.services.build_layout")
+    framework_config = importlib.import_module("framework._test_internal.app_config")
+    framework_constants = importlib.import_module("framework._test_internal.constants")
+    executor_module = importlib.import_module("framework._test_internal.executor")
+    preparer_module = importlib.import_module("framework._test_internal.preparer")
+    tasks_module = importlib.import_module("framework._test_internal.tasks")
+
+    resolve_artifact_project_root = build_layout.resolve_artifact_project_root
+    config = framework_config
+    constants = framework_constants
+    CommandExecutor = executor_module.CommandExecutor
+    TestPreparer = preparer_module.TestPreparer
+    DateExportTasks = tasks_module.DateExportTasks
+    ExportTasks = tasks_module.ExportTasks
+    ImportTasks = tasks_module.ImportTasks
+    QueryTasks = tasks_module.QueryTasks
+
+
+_bootstrap_imports()
 
 SUMMARY_FILENAME = "test_summary.json"
 FORMAT_OUTPUT_SPECS = {
@@ -110,7 +147,11 @@ def validate_export_outputs(run_output_root: Path) -> list[str]:
             errors.append(f"missing format directory for {normalized}: {format_root}")
             continue
 
-        matching_files = sorted(path for path in format_root.rglob("*") if path.is_file() and path.suffix.lower() == extension)
+        matching_files = sorted(
+            path
+            for path in format_root.rglob("*")
+            if path.is_file() and path.suffix.lower() == extension
+        )
         if not matching_files:
             errors.append(
                 f"no exported {normalized} files with extension {extension} under {format_root}"
@@ -145,7 +186,7 @@ def main():
             sys.exit(1)
     else:
         print(f"{constants.YELLOW}--- Skipped Cleanup Step (as per config) ---{constants.RESET}")
-    
+
     # --- 步骤 2: 准备运行时环境/复制文件 (根据开关决定是否执行) ---
     if config.RUN_PREPARE_ENV:
         if not preparer.prepare_runtime_env():
@@ -160,7 +201,9 @@ def main():
             )
             sys.exit(1)
     else:
-        print(f"{constants.YELLOW}--- Skipped Environment Preparation Step (as per config) ---{constants.RESET}")
+        print(
+            f"{constants.YELLOW}--- Skipped Environment Preparation Step (as per config) ---{constants.RESET}"
+        )
 
     # --- 步骤 3: 执行指令测试 (根据开关决定是否执行) ---
     if config.RUN_TESTS:
@@ -175,9 +218,7 @@ def main():
                 final_result = False
                 summary_payload["ok"] = False
                 summary_payload["note"] = "; ".join(export_errors)
-                print(
-                    f"{constants.RED}[FAILED] Export output validation failed:{constants.RESET}"
-                )
+                print(f"{constants.RED}[FAILED] Export output validation failed:{constants.RESET}")
                 for error in export_errors:
                     print(f"  - {error}")
             else:
@@ -189,7 +230,9 @@ def main():
         if not final_result:
             sys.exit(1)
     else:
-        print(f"{constants.YELLOW}--- Skipped Test Execution Step (as per config) ---{constants.RESET}")
+        print(
+            f"{constants.YELLOW}--- Skipped Test Execution Step (as per config) ---{constants.RESET}"
+        )
         write_summary_file(
             summary_path,
             build_summary(
@@ -199,7 +242,7 @@ def main():
                 note="run_tests is disabled in config",
             ),
         )
-    
+
     print(f"\n{constants.GREEN}[OK] Script finished.{constants.RESET}")
 
 
@@ -207,10 +250,12 @@ def run_test_sequence(runtime_base_dir: Path, preparer, run_output_root: Path):
     exe_path = runtime_base_dir / preparer.exe_name
     output_dir = run_output_root / "logs"
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     if not exe_path.exists():
         print(f"\n{constants.RED}错误: 可执行文件 '{preparer.exe_name}' 未找到。{constants.RESET}")
-        print(f"{constants.YELLOW}请在 config.toml 中设置 'run_prepare_env = true' 并重新运行脚本来复制文件。{constants.RESET}")
+        print(
+            f"{constants.YELLOW}请在 config.toml 中设置 'run_prepare_env = true' 并重新运行脚本来复制文件。{constants.RESET}"
+        )
         return False, build_summary(
             ok=False,
             executor=None,
@@ -227,7 +272,7 @@ def run_test_sequence(runtime_base_dir: Path, preparer, run_output_root: Path):
             mode="execution",
             note=f"bills_dir not found: {config.BILLS_DIR}",
         )
-        
+
     # --- 初始化任务 ---
     executor = CommandExecutor(str(exe_path), str(output_dir))
     importer = ImportTasks(executor, config.BILLS_DIR, config.IMPORT_DIR)
@@ -237,7 +282,7 @@ def run_test_sequence(runtime_base_dir: Path, preparer, run_output_root: Path):
 
     # --- 执行测试序列 ---
     print(f"\n{constants.CYAN}========== Starting Test Sequence =========={constants.RESET}")
-    
+
     base_tasks_ok = importer.run() and querier.run()
     final_result = False
 

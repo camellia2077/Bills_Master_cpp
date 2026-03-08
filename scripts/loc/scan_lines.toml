@@ -21,7 +21,7 @@ ignore_dirs = [
   "Release",
   "__pycache__",
 ]
-ignore_prefixes = ["build", "cmake", "out"]
+ignore_prefixes = ["dist", "cmake", "out"]
 default_over_threshold = 350
 default_under_threshold = 120
 default_dir_over_files = 16
@@ -44,10 +44,9 @@ ignore_dirs = [
   "env",
   ".env",
   "dist",
-  "build",
   "output",
 ]
-ignore_prefixes = ["build", "out"]
+ignore_prefixes = ["dist", "out"]
 default_over_threshold = 200
 default_under_threshold = 80
 default_dir_over_files = 10

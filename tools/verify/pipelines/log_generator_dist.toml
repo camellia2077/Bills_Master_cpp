@@ -1,0 +1,27 @@
+schema_version = 1
+
+[pipeline]
+name = "log_generator_dist"
+description = "Configure and prepare log_generator dist (Debug)."
+default_timeout_seconds = 1800
+
+[output]
+root = "dist/tests/logic/pipeline_runner/log_generator_dist"
+
+[env]
+PYTHONUNBUFFERED = "1"
+
+[[steps]]
+id = "dist"
+name = "Prepare log_generator debug dist"
+command = ["{python}", "tools/flows/log_generator_flow.py", "dist", "--preset", "debug"]
+cwd = "{repo_root}"
+timeout_seconds = 1800
+retries = 0
+depends_on = []
+artifacts = [
+  "dist/cmake/log_generator/debug/shared/bin/generator.exe",
+]
+
+
+

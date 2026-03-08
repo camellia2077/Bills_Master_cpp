@@ -8,14 +8,15 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.toolchain.services.build_layout import resolve_build_directory, resolve_runtime_workspace_dir
-
+from tools.toolchain.services.build_layout import (
+    resolve_build_directory,
+    resolve_runtime_workspace_dir,
+)
 
 PROJECT_DIR = REPO_ROOT / "apps" / "bills_cli"
 RUNTIME_SIDECAR_EXTS = {".dll", ".exe", ".manifest", ".pdb"}
@@ -26,13 +27,10 @@ def run_command(command: list[str], cwd: Path) -> None:
     try:
         subprocess.run(command, check=True, cwd=cwd)
     except FileNotFoundError:
-        print(
-            f"!!! Error: Command '{command[0]}' not found. "
-            "Is it installed and in your PATH?"
-        )
+        print(f"!!! Error: Command '{command[0]}' not found. Is it installed and in your PATH?")
         sys.exit(1)
     except subprocess.CalledProcessError as exc:
-        print(f"\n!!! A build step failed with exit code {exc.returncode}.")
+        print(f"\n!!! A dist preparation step failed with exit code {exc.returncode}.")
         sys.exit(exc.returncode)
 
 
@@ -149,16 +147,14 @@ def ensure_cmake_configured(
     core_shared: bool,
 ) -> None:
     if not build_dir.exists():
-        print(f"==> Creating build directory: {build_dir}")
+        print(f"==> Creating dist directory: {build_dir}")
         build_dir.mkdir(parents=True)
 
     cache_file = build_dir / "CMakeCache.txt"
     if cache_file.is_file():
         cached_home = read_cache_home_directory(cache_file)
         cached_tidy_enabled = read_cache_bool_option(cache_file, "BILLS_ENABLE_TIDY")
-        cached_core_shared = read_cache_bool_option(
-            cache_file, "BILLS_CORE_BUILD_SHARED"
-        )
+        cached_core_shared = read_cache_bool_option(cache_file, "BILLS_CORE_BUILD_SHARED")
         if (
             cached_home is not None
             and cached_home.resolve() == PROJECT_DIR.resolve()
@@ -168,7 +164,7 @@ def ensure_cmake_configured(
         ):
             print("==> Using existing CMake configuration.")
             return
-        print("==> Existing CMake cache does not match expected setup. Recreating build directory.")
+        print("==> Existing CMake cache does not match expected setup. Recreating dist directory.")
         shutil.rmtree(build_dir)
         build_dir.mkdir(parents=True, exist_ok=True)
 
@@ -214,10 +210,7 @@ def run_build_capture(
             errors="replace",
         )
     except FileNotFoundError:
-        print(
-            f"!!! Error: Command '{command[0]}' not found. "
-            "Is it installed and in your PATH?"
-        )
+        print(f"!!! Error: Command '{command[0]}' not found. Is it installed and in your PATH?")
         sys.exit(1)
 
     log_path = build_dir / "build.log"
@@ -234,9 +227,9 @@ def run_build_capture(
     process.wait()
     success = process.returncode == 0
     if success:
-        print("==> Build finished successfully.")
+        print("==> Dist preparation finished successfully.")
     else:
-        print(f"==> Build failed with exit code {process.returncode}.")
+        print(f"==> Dist preparation failed with exit code {process.returncode}.")
     return log_lines, success
 
 
@@ -253,23 +246,23 @@ def normalize_cmake_build_extra_args(extra_args: list[str] | None) -> list[str]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Bills Master build helper")
+    parser = argparse.ArgumentParser(description="Bills Master dist helper")
     parser.add_argument(
         "--preset",
         choices=["debug", "release", "tidy"],
         default="debug",
-        help="Build preset to use.",
+        help="Dist preset to use.",
     )
     parser.add_argument(
         "--scope",
         choices=["shared", "isolated"],
         default="shared",
-        help="Build scope to use. `tidy` only supports shared.",
+        help="Dist scope to use. `tidy` only supports shared.",
     )
     parser.add_argument(
         "--instance-id",
         default="",
-        help="Optional isolated build instance id. Defaults to 'manual'.",
+        help="Optional isolated dist instance id. Defaults to 'manual'.",
     )
     parser.add_argument("--generator", default="Ninja")
     parser.add_argument("--target", default="bill_master_cli")
@@ -284,13 +277,13 @@ def main() -> int:
         dest="core_shared",
         action="store_true",
         default=True,
-        help="Build bills_core as shared library (default).",
+        help="Emit bills_core as shared library into dist (default).",
     )
     parser.add_argument(
         "--core-static",
         dest="core_shared",
         action="store_false",
-        help="Build bills_core as static library.",
+        help="Emit bills_core as static library into dist.",
     )
     parser.add_argument(
         "extra",
@@ -329,17 +322,14 @@ def main() -> int:
 
     if tidy_enabled:
         if log_lines:
-            print(
-                "==> Legacy task splitting into "
-                f"{spec.build_dir / 'tasks'} is disabled."
-            )
+            print(f"==> Legacy task splitting into {spec.build_dir / 'tasks'} is disabled.")
             print(
                 "==> Use `python tools/run.py tidy` + "
                 "`python tools/run.py tidy-split` to generate the canonical queue "
                 "under `temp/tidy/tasks`."
             )
         else:
-            print("==> No build output captured; skipping task split.")
+            print("==> No compile output captured; skipping task split.")
         return 0
 
     sync_runtime_artifacts(spec.build_dir)

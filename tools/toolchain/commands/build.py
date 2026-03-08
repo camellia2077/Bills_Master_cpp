@@ -30,7 +30,7 @@ BUILD_TARGETS: dict[str, BuildTargetSpec] = {
     ),
     "log-generator": BuildTargetSpec(
         entry_name="log_generator_flow.py",
-        fixed_args=["build"],
+        fixed_args=["dist"],
         supports_isolated=False,
         supports_tidy=False,
     ),
@@ -43,7 +43,7 @@ def run(args, ctx: Context) -> int:
     preset = str(args.preset).strip().lower()
     scope = str(args.scope).strip().lower()
     forwarded = normalize_forwarded_args(list(args.forwarded))
-    assert_no_legacy_flags(forwarded, source="tools/run.py build")
+    assert_no_legacy_flags(forwarded, source="tools/run.py dist")
 
     if scope == "isolated" and not spec.supports_isolated:
         print(f"[ERROR] Target '{target}' only supports --scope shared.")

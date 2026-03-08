@@ -2,25 +2,25 @@ schema_version = 1
 
 [pipeline]
 name = "log_generator_artifact"
-description = "Build log_generator and generate dataset into artifact."
+description = "Prepare log_generator dist and generate dataset into artifact."
 default_timeout_seconds = 1800
 
 [output]
-root = "build/tests/logic/pipeline_runner/log_generator_artifact"
+root = "dist/tests/logic/pipeline_runner/log_generator_artifact"
 
 [env]
 PYTHONUNBUFFERED = "1"
 
 [[steps]]
-id = "build"
-name = "Build log_generator debug"
-command = ["{python}", "tools/flows/log_generator_flow.py", "build", "--preset", "debug"]
+id = "dist"
+name = "Prepare log_generator debug dist"
+command = ["{python}", "tools/flows/log_generator_flow.py", "dist", "--preset", "debug"]
 cwd = "{repo_root}"
 timeout_seconds = 1800
 retries = 0
 depends_on = []
 artifacts = [
-  "build/log_generator/debug/shared/bin/generator.exe",
+  "dist/cmake/log_generator/debug/shared/bin/generator.exe",
 ]
 
 [[steps]]
@@ -32,7 +32,7 @@ command = [
   "generate",
   "--preset",
   "debug",
-  "--skip-build",
+  "--skip-dist",
   "--start-year",
   "2024",
   "--end-year",
@@ -41,8 +41,10 @@ command = [
 cwd = "{repo_root}"
 timeout_seconds = 600
 retries = 0
-depends_on = ["build"]
+depends_on = ["dist"]
 artifacts = [
-  "build/tests/artifact/log_generator/latest/bills_output_from_config",
-  "build/tests/artifact/log_generator/latest_run.txt",
+  "dist/tests/artifact/log_generator/latest/bills_output_from_config",
+  "dist/tests/artifact/log_generator/latest_run.txt",
 ]
+
+

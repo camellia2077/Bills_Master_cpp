@@ -6,7 +6,7 @@ import json
 import subprocess
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -19,8 +19,7 @@ from tools.toolchain.services.build_layout import resolve_build_directory
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Capture Windows build baseline for apps/bills_cli using the "
-            "unified verify entry."
+            "Capture Windows dist baseline for apps/bills_cli using the unified verify entry."
         )
     )
     parser.add_argument(
@@ -32,10 +31,7 @@ def parse_args() -> argparse.Namespace:
         "--preset",
         default="debug",
         choices=["debug", "release", "tidy"],
-        help=(
-            "Build preset passed to tools/verify/verify.py bills-build "
-            "(default: debug)."
-        ),
+        help=("Preset passed to tools/verify/verify.py bills-dist (default: debug)."),
     )
     parser.add_argument(
         "--output",
@@ -43,24 +39,21 @@ def parse_args() -> argparse.Namespace:
         help="Output JSON path (relative to repo root by default).",
     )
     parser.add_argument(
-        "--run-build",
+        "--run-dist",
         action="store_true",
-        help="Run build via python tools/verify/verify.py bills-build before collecting baseline.",
+        help="Run dist via python tools/verify/verify.py bills-dist before collecting baseline.",
     )
     parser.add_argument(
         "--clean-first",
         action="store_true",
-        help="Delete build directory before build (effective with --run-build).",
+        help="Delete the dist directory before preparation (effective with --run-dist).",
     )
     parser.add_argument(
         "--cmake-arg",
         action="append",
         default=[],
         metavar="ARG",
-        help=(
-            "Extra build argument forwarded to bills-build after '--'. "
-            "Can be repeated."
-        ),
+        help=("Extra dist argument forwarded to bills-dist after '--'. Can be repeated."),
     )
     return parser.parse_args()
 
@@ -96,7 +89,7 @@ def collect_artifacts(bin_dir: Path) -> list[dict[str, object]]:
                 "name": file_path.name,
                 "size_bytes": file_stat.st_size,
                 "last_write_time": datetime.fromtimestamp(
-                    file_stat.st_mtime, tz=timezone.utc
+                    file_stat.st_mtime, tz=UTC
                 ).isoformat(),
             }
         )
@@ -111,7 +104,7 @@ def collect_artifacts(bin_dir: Path) -> list[dict[str, object]]:
                     "name": file_path.name,
                     "size_bytes": file_stat.st_size,
                     "last_write_time": datetime.fromtimestamp(
-                        file_stat.st_mtime, tz=timezone.utc
+                        file_stat.st_mtime, tz=UTC
                     ).isoformat(),
                 }
             )
@@ -145,7 +138,9 @@ def parse_binary_imports(binary_path: Path) -> list[str]:
     return sorted(imports)
 
 
-def collect_binary_imports(bin_dir: Path, artifacts: list[dict[str, object]]) -> dict[str, list[str]]:
+def collect_binary_imports(
+    bin_dir: Path, artifacts: list[dict[str, object]]
+) -> dict[str, list[str]]:
     imports: dict[str, list[str]] = {}
     for artifact in artifacts:
         name = str(artifact["name"])
@@ -163,7 +158,6 @@ def collect_binary_imports(bin_dir: Path, artifacts: list[dict[str, object]]) ->
 def main() -> int:
     args = parse_args()
     repo_root = REPO_ROOT
-    app_dir = repo_root / "apps" / args.app
     target = "bills" if args.app == "bills_cli" else args.app
     build_dir = resolve_build_directory(
         repo_root,
@@ -178,9 +172,9 @@ def main() -> int:
 
     build_seconds: float | None = None
     build_exit_code: int | None = None
-    if args.run_build:
+    if args.run_dist:
         if args.clean_first and build_dir.exists():
-            print(f"--- clean build dir: {build_dir}")
+            print(f"--- clean dist dir: {build_dir}")
             # Keep cleanup logic in Python while build itself is delegated to verify.py.
             import shutil
 
@@ -189,7 +183,7 @@ def main() -> int:
         build_cmd = [
             sys.executable,
             "tools/verify/verify.py",
-            "bills-build",
+            "bills-dist",
             "--",
             "--preset",
             args.preset,
@@ -199,11 +193,11 @@ def main() -> int:
         for cmake_arg in args.cmake_arg:
             build_cmd.append(cmake_arg)
 
-        print("--- run build command:")
+        print("--- run dist command:")
         print(" ".join(build_cmd))
         build_exit_code, build_seconds = run_command(build_cmd, repo_root)
         if build_exit_code != 0:
-            print(f"Error: build failed with exit code {build_exit_code}.")
+            print(f"Error: dist preparation failed with exit code {build_exit_code}.")
             return build_exit_code
 
     artifacts = collect_artifacts(bin_dir)
@@ -223,14 +217,14 @@ def main() -> int:
     payload = {
         "timestamp_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "app": args.app,
-        "build_profile": args.preset,
-        "build_dir": str(build_dir),
+        "dist_profile": args.preset,
+        "cmake_dist_dir": str(build_dir),
         "bin_dir": str(bin_dir),
         "cmake_generator": read_cmake_generator(build_dir),
-        "run_build": bool(args.run_build),
+        "run_dist": bool(args.run_dist),
         "clean_first": bool(args.clean_first),
-        "build_exit_code": build_exit_code,
-        "build_duration_seconds": build_seconds,
+        "dist_exit_code": build_exit_code,
+        "dist_duration_seconds": build_seconds,
         "runtime_dll_presence": runtime_dll_presence,
         "artifacts": artifacts,
         "binary_imports": binary_imports,

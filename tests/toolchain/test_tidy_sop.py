@@ -9,10 +9,10 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from tools.toolchain.cli.main import parse_cli_args
 from tools.toolchain.commands.tidy_batch import execute_tidy_batch
 from tools.toolchain.commands.tidy_fix import TidyFixResult
 from tools.toolchain.commands.tidy_show import run as run_tidy_show
-from tools.toolchain.cli.main import parse_cli_args
 from tools.toolchain.commands.tidy_status import _print_batch_status
 from tools.toolchain.core.config import ToolchainConfig, load_toolchain_config
 from tools.toolchain.core.context import Context
@@ -30,16 +30,12 @@ from tools.toolchain.services.tidy_runtime import (
 
 
 class TidySopTests(unittest.TestCase):
-    def test_build_parser_does_not_reforward_owned_flags(self) -> None:
-        _, args = parse_cli_args(
-            ["build", "core", "--preset", "debug", "--scope", "shared"]
-        )
+    def test_dist_parser_does_not_reforward_owned_flags(self) -> None:
+        _, args = parse_cli_args(["dist", "core", "--preset", "debug", "--scope", "shared"])
         self.assertEqual(args.forwarded, [])
 
-    def test_build_parser_preserves_explicit_forwarded_args(self) -> None:
-        _, args = parse_cli_args(
-            ["build", "core", "--preset", "debug", "--shared"]
-        )
+    def test_dist_parser_preserves_explicit_forwarded_args(self) -> None:
+        _, args = parse_cli_args(["dist", "core", "--preset", "debug", "--shared"])
         self.assertEqual(args.forwarded, ["--shared"])
 
     def test_load_toolchain_config_reads_new_tidy_sections(self) -> None:
@@ -48,6 +44,9 @@ class TidySopTests(unittest.TestCase):
             config_path = root / "workflow.toml"
             config_path.write_text(
                 """
+[dist]
+default_target = "core"
+
 [tidy.safe_fix_prepass]
 checks = ["modernize-use-trailing-return-type"]
 
@@ -62,6 +61,7 @@ explain_closed_ranges = false
             )
             config = load_toolchain_config(config_path)
 
+        self.assertEqual(config.dist.default_target, "core")
         self.assertEqual(
             config.tidy.safe_fix_prepass.checks,
             ["modernize-use-trailing-return-type"],
@@ -72,6 +72,28 @@ explain_closed_ranges = false
             ["readability-function-cognitive-complexity"],
         )
         self.assertFalse(config.tidy.status.explain_closed_ranges)
+
+    def test_load_toolchain_config_rejects_legacy_build_section(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            config_path = root / "workflow.toml"
+            config_path.write_text(
+                """
+[build]
+default_target = "bills"
+""".strip(),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, r"\[build\]"):
+                load_toolchain_config(config_path)
+
+    def test_tidy_runtime_facade_preserves_public_imports(self) -> None:
+        from tools.toolchain.services import tidy_runtime as facade
+
+        self.assertIs(facade.build_numbering_context, build_numbering_context)
+        self.assertIs(facade.write_tidy_result, write_tidy_result)
+        self.assertTrue(callable(facade.load_batch_runtime_state))
 
     def test_summarize_checks_reports_primary_and_auxiliary_flags(self) -> None:
         config = ToolchainConfig()
@@ -177,13 +199,9 @@ explain_closed_ranges = false
             for batch_number in range(1, 13):
                 batch_dir = paths.tasks_done_dir / f"batch_{batch_number:03d}"
                 batch_dir.mkdir(parents=True, exist_ok=True)
-                (batch_dir / f"task_{batch_number:03d}.log").write_text(
-                    "done", encoding="utf-8"
-                )
+                (batch_dir / f"task_{batch_number:03d}.log").write_text("done", encoding="utf-8")
 
-            numbering = build_numbering_context(
-                paths, current_batch_id="batch_013"
-            )
+            numbering = build_numbering_context(paths, current_batch_id="batch_013")
 
         self.assertEqual(numbering["already_closed_before_current"], 12)
         self.assertEqual(numbering["already_closed_ranges"], ["batch_001..batch_012"])
@@ -197,9 +215,7 @@ explain_closed_ranges = false
             for batch_number in range(1, 13):
                 batch_dir = paths.tasks_done_dir / f"batch_{batch_number:03d}"
                 batch_dir.mkdir(parents=True, exist_ok=True)
-                (batch_dir / f"task_{batch_number:03d}.log").write_text(
-                    "done", encoding="utf-8"
-                )
+                (batch_dir / f"task_{batch_number:03d}.log").write_text("done", encoding="utf-8")
             update_batch_runtime_state(
                 paths,
                 "batch_013",
@@ -228,9 +244,7 @@ explain_closed_ranges = false
                         }
                     ],
                 },
-                numbering_context=build_numbering_context(
-                    paths, current_batch_id="batch_013"
-                ),
+                numbering_context=build_numbering_context(paths, current_batch_id="batch_013"),
             )
             write_tidy_result(
                 ctx,
@@ -282,9 +296,7 @@ explain_closed_ranges = false
                     "unexpected_fixable_count": 1,
                     "files_with_remaining": ["C:/repo/file.cpp"],
                 },
-                numbering_context=build_numbering_context(
-                    paths, current_batch_id="batch_013"
-                ),
+                numbering_context=build_numbering_context(paths, current_batch_id="batch_013"),
             )
             write_tidy_result(
                 ctx,
@@ -310,9 +322,7 @@ explain_closed_ranges = false
             for batch_number in range(1, 13):
                 batch_dir = paths.tasks_done_dir / f"batch_{batch_number:03d}"
                 batch_dir.mkdir(parents=True, exist_ok=True)
-                (batch_dir / f"task_{batch_number:03d}.log").write_text(
-                    "done", encoding="utf-8"
-                )
+                (batch_dir / f"task_{batch_number:03d}.log").write_text("done", encoding="utf-8")
 
             buffer = io.StringIO()
             with redirect_stdout(buffer):
@@ -331,9 +341,7 @@ explain_closed_ranges = false
             for batch_number in range(1, 13):
                 batch_dir = paths.tasks_done_dir / f"batch_{batch_number:03d}"
                 batch_dir.mkdir(parents=True, exist_ok=True)
-                (batch_dir / f"task_{batch_number:03d}.log").write_text(
-                    "done", encoding="utf-8"
-                )
+                (batch_dir / f"task_{batch_number:03d}.log").write_text("done", encoding="utf-8")
 
             buffer = io.StringIO()
             with redirect_stdout(buffer):
@@ -396,23 +404,26 @@ explain_closed_ranges = false
                 changed_files=[Path("C:/repo/file.cpp")],
                 checks_filter=["modernize-use-trailing-return-type"],
             )
-            with patch(
-                "tools.toolchain.commands.tidy_batch.run_tidy_fix_pass",
-                return_value=fix_result,
-            ), patch(
-                "tools.toolchain.commands.tidy_batch.run_verify_workflow",
-                return_value=(
-                    [
-                        "python",
-                        "verify.py",
-                        "bills-build",
-                        "--",
-                        "--preset",
-                        "debug",
-                        "--scope",
-                        "shared",
-                    ],
-                    1,
+            with (
+                patch(
+                    "tools.toolchain.commands.tidy_batch_support.steps.run_tidy_fix_pass",
+                    return_value=fix_result,
+                ),
+                patch(
+                    "tools.toolchain.commands.tidy_batch_support.steps.run_verify_workflow",
+                    return_value=(
+                        [
+                            "python",
+                            "verify.py",
+                            "bills-dist",
+                            "--",
+                            "--preset",
+                            "debug",
+                            "--scope",
+                            "shared",
+                        ],
+                        1,
+                    ),
                 ),
             ):
                 exit_code = execute_tidy_batch(
@@ -468,9 +479,7 @@ explain_closed_ranges = false
                     "diagnostic_count": 1,
                     "primary_fix_strategy": "safe_refactor",
                     "safe_fix_checks_present": [],
-                    "suppression_candidates_present": [
-                        "readability-function-cognitive-complexity"
-                    ],
+                    "suppression_candidates_present": ["readability-function-cognitive-complexity"],
                     "content_path": f"tasks/{batch_id}/task_{task_id}.log",
                 }
             )
@@ -482,9 +491,7 @@ explain_closed_ranges = false
                     "files": ["C:/repo/file.cpp"],
                     "primary_fix_strategy": ["safe_refactor"],
                     "safe_fix_checks_present": [],
-                    "suppression_candidates_present": [
-                        "readability-function-cognitive-complexity"
-                    ],
+                    "suppression_candidates_present": ["readability-function-cognitive-complexity"],
                 }
             )
         payload = {

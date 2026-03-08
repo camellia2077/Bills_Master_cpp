@@ -16,50 +16,47 @@ from ..commands.tidy_recheck import run as run_tidy_recheck
 from ..commands.tidy_refresh import run as run_tidy_refresh
 from ..commands.tidy_scope import run as run_tidy_scope
 from ..commands.tidy_show import run as run_tidy_show
-from ..commands.tidy_status import run as run_tidy_status
 from ..commands.tidy_split import run as run_tidy_split
+from ..commands.tidy_status import run as run_tidy_status
 from ..commands.verify import run as run_verify
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="Unified Python toolchain entry for bills_tracer."
-    )
+    parser = argparse.ArgumentParser(description="Unified Python toolchain entry for bills_tracer.")
     subparsers = parser.add_subparsers(dest="command")
 
-    build_parser = subparsers.add_parser(
-        "build",
-        help="Forward to existing build helpers under tools/flows.",
+    dist_parser = subparsers.add_parser(
+        "dist",
+        help="Forward to the supported dist helpers under tools/flows.",
         description=(
-            "Build one of the supported targets. "
-            "Unknown extra arguments are forwarded to the underlying build entry."
+            "Prepare one of the supported targets into dist/. "
+            "Unknown extra arguments are forwarded to the underlying entry."
         ),
     )
-    build_parser.add_argument(
+    dist_parser.add_argument(
         "target",
         choices=["bills", "core", "log-generator"],
-        help="Build target to use.",
+        help="Target to emit into dist/.",
     )
-    build_parser.add_argument(
+    dist_parser.add_argument(
         "--preset",
         choices=["debug", "release", "tidy"],
         default="debug",
-        help="Build preset to use.",
+        help="Preset to use.",
     )
-    build_parser.add_argument(
+    dist_parser.add_argument(
         "--scope",
         choices=["shared", "isolated"],
         default="shared",
-        help="Build scope to use. Some targets only support shared.",
+        help="Dist scope to use. Some targets only support shared.",
     )
-    build_parser.set_defaults(handler=run_build, forwarded=[])
+    dist_parser.set_defaults(handler=run_build, forwarded=[])
 
     verify_parser = subparsers.add_parser(
         "verify",
         help="Forward to tools/verify/verify.py.",
         description=(
-            "Run the existing unified verify entry. "
-            "Extra arguments are forwarded unchanged."
+            "Run the existing unified verify entry. Extra arguments are forwarded unchanged."
         ),
     )
     verify_parser.add_argument(
@@ -109,21 +106,19 @@ def build_parser() -> argparse.ArgumentParser:
     tidy_parser = subparsers.add_parser(
         "tidy",
         help="Run clang-tidy and capture raw logs.",
-        description="Run clang-tidy through the existing bills build helper and capture raw logs for later splitting.",
+        description="Run clang-tidy through the existing bills dist helper and capture raw logs for later splitting.",
     )
     tidy_parser.add_argument(
         "--jobs",
         type=int,
         default=None,
-        help="Parallel Ninja jobs for full tidy build, e.g. 16.",
+        help="Parallel Ninja jobs for full tidy dist preparation, e.g. 16.",
     )
     tidy_keep_going_group = tidy_parser.add_mutually_exclusive_group()
     tidy_keep_going_group.add_argument(
         "--keep-going", dest="keep_going", action="store_true", default=None
     )
-    tidy_keep_going_group.add_argument(
-        "--no-keep-going", dest="keep_going", action="store_false"
-    )
+    tidy_keep_going_group.add_argument("--no-keep-going", dest="keep_going", action="store_false")
     tidy_parser.set_defaults(handler=run_tidy, forwarded=[])
 
     tidy_split_parser = subparsers.add_parser(

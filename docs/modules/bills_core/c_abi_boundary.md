@@ -24,15 +24,15 @@
 - Memory ownership must be explicit on every ABI string return.
 
 ## Phase 0 Baseline Verify Commands
-- Build Windows CLI:
-  - `python tools/verify/verify.py bills-build`
-- Build + run CLI test suite:
+- Prepare Windows CLI dist:
+  - `python tools/verify/verify.py bills-dist`
+- Prepare dist + run CLI test suite:
   - `python tools/verify/verify.py bills`
-- Build `bills_core` shared library:
-  - `python tools/verify/verify.py core-build`
+- Prepare `bills_core` shared library dist:
+  - `python tools/verify/verify.py core-dist`
 - Run `bills_core` C ABI smoke tests:
   - `python tools/verify/verify.py core-abi`
 
 ## Notes
 - In Phase 1, `bills_core` is configurable as `STATIC/SHARED`.
-- Default in CLI build remains static to avoid runtime behavior drift during migration.
+- Default in CLI dist remains static to avoid runtime behavior drift during migration.

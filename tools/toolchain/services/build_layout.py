@@ -4,12 +4,15 @@ import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 
-
 VALID_TARGETS = ("bills", "core", "log-generator")
 VALID_PRESETS = ("debug", "release", "tidy")
 VALID_SCOPES = ("shared", "isolated")
 
 LEGACY_LAYOUT_TOKENS = (
+    "build/",
+    "/build/",
+    "/".join(("tests", "fixtures")),
+    "fixtures/bills",
     "/".join(("tests", "output")),
     "/".join(("test", "output")),
     "_".join(("build", "fast")),
@@ -19,6 +22,7 @@ LEGACY_LAYOUT_TOKENS = (
 LEGACY_FLAG_TOKENS = (
     "--" + "build-dir",
     "--" + "build-dir-mode",
+    "--" + "build-scope",
 )
 
 
@@ -52,7 +56,7 @@ def assert_no_legacy_layout(value: str, *, source: str) -> None:
         if token in normalized:
             raise LegacyLayoutError(
                 f"{source} still uses legacy path token '{token}'. "
-                "The root build-tree refactor removed that layout."
+                "The root dist-tree refactor removed that layout."
             )
 
 
@@ -63,7 +67,7 @@ def assert_no_legacy_flags(values: list[str], *, source: str) -> None:
             if normalized == token:
                 raise LegacyLayoutError(
                     f"{source} still uses legacy flag '{token}'. "
-                    "The root build-tree refactor removed that flag."
+                    "The root dist-tree refactor removed that flag."
                 )
 
 
@@ -112,7 +116,7 @@ def resolve_build_directory(
     normalized_target = normalize_target(target)
     normalized_preset = normalize_preset(preset)
     normalized_scope = normalize_scope(scope)
-    build_root = (repo_root / "build").resolve()
+    build_root = resolve_cmake_root(repo_root)
 
     if normalized_target == "bills":
         if normalized_preset == "tidy" and normalized_scope != "shared":
@@ -132,9 +136,7 @@ def resolve_build_directory(
         )
 
     if normalized_scope != "shared":
-        raise ValueError(
-            f"Target '{normalized_target}' only supports scope 'shared'."
-        )
+        raise ValueError(f"Target '{normalized_target}' only supports scope 'shared'.")
 
     target_folder = "log_generator" if normalized_target == "log-generator" else normalized_target
     build_dir = build_root / target_folder / normalized_preset / "shared"
@@ -147,8 +149,20 @@ def resolve_build_directory(
     )
 
 
+def resolve_dist_root(repo_root: Path) -> Path:
+    return (repo_root / "dist").resolve()
+
+
+def resolve_cmake_root(repo_root: Path) -> Path:
+    return (resolve_dist_root(repo_root) / "cmake").resolve()
+
+
+def resolve_gradle_root(repo_root: Path) -> Path:
+    return (resolve_dist_root(repo_root) / "gradle").resolve()
+
+
 def resolve_tests_root(repo_root: Path) -> Path:
-    return (repo_root / "build" / "tests").resolve()
+    return (resolve_dist_root(repo_root) / "tests").resolve()
 
 
 def resolve_runtime_project_root(repo_root: Path, project: str) -> Path:
@@ -192,13 +206,9 @@ def resolve_logic_pipeline_root(repo_root: Path, pipeline_name: str) -> Path:
     ).resolve()
 
 
-def resolve_logic_pipeline_run_dir(
-    repo_root: Path, pipeline_name: str, run_id: str
-) -> Path:
+def resolve_logic_pipeline_run_dir(repo_root: Path, pipeline_name: str, run_id: str) -> Path:
     return (
-        resolve_logic_pipeline_root(repo_root, pipeline_name)
-        / "runs"
-        / sanitize_segment(run_id)
+        resolve_logic_pipeline_root(repo_root, pipeline_name) / "runs" / sanitize_segment(run_id)
     ).resolve()
 
 

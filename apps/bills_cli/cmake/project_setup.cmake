@@ -1,5 +1,5 @@
 # --- 统一定义输出目录 ---
-# 将所有生成的可执行文件、库等都统一输出到 build/bin 目录下
+# 将所有生成的可执行文件、库等都统一输出到 dist/cmake/.../bin 目录下
 set(OUTPUT_BINARY_DIR "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_BINARY_DIR})

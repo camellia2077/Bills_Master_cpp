@@ -6,7 +6,6 @@ import argparse
 import sys
 from pathlib import Path
 
-
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -14,7 +13,6 @@ if str(REPO_ROOT) not in sys.path:
 
 from log_generator_build.cli import main as cli_main
 from log_generator_build.config_loader import load_config
-
 
 PROJECT_DIR = REPO_ROOT / "tests" / "generators" / "log_generator"
 DEFAULT_CONFIG_PATH = PROJECT_DIR / "scripts" / "config.toml"

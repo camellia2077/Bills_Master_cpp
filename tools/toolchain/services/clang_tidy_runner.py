@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import subprocess
 import shutil
+import subprocess
 from pathlib import Path
 
 from ..core.context import Context
@@ -53,13 +53,8 @@ def run_clang_tidy(
                 command.append(f"-checks={','.join(effective_checks_filter)}")
             if extra_args:
                 command.extend(extra_args)
-            command.extend(
-                ["-p", str(compile_commands_dir.resolve()), str(file_path.resolve())]
-            )
-            header = (
-                f"[{index}/{total}] Analyzing: "
-                f"{display_path(file_path, resolve=True)}\n"
-            )
+            command.extend(["-p", str(compile_commands_dir.resolve()), str(file_path.resolve())])
+            header = f"[{index}/{total}] Analyzing: {display_path(file_path, resolve=True)}\n"
             handle.write(header)
             print(header, end="")
             print(f"==> Running: {display_command(command)}")
