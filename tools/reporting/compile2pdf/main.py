@@ -20,6 +20,18 @@ except ImportError:
 # 从 internal 包中导入命令处理函数
 from internal.handlers import handle_auto
 
+
+def _configure_console_streams() -> None:
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if stream is None or not hasattr(stream, "reconfigure"):
+            continue
+        try:
+            stream.reconfigure(errors="replace")
+        except (AttributeError, OSError, ValueError):
+            continue
+
+
 def format_time(seconds):
     """将秒数格式化为 HH:MM:SS """
     seconds = int(seconds)
@@ -29,6 +41,7 @@ def format_time(seconds):
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 def main():
+    _configure_console_streams()
     program_start_time = time.perf_counter()
     parser = argparse.ArgumentParser(
         description="一个通用的、支持并行的文档编译器（配置文件驱动）。",
