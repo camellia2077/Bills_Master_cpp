@@ -19,9 +19,9 @@ description: Run scoped Tidy tasks for bills_tracer (by task count or batch coun
   - `temp/tidy/tasks/manifest.json`
   - `temp/tidy/tidy_result.json`
 - Keep incremental build from existing:
-  - `apps/bills_cli/build_fast`; do not delete it.
+  - `build/bills/tidy/shared`; do not delete it.
 - Verify gate command (manual spot-check):
-  - `python tools/run.py verify bills-build -- build_fast`
+  - `python tools/run.py verify bills-build`
 - Verify gate state file used by strict tidy cleanup:
   - `temp/tidy/verify_result.json`
   - This file is written by `tidy-batch` / `tidy-close`, not by plain `python tools/run.py verify ...`.
@@ -52,7 +52,7 @@ description: Run scoped Tidy tasks for bills_tracer (by task count or batch coun
 ### Fix Cadence (MUST)
 - Work one `task_NNN.log` at a time; do not batch-edit multiple logs before verification.
 - After each task fix, a manual spot-check may use:
-  - `python tools/run.py verify bills-build -- build_fast`
+  - `python tools/run.py verify bills-build`
 - For normal batch closure, use:
   - `python tools/run.py tidy-batch --batch-id <BATCH_ID> --preset sop --timeout-seconds 1800`
 - `tidy-batch` is the unified path for verify gate + clean + incremental/full refresh.
@@ -94,7 +94,7 @@ description: Run scoped Tidy tasks for bills_tracer (by task count or batch coun
 
 ### Baseline Verify
 - Before manual fix rounds, ensure the fast build path is healthy:
-  - `python tools/run.py verify bills-build -- build_fast`
+  - `python tools/run.py verify bills-build`
 - For final authoritative batch gate, still use:
   - `python tools/run.py tidy-batch --batch-id <BATCH_ID> --preset sop`
   - add `--full-every <N>` when the run explicitly wants bounded incremental drift
@@ -131,7 +131,7 @@ description: Run scoped Tidy tasks for bills_tracer (by task count or batch coun
 - Analyze only this log.
 - Fix only this task (or one source-file cluster if multiple logs map to the same file).
 - Manual verify:
-  - `python tools/run.py verify bills-build -- build_fast`
+  - `python tools/run.py verify bills-build`
 - Do not manually run `clean + tidy-refresh` in normal flow.
 - For multiple tasks mapped to the same source file in one batch, fallback clustered clean is:
   - `python tools/run.py clean --batch-id <BATCH_ID> --strict --cluster-by-file <TASK_ID>`

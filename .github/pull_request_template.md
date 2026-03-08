@@ -8,7 +8,7 @@
 
 ## Verification
 
-- [ ] `python tools/verify/verify.py bills-build -- build_fast`
+- [ ] `python tools/verify/verify.py bills-build`
 - [ ] `python tools/verify/verify.py all-tests`
 
 ## Checklist

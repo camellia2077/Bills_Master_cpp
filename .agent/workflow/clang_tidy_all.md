@@ -19,9 +19,9 @@ description: Run all Tidy tasks for bills_tracer (bills task queue)
   - `temp/tidy/tasks/manifest.json`
   - `temp/tidy/tidy_result.json`
 - Keep incremental build from existing:
-  - `apps/bills_cli/build_fast`; do not delete it.
+  - `build/bills/tidy/shared`; do not delete it.
 - Verify gate command (manual spot-check):
-  - `python tools/run.py verify bills-build -- build_fast`
+  - `python tools/run.py verify bills-build`
 - Verify gate state file used by strict tidy cleanup:
   - `temp/tidy/verify_result.json`
   - This file is written by `tidy-batch` / `tidy-close`, not by plain `python tools/run.py verify ...`.
@@ -103,7 +103,7 @@ description: Run all Tidy tasks for bills_tracer (bills task queue)
   - Use `python tools/run.py tidy-show --batch-id <BATCH_ID>` before editing.
   - Work one `task_NNN.log` at a time inside the chosen batch.
   - After each fix, a manual spot-check may use:
-    - `python tools/run.py verify bills-build -- build_fast`
+- `python tools/run.py verify bills-build`
   - Do not treat the direct verify command as the strict-clean state source; the authoritative strict-clean verify file is still `temp/tidy/verify_result.json`.
   - When one batch is ready to close, use:
     - `python tools/run.py tidy-batch --batch-id <BATCH_ID> --preset sop --timeout-seconds 1800`
@@ -160,5 +160,5 @@ description: Run all Tidy tasks for bills_tracer (bills task queue)
 - Stop immediately if:
   - `python tools/run.py tidy-batch ...` returns non-zero
   - `python tools/run.py tidy-close ...` returns non-zero
-  - `python tools/run.py verify bills-build -- build_fast` returns non-zero during manual inspection
+- `python tools/run.py verify bills-build` returns non-zero during manual inspection
 - Continue only while the queue in `temp/tidy/tasks/` is still valid and the next action in `temp/tidy/tidy_result.json` still points to the current batch progression.

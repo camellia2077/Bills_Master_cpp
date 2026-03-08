@@ -13,7 +13,7 @@
 - 本项目的 Python 构建、编译、测试入口统一在根目录 `tests/` 相关链路与 `tools/verify/verify.py`
 - agent 不需要手工拼接零散编译命令，优先通过 Python 入口触发构建与测试
 - 常用入口：
-  - `python tools/verify/verify.py bills-build -- build_fast`
+- `python tools/verify/verify.py bills-build`
   - `python tools/verify/verify.py bills`
   - `python tools/verify/verify.py log-cli-test`
   - 其他测试若已接入 `tools/verify/verify.py`，优先走该入口
@@ -32,10 +32,10 @@
 
 - 优先查看终端输出中的失败信息、错误栈、summary
 - 若测试流程生成结果文件，优先读取：
-  - `tests/output/`
-  - `tests/output/artifact/`
-  - `tests/output/logic/`
-  - `tests/output/runtime/`
+  - `build/tests/`
+  - `build/tests/artifact/`
+  - `build/tests/logic/`
+  - `build/tests/runtime/`
 - 若存在 `test_summary.json`、`pipeline_summary.json`、日志文件，优先基于这些结果判断是否通过
 
 ## Temporary Files

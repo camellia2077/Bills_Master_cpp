@@ -41,11 +41,11 @@
   - 逻辑层：`tests/suites/logic/bills_core_abi/run_tests.py`
   - 产物层：`tests/suites/artifact/bills_master/run_tests.py`
 - 测试输出目录：
-  - 运行时层：`tests/output/runtime/<project>/`
+- 运行时层：`build/tests/runtime/<project>/`
     - `workspace/`（exe/dll/config）
     - `runs/<run_id>/`（每次执行独立运行目录）
-  - 逻辑层预留：`tests/output/logic/`
-  - 产物层默认：`tests/output/artifact/<project>/`
+- 逻辑层预留：`build/tests/logic/`
+- 产物层默认：`build/tests/artifact/<project>/`
 
 ## 常见子命令
 
@@ -56,23 +56,23 @@
     - `python tools/verify/verify.py bills-parallel-smoke -- --compare-scope all`
     - `python tools/verify/verify.py bills-parallel-smoke -- --model-project bills_a --json-project bills_b`
 - 仅构建 bills：
-  - `python tools/verify/verify.py bills-build -- build_fast`
+- `python tools/verify/verify.py bills-build`
 - 仅构建 log_generator：
-  - `python tools/verify/verify.py log-build -- build --mode Debug`
+- `python tools/verify/verify.py log-build -- build --preset debug`
   - Phase 4 起默认由 TOML runner 驱动（`log-build` 无参数时直接使用 `tools/verify/pipelines/log_generator_build.toml`）。
 - log_generator 完整命令行测试（构建 + CLI 参数覆盖）：
   - `python tools/verify/verify.py log-cli-test`
   - 默认由 TOML runner 执行 `tools/verify/pipelines/log_generator_cli.toml`。
-  - 运行时配置文件默认位于 `tests/generators/log_generator/build_debug/bin/config/config.toml`。
+- 运行时配置文件默认位于 `build/log_generator/debug/shared/bin/config/config.toml`。
 - 生成 log_generator 测试输入（默认落盘到 artifact）：
-  - `python tools/flows/log_generator_flow.py generate --mode Debug --start-year 2024 --end-year 2024`
+- `python tools/flows/log_generator_flow.py generate --preset debug --start-year 2024 --end-year 2024`
   - 生成命令会将 `config.toml` 复制到独立 runtime 目录后再执行生成器。
 - 显式将 log_generator 数据提升到 fixtures（默认不会覆盖夹具）：
   - `python tools/flows/log_generator_flow.py promote-fixtures`
 - 模块模式双通道检查：
   - `python tools/verify/verify.py module-mode-check`
   - 可选参数示例：
-    - `python tools/verify/verify.py module-mode-check -- --command build`
+- `python tools/verify/verify.py module-mode-check -- --preset release`
     - `python tools/verify/verify.py module-mode-check -- --compiler clang`
 - tools 分层约束检查：
   - `python tools/verify/verify.py tools-layer-check`
@@ -89,7 +89,7 @@
   - `python tools/verify/verify.py bills-parallel-smoke` / `report-consistency-gate` 也由 TOML pipeline 编排。
 - Phase 4 收敛说明：
   - `python tools/flows/build_log_generator.py` 为兼容壳层，已改为直接转发 `tools/flows/log_generator_flow.py`。
-  - `promote-fixtures` 为显式步骤，执行记录落在 `tests/output/artifact/log_generator/last_promote.json`。
+- `promote-fixtures` 为显式步骤，执行记录落在 `build/tests/artifact/log_generator/last_promote.json`。
 - Phase 6 兼容入口下线窗口：
   - `tools/flows/build_then_cli_test.py`、`tools/flows/build_log_generator.py` 自 `2026-03-05` 起输出弃用提示。
   - 计划下线日期：`2026-06-30`。
@@ -103,20 +103,20 @@
 ## 测试结果读取（给 agent）
 
 - 汇总 JSON：
-  - `tests/output/artifact/<project>/latest/test_summary.json`
+- `build/tests/artifact/<project>/latest/test_summary.json`
   - 关键字段：`ok`、`total`、`success`、`failed`
 - Python 运行日志：
-  - `tests/output/artifact/<project>/latest/test_python_output.log`
+- `build/tests/artifact/<project>/latest/test_python_output.log`
   - 包含开始时间、结束时间、return code、stdout/stderr。
 - 单次运行产物（并行场景）：
-  - `tests/output/artifact/<project>/runs/<run_id>/`
+- `build/tests/artifact/<project>/runs/<run_id>/`
 - 运行时工作区：
-  - `tests/output/runtime/<project>/workspace`
-  - `tests/output/runtime/<project>/runs/<run_id>/`
+- `build/tests/runtime/<project>/workspace`
+- `build/tests/runtime/<project>/runs/<run_id>/`
 
 ## 失败排查
 
 - 单步骤日志目录：
-  - `tests/output/artifact/<project>/latest/logs/`（latest）
-  - `tests/output/artifact/<project>/runs/<run_id>/logs/`（run 级）
+- `build/tests/artifact/<project>/latest/logs/`（latest）
+- `build/tests/artifact/<project>/runs/<run_id>/logs/`（run 级）
 - 先看 `test_summary.json` 判定失败步数，再看对应日志文件。

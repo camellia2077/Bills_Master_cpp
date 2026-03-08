@@ -44,14 +44,14 @@
   - `python tools/verify/verify.py`
   - `python tools/run.py`
   - 构建/测试输出目录模型：
-    - `tests/output/runtime/<project>/workspace`（最新 exe/dll/config）
-    - `tests/output/runtime/<project>/runs/<run_id>/...`（单次运行沙箱与运行期产物）
-    - `tests/output/artifact/<project>/latest/...`（最新 summary/logs/exported_files 快照）
-    - `tests/output/artifact/<project>/runs/<run_id>/...`（单次测试归档）
-    - `tests/output/logic/<project>/...`（流程 runner 元数据）
+- `build/tests/runtime/<project>/workspace`（最新 exe/dll/config）
+- `build/tests/runtime/<project>/runs/<run_id>/...`（单次运行沙箱与运行期产物）
+- `build/tests/artifact/<project>/latest/...`（最新 summary/logs/exported_files 快照）
+- `build/tests/artifact/<project>/runs/<run_id>/...`（单次测试归档）
+- `build/tests/logic/pipeline_runner/<pipeline>/...`（流程 runner 元数据）
 - `tools/toolchain/`（统一 Python toolchain 实现，含 tidy SOP 编排）
 - `tests/generators/log_generator/`（测试输入数据生成器）
-  - 默认产物：`tests/output/artifact/log_generator/`
+- 默认产物：`build/tests/artifact/log_generator/`
   - 默认配置：`tests/generators/log_generator/src/config/config.toml`
   - 显式同步夹具：`python tools/flows/log_generator_flow.py promote-fixtures`
 - `tools/reporting/compile2pdf/`（报表产物转 PDF）
