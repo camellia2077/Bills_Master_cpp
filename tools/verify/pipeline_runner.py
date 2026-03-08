@@ -12,6 +12,16 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools.toolchain.services.build_layout import (
+    assert_no_legacy_layout,
+    resolve_logic_pipeline_root,
+    sanitize_segment,
+)
+
 
 def load_toml(path: Path) -> dict:
     try:
@@ -27,13 +37,6 @@ def load_toml(path: Path) -> dict:
 
 def now_iso() -> str:
     return datetime.now().isoformat(timespec="seconds")
-
-
-def sanitize_segment(value: str) -> str:
-    allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
-    normalized = "".join(ch if ch in allowed else "_" for ch in value.strip())
-    normalized = normalized.strip("_")
-    return normalized or "default"
 
 
 def replace_path(src: Path, dst: Path) -> None:
@@ -176,6 +179,7 @@ def write_json(path: Path, payload: dict) -> None:
 def evaluate_artifacts(repo_root: Path, artifact_specs: list[str]) -> list[dict]:
     results: list[dict] = []
     for spec in artifact_specs:
+        assert_no_legacy_layout(spec, source="pipeline.artifacts")
         artifact_path = Path(spec)
         if not artifact_path.is_absolute():
             artifact_path = (repo_root / artifact_path).resolve()
@@ -336,18 +340,12 @@ def parse_args() -> argparse.Namespace:
 def resolve_output_root(repo_root: Path, output_cfg: dict, pipeline_name: str) -> Path:
     root_raw = str(output_cfg.get("root", "")).strip()
     if root_raw:
+        assert_no_legacy_layout(root_raw, source=f"pipeline[{pipeline_name}].output.root")
         root_path = Path(root_raw)
         if not root_path.is_absolute():
             root_path = (repo_root / root_path).resolve()
         return root_path
-    return (
-        repo_root
-        / "tests"
-        / "output"
-        / "logic"
-        / "pipeline_runner"
-        / sanitize_segment(pipeline_name)
-    ).resolve()
+    return resolve_logic_pipeline_root(repo_root, pipeline_name)
 
 
 def sync_latest(output_root: Path, run_dir: Path) -> None:

@@ -4,7 +4,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools.toolchain.services.build_layout import (
+    resolve_artifact_latest_dir,
+    resolve_artifact_project_root,
+)
 
 
 def normalize_text_content(content: str) -> str:
@@ -161,9 +171,13 @@ def collect_scoped_files(root: Path, compare_scope: str) -> dict[str, Path]:
 
 
 def resolve_project_output_root(repo_root: Path, project: str, output_group: str) -> Path:
-    root = repo_root / "tests" / "output" / output_group / project
+    if output_group != "artifact":
+        raise ValueError(
+            f"Unsupported output_group '{output_group}'. Only 'artifact' is supported."
+        )
+    root = resolve_artifact_project_root(repo_root, project)
     if output_group == "artifact":
-        return root / "latest"
+        return resolve_artifact_latest_dir(repo_root, project)
     return root
 
 
@@ -180,8 +194,7 @@ def main() -> int:
         "--output-group",
         default="artifact",
         help=(
-            "Output group under tests/output (default: artifact). "
-            "Optional: logic."
+            "Output group under build/tests (default: artifact)."
         ),
     )
     parser.add_argument(
@@ -201,7 +214,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    repo_root = Path(__file__).resolve().parents[2]
+    repo_root = REPO_ROOT
     baseline_root = repo_root / "tests" / "baseline" / "report_snapshots"
     manifest_path = baseline_root / "manifest.json"
 

@@ -9,6 +9,12 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools.toolchain.services.build_layout import resolve_build_directory
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -23,17 +29,13 @@ def parse_args() -> argparse.Namespace:
         help="App name under apps/<app> (default: bills_cli).",
     )
     parser.add_argument(
-        "--profile",
-        default="build_fast",
+        "--preset",
+        default="debug",
+        choices=["debug", "release", "tidy"],
         help=(
-            "Build command passed to tools/verify/verify.py bills-build "
-            "(default: build_fast)."
+            "Build preset passed to tools/verify/verify.py bills-build "
+            "(default: debug)."
         ),
-    )
-    parser.add_argument(
-        "--build-dir",
-        default="build_fast",
-        help="Build directory name under apps/<app> (default: build_fast).",
     )
     parser.add_argument(
         "--output",
@@ -160,9 +162,15 @@ def collect_binary_imports(bin_dir: Path, artifacts: list[dict[str, object]]) ->
 
 def main() -> int:
     args = parse_args()
-    repo_root = Path(__file__).resolve().parents[2]
+    repo_root = REPO_ROOT
     app_dir = repo_root / "apps" / args.app
-    build_dir = app_dir / args.build_dir
+    target = "bills" if args.app == "bills_cli" else args.app
+    build_dir = resolve_build_directory(
+        repo_root,
+        target=target,
+        preset=args.preset,
+        scope="shared",
+    ).build_dir
     bin_dir = build_dir / "bin"
     output_path = Path(args.output)
     if not output_path.is_absolute():
@@ -183,7 +191,10 @@ def main() -> int:
             "tools/verify/verify.py",
             "bills-build",
             "--",
-            args.profile,
+            "--preset",
+            args.preset,
+            "--scope",
+            "shared",
         ]
         for cmake_arg in args.cmake_arg:
             build_cmd.append(cmake_arg)
@@ -212,7 +223,7 @@ def main() -> int:
     payload = {
         "timestamp_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "app": args.app,
-        "build_profile": args.profile,
+        "build_profile": args.preset,
         "build_dir": str(build_dir),
         "bin_dir": str(bin_dir),
         "cmake_generator": read_cmake_generator(build_dir),

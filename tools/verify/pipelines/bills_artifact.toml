@@ -6,7 +6,7 @@ description = "Build bills_cli and run artifact CLI tests."
 default_timeout_seconds = 3600
 
 [output]
-root = "tests/output/logic/pipeline_runner/bills_artifact"
+root = "build/tests/logic/pipeline_runner/bills_artifact"
 
 [env]
 PYTHONUNBUFFERED = "1"
@@ -20,8 +20,8 @@ timeout_seconds = 3600
 retries = 0
 depends_on = []
 artifacts = [
-  "tests/output/artifact/bills_tracer/latest/test_summary.json",
-  "tests/output/artifact/bills_tracer/latest/test_python_output.log",
+  "build/tests/artifact/bills_tracer/latest/test_summary.json",
+  "build/tests/artifact/bills_tracer/latest/test_python_output.log",
 ]
 
 [[steps]]
@@ -30,12 +30,12 @@ name = "Validate artifact summary json exists and passes"
 command = [
   "{python}",
   "-c",
-  "import json,pathlib,sys; p=pathlib.Path(r'tests/output/artifact/bills_tracer/latest/test_summary.json'); d=json.loads(p.read_text(encoding='utf-8')); sys.exit(0 if d.get('ok') else 1)",
+  "import json,pathlib,sys; p=pathlib.Path(r'build/tests/artifact/bills_tracer/latest/test_summary.json'); d=json.loads(p.read_text(encoding='utf-8')); sys.exit(0 if d.get('ok') else 1)",
 ]
 cwd = "{repo_root}"
 timeout_seconds = 300
 retries = 0
 depends_on = ["build_and_test"]
 artifacts = [
-  "tests/output/artifact/bills_tracer/latest/test_summary.json",
+  "build/tests/artifact/bills_tracer/latest/test_summary.json",
 ]

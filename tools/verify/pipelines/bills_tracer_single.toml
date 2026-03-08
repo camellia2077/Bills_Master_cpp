@@ -6,7 +6,7 @@ description = "Build+sync runtime+run tests for bills_tracer."
 default_timeout_seconds = 7200
 
 [output]
-root = "tests/output/logic/pipeline_runner/bills_tracer_single"
+root = "build/tests/logic/pipeline_runner/bills_tracer_single"
 
 [env]
 PYTHONUNBUFFERED = "1"
@@ -20,6 +20,6 @@ timeout_seconds = 7200
 retries = 0
 depends_on = []
 artifacts = [
-  "tests/output/artifact/bills_tracer/latest/test_summary.json",
-  "tests/output/artifact/bills_tracer/latest/test_python_output.log",
+  "build/tests/artifact/bills_tracer/latest/test_summary.json",
+  "build/tests/artifact/bills_tracer/latest/test_python_output.log",
 ]

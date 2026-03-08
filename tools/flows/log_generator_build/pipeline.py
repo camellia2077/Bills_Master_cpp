@@ -26,7 +26,7 @@ def handle_clean(build_dir: Path, generator: str, clean_flag: bool) -> None:
 
 def run_build(
     build_type: str,
-    build_dir_name: str,
+    build_dir: Path,
     config: dict,
     project_dir: Path,
     clean_flag: bool,
@@ -34,7 +34,6 @@ def run_build(
     start_time = time.monotonic()
 
     setup_environment(project_dir)
-    build_dir = project_dir / build_dir_name
     source_dir = Path(config["build"]["cmake_source_dir"])
     if not source_dir.is_absolute():
         source_dir = (project_dir / source_dir).resolve()
@@ -62,13 +61,12 @@ def run_build(
 
 def run_target_only(
     build_type: str,
-    build_dir_name: str,
+    build_dir: Path,
     target: str,
     config: dict,
     project_dir: Path,
 ) -> None:
     setup_environment(project_dir)
-    build_dir = project_dir / build_dir_name
     source_dir = Path(config["build"]["cmake_source_dir"])
     if not source_dir.is_absolute():
         source_dir = (project_dir / source_dir).resolve()

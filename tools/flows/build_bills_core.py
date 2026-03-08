@@ -11,6 +11,12 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools.toolchain.services.build_layout import resolve_build_directory
+
+
 PROJECT_DIR = REPO_ROOT / "libs" / "bills_core"
 
 
@@ -40,26 +46,35 @@ def read_cache_home_directory(cache_file: Path) -> Path | None:
     return None
 
 
-def read_cache_cxx_compiler(cache_file: Path) -> str | None:
+def read_cache_compilers(cache_file: Path) -> tuple[str | None, str | None]:
+    c_compiler = None
+    cxx_compiler = None
     try:
         with cache_file.open("r", encoding="utf-8", errors="ignore") as handle:
             for line in handle:
-                if line.startswith("CMAKE_CXX_COMPILER:FILEPATH="):
-                    return line.split("=", 1)[1].strip()
+                if line.startswith("CMAKE_C_COMPILER:FILEPATH="):
+                    c_compiler = line.split("=", 1)[1].strip()
+                elif line.startswith("CMAKE_CXX_COMPILER:FILEPATH="):
+                    cxx_compiler = line.split("=", 1)[1].strip()
     except OSError:
-        return None
-    return None
+        return None, None
+    return c_compiler, cxx_compiler
 
 
 def cache_matches_compiler(cache_file: Path, compiler: str) -> bool:
-    cached = read_cache_cxx_compiler(cache_file)
-    if not cached:
+    if not compiler:
+        return True
+    c_compiler, cxx_compiler = read_cache_compilers(cache_file)
+    if not c_compiler or not cxx_compiler:
         return False
-    name = Path(cached).name.lower()
+    c_name = Path(c_compiler).name.lower()
+    cxx_name = Path(cxx_compiler).name.lower()
     if compiler == "clang":
-        return "clang" in name
+        return "clang" in c_name and "clang" in cxx_name
     if compiler == "gcc":
-        return name.startswith("g++") or name.startswith("c++")
+        return c_name.startswith("gcc") and (
+            cxx_name.startswith("g++") or cxx_name.startswith("c++")
+        )
     return False
 
 
@@ -82,6 +97,7 @@ def read_cache_bool_option(cache_file: Path, key: str) -> bool | None:
 
 def ensure_cmake_configured(
     build_dir: Path,
+    *,
     generator: str,
     build_type: str,
     shared: bool,
@@ -112,7 +128,10 @@ def ensure_cmake_configured(
                 shutil.rmtree(build_dir)
                 build_dir.mkdir(parents=True, exist_ok=True)
         else:
-            print("==> Existing CMake cache points to a different source. Recreating build directory.")
+            print(
+                "==> Existing CMake cache points to a different source. "
+                "Recreating build directory."
+            )
             shutil.rmtree(build_dir)
             build_dir.mkdir(parents=True, exist_ok=True)
 
@@ -142,11 +161,12 @@ def ensure_cmake_configured(
 
 def run_build(
     build_dir: Path,
+    *,
     build_type: str,
     shared: bool,
     compiler: str,
     modules_enabled: bool,
-    extra_args: list[str] | None = None
+    extra_args: list[str] | None,
 ) -> None:
     ensure_cmake_configured(
         build_dir=build_dir,
@@ -166,9 +186,10 @@ def run_build(
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build helper for libs/bills_core")
     parser.add_argument(
-        "command",
-        choices=["build", "build_fast"],
-        help="build=Release, build_fast=Debug",
+        "--preset",
+        choices=["debug", "release"],
+        default="debug",
+        help="Build preset to use.",
     )
     parser.add_argument(
         "--compiler",
@@ -181,54 +202,45 @@ def main() -> int:
         dest="shared",
         action="store_true",
         default=True,
-        help="Build shared library (default)",
+        help="Build shared library (default).",
     )
     parser.add_argument(
         "--static",
         dest="shared",
         action="store_false",
-        help="Build static library",
+        help="Build static library.",
     )
     parser.add_argument(
         "--modules",
         dest="modules_enabled",
         action="store_true",
         default=False,
-        help="Enable C++ modules pilot (BILLS_ENABLE_MODULES=ON)",
+        help="Enable C++ modules pilot (BILLS_ENABLE_MODULES=ON).",
     )
     parser.add_argument(
         "--no-modules",
         dest="modules_enabled",
         action="store_false",
-        help="Disable C++ modules pilot (BILLS_ENABLE_MODULES=OFF)",
+        help="Disable C++ modules pilot (BILLS_ENABLE_MODULES=OFF).",
     )
-
     args, extra_args = parser.parse_known_args()
     if extra_args and extra_args[0] == "--":
         extra_args = extra_args[1:]
 
-    if args.command == "build":
-        run_build(
-            PROJECT_DIR / "build",
-            build_type="Release",
-            shared=args.shared,
-            compiler=args.compiler,
-            modules_enabled=args.modules_enabled,
-            extra_args=extra_args,
-        )
-    elif args.command == "build_fast":
-        run_build(
-            PROJECT_DIR / "build_fast",
-            build_type="Debug",
-            shared=args.shared,
-            compiler=args.compiler,
-            modules_enabled=args.modules_enabled,
-            extra_args=extra_args,
-        )
-    else:
-        parser.print_help()
-        return 1
-
+    spec = resolve_build_directory(
+        REPO_ROOT,
+        target="core",
+        preset=args.preset,
+        scope="shared",
+    )
+    run_build(
+        spec.build_dir,
+        build_type=spec.cmake_build_type,
+        shared=args.shared,
+        compiler=args.compiler,
+        modules_enabled=args.modules_enabled,
+        extra_args=extra_args,
+    )
     return 0
 
 

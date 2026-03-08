@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
 import argparse
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools.toolchain.services.build_layout import resolve_build_directory, resolve_runtime_workspace_dir
+
+
 PROJECT_DIR = REPO_ROOT / "apps" / "bills_cli"
-RUNTIME_WORKSPACE_DIR = (
-    REPO_ROOT / "tests" / "output" / "runtime" / "bills_tracer" / "workspace"
-)
 RUNTIME_SIDECAR_EXTS = {".dll", ".exe", ".manifest", ".pdb"}
 
 
@@ -51,24 +57,25 @@ def sync_runtime_artifacts(build_dir: Path) -> None:
         print(f"==> Skip artifact sync: missing directory {build_bin_dir}")
         return
 
-    RUNTIME_WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
-    for stale in RUNTIME_WORKSPACE_DIR.iterdir():
+    runtime_workspace_dir = resolve_runtime_workspace_dir(REPO_ROOT, "bills_tracer")
+    runtime_workspace_dir.mkdir(parents=True, exist_ok=True)
+    for stale in runtime_workspace_dir.iterdir():
         if stale.is_file() and stale.suffix.lower() in RUNTIME_SIDECAR_EXTS:
             stale.unlink()
 
     copied_files: list[str] = []
-    for entry in sorted(build_bin_dir.iterdir(), key=lambda p: p.name.lower()):
+    for entry in sorted(build_bin_dir.iterdir(), key=lambda path: path.name.lower()):
         if not entry.is_file():
             continue
         if entry.suffix.lower() not in RUNTIME_SIDECAR_EXTS:
             continue
-        shutil.copy2(entry, RUNTIME_WORKSPACE_DIR / entry.name)
+        shutil.copy2(entry, runtime_workspace_dir / entry.name)
         copied_files.append(entry.name)
 
-    replace_path(build_bin_dir / "config", RUNTIME_WORKSPACE_DIR / "config")
+    replace_path(build_bin_dir / "config", runtime_workspace_dir / "config")
     print(
         "==> Synced runtime artifacts to "
-        f"{RUNTIME_WORKSPACE_DIR} ({len(copied_files)} files + config)"
+        f"{runtime_workspace_dir} ({len(copied_files)} files + config)"
     )
 
 
@@ -133,8 +140,13 @@ def read_cache_bool_option(cache_file: Path, key: str) -> bool | None:
 
 
 def ensure_cmake_configured(
-    build_dir: Path, generator: str, build_type: str, compiler: str,
-    tidy_enabled: bool = False, core_shared: bool = True
+    build_dir: Path,
+    *,
+    generator: str,
+    build_type: str,
+    compiler: str,
+    tidy_enabled: bool,
+    core_shared: bool,
 ) -> None:
     if not build_dir.exists():
         print(f"==> Creating build directory: {build_dir}")
@@ -144,7 +156,9 @@ def ensure_cmake_configured(
     if cache_file.is_file():
         cached_home = read_cache_home_directory(cache_file)
         cached_tidy_enabled = read_cache_bool_option(cache_file, "BILLS_ENABLE_TIDY")
-        cached_core_shared = read_cache_bool_option(cache_file, "BILLS_CORE_BUILD_SHARED")
+        cached_core_shared = read_cache_bool_option(
+            cache_file, "BILLS_CORE_BUILD_SHARED"
+        )
         if (
             cached_home is not None
             and cached_home.resolve() == PROJECT_DIR.resolve()
@@ -154,7 +168,7 @@ def ensure_cmake_configured(
         ):
             print("==> Using existing CMake configuration.")
             return
-        print("==> Existing CMake cache does not match source/compiler. Recreating build directory.")
+        print("==> Existing CMake cache does not match expected setup. Recreating build directory.")
         shutil.rmtree(build_dir)
         build_dir.mkdir(parents=True, exist_ok=True)
 
@@ -174,12 +188,14 @@ def ensure_cmake_configured(
         cmake_args.append(f"-DBILL_COMPILER={compiler}")
     cmake_args.append(f"-DBILLS_ENABLE_TIDY={'ON' if tidy_enabled else 'OFF'}")
     cmake_args.append(f"-DBILLS_CORE_BUILD_SHARED={'ON' if core_shared else 'OFF'}")
-
     run_command(cmake_args, cwd=PROJECT_DIR)
 
 
 def run_build_capture(
-    build_dir: Path, target: str | None, extra_args: list[str] | None = None
+    build_dir: Path,
+    *,
+    target: str | None,
+    extra_args: list[str] | None,
 ) -> tuple[list[str], bool]:
     command = ["cmake", "--build", str(build_dir)]
     if target:
@@ -224,65 +240,6 @@ def run_build_capture(
     return log_lines, success
 
 
-def run_build(
-    build_dir: Path,
-    build_type: str,
-    extra_args: list[str] | None = None,
-    tidy_enabled: bool = False,
-    core_shared: bool = True,
-) -> list[str]:
-    ensure_cmake_configured(
-        build_dir=build_dir,
-        generator="Ninja",
-        build_type=build_type,
-        compiler="clang",
-        tidy_enabled=tidy_enabled,
-        core_shared=core_shared,
-    )
-
-    log_lines, success = run_build_capture(
-        build_dir, target=None, extra_args=extra_args
-    )
-    if not success:
-        sys.exit(1)
-    sync_runtime_artifacts(build_dir)
-    return log_lines
-
-
-def run_tidy(extra_args: list[str] | None = None) -> None:
-    build_dir = PROJECT_DIR / "build_tidy"
-
-    ensure_cmake_configured(
-        build_dir=build_dir,
-        generator="Ninja",
-        build_type="Debug",
-        compiler="clang",
-        tidy_enabled=True,
-        core_shared=True,
-    )
-
-    print("==> Running clang-tidy checks...")
-    log_lines, success = run_build_capture(
-        build_dir, target="tidy", extra_args=extra_args
-    )
-
-    if log_lines:
-        print(
-            "==> Legacy task splitting into "
-            f"{build_dir / 'tasks'} is disabled."
-        )
-        print(
-            "==> Use `python tools/run.py tidy` + "
-            "`python tools/run.py tidy-split` to generate the canonical queue "
-            "under `temp/tidy/tasks`."
-        )
-    else:
-        print("==> No build output captured; skipping task split.")
-
-    if not success:
-        sys.exit(1)
-
-
 def normalize_cmake_build_extra_args(extra_args: list[str] | None) -> list[str]:
     if not extra_args:
         return []
@@ -297,53 +254,95 @@ def normalize_cmake_build_extra_args(extra_args: list[str] | None) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Bills Master build helper")
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    build_parser = subparsers.add_parser("build", help="Run a Release build")
-    build_parser.add_argument(
-        "extra", nargs=argparse.REMAINDER, help="Extra args for cmake --build"
+    parser.add_argument(
+        "--preset",
+        choices=["debug", "release", "tidy"],
+        default="debug",
+        help="Build preset to use.",
     )
-
-    build_fast_parser = subparsers.add_parser(
-        "build_fast", help="Run a fast Debug build"
+    parser.add_argument(
+        "--scope",
+        choices=["shared", "isolated"],
+        default="shared",
+        help="Build scope to use. `tidy` only supports shared.",
     )
-    build_fast_parser.add_argument(
-        "extra", nargs=argparse.REMAINDER, help="Extra args for cmake --build"
+    parser.add_argument(
+        "--instance-id",
+        default="",
+        help="Optional isolated build instance id. Defaults to 'manual'.",
     )
-
-    tidy_parser = subparsers.add_parser("tidy", help="Run clang-tidy checks")
-    tidy_parser.add_argument(
-        "extra", nargs=argparse.REMAINDER, help="Extra args for cmake --build"
+    parser.add_argument("--generator", default="Ninja")
+    parser.add_argument("--target", default="bill_master_cli")
+    parser.add_argument(
+        "--compiler",
+        choices=["clang", "gcc"],
+        default="clang",
+        help="Compiler choice.",
     )
-
+    parser.add_argument(
+        "--core-shared",
+        dest="core_shared",
+        action="store_true",
+        default=True,
+        help="Build bills_core as shared library (default).",
+    )
+    parser.add_argument(
+        "--core-static",
+        dest="core_shared",
+        action="store_false",
+        help="Build bills_core as static library.",
+    )
+    parser.add_argument(
+        "extra",
+        nargs=argparse.REMAINDER,
+        help="Extra args for `cmake --build`.",
+    )
     args = parser.parse_args()
 
-    extra_args: list[str] = []
-    if hasattr(args, "extra"):
-        extra_args = normalize_cmake_build_extra_args(args.extra)
+    spec = resolve_build_directory(
+        REPO_ROOT,
+        target="bills",
+        preset=args.preset,
+        scope=args.scope,
+        instance_id=args.instance_id,
+    )
+    extra_args = normalize_cmake_build_extra_args(args.extra)
+    tidy_enabled = args.preset == "tidy"
+    target_name = "tidy" if tidy_enabled else args.target
 
-    if args.command == "build":
-        run_build(
-            PROJECT_DIR / "build",
-            build_type="Release",
-            extra_args=extra_args,
-            tidy_enabled=False,
-            core_shared=True,
-        )
-    elif args.command == "build_fast":
-        run_build(
-            PROJECT_DIR / "build_fast",
-            build_type="Debug",
-            extra_args=extra_args,
-            tidy_enabled=False,
-            core_shared=True,
-        )
-    elif args.command == "tidy":
-        run_tidy(extra_args=extra_args)
-    else:
-        parser.print_help()
+    ensure_cmake_configured(
+        spec.build_dir,
+        generator=args.generator,
+        build_type=spec.cmake_build_type,
+        compiler=args.compiler,
+        tidy_enabled=tidy_enabled,
+        core_shared=args.core_shared,
+    )
+
+    log_lines, success = run_build_capture(
+        spec.build_dir,
+        target=target_name,
+        extra_args=extra_args,
+    )
+    if not success:
         return 1
 
+    if tidy_enabled:
+        if log_lines:
+            print(
+                "==> Legacy task splitting into "
+                f"{spec.build_dir / 'tasks'} is disabled."
+            )
+            print(
+                "==> Use `python tools/run.py tidy` + "
+                "`python tools/run.py tidy-split` to generate the canonical queue "
+                "under `temp/tidy/tasks`."
+            )
+        else:
+            print("==> No build output captured; skipping task split.")
+        return 0
+
+    sync_runtime_artifacts(spec.build_dir)
     return 0
 
 

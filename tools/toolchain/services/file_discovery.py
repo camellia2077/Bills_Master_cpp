@@ -22,9 +22,6 @@ COMPILE_UNIT_EXTENSIONS = {".cpp", ".cc", ".cxx"}
 EXCLUDED_SEGMENTS = {
     ".git",
     "build",
-    "build_fast",
-    "build_tidy",
-    "build_debug",
     "temp",
 }
 

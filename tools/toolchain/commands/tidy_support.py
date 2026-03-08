@@ -32,6 +32,7 @@ def run_tidy_build(
     command = [
         ctx.python_executable,
         str(ctx.flow_entry("build_bills_master.py")),
+        "--preset",
         "tidy",
     ]
     normalized = normalize_forwarded_args(forwarded or [])
@@ -41,9 +42,10 @@ def run_tidy_build(
         build_args.extend(["-j", str(effective_jobs)])
     if resolve_keep_going(ctx, keep_going):
         build_args.extend(["-k", "0"])
-    if build_args or normalized:
-        command.append("--")
-        command.extend([*build_args, *normalized])
+    if build_args:
+        command.extend(["--", *build_args])
+    if normalized:
+        command.extend(normalized)
 
     result = ctx.process_runner.run(command, cwd=ctx.repo_root)
     run_dir = new_tidy_run_dir(paths)

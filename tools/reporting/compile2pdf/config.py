@@ -25,8 +25,8 @@ SOURCE_DIRECTORY = os.environ.get(
     "BILLS_COMPILE2PDF_SOURCE",
     str(
         _REPO_ROOT
+        / "build"
         / "tests"
-        / "output"
         / "artifact"
         / "bills_tracer"
         / "latest"
@@ -37,7 +37,7 @@ SOURCE_DIRECTORY = os.environ.get(
 # 2. 统一的输出目录（可用环境变量覆盖）
 OUTPUT_DIRECTORY = os.environ.get(
     "BILLS_COMPILE2PDF_OUTPUT",
-    str(_REPO_ROOT / "tests" / "output" / "artifact" / "reporting" / "compile2pdf"),
+    str(_REPO_ROOT / "build" / "tests" / "artifact" / "reporting" / "compile2pdf"),
 )
 
 # 3. 指定要编译的文档类型（可用环境变量覆盖，逗号分隔）

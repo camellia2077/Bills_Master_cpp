@@ -6,16 +6,16 @@ description = "Generate charts from latest runtime sqlite db (tooling workflow, 
 default_timeout_seconds = 1800
 
 [output]
-root = "tests/output/logic/pipeline_runner/reporting_graph_generator"
+root = "build/tests/logic/pipeline_runner/reporting_graph_generator"
 
 [env]
 PYTHONUNBUFFERED = "1"
 
 [reporting.input]
-db_path = "tests/output/runtime/bills_tracer/runs/<latest>/bills.sqlite3"
+db_path = "build/tests/runtime/bills_tracer/runs/<latest>/bills.sqlite3"
 
 [reporting.output]
-output_directory = "tests/output/artifact/reporting/graph_generator"
+output_directory = "build/tests/artifact/reporting/graph_generator"
 
 [reporting.options]
 chart_type = "year"
@@ -32,12 +32,12 @@ command = [
   "--period",
   "2024",
   "--output-dir",
-  "tests/output/artifact/reporting/graph_generator",
+  "build/tests/artifact/reporting/graph_generator",
 ]
 cwd = "{repo_root}"
 timeout_seconds = 1800
 retries = 0
 depends_on = []
 artifacts = [
-  "tests/output/artifact/reporting/graph_generator",
+  "build/tests/artifact/reporting/graph_generator",
 ]

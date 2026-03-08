@@ -6,16 +6,16 @@ description = "Compile exported reports to PDF (tooling workflow, not core gate)
 default_timeout_seconds = 3600
 
 [output]
-root = "tests/output/logic/pipeline_runner/reporting_compile2pdf"
+root = "build/tests/logic/pipeline_runner/reporting_compile2pdf"
 
 [env]
 PYTHONUNBUFFERED = "1"
 
 [reporting.input]
-source_directory = "tests/output/artifact/bills_tracer/latest/exported_files"
+source_directory = "build/tests/artifact/bills_tracer/latest/exported_files"
 
 [reporting.output]
-output_directory = "tests/output/artifact/reporting/compile2pdf"
+output_directory = "build/tests/artifact/reporting/compile2pdf"
 
 [reporting.compiler]
 compile_types = ""
@@ -43,12 +43,12 @@ timeout_seconds = 3600
 retries = 0
 depends_on = []
 artifacts = [
-  "tests/output/artifact/reporting/compile2pdf",
+  "build/tests/artifact/reporting/compile2pdf",
 ]
 
 [steps.env]
-BILLS_COMPILE2PDF_SOURCE = "{repo_root}/tests/output/artifact/bills_tracer/latest/exported_files"
-BILLS_COMPILE2PDF_OUTPUT = "{repo_root}/tests/output/artifact/reporting/compile2pdf"
+BILLS_COMPILE2PDF_SOURCE = "{repo_root}/build/tests/artifact/bills_tracer/latest/exported_files"
+BILLS_COMPILE2PDF_OUTPUT = "{repo_root}/build/tests/artifact/reporting/compile2pdf"
 BILLS_COMPILE2PDF_TYPES = ""
 BILLS_COMPILE2PDF_MD_COMPILERS = "pandoc"
 BILLS_COMPILE2PDF_BENCHMARK_LOOPS = "1"

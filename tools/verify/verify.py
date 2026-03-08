@@ -11,6 +11,18 @@ from datetime import datetime
 from pathlib import Path
 from statistics import mean, median
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools.toolchain.services.build_layout import (
+    assert_no_legacy_flags,
+    resolve_artifact_latest_dir,
+    resolve_artifact_project_root,
+    resolve_logic_pipeline_root,
+    sanitize_segment,
+)
+
 
 def normalize_extra(extra_args: list[str]) -> list[str]:
     if extra_args and extra_args[0] == "--":
@@ -21,13 +33,6 @@ def normalize_extra(extra_args: list[str]) -> list[str]:
 def run(command: list[str]) -> int:
     print(f"==> Running: {' '.join(command)}")
     return subprocess.call(command)
-
-
-def sanitize_segment(value: str) -> str:
-    allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
-    normalized = "".join(ch if ch in allowed else "_" for ch in value.strip())
-    normalized = normalized.strip("_")
-    return normalized or "default"
 
 
 def to_toml_list(items: list[str]) -> str:
@@ -128,11 +133,13 @@ def run_bills_workflow(
     python_exe: str,
     forwarded: list[str],
 ) -> int:
+    assert_no_legacy_flags(forwarded, source="verify bills")
     effective_forwarded = list(forwarded)
     if "--formats" not in effective_forwarded:
         effective_forwarded = [*effective_forwarded, "--formats", "md,json,tex,rst"]
     output_project = detect_output_project(forwarded)
     flow_entry = repo_root / "tools" / "flows" / "bills_tracer_flow.py"
+    latest_root = resolve_artifact_latest_dir(repo_root, output_project)
     steps = [
         {
             "id": "bills_tracer",
@@ -142,8 +149,8 @@ def run_bills_workflow(
             "timeout_seconds": 7200,
             "depends_on": [],
             "artifacts": [
-                f"tests/output/artifact/{output_project}/latest/test_summary.json",
-                f"tests/output/artifact/{output_project}/latest/test_python_output.log",
+                str(latest_root / "test_summary.json"),
+                str(latest_root / "test_python_output.log"),
             ],
         }
     ]
@@ -152,7 +159,7 @@ def run_bills_workflow(
         python_exe=python_exe,
         pipeline_name="verify_bills",
         pipeline_description="verify workflow bills",
-        output_root="tests/output/logic/pipeline_runner/verify_bills",
+        output_root=str(resolve_logic_pipeline_root(repo_root, "verify_bills")),
         steps=steps,
         run_id_prefix=output_project,
     )
@@ -163,7 +170,14 @@ def resolve_project_output_root(
     project: str,
     preferred_group: str = "artifact",
 ) -> Path:
-    return repo_root / "tests" / "output" / preferred_group / project
+    group = str(preferred_group).strip().lower()
+    if group == "artifact":
+        return resolve_artifact_project_root(repo_root, project)
+    if group == "logic":
+        return (repo_root / "build" / "tests" / "logic" / sanitize_segment(project)).resolve()
+    if group == "runtime":
+        return (repo_root / "build" / "tests" / "runtime" / sanitize_segment(project)).resolve()
+    raise ValueError(f"Unsupported output group: {preferred_group}")
 
 
 def resolve_project_latest_output_root(
@@ -357,7 +371,7 @@ def run_bills_parallel_smoke(
         choices=["all", "md", "json", "tex", "rst"],
     )
     parser.add_argument(
-        "--build-dir-mode",
+        "--build-scope",
         default="isolated",
         choices=["isolated", "shared"],
     )
@@ -379,6 +393,7 @@ def run_bills_parallel_smoke(
         help="Aggregation method for dual-order performance samples.",
     )
     args, passthrough = parser.parse_known_args(forwarded)
+    assert_no_legacy_flags(passthrough, source="verify bills-parallel-smoke")
     if args.max_performance_regression < 0:
         print("[ERROR] --max-performance-regression must be >= 0.")
         return 2
@@ -396,8 +411,8 @@ def run_bills_parallel_smoke(
         "parallel_model",
         "--formats",
         args.formats,
-        "--build-dir-mode",
-        args.build_dir_mode,
+        "--build-scope",
+        args.build_scope,
         *passthrough,
     ]
     json_cmd = [
@@ -411,8 +426,8 @@ def run_bills_parallel_smoke(
         "parallel_json",
         "--formats",
         args.formats,
-        "--build-dir-mode",
-        args.build_dir_mode,
+        "--build-scope",
+        args.build_scope,
         *passthrough,
     ]
     model_rev_project = f"{args.model_project}__rev"
@@ -428,8 +443,8 @@ def run_bills_parallel_smoke(
         "parallel_model_rev",
         "--formats",
         args.formats,
-        "--build-dir-mode",
-        args.build_dir_mode,
+        "--build-scope",
+        args.build_scope,
         *passthrough,
     ]
     json_cmd_rev = [
@@ -443,8 +458,8 @@ def run_bills_parallel_smoke(
         "parallel_json_rev",
         "--formats",
         args.formats,
-        "--build-dir-mode",
-        args.build_dir_mode,
+        "--build-scope",
+        args.build_scope,
         *passthrough,
     ]
 
@@ -522,7 +537,9 @@ def run_bills_parallel_smoke(
         python_exe=python_exe,
         pipeline_name="verify_bills_parallel_smoke",
         pipeline_description="verify bills parallel smoke/gate via TOML pipeline",
-        output_root="tests/output/logic/pipeline_runner/verify_bills_parallel_smoke",
+        output_root=str(
+            resolve_logic_pipeline_root(repo_root, "verify_bills_parallel_smoke")
+        ),
         steps=pipeline_steps,
         run_id_prefix=f"{args.model_project}_{args.json_project}",
     )
@@ -579,7 +596,15 @@ def run_logic_tests(
 
     if not args.skip_core_build:
         core_build_entry = repo_root / "tools" / "flows" / "build_bills_core.py"
-        build_code = run([python_exe, str(core_build_entry), "build_fast", "--shared"])
+        build_code = run(
+            [
+                python_exe,
+                str(core_build_entry),
+                "--preset",
+                "debug",
+                "--shared",
+            ]
+        )
         if build_code != 0:
             return build_code
 
@@ -599,10 +624,10 @@ def run_module_mode_check(
 ) -> int:
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument(
-        "--command",
-        default="build_fast",
-        choices=["build", "build_fast"],
-        help="Build command for bills_core dual-mode check.",
+        "--preset",
+        default="debug",
+        choices=["debug", "release"],
+        help="Build preset for bills_core dual-mode check.",
     )
     parser.add_argument(
         "--compiler",
@@ -628,7 +653,8 @@ def run_module_mode_check(
     base_cmd = [
         python_exe,
         str(core_build_entry),
-        args.command,
+        "--preset",
+        args.preset,
         "--compiler",
         args.compiler,
         "--shared" if args.shared else "--static",
@@ -724,7 +750,7 @@ def run_artifact_tests(
             "md,json,tex,rst",
             "--compare-scope",
             "all",
-            "--build-dir-mode",
+            "--build-scope",
             "isolated",
         ]
         if args.enforce_performance_gate:
@@ -852,10 +878,10 @@ def main() -> int:
             "tools-layer-check=check tools/* layering dependency rules, "
             "import-layer-check=check call-layer include/import policy for C++ sources, "
             "boundary-layer-check=check boundary-layer include allowlist policy for C++ sources, "
-            "bills-build=compile bills_cli, "
+            "bills-build=compile bills_cli with --preset/--scope, "
             "bills-parallel-smoke=run model-first/json-first bills in parallel and compare outputs, "
             "report-consistency-gate=run full model/json consistency gate with performance threshold, "
-            "core-build=compile bills_core, core-abi=run ABI smoke tests, "
+            "core-build=compile bills_core with --preset, core-abi=run ABI smoke tests, "
             "log-build=compile log_generator, "
             "log-cli-test=build log_generator and run CLI command tests, "
             "report-snapshot=compare exported reports with frozen snapshots, "
@@ -875,7 +901,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    repo_root = Path(__file__).resolve().parents[2]
+    repo_root = REPO_ROOT
     python_exe = sys.executable
     forwarded = normalize_extra(args.extra)
 
@@ -987,7 +1013,7 @@ def main() -> int:
             "md,json,tex,rst",
             "--compare-scope",
             "all",
-            "--build-dir-mode",
+            "--build-scope",
             "isolated",
             "--enforce-performance-gate",
             "--max-performance-regression",
@@ -1004,13 +1030,15 @@ def main() -> int:
     if args.workflow == "bills-build":
         entry = repo_root / "tools" / "flows" / "build_bills_master.py"
         if not forwarded:
-            forwarded = ["build_fast"]
+            forwarded = ["--preset", "debug", "--scope", "shared"]
+        assert_no_legacy_flags(forwarded, source="verify bills-build")
         return run([python_exe, str(entry), *forwarded])
 
     if args.workflow == "core-build":
         entry = repo_root / "tools" / "flows" / "build_bills_core.py"
         if not forwarded:
-            forwarded = ["build_fast", "--shared"]
+            forwarded = ["--preset", "debug", "--shared"]
+        assert_no_legacy_flags(forwarded, source="verify core-build")
         return run([python_exe, str(entry), *forwarded])
 
     if args.workflow == "core-abi":

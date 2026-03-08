@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..core.context import Context
+from .build_layout import resolve_build_directory
 
 
 @dataclass(frozen=True)
@@ -39,7 +40,12 @@ def resolve_tidy_paths(ctx: Context) -> TidyPaths:
     raw_root = root / "raw"
     state_root = root / "state"
     batch_state_dir = state_root / "batches"
-    build_dir = ctx.repo_root / "apps" / "bills_cli" / "build_tidy"
+    build_dir = resolve_build_directory(
+        ctx.repo_root,
+        target="bills",
+        preset="tidy",
+        scope="shared",
+    ).build_dir
     paths = TidyPaths(
         root=root,
         run_root=run_root,

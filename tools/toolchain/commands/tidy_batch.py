@@ -117,7 +117,9 @@ def execute_tidy_batch(
             phase="verify",
             status="running",
         )
-        command, verify_ret = run_verify_workflow(ctx, "bills-build", ["build_fast"])
+        command, verify_ret = run_verify_workflow(
+            ctx, "bills-build", ["--preset", "debug", "--scope", "shared"]
+        )
         write_verify_result(paths, command=command, returncode=verify_ret)
         if verify_ret != 0:
             update_batch_phase(
@@ -256,7 +258,9 @@ def execute_tidy_batch(
         phase="build_gate",
         status="running",
     )
-    build_command, build_ret = run_verify_workflow(ctx, "bills-build", ["build_fast"])
+    build_command, build_ret = run_verify_workflow(
+        ctx, "bills-build", ["--preset", "debug", "--scope", "shared"]
+    )
     write_verify_result(paths, command=build_command, returncode=build_ret)
     if build_ret != 0:
         suspect_files = [

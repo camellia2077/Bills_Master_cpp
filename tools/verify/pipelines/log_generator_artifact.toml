@@ -6,7 +6,7 @@ description = "Build log_generator and generate dataset into artifact."
 default_timeout_seconds = 1800
 
 [output]
-root = "tests/output/logic/pipeline_runner/log_generator_artifact"
+root = "build/tests/logic/pipeline_runner/log_generator_artifact"
 
 [env]
 PYTHONUNBUFFERED = "1"
@@ -14,13 +14,13 @@ PYTHONUNBUFFERED = "1"
 [[steps]]
 id = "build"
 name = "Build log_generator debug"
-command = ["{python}", "tools/flows/log_generator_flow.py", "build", "--mode", "Debug"]
+command = ["{python}", "tools/flows/log_generator_flow.py", "build", "--preset", "debug"]
 cwd = "{repo_root}"
 timeout_seconds = 1800
 retries = 0
 depends_on = []
 artifacts = [
-  "tests/generators/log_generator/build_debug/bin/generator.exe",
+  "build/log_generator/debug/shared/bin/generator.exe",
 ]
 
 [[steps]]
@@ -30,8 +30,8 @@ command = [
   "{python}",
   "tools/flows/log_generator_flow.py",
   "generate",
-  "--mode",
-  "Debug",
+  "--preset",
+  "debug",
   "--skip-build",
   "--start-year",
   "2024",
@@ -43,6 +43,6 @@ timeout_seconds = 600
 retries = 0
 depends_on = ["build"]
 artifacts = [
-  "tests/output/artifact/log_generator/bills_output_from_config",
-  "tests/output/artifact/log_generator/latest_run.txt",
+  "build/tests/artifact/log_generator/latest/bills_output_from_config",
+  "build/tests/artifact/log_generator/latest_run.txt",
 ]

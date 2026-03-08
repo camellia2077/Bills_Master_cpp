@@ -1,11 +1,24 @@
 from __future__ import annotations
 
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 
 from .io_ops import replace_path, write_json_file
 from .utils import run_command
+
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools.toolchain.services.build_layout import (
+    resolve_artifact_project_root,
+    resolve_artifact_run_dir,
+    resolve_runtime_project_root,
+    resolve_runtime_run_dir,
+)
 
 
 def _resolve_generator_executable(build_bin_dir: Path) -> Path:
@@ -28,7 +41,7 @@ def run_generate_to_artifact(
     *,
     repo_root: Path,
     project_dir: Path,
-    build_dir_name: str,
+    build_dir: Path,
     output_project: str,
     start_year: int,
     end_year: int,
@@ -37,7 +50,7 @@ def run_generate_to_artifact(
         print("[ERROR] start_year 不能大于 end_year。")
         return 2
 
-    build_bin_dir = project_dir / build_dir_name / "bin"
+    build_bin_dir = build_dir / "bin"
     generator_exe = _resolve_generator_executable(build_bin_dir)
     if not generator_exe.exists():
         print(f"[ERROR] 生成器可执行文件不存在: {generator_exe}")
@@ -50,8 +63,8 @@ def run_generate_to_artifact(
         return 2
 
     run_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    runtime_root = repo_root / "tests" / "output" / "runtime" / output_project
-    runtime_run_dir = runtime_root / "runs" / run_id
+    runtime_root = resolve_runtime_project_root(repo_root, output_project)
+    runtime_run_dir = resolve_runtime_run_dir(repo_root, output_project, run_id)
     runtime_run_dir.mkdir(parents=True, exist_ok=True)
     replace_path(config_src, runtime_run_dir / "config.toml")
 
@@ -65,10 +78,10 @@ def run_generate_to_artifact(
         print(f"[ERROR] 生成目录不存在: {generated_dir}")
         return 2
 
-    artifact_root = repo_root / "tests" / "output" / "artifact" / output_project
-    artifact_run_dir = artifact_root / "runs" / run_id
+    artifact_root = resolve_artifact_project_root(repo_root, output_project)
+    artifact_run_dir = resolve_artifact_run_dir(repo_root, output_project, run_id)
     run_dataset_dir = artifact_run_dir / "bills_output_from_config"
-    latest_dataset_dir = artifact_root / "bills_output_from_config"
+    latest_dataset_dir = artifact_root / "latest" / "bills_output_from_config"
     replace_path(generated_dir, run_dataset_dir)
     replace_path(run_dataset_dir, latest_dataset_dir)
     (artifact_root / "latest_run.txt").write_text(run_id, encoding="utf-8")
@@ -97,11 +110,11 @@ def promote_artifact_to_fixtures(
     output_project: str,
     run_id: str,
 ) -> int:
-    artifact_root = repo_root / "tests" / "output" / "artifact" / output_project
+    artifact_root = resolve_artifact_project_root(repo_root, output_project)
     if run_id:
         source_dir = artifact_root / "runs" / run_id / "bills_output_from_config"
     else:
-        source_dir = artifact_root / "bills_output_from_config"
+        source_dir = artifact_root / "latest" / "bills_output_from_config"
 
     if not source_dir.exists():
         print(f"[ERROR] 找不到可 promote 的数据目录: {source_dir}")

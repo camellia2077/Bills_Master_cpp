@@ -32,25 +32,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="Forward to existing build helpers under tools/flows.",
         description=(
             "Build one of the supported targets. "
-            "Extra arguments are forwarded to the underlying build entry."
+            "Unknown extra arguments are forwarded to the underlying build entry."
         ),
     )
     build_parser.add_argument(
         "target",
-        nargs="?",
         choices=["bills", "core", "log-generator"],
-        default=None,
-        help="Build target to use (default from tools/toolchain/config/workflow.toml).",
+        help="Build target to use.",
     )
     build_parser.add_argument(
-        "forwarded",
-        nargs=argparse.REMAINDER,
-        help=(
-            "Arguments forwarded to the underlying build entry. "
-            "Example: `python tools/run.py build core build_fast --compiler clang`."
-        ),
+        "--preset",
+        choices=["debug", "release", "tidy"],
+        default="debug",
+        help="Build preset to use.",
     )
-    build_parser.set_defaults(handler=run_build)
+    build_parser.add_argument(
+        "--scope",
+        choices=["shared", "isolated"],
+        default="shared",
+        help="Build scope to use. Some targets only support shared.",
+    )
+    build_parser.set_defaults(handler=run_build, forwarded=[])
 
     verify_parser = subparsers.add_parser(
         "verify",
@@ -122,12 +124,7 @@ def build_parser() -> argparse.ArgumentParser:
     tidy_keep_going_group.add_argument(
         "--no-keep-going", dest="keep_going", action="store_false"
     )
-    tidy_parser.add_argument(
-        "forwarded",
-        nargs=argparse.REMAINDER,
-        help="Extra args forwarded to the underlying tidy build.",
-    )
-    tidy_parser.set_defaults(handler=run_tidy)
+    tidy_parser.set_defaults(handler=run_tidy, forwarded=[])
 
     tidy_split_parser = subparsers.add_parser(
         "tidy-split",

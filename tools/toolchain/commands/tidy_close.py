@@ -33,7 +33,9 @@ def run(args, ctx: Context) -> int:
         return refresh_ret
 
     if not args.tidy_only:
-        command, verify_ret = run_verify_workflow(ctx, "bills-build", ["build_fast"])
+        command, verify_ret = run_verify_workflow(
+            ctx, "bills-build", ["--preset", "debug", "--scope", "shared"]
+        )
         write_verify_result(paths, command=command, returncode=verify_ret)
         if verify_ret != 0:
             write_latest_tidy_summary(

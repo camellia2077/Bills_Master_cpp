@@ -19,24 +19,31 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from tools.toolchain.core.config import load_toolchain_config
+from tools.toolchain.services.build_layout import resolve_build_directory
 
 
 WORKFLOW_TOML_PATH = REPO_ROOT / "tools" / "toolchain" / "config" / "workflow.toml"
 
 
-def run_build(build_mode: str) -> None:
+def run_build(build_preset: str) -> None:
     command = [
         sys.executable,
         str(REPO_ROOT / "tools" / "flows" / "build_bills_core.py"),
-        build_mode,
+        "--preset",
+        build_preset,
         "--shared",
     ]
     print(f"==> Running: {' '.join(command)}")
     subprocess.run(command, check=True, cwd=REPO_ROOT)
 
 
-def detect_library_path(build_dir_name: str) -> Path:
-    base_dir = REPO_ROOT / "libs" / "bills_core" / build_dir_name / "bin"
+def detect_library_path(build_preset: str) -> Path:
+    base_dir = resolve_build_directory(
+        REPO_ROOT,
+        target="core",
+        preset=build_preset,
+        scope="shared",
+    ).build_dir / "bin"
     if sys.platform.startswith("win"):
         candidates = ["bills_core.dll", "libbills_core.dll"]
     elif sys.platform == "darwin":
@@ -571,15 +578,10 @@ def main() -> int:
         description="Run C ABI compatibility smoke tests for libs/bills_core."
     )
     parser.add_argument(
-        "--build-mode",
-        choices=["build", "build_fast"],
-        default="build_fast",
-        help="Build mode used when --skip-build is not set.",
-    )
-    parser.add_argument(
-        "--build-dir",
-        default="build_fast",
-        help="Build directory name under libs/bills_core (default: build_fast).",
+        "--preset",
+        choices=["debug", "release"],
+        default="debug",
+        help="Build preset used when --skip-build is not set.",
     )
     parser.add_argument(
         "--lib",
@@ -602,14 +604,14 @@ def main() -> int:
 
     try:
         if not args.skip_build:
-            run_build(args.build_mode)
+            run_build(args.preset)
 
         if args.library_path:
             library_path = Path(args.library_path).resolve()
             if not library_path.is_file():
                 raise FileNotFoundError(f"Library not found: {library_path}")
         else:
-            library_path = detect_library_path(args.build_dir)
+            library_path = detect_library_path(args.preset)
 
         print(f"==> Testing ABI library: {library_path}")
         client = AbiClient(library_path)

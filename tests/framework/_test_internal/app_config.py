@@ -18,7 +18,7 @@ except ModuleNotFoundError:
 _current_dir = os.path.dirname(os.path.abspath(__file__))
 _test_root = os.path.dirname(os.path.dirname(_current_dir))
 _default_config_path = os.path.join(
-    _test_root, "suites", "artifact", "bills_master", "config.toml"
+    _test_root, "config", "bills_master.toml"
 )
 _config_path = os.environ.get("BILLS_MASTER_TEST_CONFIG", "").strip()
 if _config_path:
@@ -58,9 +58,27 @@ RUNTIME = _data.get("runtime", {})
 def _resolve_config_path(raw_path):
     if not raw_path:
         return raw_path
+    _validate_non_legacy_path(raw_path)
     if os.path.isabs(raw_path):
         return os.path.normpath(raw_path)
     return os.path.normpath(os.path.join(_config_dir, raw_path))
+
+
+def _validate_non_legacy_path(raw_path):
+    normalized = str(raw_path).strip().replace("\\", "/")
+    for token in (
+        "/".join(("tests", "output")),
+        "/".join(("test", "output")),
+        "_".join(("build", "fast")),
+        "_".join(("build", "tidy")),
+        "_".join(("build", "debug")),
+    ):
+        if token in normalized:
+            print(
+                "Error: legacy build-tree path is not supported anymore: "
+                f"'{raw_path}' (matched '{token}')"
+            )
+            sys.exit(2)
 
 
 BUILD_DIR = _resolve_config_path(PATHS.get("build_dir"))

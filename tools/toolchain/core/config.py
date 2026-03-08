@@ -41,9 +41,6 @@ class ScopeConfig:
         default_factory=lambda: [
             ".git",
             "build",
-            "build_fast",
-            "build_tidy",
-            "build_debug",
             "temp",
         ]
     )

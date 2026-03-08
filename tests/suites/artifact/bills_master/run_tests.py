@@ -7,14 +7,18 @@ from pathlib import Path
 
 TEST_SUITE_DIR = Path(__file__).resolve().parent
 TEST_ROOT = TEST_SUITE_DIR.parents[2]
+REPO_ROOT = TEST_ROOT.parent
 if str(TEST_ROOT) not in sys.path:
     sys.path.insert(0, str(TEST_ROOT))
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from framework._test_internal import app_config as config
 from framework._test_internal import constants
 from framework._test_internal.executor import CommandExecutor
 from framework._test_internal.preparer import TestPreparer
 from framework._test_internal.tasks import DateExportTasks, ExportTasks, ImportTasks, QueryTasks
+from tools.toolchain.services.build_layout import resolve_artifact_project_root
 
 SUMMARY_FILENAME = "test_summary.json"
 FORMAT_OUTPUT_SPECS = {
@@ -121,7 +125,7 @@ def main():
 
     runtime_base_dir = resolve_runtime_base_dir()
     test_root = str(runtime_base_dir)
-    project_output_root = TEST_ROOT / "output" / "artifact" / config.OUTPUT_PROJECT
+    project_output_root = resolve_artifact_project_root(REPO_ROOT, config.OUTPUT_PROJECT)
     run_output_root = resolve_run_output_root(project_output_root)
     summary_path = resolve_summary_path(project_output_root)
     preparer = TestPreparer(test_root)

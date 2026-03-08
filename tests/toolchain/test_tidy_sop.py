@@ -12,6 +12,7 @@ from unittest.mock import patch
 from tools.toolchain.commands.tidy_batch import execute_tidy_batch
 from tools.toolchain.commands.tidy_fix import TidyFixResult
 from tools.toolchain.commands.tidy_show import run as run_tidy_show
+from tools.toolchain.cli.main import parse_cli_args
 from tools.toolchain.commands.tidy_status import _print_batch_status
 from tools.toolchain.core.config import ToolchainConfig, load_toolchain_config
 from tools.toolchain.core.context import Context
@@ -29,6 +30,18 @@ from tools.toolchain.services.tidy_runtime import (
 
 
 class TidySopTests(unittest.TestCase):
+    def test_build_parser_does_not_reforward_owned_flags(self) -> None:
+        _, args = parse_cli_args(
+            ["build", "core", "--preset", "debug", "--scope", "shared"]
+        )
+        self.assertEqual(args.forwarded, [])
+
+    def test_build_parser_preserves_explicit_forwarded_args(self) -> None:
+        _, args = parse_cli_args(
+            ["build", "core", "--preset", "debug", "--shared"]
+        )
+        self.assertEqual(args.forwarded, ["--shared"])
+
     def test_load_toolchain_config_reads_new_tidy_sections(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -388,7 +401,19 @@ explain_closed_ranges = false
                 return_value=fix_result,
             ), patch(
                 "tools.toolchain.commands.tidy_batch.run_verify_workflow",
-                return_value=(["python", "verify.py", "bills-build", "--", "build_fast"], 1),
+                return_value=(
+                    [
+                        "python",
+                        "verify.py",
+                        "bills-build",
+                        "--",
+                        "--preset",
+                        "debug",
+                        "--scope",
+                        "shared",
+                    ],
+                    1,
+                ),
             ):
                 exit_code = execute_tidy_batch(
                     ctx,

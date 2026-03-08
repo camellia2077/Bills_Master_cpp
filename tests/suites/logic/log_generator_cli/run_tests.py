@@ -6,12 +6,18 @@ import argparse
 import json
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools.toolchain.services.build_layout import resolve_build_directory
+
 SUMMARY_FILENAME = "test_summary.json"
 
 
@@ -57,11 +63,12 @@ def resolve_generator_path(explicit_path: str) -> Path:
         return path
 
     default_path = (
-        REPO_ROOT
-        / "tests"
-        / "generators"
-        / "log_generator"
-        / "build_debug"
+        resolve_build_directory(
+            REPO_ROOT,
+            target="log-generator",
+            preset="debug",
+            scope="shared",
+        ).build_dir
         / "bin"
         / "generator.exe"
     )
@@ -76,11 +83,12 @@ def resolve_generator_config(explicit_path: str) -> Path:
         return path
 
     default_path = (
-        REPO_ROOT
-        / "tests"
-        / "generators"
-        / "log_generator"
-        / "build_debug"
+        resolve_build_directory(
+            REPO_ROOT,
+            target="log-generator",
+            preset="debug",
+            scope="shared",
+        ).build_dir
         / "bin"
         / "config"
         / "config.toml"
@@ -260,17 +268,17 @@ def main() -> int:
     parser.add_argument(
         "--generator",
         default="",
-        help="Path to generator executable. Defaults to build_debug/bin/generator.exe.",
+        help="Path to generator executable. Defaults to build/log_generator/debug/shared/bin/generator.exe.",
     )
     parser.add_argument(
         "--config",
         default="",
-        help="Path to config.toml. Defaults to build_debug/bin/config/config.toml.",
+        help="Path to config.toml. Defaults to build/log_generator/debug/shared/bin/config/config.toml.",
     )
     parser.add_argument(
         "--summary",
         default=str(
-            REPO_ROOT / "tests" / "output" / "logic" / "log_generator_cli" / SUMMARY_FILENAME
+            REPO_ROOT / "build" / "tests" / "logic" / "log_generator_cli" / SUMMARY_FILENAME
         ),
         help="Summary output path.",
     )

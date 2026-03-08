@@ -8,13 +8,23 @@ import subprocess
 import sys
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools.toolchain.services.build_layout import (
+    resolve_artifact_project_root,
+    resolve_runtime_project_root,
+    resolve_runtime_workspace_dir,
+)
+
 
 def has_dependency(module_name: str) -> bool:
     return importlib.util.find_spec(module_name) is not None
 
 
 def resolve_default_db(repo_root: Path) -> Path | None:
-    runs_root = repo_root / "tests" / "output" / "runtime" / "bills_tracer" / "runs"
+    runs_root = resolve_runtime_project_root(repo_root, "bills_tracer") / "runs"
     if runs_root.exists():
         candidates = sorted(
             runs_root.glob("*/bills.sqlite3"),
@@ -24,7 +34,9 @@ def resolve_default_db(repo_root: Path) -> Path | None:
         if candidates:
             return candidates[0]
 
-    workspace_db = repo_root / "tests" / "output" / "runtime" / "bills_tracer" / "workspace" / "bills.sqlite3"
+    workspace_db = (
+        resolve_runtime_workspace_dir(repo_root, "bills_tracer") / "bills.sqlite3"
+    )
     if workspace_db.exists():
         return workspace_db
     return None
@@ -39,7 +51,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--db", default="", help="Optional explicit sqlite db path.")
     parser.add_argument(
         "--output-dir",
-        default="tests/output/artifact/reporting/graph_generator",
+        default="build/tests/artifact/reporting/graph_generator",
     )
     parser.add_argument("--output-name", default="")
     return parser.parse_args()
@@ -55,7 +67,7 @@ def default_output_name(chart_type: str, period: str) -> str:
 
 def main() -> int:
     args = parse_args()
-    repo_root = Path(__file__).resolve().parents[3]
+    repo_root = REPO_ROOT
 
     missing = [
         module_name

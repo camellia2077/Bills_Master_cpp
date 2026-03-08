@@ -1,7 +1,13 @@
 [paths]
-build_dir = "../../../../tests/output/runtime/bills_tracer/workspace"
-bills_dir = "../../../fixtures/bills"
-import_dir = "../../../output/txt2josn"
+build_dir = "../../build/tests/runtime/bills_tracer/workspace"
+bills_dir = "../fixtures/bills"
+import_dir = "../../build/tests/runtime/bills_tracer/runs/manual/output/txt2josn"
+
+[runtime]
+base_dir = "../../build/tests/runtime/bills_tracer/runs/manual"
+run_id = "manual"
+output_dir = "../../build/tests/artifact/bills_tracer/latest"
+summary_path = "../../build/tests/artifact/bills_tracer/latest/test_summary.json"
 
 [run_control]
 run_cleanup = true

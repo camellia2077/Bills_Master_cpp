@@ -1,17 +1,11 @@
 build/
-build_tidy/
-build_fast/
 my_test/
 .vscode/
 pdf_files/
 __pycache__/
 *.pyc
-build_*/
 temp/
 
-bills_output_from_config/
-output/
-tests/output/
 tests/fixtures/config/
 tests/fixtures/plugins/
 

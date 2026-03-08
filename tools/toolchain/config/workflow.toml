@@ -13,9 +13,6 @@ optional_roots = [
 exclude_segments = [
   ".git",
   "build",
-  "build_fast",
-  "build_tidy",
-  "build_debug",
   "temp",
 ]
 header_filter_roots = [

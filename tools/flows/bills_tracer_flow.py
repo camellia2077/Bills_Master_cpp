@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import shutil
@@ -15,6 +14,20 @@ import time
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools.toolchain.services.build_layout import (
+    resolve_artifact_project_root,
+    resolve_build_directory,
+    resolve_runtime_project_root,
+    resolve_runtime_workspace_dir,
+    sanitize_segment,
+    short_hash,
+)
 
 
 FORMAT_CONFIG = {
@@ -36,10 +49,7 @@ TEST_SUMMARY_FILENAME = "test_summary.json"
 PYTHON_TEST_LOG_FILENAME = "test_python_output.log"
 RUN_MANIFEST_FILENAME = "run_manifest.json"
 DEFAULT_OUTPUT_PROJECT = "bills_tracer"
-DEFAULT_OUTPUT_GROUP = "artifact"
-RUNTIME_OUTPUT_GROUP = "runtime"
-DEFAULT_BUILD_ROOT = "apps/bills_cli/build_cli_test"
-DEFAULT_BUILD_DIR_MODE = "isolated"
+DEFAULT_BUILD_SCOPE = "shared"
 DEFAULT_MAX_RUNS = 20
 RUNS_DIR_NAME = "runs"
 LATEST_DIR_NAME = "latest"
@@ -56,18 +66,6 @@ def run_command(command: list[str], cwd: Path | None = None,
                 env: dict[str, str] | None = None) -> None:
     print(f"==> {' '.join(command)}")
     subprocess.run(command, cwd=str(cwd) if cwd else None, env=env, check=True)
-
-
-def sanitize_segment(value: str) -> str:
-    allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
-    normalized = "".join(ch if ch in allowed else "_" for ch in value.strip())
-    normalized = normalized.strip("_")
-    return normalized or "default"
-
-
-def short_hash(text: str, length: int = 8) -> str:
-    return hashlib.sha1(text.encode("utf-8")).hexdigest()[:length]
-
 
 @contextmanager
 def directory_lock(
@@ -257,30 +255,30 @@ def prepare_build_dir(build_dir: Path, source_dir: Path) -> None:
 
 def resolve_build_dir(
     repo_root: Path,
-    explicit_build_dir: str | None,
-    build_dir_mode: str,
+    build_scope: str,
+    build_preset: str,
     output_project: str,
     export_pipeline: str,
     formats: list[str],
-    build_type: str,
     generator: str,
 ) -> Path:
-    if explicit_build_dir:
-        return (repo_root / explicit_build_dir).resolve()
-
-    build_root = (repo_root / DEFAULT_BUILD_ROOT).resolve()
-    if build_dir_mode == "shared":
-        return (build_root / "shared").resolve()
-
-    format_tag = sanitize_segment("-".join(formats))
-    project_tag = sanitize_segment(output_project)
-    pipeline_tag = sanitize_segment(export_pipeline)
-    build_type_tag = sanitize_segment(build_type.lower())
-    generator_tag = sanitize_segment(generator.lower())
-    unique_seed = f"{project_tag}|{pipeline_tag}|{format_tag}|{build_type_tag}|{generator_tag}"
-    unique_tag = short_hash(unique_seed, length=12)
-    build_name = f"b_{unique_tag}"
-    return (build_root / "iso" / build_name).resolve()
+    instance_id = ""
+    if build_scope == "isolated":
+        format_tag = sanitize_segment("-".join(formats))
+        project_tag = sanitize_segment(output_project)
+        pipeline_tag = sanitize_segment(export_pipeline)
+        generator_tag = sanitize_segment(generator.lower())
+        unique_seed = (
+            f"{project_tag}|{pipeline_tag}|{format_tag}|{build_preset}|{generator_tag}"
+        )
+        instance_id = f"b_{short_hash(unique_seed, length=12)}"
+    return resolve_build_directory(
+        repo_root,
+        target="bills",
+        preset=build_preset,
+        scope=build_scope,
+        instance_id=instance_id,
+    ).build_dir
 
 
 def make_runtime_base_dir(
@@ -560,14 +558,18 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Build bill_master_cli and run command-line tests."
     )
-    parser.add_argument("--build-dir", default="")
     parser.add_argument(
-        "--build-dir-mode",
-        default=DEFAULT_BUILD_DIR_MODE,
+        "--build-scope",
+        default=DEFAULT_BUILD_SCOPE,
         choices=["isolated", "shared"],
         help="isolated=dedicated build dir per test run; shared=single reusable build dir.",
     )
-    parser.add_argument("--build-type", default="Debug")
+    parser.add_argument(
+        "--preset",
+        default="debug",
+        choices=["debug", "release"],
+        help="Build preset to use for the CLI build.",
+    )
     parser.add_argument("--generator", default="Ninja")
     parser.add_argument("--target", default="bill_master_cli")
     parser.add_argument("--bills-dir", default="tests/fixtures/bills")
@@ -600,31 +602,25 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    repo_root = Path(__file__).resolve().parents[2]
+    repo_root = REPO_ROOT
     source_dir = repo_root / "apps" / "bills_cli"
     export_formats = parse_formats(args.formats)
     output_project_name = sanitize_segment(args.output_project)
-    explicit_build_dir = args.build_dir.strip()
     build_dir = resolve_build_dir(
         repo_root=repo_root,
-        explicit_build_dir=explicit_build_dir if explicit_build_dir else None,
-        build_dir_mode=args.build_dir_mode,
+        build_scope=args.build_scope,
+        build_preset=args.preset,
         output_project=output_project_name,
         export_pipeline=args.export_pipeline,
         formats=export_formats,
-        build_type=args.build_type,
         generator=args.generator,
     )
     build_bin_dir = build_dir / "bin"
     bills_dir = repo_root / args.bills_dir
     test_root = repo_root / "tests"
-    project_output_root = (
-        test_root / "output" / DEFAULT_OUTPUT_GROUP / output_project_name
-    )
-    runtime_project_root = (
-        test_root / "output" / RUNTIME_OUTPUT_GROUP / output_project_name
-    )
-    runtime_workspace_dir = (runtime_project_root / "workspace").resolve()
+    project_output_root = resolve_artifact_project_root(repo_root, output_project_name)
+    runtime_project_root = resolve_runtime_project_root(repo_root, output_project_name)
+    runtime_workspace_dir = resolve_runtime_workspace_dir(repo_root, output_project_name)
     test_runner = test_root / "suites" / "artifact" / "bills_master" / "run_tests.py"
     runtime_base_dir = make_runtime_base_dir(
         runtime_project_root=runtime_project_root,
@@ -650,13 +646,20 @@ def main() -> int:
         return 2
 
     format_defines = cmake_format_defines(export_formats)
+    build_spec = resolve_build_directory(
+        repo_root,
+        target="bills",
+        preset=args.preset,
+        scope=args.build_scope,
+        instance_id=build_dir.name if args.build_scope == "isolated" else "",
+    )
 
     try:
         build_cli(
             source_dir=source_dir,
             build_dir=build_dir,
             generator=args.generator,
-            build_type=args.build_type,
+            build_type=build_spec.cmake_build_type,
             target=args.target,
             cmake_defines=format_defines,
         )
