@@ -2,13 +2,16 @@
 cmake_minimum_required(VERSION 3.12)
 
 # 可选编译器选择（在 project() 之前生效）
-include(cmake/compiler_select.cmake)
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/modules/compiler_select.cmake")
 
 # 定义项目名称和语言
 project(BillGenerator CXX)
 
 # 将模块路径添加到CMake的搜索路径中
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/modules"
+)
 
 # 引入项目设置与编译选项
 include(cmake/project_setup.cmake)

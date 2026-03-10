@@ -16,6 +16,8 @@
 - `python tools/verify/verify.py bills-build`
   - `python tools/verify/verify.py bills`
   - `python tools/verify/verify.py log-cli-test`
+  - `python tools/flows/build_bills_master.py --preset debug --scope shared --compiler clang`
+  - `python tests/suites/artifact/bills_master/run_tests.py`
   - 其他测试若已接入 `tools/verify/verify.py`，优先走该入口
 
 ## Execution Rules
@@ -32,11 +34,14 @@
 
 - 优先查看终端输出中的失败信息、错误栈、summary
 - 若测试流程生成结果文件，优先读取：
-  - `build/tests/`
-  - `build/tests/artifact/`
-  - `build/tests/logic/`
-  - `build/tests/runtime/`
+  - `dist/tests/artifact/`
+  - `dist/tests/logic/`
+  - `dist/tests/runtime/`
+  - `dist/runtime/`（手工 CLI 默认运行时）
 - 若存在 `test_summary.json`、`pipeline_summary.json`、日志文件，优先基于这些结果判断是否通过
+- `bills_tracer` CLI artifact 测试的默认 summary 路径是 `dist/tests/artifact/<project>/latest/test_summary.json`
+- `bills_tracer` CLI 手工运行默认目录是 `dist/runtime/bills_tracer/workspace/`
+- 不要再读取或依赖根目录 `output/`，它是遗留约定
 
 ## Temporary Files
 

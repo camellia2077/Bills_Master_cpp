@@ -2,12 +2,12 @@
 cmake_minimum_required(VERSION 3.10)
 
 # 可选编译器选择（在 project() 之前生效）
-include(cmake/compiler_select.cmake)
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/modules/compiler_select.cmake")
 
 # 定义项目名称和所用语言 (必须在顶层)
 project(BillReprocessor VERSION "0.2.8" LANGUAGES C CXX)
 
-option(BILLS_CORE_BUILD_SHARED "Build bills_core as a shared library for CLI app" ON)
+option(BILLS_CORE_BUILD_SHARED "Build bills_core as a shared library for CLI app" OFF)
 if(WIN32)
     set(_BILLS_STATIC_MINGW_RUNTIME_DEFAULT ON)
 else()
@@ -27,30 +27,11 @@ option(BILLS_ENABLE_TIDY
     OFF
 )
 
-# Export format switches: built-in report formatter selection.
-option(ENABLE_FMT_MD "Enable built-in Markdown report formatters" ON)
-option(ENABLE_FMT_RST "Enable built-in reStructuredText report formatters" OFF)
-option(ENABLE_FMT_TEX "Enable built-in LaTeX report formatters" OFF)
-
-set(BILLS_FORMAT_COMPILE_DEFINITIONS)
-if(ENABLE_FMT_MD)
-    list(APPEND BILLS_FORMAT_COMPILE_DEFINITIONS BILLS_FMT_MD_ENABLED=1)
-else()
-    list(APPEND BILLS_FORMAT_COMPILE_DEFINITIONS BILLS_FMT_MD_ENABLED=0)
-endif()
-if(ENABLE_FMT_RST)
-    list(APPEND BILLS_FORMAT_COMPILE_DEFINITIONS BILLS_FMT_RST_ENABLED=1)
-else()
-    list(APPEND BILLS_FORMAT_COMPILE_DEFINITIONS BILLS_FMT_RST_ENABLED=0)
-endif()
-if(ENABLE_FMT_TEX)
-    list(APPEND BILLS_FORMAT_COMPILE_DEFINITIONS BILLS_FMT_TEX_ENABLED=1)
-else()
-    list(APPEND BILLS_FORMAT_COMPILE_DEFINITIONS BILLS_FMT_TEX_ENABLED=0)
-endif()
-
 # 将模块路径添加到CMake的搜索路径中
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/modules"
+)
 
 # 引入项目设置模块 (现在只包含路径和输出目录设置)
 include(cmake/project_setup.cmake)
@@ -60,6 +41,12 @@ include(cmake/compiler_options.cmake)
 
 # 引入并查找外部依赖
 include(cmake/dependencies.cmake)
+
+# 引入核心库
+add_subdirectory(
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/bills_core"
+    "${CMAKE_CURRENT_BINARY_DIR}/libs/bills_core"
+)
 
 # 引入 IO 适配层独立库
 add_subdirectory(

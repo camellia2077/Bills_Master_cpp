@@ -28,11 +28,11 @@
 
 ## release
 
-- `docs/release/v0.3.1.md`
-- `docs/release/v0.3.0.md`
-- `docs/release/v0.2/v0.2.8.md`
-- `docs/release/v0.2/v0.2.7.md`
-- `CHANGELOG.md`（仓库根，长期维护入口）
+- `docs/release/README.md`（统一发布历史入口）
+- `docs/release/product/`（跨模块 / 跨端的产品级历史）
+- `docs/release/core/`（`bills_core` 内核能力历史）
+- `docs/release/clients/cli/`（`bills_cli` 表现层历史）
+- `docs/release/clients/android/`（`bills_android` 表现层历史）
 
 ## roadmap
 
@@ -48,12 +48,13 @@
   - `python tools/run.py dist <target>`
   - dist 目录模型：
 - `dist/cmake/<target>/<preset>/<scope>/...`（CMake 产物）
+- `dist/runtime/<project>/workspace/...`（手工 CLI 默认运行时：db/cache/exports/config/notices）
 - `dist/tests/runtime/<project>/workspace`（最新 exe/dll/config）
 - `dist/tests/runtime/<project>/runs/<run_id>/...`（单次运行沙箱与运行期产物）
-- `dist/tests/artifact/<project>/latest/...`（最新 summary/logs/exported_files 快照）
+- `dist/tests/artifact/<project>/latest/...`（最新 summary/logs/exports 快照）
 - `dist/tests/artifact/<project>/runs/<run_id>/...`（单次测试归档）
 - `dist/tests/logic/pipeline_runner/<pipeline>/...`（流程 runner 元数据）
-- `dist/gradle/`（预留给 Android / Gradle 产物）
+- Android / Gradle 默认产物位于各模块自己的 `build/` 目录；Android native CMake staging 默认位于模块下 `.cxx/`
 - `tools/toolchain/`（统一 Python toolchain 实现，含 tidy SOP 编排）
 - `tests/generators/log_generator/`（测试输入数据生成器）
 - `testdata/bills/`（跨端共享 canonical 输入数据）

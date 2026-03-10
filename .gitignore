@@ -1,11 +1,18 @@
 dist/
+dist/runtime/
 build/
 my_test/
 .vscode/
+.idea/
 pdf_files/
 __pycache__/
+.pytest_cache/
 *.pyc
 temp/
+.ruff_cache/
+output/
+# gradle
+.kotlin/
 
 *.log
 *.pdf
@@ -56,3 +63,4 @@ compile_commands.json
 CMakeFiles/
 .gradle/
 .cxx/
+local.properties
