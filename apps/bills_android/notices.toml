@@ -1,0 +1,201 @@
+schema_version = "1"
+layer_id = "bills_android"
+
+[[deps]]
+package_id = "nlohmann_json"
+cmake_targets = ["nlohmann_json::nlohmann_json"]
+
+[[deps]]
+package_id = "sqlite_amalgamation"
+cmake_targets = ["sqlite3_amalgamation"]
+
+[[deps]]
+package_id = "androidx_activity"
+maven_groups = ["androidx.activity"]
+
+[[deps]]
+package_id = "androidx_annotation"
+maven_groups = ["androidx.annotation"]
+
+[[deps]]
+package_id = "androidx_autofill"
+maven_groups = ["androidx.autofill"]
+
+[[deps]]
+package_id = "androidx_cardview"
+maven_groups = ["androidx.cardview"]
+
+[[deps]]
+package_id = "androidx_appcompat"
+maven_groups = ["androidx.appcompat"]
+
+[[deps]]
+package_id = "androidx_arch_core"
+maven_groups = ["androidx.arch.core"]
+
+[[deps]]
+package_id = "androidx_collection"
+maven_groups = ["androidx.collection"]
+
+[[deps]]
+package_id = "androidx_compose"
+maven_groups = [
+  "androidx.compose.animation",
+  "androidx.compose.foundation",
+  "androidx.compose.material",
+  "androidx.compose.material3",
+  "androidx.compose.runtime",
+  "androidx.compose.ui",
+]
+
+[[deps]]
+package_id = "androidx_concurrent"
+maven_groups = ["androidx.concurrent"]
+
+[[deps]]
+package_id = "androidx_constraintlayout"
+maven_groups = ["androidx.constraintlayout"]
+
+[[deps]]
+package_id = "androidx_coordinatorlayout"
+maven_groups = ["androidx.coordinatorlayout"]
+
+[[deps]]
+package_id = "androidx_core"
+maven_groups = ["androidx.core"]
+
+[[deps]]
+package_id = "androidx_cursoradapter"
+maven_groups = ["androidx.cursoradapter"]
+
+[[deps]]
+package_id = "androidx_customview"
+maven_groups = ["androidx.customview"]
+
+[[deps]]
+package_id = "androidx_datastore"
+maven_groups = ["androidx.datastore"]
+
+[[deps]]
+package_id = "androidx_documentfile"
+maven_groups = ["androidx.documentfile"]
+
+[[deps]]
+package_id = "androidx_drawerlayout"
+maven_groups = ["androidx.drawerlayout"]
+
+[[deps]]
+package_id = "androidx_dynamicanimation"
+maven_groups = ["androidx.dynamicanimation"]
+
+[[deps]]
+package_id = "androidx_emoji2"
+maven_groups = ["androidx.emoji2"]
+
+[[deps]]
+package_id = "androidx_fragment"
+maven_groups = ["androidx.fragment"]
+
+[[deps]]
+package_id = "androidx_graphics"
+maven_groups = ["androidx.graphics"]
+
+[[deps]]
+package_id = "androidx_interpolator"
+maven_groups = ["androidx.interpolator"]
+
+[[deps]]
+package_id = "androidx_legacy"
+maven_groups = ["androidx.legacy"]
+
+[[deps]]
+package_id = "androidx_lifecycle"
+maven_groups = ["androidx.lifecycle"]
+
+[[deps]]
+package_id = "androidx_loader"
+maven_groups = ["androidx.loader"]
+
+[[deps]]
+package_id = "androidx_localbroadcastmanager"
+maven_groups = ["androidx.localbroadcastmanager"]
+
+[[deps]]
+package_id = "androidx_print"
+maven_groups = ["androidx.print"]
+
+[[deps]]
+package_id = "androidx_profileinstaller"
+maven_groups = ["androidx.profileinstaller"]
+
+[[deps]]
+package_id = "androidx_recyclerview"
+maven_groups = ["androidx.recyclerview"]
+
+[[deps]]
+package_id = "androidx_resourceinspection"
+maven_groups = ["androidx.resourceinspection"]
+
+[[deps]]
+package_id = "androidx_savedstate"
+maven_groups = ["androidx.savedstate"]
+
+[[deps]]
+package_id = "androidx_startup"
+maven_groups = ["androidx.startup"]
+
+[[deps]]
+package_id = "androidx_tracing"
+maven_groups = ["androidx.tracing"]
+
+[[deps]]
+package_id = "androidx_transition"
+maven_groups = ["androidx.transition"]
+
+[[deps]]
+package_id = "androidx_vectordrawable"
+maven_groups = ["androidx.vectordrawable"]
+
+[[deps]]
+package_id = "androidx_versionedparcelable"
+maven_groups = ["androidx.versionedparcelable"]
+
+[[deps]]
+package_id = "androidx_viewpager"
+maven_groups = ["androidx.viewpager"]
+
+[[deps]]
+package_id = "androidx_viewpager2"
+maven_groups = ["androidx.viewpager2"]
+
+[[deps]]
+package_id = "com_google_android_material"
+maven_groups = ["com.google.android.material"]
+
+[[deps]]
+package_id = "com_google_errorprone"
+maven_groups = ["com.google.errorprone"]
+
+[[deps]]
+package_id = "com_google_guava"
+maven_groups = ["com.google.guava"]
+
+[[deps]]
+package_id = "com_squareup_okio"
+maven_groups = ["com.squareup.okio"]
+
+[[deps]]
+package_id = "org_jetbrains"
+maven_groups = ["org.jetbrains"]
+
+[[deps]]
+package_id = "org_jetbrains_kotlin"
+maven_groups = ["org.jetbrains.kotlin"]
+
+[[deps]]
+package_id = "org_jetbrains_kotlinx"
+maven_groups = ["org.jetbrains.kotlinx"]
+
+[[deps]]
+package_id = "org_jspecify"
+maven_groups = ["org.jspecify"]
