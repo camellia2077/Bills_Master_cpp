@@ -1,0 +1,5 @@
+package_id = "org_jetbrains_kotlinx"
+display_name = "KotlinX Libraries"
+homepage = "https://github.com/Kotlin"
+license_spdx = "Apache-2.0"
+license_text_relpath = "third_party/texts/apache-2.0/LICENSE.txt"

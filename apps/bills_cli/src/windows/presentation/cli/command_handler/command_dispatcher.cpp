@@ -14,8 +14,10 @@ namespace terminal = common::terminal;
 #include <utility>
 
 #include "commands/export_command.hpp"
+#include "commands/config_command.hpp"
 #include "commands/ingest_command.hpp"
 #include "commands/query_command.hpp"
+#include "commands/record_command.hpp"
 #include "commands/simple_command.hpp"
 
 auto ICommandDeleter::operator()(ICommand* command) const -> void {
@@ -70,6 +72,9 @@ void CommandDispatcher::register_commands(const std::string& format,
       format, export_pipeline);
   m_commands["-q"] = make_command.template operator()<QueryCommand>(
       format, export_pipeline);
+
+  m_commands["record"] = make_command.template operator()<RecordCommand>();
+  m_commands["config"] = make_command.template operator()<ConfigCommand>();
 }
 
 auto CommandDispatcher::run(int argc, char* argv[]) -> int {
@@ -122,6 +127,12 @@ auto CommandDispatcher::run(int argc, char* argv[]) -> int {
     if (command_name == "--version" || command_name == "-V") {
       AppController::display_version();
       return 0;
+    }
+    if (command_name == "--notices") {
+      return AppController::display_notices(false) ? 0 : 1;
+    }
+    if (command_name == "--notices-json") {
+      return AppController::display_notices(true) ? 0 : 1;
     }
 
     // 2. 注册所有命令

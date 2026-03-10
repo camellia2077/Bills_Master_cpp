@@ -8,37 +8,53 @@ import shutil
 from pathlib import Path
 
 SNAPSHOT_MATRIX = {
-    "monthly_md_2024_01": (
-        "Markdown_bills/months/2024/2024-01.md",
-        "monthly/2024-01.md",
+    "monthly_md_2025_01": (
+        "Markdown_bills/months/2025/2025-01.md",
+        "monthly/2025-01.md",
     ),
-    "monthly_json_2024_01": (
-        "standard_json/months/2024/2024-01.json",
-        "monthly/2024-01.json",
+    "monthly_json_2025_01": (
+        "standard_json/months/2025/2025-01.json",
+        "monthly/2025-01.json",
     ),
-    "yearly_md_2024": (
-        "Markdown_bills/years/2024.md",
-        "yearly/2024.md",
+    "monthly_typ_2025_01": (
+        "Typst_bills/months/2025/2025-01.typ",
+        "monthly/2025-01.typ",
     ),
-    "yearly_json_2024": (
-        "standard_json/years/2024.json",
-        "yearly/2024.json",
+    "yearly_md_2025": (
+        "Markdown_bills/years/2025.md",
+        "yearly/2025.md",
     ),
-    "range_md_2024_03": (
-        "Markdown_bills/months/2024/2024-03.md",
-        "range/2024-03.md",
+    "yearly_json_2025": (
+        "standard_json/years/2025.json",
+        "yearly/2025.json",
     ),
-    "range_md_2024_04": (
-        "Markdown_bills/months/2024/2024-04.md",
-        "range/2024-04.md",
+    "yearly_typ_2025": (
+        "Typst_bills/years/2025.typ",
+        "yearly/2025.typ",
     ),
-    "range_json_2024_03": (
-        "standard_json/months/2024/2024-03.json",
-        "range/2024-03.json",
+    "range_md_2025_03": (
+        "Markdown_bills/months/2025/2025-03.md",
+        "range/2025-03.md",
     ),
-    "range_json_2024_04": (
-        "standard_json/months/2024/2024-04.json",
-        "range/2024-04.json",
+    "range_md_2025_04": (
+        "Markdown_bills/months/2025/2025-04.md",
+        "range/2025-04.md",
+    ),
+    "range_json_2025_03": (
+        "standard_json/months/2025/2025-03.json",
+        "range/2025-03.json",
+    ),
+    "range_json_2025_04": (
+        "standard_json/months/2025/2025-04.json",
+        "range/2025-04.json",
+    ),
+    "range_typ_2025_03": (
+        "Typst_bills/months/2025/2025-03.typ",
+        "range/2025-03.typ",
+    ),
+    "range_typ_2025_04": (
+        "Typst_bills/months/2025/2025-04.typ",
+        "range/2025-04.typ",
     ),
 }
 
@@ -52,7 +68,7 @@ def sha256(path: Path) -> str:
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
     source_root = (
-        repo_root / "tests" / "output" / "artifact" / "bills_tracer" / "latest" / "exported_files"
+        repo_root / "dist" / "tests" / "artifact" / "bills_tracer" / "latest" / "exports"
     )
     baseline_root = repo_root / "tests" / "baseline" / "report_snapshots"
 

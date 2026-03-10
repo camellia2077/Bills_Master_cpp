@@ -1,0 +1,5 @@
+package_id = "com_google_android_material"
+display_name = "Material Components for Android"
+homepage = "https://github.com/material-components/material-components-android"
+license_spdx = "Apache-2.0"
+license_text_relpath = "third_party/texts/apache-2.0/LICENSE.txt"

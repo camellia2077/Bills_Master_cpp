@@ -78,7 +78,7 @@ def _run_report_consistency_gate(repo_root: Path, python_exe: str, forwarded: li
         "--json-project",
         "bills_gate_json_first",
         "--formats",
-        "md,json,tex,rst",
+        "md,json,tex,rst,typ",
         "--compare-scope",
         "all",
         "--dist-scope",

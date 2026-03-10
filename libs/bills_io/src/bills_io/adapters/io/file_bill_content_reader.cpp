@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 auto FileBillContentReader::Read(const std::string& file_path) -> std::string {
-  std::ifstream input_file(file_path);
+  std::ifstream input_file(file_path, std::ios::binary);
   if (!input_file.is_open()) {
     throw std::runtime_error("无法打开输入账单文件 '" + file_path + "'");
   }

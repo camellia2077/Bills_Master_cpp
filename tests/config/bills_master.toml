@@ -1,7 +1,7 @@
 [paths]
 workspace_dir = "../../dist/tests/runtime/bills_tracer/workspace"
 bills_dir = "../../testdata/bills"
-import_dir = "../../dist/tests/runtime/bills_tracer/runs/manual/output/txt2josn"
+import_dir = "../../dist/tests/runtime/bills_tracer/runs/manual/cache/txt2json"
 
 [runtime]
 base_dir = "../../dist/tests/runtime/bills_tracer/runs/manual"
@@ -23,14 +23,15 @@ export_formats = ["md", "json", "tex", "rst"]
 output_project = "bills_tracer"
 
 [cleanup]
-files_to_delete = ["bills.sqlite3"]
+files_to_delete = []
 dirs_to_delete = [
-  "output/bills_tracer",
-  "output/txt2josn",
-  "output/exported_files",
-  "output/logs",
-  "dist",
+  "db",
+  "cache",
+  "exports",
+  "logs",
+  "record_templates",
   "config",
+  "notices",
 ]
 
 [test_dates]

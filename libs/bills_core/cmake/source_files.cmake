@@ -1,14 +1,30 @@
 set(APPLICATION_DIR       "${CORE_SOURCE_ROOT}/application")
+set(CONFIG_LOADING_DIR    "${CORE_SOURCE_ROOT}/config_loading")
 set(CONFIG_VALIDATOR_DIR  "${CORE_SOURCE_ROOT}/config_validator")
 set(CONVERSION_DIR        "${CORE_SOURCE_ROOT}/billing/conversion")
+set(COMMON_DIR           "${CORE_SOURCE_ROOT}/common")
 set(SERIALIZATION_DIR     "${CORE_SOURCE_ROOT}/serialization")
 set(REPORTS_DIR           "${CORE_SOURCE_ROOT}/reports")
 set(ABI_DIR               "${CORE_SOURCE_ROOT}/abi")
 set(MODULES_DIR           "${CORE_SOURCE_ROOT}/modules")
+set(RECORD_TEMPLATE_DIR   "${CORE_SOURCE_ROOT}/record_template")
 
 set(CONFIG_VALIDATOR_SOURCES
     "${CONFIG_VALIDATOR_DIR}/pipeline/validator_config_validator.cpp"
     "${CONFIG_VALIDATOR_DIR}/pipeline/modifier_config_validator.cpp"
+)
+
+set(APPLICATION_SOURCES
+    "${APPLICATION_DIR}/use_cases/workflow_use_case.cpp"
+)
+
+set(COMMON_SOURCES
+    "${COMMON_DIR}/iso_period.cpp"
+    "${COMMON_DIR}/text_normalizer.cpp"
+)
+
+set(CONFIG_LOADING_SOURCES
+    "${CONFIG_LOADING_DIR}/runtime_config_loader.cpp"
 )
 
 set(CONVERSION_SOURCES
@@ -24,40 +40,29 @@ set(CONVERSION_SOURCES
 
 set(SERIALIZATION_SOURCES
     "${SERIALIZATION_DIR}/bills_json_serializer.cpp"
+    "${CORE_SOURCE_ROOT}/adapters/serialization/json_bill_serializer.cpp"
 )
 
 set(REPORTS_SOURCES
     "${REPORTS_DIR}/core/report_export_service.cpp"
     "${REPORTS_DIR}/core/report_exporter.cpp"
+    "${REPORTS_DIR}/core/standard_report_renderer_registry.cpp"
     "${REPORTS_DIR}/core/standard_json_latex_renderer.cpp"
     "${REPORTS_DIR}/core/standard_json_markdown_renderer.cpp"
+    "${REPORTS_DIR}/core/standard_json_rst_renderer.cpp"
+    "${REPORTS_DIR}/core/standard_json_typst_renderer.cpp"
     "${REPORTS_DIR}/standard_json/standard_report_assembler.cpp"
     "${REPORTS_DIR}/standard_json/standard_report_json_serializer.cpp"
-    "${REPORTS_DIR}/formatters/month/base_month_report_formatter.cpp"
-    "${REPORTS_DIR}/formatters/year/base_yearly_report_formatter.cpp"
     "${REPORTS_DIR}/monthly_report/report_sorter.cpp"
 )
 
-if(ENABLE_FMT_MD)
-    list(APPEND REPORTS_SOURCES
-        "${REPORTS_DIR}/formatters/month/md/month_md_format.cpp"
-        "${REPORTS_DIR}/formatters/year/md/year_md_format.cpp"
-    )
-endif()
-
-if(ENABLE_FMT_RST)
-    list(APPEND REPORTS_SOURCES
-        "${REPORTS_DIR}/formatters/month/rst/month_rst_format.cpp"
-        "${REPORTS_DIR}/formatters/year/rst/year_rst_format.cpp"
-    )
-endif()
-
-if(ENABLE_FMT_TEX)
-    list(APPEND REPORTS_SOURCES
-        "${REPORTS_DIR}/formatters/month/tex/month_tex_format.cpp"
-        "${REPORTS_DIR}/formatters/year/tex/year_tex_format.cpp"
-    )
-endif()
+set(RECORD_TEMPLATE_SOURCES
+    "${RECORD_TEMPLATE_DIR}/file_support.cpp"
+    "${RECORD_TEMPLATE_DIR}/ordered_template_layout_loader.cpp"
+    "${RECORD_TEMPLATE_DIR}/period_support.cpp"
+    "${RECORD_TEMPLATE_DIR}/record_template_service.cpp"
+    "${RECORD_TEMPLATE_DIR}/template_render_support.cpp"
+)
 
 set(ABI_SOURCES
     "${ABI_DIR}/bills_core_abi.cpp"
@@ -66,13 +71,18 @@ set(ABI_SOURCES
     "${ABI_DIR}/internal/handlers/convert_handler.cpp"
     "${ABI_DIR}/internal/handlers/ingest_import_handler.cpp"
     "${ABI_DIR}/internal/handlers/query_handler.cpp"
+    "${ABI_DIR}/internal/handlers/record_template_handler.cpp"
 )
 
 set(CORE_SOURCES
+    ${COMMON_SOURCES}
+    ${APPLICATION_SOURCES}
+    ${CONFIG_LOADING_SOURCES}
     ${CONFIG_VALIDATOR_SOURCES}
     ${CONVERSION_SOURCES}
     ${SERIALIZATION_SOURCES}
     ${REPORTS_SOURCES}
+    ${RECORD_TEMPLATE_SOURCES}
     ${ABI_SOURCES}
 )
 
@@ -80,6 +90,7 @@ set(CORE_MODULE_INTERFACE_FILES
     "${MODULES_DIR}/core_build_info.cppm"
     "${MODULES_DIR}/common_result.cppm"
     "${MODULES_DIR}/common_process_stats.cppm"
+    "${MODULES_DIR}/common_text_normalizer.cppm"
     "${MODULES_DIR}/common_version.cppm"
     "${MODULES_DIR}/domain_bill_record.cppm"
     "${MODULES_DIR}/config_validator_validator_types.cppm"
@@ -95,9 +106,8 @@ set(CORE_MODULE_INTERFACE_FILES
     "${MODULES_DIR}/ports_bills_repository.cppm"
     "${MODULES_DIR}/ports_bills_serializer.cppm"
     "${MODULES_DIR}/ports_output_path_builder.cppm"
-    "${MODULES_DIR}/ports_month_report_formatter_provider.cppm"
-    "${MODULES_DIR}/ports_yearly_report_formatter_provider.cppm"
     "${MODULES_DIR}/ports_report_data_gateway.cppm"
+    "${MODULES_DIR}/reports_standard_report_renderer_registry.cppm"
     "${MODULES_DIR}/reports_standard_report_assembler.cppm"
     "${MODULES_DIR}/reports_standard_report_json_serializer.cppm"
     "${MODULES_DIR}/reports_report_exporter.cppm"

@@ -25,7 +25,7 @@ def run_bills_workflow(
     assert_no_legacy_flags(forwarded, source="verify bills")
     effective_forwarded = list(forwarded)
     if "--formats" not in effective_forwarded:
-        effective_forwarded = [*effective_forwarded, "--formats", "md,json,tex,rst"]
+        effective_forwarded = [*effective_forwarded, "--formats", "md,json,tex,rst,typ"]
     output_project = detect_output_project(forwarded)
     flow_entry = repo_root / "tools" / "flows" / "bills_tracer_flow.py"
     latest_root = resolve_artifact_latest_dir(repo_root, output_project)
@@ -70,12 +70,12 @@ def run_bills_parallel_smoke(
     )
     parser.add_argument(
         "--formats",
-        default="md,json,tex,rst",
+        default="md,json,tex,rst,typ",
     )
     parser.add_argument(
         "--compare-scope",
         default="all",
-        choices=["all", "md", "json", "tex", "rst"],
+        choices=["all", "md", "json", "tex", "rst", "typ"],
     )
     parser.add_argument(
         "--dist-scope",
@@ -319,7 +319,7 @@ def run_artifact_tests(
             "--json-project",
             "bills_gate_json_first",
             "--formats",
-            "md,json,tex,rst",
+            "md,json,tex,rst,typ",
             "--compare-scope",
             "all",
             "--dist-scope",

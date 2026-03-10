@@ -1,0 +1,5 @@
+package_id = "sqlite_amalgamation"
+display_name = "SQLite Amalgamation"
+homepage = "https://www.sqlite.org/copyright.html"
+license_spdx = "LicenseRef-SQLiteBlessing"
+license_text_relpath = "third_party/texts/sqlite-blessing/LICENSE.txt"

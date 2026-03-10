@@ -12,46 +12,45 @@
 #include "common/common_utils.hpp"
 
 namespace terminal = common::terminal;
-#include "standard_json_latex_renderer.hpp"
-#include "standard_json_markdown_renderer.hpp"
+#include "standard_report_renderer_registry.hpp"
 #if BILLS_CORE_MODULES_ENABLED
 import bill.core.common.process_stats;
-import bill.core.ports.month_report_formatter_provider;
 import bill.core.ports.report_data_gateway;
-import bill.core.ports.yearly_report_formatter_provider;
 import bill.core.reports.report_exporter;
+import bill.core.reports.standard_report_renderer_registry;
 import bill.core.reports.standard_report_assembler;
-import bill.core.reports.standard_report_json_serializer;
 using bills::core::modules::common_process_stats::ProcessStats;
-using bills::core::modules::ports::MonthReportFormatterProvider;
 using bills::core::modules::ports::ReportDataGateway;
-using bills::core::modules::ports::YearlyReportFormatterProvider;
 using bills::core::modules::reports::ReportExporter;
+using bills::core::modules::reports::StandardReportRendererRegistry;
 using bills::core::modules::reports::StandardReportAssembler;
 using bills::core::modules::reports::MonthlyReportData;
-using bills::core::modules::reports::StandardReport;
-using bills::core::modules::reports::StandardReportJsonSerializer;
 using bills::core::modules::reports::YearlyReportData;
 #else
 #include "common/process_stats.hpp"
-#include "ports/month_report_formatter_provider.hpp"
 #include "ports/report_data_gateway.hpp"
-#include "ports/yearly_report_formatter_provider.hpp"
 #include "report_exporter.hpp"
 #include "reports/standard_json/standard_report_assembler.hpp"
-#include "reports/standard_json/standard_report_json_serializer.hpp"
 #endif
 
 namespace {
 constexpr std::size_t kYearLength = 4U;
+constexpr int kMinSupportedYear = 1900;
+constexpr int kMaxSupportedYear = 9999;
+const std::regex kIsoYearRegex(R"(^\d{4}$)");
 const std::regex kIsoMonthRegex(R"(^(\d{4})-(0[1-9]|1[0-2])$)");
 
-enum class StandardRenderMode {
-  kNone,
-  kJson,
-  kMarkdown,
-  kLatex,
-};
+auto parse_iso_year(const std::string& value, int& year) -> bool {
+  if (!std::regex_match(value, kIsoYearRegex)) {
+    return false;
+  }
+  try {
+    year = std::stoi(value);
+  } catch (...) {
+    return false;
+  }
+  return year >= kMinSupportedYear && year <= kMaxSupportedYear;
+}
 
 auto parse_iso_month(const std::string& value, int& year, int& month) -> bool {
   std::smatch match;
@@ -64,66 +63,10 @@ auto parse_iso_month(const std::string& value, int& year, int& month) -> bool {
   } catch (...) {
     return false;
   }
-  return true;
+  return year >= kMinSupportedYear && year <= kMaxSupportedYear;
 }
 
 auto month_key(int year, int month) -> int { return year * 100 + month; }
-
-auto is_markdown_format(std::string format_name) -> bool {
-  std::ranges::transform(format_name, format_name.begin(),
-                         [](unsigned char ch) -> char {
-                           return static_cast<char>(std::tolower(ch));
-                         });
-  return format_name == "md" || format_name == "markdown";
-}
-
-auto is_json_format(std::string format_name) -> bool {
-  std::ranges::transform(format_name, format_name.begin(),
-                         [](unsigned char ch) -> char {
-                           return static_cast<char>(std::tolower(ch));
-                         });
-  return format_name == "json";
-}
-
-auto is_latex_format(std::string format_name) -> bool {
-  std::ranges::transform(format_name, format_name.begin(),
-                         [](unsigned char ch) -> char {
-                           return static_cast<char>(std::tolower(ch));
-                         });
-  return format_name == "tex" || format_name == "latex";
-}
-
-auto select_standard_render_mode(const std::string& pipeline,
-                                 const std::string& format_name)
-    -> StandardRenderMode {
-  (void)pipeline;
-  if (is_json_format(format_name)) {
-    return StandardRenderMode::kJson;
-  }
-  if (is_markdown_format(format_name)) {
-    return StandardRenderMode::kMarkdown;
-  }
-  if (is_latex_format(format_name)) {
-    return StandardRenderMode::kLatex;
-  }
-  return StandardRenderMode::kNone;
-}
-
-auto render_standard_report(const StandardReport& standard_report,
-                            const std::string& standard_report_json,
-                            const StandardRenderMode mode) -> std::string {
-  switch (mode) {
-    case StandardRenderMode::kJson:
-      return standard_report_json;
-    case StandardRenderMode::kMarkdown:
-      return StandardJsonMarkdownRenderer::render(standard_report);
-    case StandardRenderMode::kLatex:
-      return StandardJsonLatexRenderer::render(standard_report);
-    case StandardRenderMode::kNone:
-    default:
-      return {};
-  }
-}
 
 auto normalize_export_pipeline(std::string pipeline_name) -> std::string {
   std::ranges::transform(pipeline_name, pipeline_name.begin(),
@@ -148,24 +91,13 @@ auto normalize_export_pipeline(std::string pipeline_name) -> std::string {
 }
 }  // namespace
 
-// Constructor with fully injected adapters/providers
 ReportExportService::ReportExportService(
     std::unique_ptr<ReportDataGateway> report_data_gateway,
-    std::unique_ptr<MonthReportFormatterProvider> month_formatter_provider,
-    std::unique_ptr<YearlyReportFormatterProvider> year_formatter_provider,
     const std::string& export_base_dir,
     const std::map<std::string, std::string>& format_folder_names)
-    : m_report_data_gateway(std::move(report_data_gateway)),
-      m_month_formatter_provider(std::move(month_formatter_provider)),
-      m_year_formatter_provider(std::move(year_formatter_provider)) {
+    : m_report_data_gateway(std::move(report_data_gateway)) {
   if (m_report_data_gateway == nullptr) {
     throw std::invalid_argument("Report data gateway must not be null.");
-  }
-  if (m_month_formatter_provider == nullptr) {
-    throw std::invalid_argument("Month formatter provider must not be null.");
-  }
-  if (m_year_formatter_provider == nullptr) {
-    throw std::invalid_argument("Year formatter provider must not be null.");
   }
 
   m_report_exporter =
@@ -174,6 +106,10 @@ ReportExportService::ReportExportService(
 
 ReportExportService::~ReportExportService() = default;
 
+auto ReportExportService::ListAvailableFormats() -> std::vector<std::string> {
+  return StandardReportRendererRegistry::ListAvailableFormats();
+}
+
 auto ReportExportService::export_yearly_report(const std::string& year_str,
                                                const std::string& format_name,
                                                bool suppress_output,
@@ -181,35 +117,29 @@ auto ReportExportService::export_yearly_report(const std::string& year_str,
     -> bool {
   try {
     const std::string pipeline = normalize_export_pipeline(export_pipeline);
-    const StandardRenderMode standard_render_mode =
-        select_standard_render_mode(pipeline, format_name);
-    int year = std::stoi(year_str);
-    YearlyReportData yearly_data = m_report_data_gateway->ReadYearlyData(year);
+    (void)pipeline;
+    const std::string normalized_format =
+        StandardReportRendererRegistry::NormalizeFormat(format_name);
+    int year = 0;
+    if (!parse_iso_year(year_str, year)) {
+      throw std::invalid_argument("Invalid year format. Use YYYY.");
+    }
+    YearlyReportData yearly_data = m_report_data_gateway->ReadYearlyData(year_str);
     const auto standard_report =
         StandardReportAssembler::FromYearly(yearly_data);
-    const std::string standard_report_json =
-        StandardReportJsonSerializer::ToString(standard_report);
-    m_report_exporter->export_yearly_standard_json(standard_report_json, year_str);
-
-    std::string report;
-    if (standard_render_mode != StandardRenderMode::kNone) {
-      report = render_standard_report(standard_report, standard_report_json,
-                                      standard_render_mode);
-    } else {
-      auto formatter = m_year_formatter_provider->CreateFormatter(format_name);
-      if (!formatter) {
-        throw std::runtime_error(
-            "Yearly formatter for '" + format_name +
-            "' is not available in the current build.");
-      }
-      report = formatter->format_report(yearly_data);
+    if (StandardReportRendererRegistry::IsFormatAvailable("json")) {
+      m_report_exporter->export_yearly_standard_json(
+          StandardReportRendererRegistry::Render(standard_report, "json"),
+          year_str);
     }
+    const std::string report =
+        StandardReportRendererRegistry::Render(standard_report, normalized_format);
 
     if (!suppress_output) {
       std::cout << report;
     }
 
-    m_report_exporter->export_yearly(report, year_str, format_name);
+    m_report_exporter->export_yearly(report, year_str, normalized_format);
     return true;
   } catch (const std::exception& e) {
     if (!suppress_output) {
@@ -227,41 +157,30 @@ auto ReportExportService::export_monthly_report(const std::string& month_str,
     -> bool {
   try {
     const std::string pipeline = normalize_export_pipeline(export_pipeline);
-    const StandardRenderMode standard_render_mode =
-        select_standard_render_mode(pipeline, format_name);
+    (void)pipeline;
+    const std::string normalized_format =
+        StandardReportRendererRegistry::NormalizeFormat(format_name);
     int year = 0;
     int month = 0;
     if (!parse_iso_month(month_str, year, month)) {
-      throw std::invalid_argument("Invalid month format.");
+      throw std::invalid_argument("Invalid month format. Use YYYY-MM.");
     }
-    MonthlyReportData monthly_data =
-        m_report_data_gateway->ReadMonthlyData(year, month);
+    MonthlyReportData monthly_data = m_report_data_gateway->ReadMonthlyData(month_str);
     const auto standard_report =
         StandardReportAssembler::FromMonthly(monthly_data);
-    const std::string standard_report_json =
-        StandardReportJsonSerializer::ToString(standard_report);
-    m_report_exporter->export_monthly_standard_json(standard_report_json,
-                                                    month_str);
-
-    std::string report;
-    if (standard_render_mode != StandardRenderMode::kNone) {
-      report = render_standard_report(standard_report, standard_report_json,
-                                      standard_render_mode);
-    } else {
-      auto formatter = m_month_formatter_provider->CreateFormatter(format_name);
-      if (!formatter) {
-        throw std::runtime_error(
-            "Monthly formatter for '" + format_name +
-            "' is not available in the current build.");
-      }
-      report = formatter->format_report(monthly_data);
+    if (StandardReportRendererRegistry::IsFormatAvailable("json")) {
+      m_report_exporter->export_monthly_standard_json(
+          StandardReportRendererRegistry::Render(standard_report, "json"),
+          month_str);
     }
+    const std::string report =
+        StandardReportRendererRegistry::Render(standard_report, normalized_format);
 
     if (!suppress_output) {
       std::cout << report;
     }
 
-    m_report_exporter->export_monthly(report, month_str, format_name);
+    m_report_exporter->export_monthly(report, month_str, normalized_format);
     return true;
   } catch (const std::exception& e) {
     if (!suppress_output) {
@@ -277,7 +196,10 @@ auto ReportExportService::export_by_date(const std::string& date_str,
                                          const std::string& export_pipeline)
     -> bool {
   if (date_str.length() == kYearLength) {
-    return export_yearly_report(date_str, format_name, false, export_pipeline);
+    int parsed_year = 0;
+    if (parse_iso_year(date_str, parsed_year)) {
+      return export_yearly_report(date_str, format_name, false, export_pipeline);
+    }
   }
   int parsed_year = 0;
   int parsed_month = 0;

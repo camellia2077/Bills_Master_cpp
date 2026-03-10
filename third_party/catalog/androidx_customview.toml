@@ -1,0 +1,5 @@
+package_id = "androidx_customview"
+display_name = "AndroidX CustomView"
+homepage = "https://developer.android.com/jetpack/androidx/releases/customview"
+license_spdx = "Apache-2.0"
+license_text_relpath = "third_party/texts/apache-2.0/LICENSE.txt"

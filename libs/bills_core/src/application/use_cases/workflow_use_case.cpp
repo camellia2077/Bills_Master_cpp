@@ -39,6 +39,28 @@ const std::string kConversionLabel = "Conversion";
 const std::string kIngestLabel = "Ingest";
 const std::string kImportLabel = "Database Import";
 const std::string kWorkflowLabel = "Full Workflow";
+
+auto normalize_failure_message(const std::string& message,
+                               const std::string& fallback) -> std::string {
+  return message.empty() ? fallback : message;
+}
+
+void record_failure(ProcessStats& stats, const fs::path& path,
+                    std::string stage, std::string message) {
+  stats.failure++;
+  stats.add_failure(path.string(), std::move(stage), std::move(message));
+}
+
+void record_pipeline_failure(ProcessStats& stats, const fs::path& path,
+                             const BillProcessingPipeline& pipeline,
+                             const std::string& fallback_stage,
+                             const std::string& fallback_message) {
+  record_failure(
+      stats, path,
+      normalize_failure_message(pipeline.last_failure_stage(), fallback_stage),
+      normalize_failure_message(pipeline.last_failure_message(),
+                                fallback_message));
+}
 }  // namespace
 
 WorkflowUseCase::WorkflowUseCase(BillConfig validator_config,
@@ -69,10 +91,12 @@ auto WorkflowUseCase::Validate(const std::string& path)
                                                       file.string())) {
           stats.success++;
         } else {
-          stats.failure++;
+          record_pipeline_failure(stats, file, bill_processing_pipeline,
+                                  "validate_content",
+                                  "Bill validation failed.");
         }
-      } catch (const std::exception&) {
-        stats.failure++;
+      } catch (const std::exception& ex) {
+        record_failure(stats, file, "read_input", ex.what());
       }
     }
   } catch (const std::exception& e) {
@@ -91,17 +115,27 @@ auto WorkflowUseCase::Convert(const std::string& path) -> Result<ProcessStats> {
         std::string_view{path}, std::string_view{kTextExtension});
     for (const auto& file : files) {
       fs::path final_output_path = output_path_builder_.build_output_path(file);
+      std::string bill_content;
       try {
-        std::string bill_content = content_reader_.Read(file.string());
-        ParsedBill bill_data{};
-        if (!bill_processing_pipeline.convert_content(bill_content, bill_data)) {
-          stats.failure++;
-          continue;
-        }
+        bill_content = content_reader_.Read(file.string());
+      } catch (const std::exception& ex) {
+        record_failure(stats, file, "read_input", ex.what());
+        continue;
+      }
+
+      ParsedBill bill_data{};
+      if (!bill_processing_pipeline.convert_content(bill_content, bill_data)) {
+        record_pipeline_failure(stats, file, bill_processing_pipeline,
+                                "convert_content",
+                                "Bill conversion failed.");
+        continue;
+      }
+
+      try {
         serializer_.WriteJson(bill_data, final_output_path.string());
         stats.success++;
-      } catch (const std::exception&) {
-        stats.failure++;
+      } catch (const std::exception& ex) {
+        record_failure(stats, file, "write_json", ex.what());
       }
     }
   } catch (const std::exception& e) {
@@ -131,11 +165,13 @@ auto WorkflowUseCase::Ingest(const std::string& path,
         std::string bill_content = content_reader_.Read(file.string());
         if (!bill_processing_pipeline.validate_and_convert_content(
                 bill_content, file.string(), bill_data)) {
-          stats.failure++;
+          record_pipeline_failure(stats, file, bill_processing_pipeline,
+                                  "validate_and_convert",
+                                  "Bill ingest validation failed.");
           continue;
         }
-      } catch (const std::exception&) {
-        stats.failure++;
+      } catch (const std::exception& ex) {
+        record_failure(stats, file, "read_input", ex.what());
         continue;
       }
 
@@ -143,8 +179,8 @@ auto WorkflowUseCase::Ingest(const std::string& path,
         fs::path output_path = output_path_builder_.build_output_path(file);
         try {
           serializer_.WriteJson(bill_data, output_path.string());
-        } catch (const std::exception&) {
-          stats.failure++;
+        } catch (const std::exception& ex) {
+          record_failure(stats, file, "write_json", ex.what());
           continue;
         }
       }
@@ -152,8 +188,8 @@ auto WorkflowUseCase::Ingest(const std::string& path,
       try {
         repository.InsertBill(bill_data);
         stats.success++;
-      } catch (const std::exception&) {
-        stats.failure++;
+      } catch (const std::exception& ex) {
+        record_failure(stats, file, "insert_repository", ex.what());
       }
     }
   } catch (const std::exception& e) {
@@ -175,8 +211,8 @@ auto WorkflowUseCase::Import(const std::string& path,
         ParsedBill import_bill = serializer_.ReadJson(file.string());
         repository.InsertBill(import_bill);
         stats.success++;
-      } catch (const std::exception&) {
-        stats.failure++;
+      } catch (const std::exception& ex) {
+        record_failure(stats, file, "import_json", ex.what());
       }
     }
   } catch (const std::exception& e) {
@@ -204,14 +240,16 @@ auto WorkflowUseCase::FullWorkflow(const std::string& path,
       std::string bill_content;
       try {
         bill_content = content_reader_.Read(file_path.string());
-      } catch (const std::exception&) {
-        stats.failure++;
+      } catch (const std::exception& ex) {
+        record_failure(stats, file_path, "read_input", ex.what());
         continue;
       }
 
       if (!bill_processing_pipeline.validate_content(bill_content,
                                                      file_path.string())) {
-        stats.failure++;
+        record_pipeline_failure(stats, file_path, bill_processing_pipeline,
+                                "validate_content",
+                                "Bill validation failed.");
         continue;
       }
 
@@ -220,13 +258,15 @@ auto WorkflowUseCase::FullWorkflow(const std::string& path,
 
       ParsedBill bill_data{};
       if (!bill_processing_pipeline.convert_content(bill_content, bill_data)) {
-        stats.failure++;
+        record_pipeline_failure(stats, file_path, bill_processing_pipeline,
+                                "convert_content",
+                                "Bill conversion failed.");
         continue;
       }
       try {
         serializer_.WriteJson(bill_data, modified_path.string());
-      } catch (const std::exception&) {
-        stats.failure++;
+      } catch (const std::exception& ex) {
+        record_failure(stats, file_path, "write_json", ex.what());
         continue;
       }
 
@@ -234,8 +274,8 @@ auto WorkflowUseCase::FullWorkflow(const std::string& path,
         ParsedBill import_bill = serializer_.ReadJson(modified_path.string());
         repository.InsertBill(import_bill);
         stats.success++;
-      } catch (const std::exception&) {
-        stats.failure++;
+      } catch (const std::exception& ex) {
+        record_failure(stats, file_path, "import_json", ex.what());
       }
     }
   } catch (const std::exception& e) {
@@ -244,5 +284,3 @@ auto WorkflowUseCase::FullWorkflow(const std::string& path,
   stats.print_summary(kWorkflowLabel);
   return stats;
 }
-
-

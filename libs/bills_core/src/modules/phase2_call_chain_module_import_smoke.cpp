@@ -3,6 +3,7 @@ import bill.core.abi;
 import bill.core.application.workflow_use_case;
 import bill.core.reports.standard_report_assembler;
 import bill.core.reports.standard_report_json_serializer;
+import bill.core.reports.standard_report_renderer_registry;
 
 namespace {
 namespace abi = bills::core::modules::abi;
@@ -11,6 +12,7 @@ using bills::core::modules::application::WorkflowUseCase;
 using bills::core::modules::reports::MonthlyReportData;
 using bills::core::modules::reports::StandardReportAssembler;
 using bills::core::modules::reports::StandardReportJsonSerializer;
+using bills::core::modules::reports::StandardReportRendererRegistry;
 using bills::core::modules::reports::YearlyReportData;
 
 [[maybe_unused]] auto kWorkflowValidate = &WorkflowUseCase::Validate;
@@ -20,6 +22,11 @@ using bills::core::modules::reports::YearlyReportData;
 [[maybe_unused]] auto kAssemblerFromYearly = &StandardReportAssembler::FromYearly;
 [[maybe_unused]] auto kReportToJson = &StandardReportJsonSerializer::ToJson;
 [[maybe_unused]] auto kReportToString = &StandardReportJsonSerializer::ToString;
+[[maybe_unused]] auto kListFormats = &StandardReportRendererRegistry::ListAvailableFormats;
+[[maybe_unused]] auto kNormalizeFormat = &StandardReportRendererRegistry::NormalizeFormat;
+[[maybe_unused]] auto kIsFormatAvailable =
+    &StandardReportRendererRegistry::IsFormatAvailable;
+[[maybe_unused]] auto kRenderReport = &StandardReportRendererRegistry::Render;
 
 [[maybe_unused]] auto kHandleValidate = &abi::handle_validate_command;
 [[maybe_unused]] auto kHandleQuery = &abi::handle_query_command;

@@ -1,0 +1,5 @@
+package_id = "androidx_vectordrawable"
+display_name = "AndroidX VectorDrawable"
+homepage = "https://developer.android.com/jetpack/androidx/releases/vectordrawable"
+license_spdx = "Apache-2.0"
+license_text_relpath = "third_party/texts/apache-2.0/LICENSE.txt"

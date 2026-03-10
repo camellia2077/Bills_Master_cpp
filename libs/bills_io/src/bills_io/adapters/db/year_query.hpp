@@ -4,6 +4,8 @@
 
 #include <sqlite3.h>
 
+#include <string_view>
+
 #include "ports/contracts/reports/yearly/yearly_report_data.hpp"
 
 class YearQuery {
@@ -11,11 +13,10 @@ class YearQuery {
   explicit YearQuery(sqlite3* db_connection);
 
   // Reads yearly data and returns it in a dedicated structure.
-  YearlyReportData read_yearly_data(int year);
+  YearlyReportData read_yearly_data(std::string_view iso_year);
 
  private:
   sqlite3* m_db;
 };
 
 #endif  // BILLS_IO_ADAPTERS_DB_YEAR_QUERY_H_
-

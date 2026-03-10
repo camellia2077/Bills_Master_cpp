@@ -37,6 +37,9 @@ auto ReportExporter::get_display_format_name(const std::string& short_name)
   if (short_name == "rst") {
     return "reST";
   }
+  if (short_name == "typ") {
+    return "Typst";
+  }
   return short_name;
 }
 

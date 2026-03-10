@@ -8,6 +8,7 @@
 
 #include "bills_io/io_factory.hpp"
 #include "common/common_utils.hpp"  // 确保包含颜色定义
+#include "reports/core/report_export_service.hpp"
 
 namespace terminal = common::terminal;
 
@@ -30,12 +31,8 @@ auto ExportController::handle_export(const std::string& type,
     auto db_session = bills::io::CreateReportDbSession(m_db_path);
     auto report_data_gateway =
         bills::io::CreateReportDataGateway(db_session->GetConnectionHandle());
-    auto month_formatter_provider = bills::io::CreateMonthReportFormatterProvider();
-    auto year_formatter_provider = bills::io::CreateYearlyReportFormatterProvider();
     ReportExportService report_export_service(
-        std::move(report_data_gateway), std::move(month_formatter_provider),
-        std::move(year_formatter_provider), m_export_base_dir,
-        m_format_folder_names);
+        std::move(report_data_gateway), m_export_base_dir, m_format_folder_names);
 
     if (type == "all") {
       success =
@@ -63,16 +60,16 @@ auto ExportController::handle_export(const std::string& type,
             "(YYYY-MM YYYY-MM) date values.");
       }
     } else if (type == "year") {
-      if (values.empty() || values[0].empty()) {
+      if (values.size() != 1U || values[0].empty()) {
         throw std::runtime_error(
-            "A year must be provided to export a yearly report.");
+            "Year queries accept exactly one YYYY value.");
       }
       success = report_export_service.export_yearly_report(
           values[0], format_str, false, export_pipeline);
     } else if (type == "month") {
-      if (values.empty() || values[0].empty()) {
+      if (values.size() != 1U || values[0].empty()) {
         throw std::runtime_error(
-            "A month (YYYY-MM) must be provided to export a monthly report.");
+            "Month queries accept exactly one YYYY-MM value.");
       }
       success = report_export_service.export_monthly_report(
           values[0], format_str, false, export_pipeline);

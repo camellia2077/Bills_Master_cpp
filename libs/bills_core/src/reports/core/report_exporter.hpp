@@ -11,7 +11,7 @@ namespace fs = std::filesystem;
 class ReportExporter {
  public:
   explicit ReportExporter(
-      const std::string& export_base_dir = "exported_files",
+      const std::string& export_base_dir = "exports",
       const std::map<std::string, std::string>& format_folder_names = {});
 
   void export_yearly(const std::string& report_content,

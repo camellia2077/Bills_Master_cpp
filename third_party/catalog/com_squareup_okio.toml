@@ -1,0 +1,5 @@
+package_id = "com_squareup_okio"
+display_name = "Okio"
+homepage = "https://github.com/square/okio"
+license_spdx = "Apache-2.0"
+license_text_relpath = "third_party/texts/apache-2.0/LICENSE.txt"

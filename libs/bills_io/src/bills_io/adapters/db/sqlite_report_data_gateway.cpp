@@ -1,8 +1,6 @@
 // bills_io/adapters/db/sqlite_report_data_gateway.cpp
 #include "bills_io/adapters/db/sqlite_report_data_gateway.hpp"
 
-#include <iomanip>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -10,8 +8,7 @@
 #include "bills_io/adapters/db/year_query.hpp"
 
 namespace {
-constexpr int kYearColumn = 0;
-constexpr int kMonthColumn = 1;
+constexpr int kBillDateColumn = 0;
 }  // namespace
 
 SqliteReportDataGateway::SqliteReportDataGateway(sqlite3* db_connection)
@@ -21,21 +18,21 @@ SqliteReportDataGateway::SqliteReportDataGateway(sqlite3* db_connection)
   }
 }
 
-auto SqliteReportDataGateway::ReadMonthlyData(int year, int month)
+auto SqliteReportDataGateway::ReadMonthlyData(std::string_view iso_month)
     -> MonthlyReportData {
   MonthQuery month_query(db_connection_);
-  return month_query.read_monthly_data(year, month);
+  return month_query.read_monthly_data(iso_month);
 }
 
-auto SqliteReportDataGateway::ReadYearlyData(int year) -> YearlyReportData {
+auto SqliteReportDataGateway::ReadYearlyData(std::string_view iso_year)
+    -> YearlyReportData {
   YearQuery year_query(db_connection_);
-  return year_query.read_yearly_data(year);
+  return year_query.read_yearly_data(iso_year);
 }
 
 auto SqliteReportDataGateway::ListAvailableMonths() -> std::vector<std::string> {
   std::vector<std::string> months;
-  const char* sql =
-      "SELECT DISTINCT year, month FROM bills ORDER BY year, month;";
+  const char* sql = "SELECT DISTINCT bill_date FROM bills ORDER BY bill_date;";
   sqlite3_stmt* stmt = nullptr;
 
   if (sqlite3_prepare_v2(db_connection_, sql, -1, &stmt, nullptr) !=
@@ -45,12 +42,11 @@ auto SqliteReportDataGateway::ListAvailableMonths() -> std::vector<std::string> 
   }
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
-    int year = sqlite3_column_int(stmt, kYearColumn);
-    int month = sqlite3_column_int(stmt, kMonthColumn);
-
-    std::stringstream month_stream;
-    month_stream << year << "-" << std::setfill('0') << std::setw(2) << month;
-    months.push_back(month_stream.str());
+    const auto* month_text =
+        reinterpret_cast<const char*>(sqlite3_column_text(stmt, kBillDateColumn));
+    if (month_text != nullptr) {
+      months.emplace_back(month_text);
+    }
   }
 
   sqlite3_finalize(stmt);

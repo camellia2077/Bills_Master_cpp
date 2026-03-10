@@ -43,6 +43,8 @@ inline constexpr const char* kParamInvalidConfig =
     ::bills::core::abi::error_code::kParamInvalidConfig;
 inline constexpr const char* kParamInvalidInputPath =
     ::bills::core::abi::error_code::kParamInvalidInputPath;
+inline constexpr const char* kParamInvalidOutputPath =
+    ::bills::core::abi::error_code::kParamInvalidOutputPath;
 inline constexpr const char* kBusinessNoInputFiles =
     ::bills::core::abi::error_code::kBusinessNoInputFiles;
 inline constexpr const char* kBusinessValidationFailed =
@@ -66,6 +68,7 @@ using ::bills::core::abi::make_response;
 using ::bills::core::abi::build_capabilities;
 using ::bills::core::abi::make_capabilities_json;
 using ::bills::core::abi::read_text_file;
+using ::bills::core::abi::format_pipeline_failure;
 using ::bills::core::abi::list_txt_files;
 using ::bills::core::abi::list_json_files;
 using ::bills::core::abi::build_convert_output_path;
@@ -75,4 +78,8 @@ using ::bills::core::abi::handle_convert_command;
 using ::bills::core::abi::handle_ingest_command;
 using ::bills::core::abi::handle_import_command;
 using ::bills::core::abi::handle_query_command;
+using ::bills::core::abi::handle_template_generate_command;
+using ::bills::core::abi::handle_record_preview_command;
+using ::bills::core::abi::handle_config_inspect_command;
+using ::bills::core::abi::handle_list_periods_command;
 }  // namespace bills::core::modules::abi

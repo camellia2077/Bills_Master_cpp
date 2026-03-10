@@ -115,6 +115,8 @@ auto handle_ingest_command(const Json& request) -> std::string {
           pipeline.validate_and_convert_content(content, file.string(), bill_data);
       item["ok"] = ingested;
       if (!ingested) {
+        item["error"] = core_abi::format_pipeline_failure(
+            pipeline, "validate_and_convert", "Ingest failed.");
         ++failure;
         file_results.push_back(std::move(item));
         continue;

@@ -86,6 +86,8 @@ auto handle_validate_command(const Json& request) -> std::string {
       if (kOk) {
         ++success;
       } else {
+        item["error"] = core_abi::format_pipeline_failure(
+            pipeline, "validate_content", "Validation failed.");
         ++failure;
       }
     } catch (const std::exception& ex) {

@@ -9,8 +9,7 @@
 #include "bills_io/adapters/db/sqlite_report_data_gateway.hpp"
 #include "bills_io/adapters/io/file_bill_content_reader.hpp"
 #include "bills_io/adapters/io/file_bill_file_enumerator.hpp"
-#include "bills_io/adapters/reports/builtin_month_report_formatter_provider.hpp"
-#include "bills_io/adapters/reports/builtin_yearly_report_formatter_provider.hpp"
+#include "bills_io/adapters/io/year_partition_output_path_builder.hpp"
 #include "adapters/serialization/json_bill_serializer.hpp"
 
 namespace bills::io {
@@ -32,6 +31,12 @@ auto CreateBillRepository(std::string db_path)
   return std::make_unique<SqliteBillRepository>(std::move(db_path));
 }
 
+auto CreateYearPartitionOutputPathBuilder(std::string base_output_dir)
+    -> std::unique_ptr<OutputPathBuilder> {
+  return std::make_unique<YearPartitionOutputPathBuilder>(
+      std::move(base_output_dir));
+}
+
 auto CreateConfigProvider() -> std::unique_ptr<ConfigProvider> {
   return std::make_unique<TomlConfigProvider>();
 }
@@ -44,16 +49,6 @@ auto CreateReportDbSession(std::string db_path)
 auto CreateReportDataGateway(sqlite3* db_connection)
     -> std::unique_ptr<ReportDataGateway> {
   return std::make_unique<SqliteReportDataGateway>(db_connection);
-}
-
-auto CreateMonthReportFormatterProvider()
-    -> std::unique_ptr<MonthReportFormatterProvider> {
-  return std::make_unique<BuiltinMonthReportFormatterProvider>();
-}
-
-auto CreateYearlyReportFormatterProvider()
-    -> std::unique_ptr<YearlyReportFormatterProvider> {
-  return std::make_unique<BuiltinYearlyReportFormatterProvider>();
 }
 
 }  // namespace bills::io

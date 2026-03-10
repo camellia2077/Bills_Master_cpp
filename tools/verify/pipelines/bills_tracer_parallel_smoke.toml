@@ -24,7 +24,7 @@ command = [
   "--run-tag",
   "parallel_model",
   "--formats",
-  "md,json,tex,rst",
+  "md,json,tex,rst,typ",
   "--dist-scope",
   "isolated",
 ]
@@ -49,7 +49,7 @@ command = [
   "--run-tag",
   "parallel_json",
   "--formats",
-  "md,json,tex,rst",
+  "md,json,tex,rst,typ",
   "--dist-scope",
   "isolated",
 ]

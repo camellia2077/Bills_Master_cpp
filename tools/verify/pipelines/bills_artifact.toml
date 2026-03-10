@@ -14,7 +14,7 @@ PYTHONUNBUFFERED = "1"
 [[steps]]
 id = "build_and_test"
 name = "Prepare dist and run bills artifact tests"
-command = ["{python}", "tools/flows/bills_tracer_flow.py", "--formats", "md,json,tex,rst"]
+command = ["{python}", "tools/flows/bills_tracer_flow.py", "--formats", "md,json,tex,rst,typ"]
 cwd = "{repo_root}"
 timeout_seconds = 3600
 retries = 0

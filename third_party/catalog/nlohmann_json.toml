@@ -1,0 +1,5 @@
+package_id = "nlohmann_json"
+display_name = "JSON for Modern C++"
+homepage = "https://github.com/nlohmann/json"
+license_spdx = "MIT"
+license_text_relpath = "third_party/texts/mit/LICENSE.txt"

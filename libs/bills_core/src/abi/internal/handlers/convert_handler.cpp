@@ -97,6 +97,8 @@ auto handle_convert_command(const Json& request) -> std::string {
       const bool converted = pipeline.convert_content(content, bill_data);
       item["ok"] = converted;
       if (!converted) {
+        item["error"] = core_abi::format_pipeline_failure(
+            pipeline, "convert_content", "Conversion failed.");
         ++failure;
         file_results.push_back(std::move(item));
         continue;

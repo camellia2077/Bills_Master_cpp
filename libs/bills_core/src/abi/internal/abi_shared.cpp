@@ -8,17 +8,7 @@
 #include <set>
 #include <sstream>
 
-#include <toml++/toml.hpp>
-
-#if BILLS_CORE_MODULES_ENABLED
-import bill.core.config.modifier;
-import bill.core.config.validator;
-using bills::core::modules::config_validator::ModifierConfigValidator;
-using bills::core::modules::config_validator::ValidatorConfigValidator;
-#else
-#include "config_validator/pipeline/modifier_config_validator.hpp"
-#include "config_validator/pipeline/validator_config_validator.hpp"
-#endif
+#include "config_loading/runtime_config_loader.hpp"
 
 namespace bills::core::abi {
 
@@ -95,41 +85,6 @@ auto ParseValidatorConfig(const Json& validator_json) -> BillConfig {
   return BillConfig(std::move(rules));
 }
 
-auto ParseValidatorConfig(const toml::table& validator_toml) -> BillConfig {
-  BillValidationRules rules;
-  if (const toml::array* categories = validator_toml["categories"].as_array();
-      categories != nullptr) {
-    for (const auto& category_node : *categories) {
-      const toml::table* category = category_node.as_table();
-      if (category == nullptr) {
-        continue;
-      }
-
-      const auto* parent_title = category->get_as<std::string>("parent_item");
-      if (parent_title == nullptr) {
-        continue;
-      }
-
-      const std::string kParentTitleValue = parent_title->get();
-      rules.parent_titles.insert(kParentTitleValue);
-
-      std::set<std::string> sub_titles;
-      if (const toml::array* sub_items =
-              category->get_as<toml::array>("sub_items");
-          sub_items != nullptr) {
-        for (const auto& sub_item : *sub_items) {
-          if (const auto* sub_title = sub_item.as_string()) {
-            sub_titles.insert(sub_title->get());
-          }
-        }
-      }
-
-      rules.validation_map[kParentTitleValue] = std::move(sub_titles);
-    }
-  }
-  return BillConfig(std::move(rules));
-}
-
 // NOLINTNEXTLINE(readability-function-cognitive-complexity) -- JSON config mapping mirrors the external schema directly.
 auto ParseModifierConfig(const Json& modifier_json) -> Config {
   Config config;
@@ -179,92 +134,6 @@ auto ParseModifierConfig(const Json& modifier_json) -> Config {
   return config;
 }
 
-auto ReadDouble(const toml::node* node, double fallback) -> double {
-  if (node == nullptr) {
-    return fallback;
-  }
-  if (const auto* value = node->as_floating_point()) {
-    return value->get();
-  }
-  if (const auto* value = node->as_integer()) {
-    return static_cast<double>(value->get());
-  }
-  return fallback;
-}
-
-// NOLINTNEXTLINE(readability-function-cognitive-complexity) -- TOML config mapping mirrors the external schema directly.
-auto ParseModifierConfig(const toml::table& modifier_toml) -> Config {
-  Config config;
-
-  if (const toml::table* renewal_config =
-          modifier_toml["auto_renewal_rules"].as_table();
-      renewal_config != nullptr) {
-    if (const auto* enabled = renewal_config->get_as<bool>("enabled")) {
-      config.auto_renewal.enabled = enabled->get();
-    }
-
-    if (config.auto_renewal.enabled) {
-      if (const toml::array* rules = renewal_config->get_as<toml::array>("rules");
-          rules != nullptr) {
-        for (const auto& rule_node : *rules) {
-          const toml::table* rule = rule_node.as_table();
-          if (rule == nullptr) {
-            continue;
-          }
-
-          const auto* header_location =
-              rule->get_as<std::string>("header_location");
-          const auto* description = rule->get_as<std::string>("description");
-          config.auto_renewal.rules.push_back(
-              {header_location != nullptr ? header_location->get() : "",
-               ReadDouble(rule->get("amount"), 0.0),
-               description != nullptr ? description->get() : ""});
-        }
-      }
-    }
-  }
-
-  if (const toml::array* metadata_prefixes =
-          modifier_toml["metadata_prefixes"].as_array();
-      metadata_prefixes != nullptr) {
-    for (const auto& prefix_node : *metadata_prefixes) {
-      if (const auto* prefix = prefix_node.as_string()) {
-        config.metadata_prefixes.push_back(prefix->get());
-      }
-    }
-  }
-
-  if (const toml::table* display_name_maps =
-          modifier_toml["display_name_maps"].as_table();
-      display_name_maps != nullptr) {
-    for (const auto& [map_key, map_node] : *display_name_maps) {
-      const toml::table* lang_table = map_node.as_table();
-      if (lang_table == nullptr) {
-        continue;
-      }
-
-      std::map<std::string, std::string> lang_map;
-      for (const auto& [lang_key, lang_node] : *lang_table) {
-        if (const auto* lang_value = lang_node.as_string()) {
-          lang_map[std::string(lang_key.str())] = lang_value->get();
-        }
-      }
-      config.display_name_maps[std::string(map_key.str())] =
-          std::move(lang_map);
-    }
-  }
-
-  return config;
-}
-
-auto ReadTomlFile(const fs::path& file_path) -> toml::table {
-  if (!fs::is_regular_file(file_path)) {
-    throw std::runtime_error("config file does not exist: " +
-                             file_path.string());
-  }
-  return toml::parse_file(file_path.string());
-}
-
 }  // namespace
 
 auto allocate_owned_string(const std::string& text) -> const char* {
@@ -304,6 +173,10 @@ auto build_capabilities() -> Json {
       "ingest",
       "import",
       "query",
+      "template_generate",
+      "record_preview",
+      "config_inspect",
+      "list_periods",
       "capabilities",
       "ping",
       "version",
@@ -321,6 +194,7 @@ auto build_capabilities() -> Json {
            error_code::kParamInvalidRequest,
            error_code::kParamInvalidConfig,
            error_code::kParamInvalidInputPath,
+           error_code::kParamInvalidOutputPath,
        }},
       {"business",
        {
@@ -350,13 +224,32 @@ auto make_capabilities_json() -> std::string {
 }
 
 auto read_text_file(const fs::path& file_path) -> std::string {
-  std::ifstream input(file_path);
+  std::ifstream input(file_path, std::ios::binary);
   if (!input) {
     throw std::runtime_error("Failed to open file: " + file_path.string());
   }
   std::ostringstream buffer;
   buffer << input.rdbuf();
   return buffer.str();
+}
+
+auto format_pipeline_failure(const BillProcessingPipeline& pipeline,
+                             std::string_view fallback_stage,
+                             std::string_view fallback_message)
+    -> std::string {
+  const std::string stage = pipeline.last_failure_stage().empty()
+                                ? std::string(fallback_stage)
+                                : pipeline.last_failure_stage();
+  const std::string message = pipeline.last_failure_message().empty()
+                                  ? std::string(fallback_message)
+                                  : pipeline.last_failure_message();
+  if (stage.empty()) {
+    return message;
+  }
+  if (message.empty()) {
+    return stage;
+  }
+  return stage + ": " + message;
 }
 
 auto list_txt_files(const fs::path& input_path) -> std::vector<fs::path> {
@@ -419,29 +312,13 @@ auto read_and_validate_configs(const Json& params, BillConfig& validator_config,
     modifier_path = fs::path(kModifierConfigPath);
   }
 
-  toml::table validator_toml;
-  toml::table modifier_toml;
-  try {
-    validator_toml = ReadTomlFile(validator_path);
-    modifier_toml = ReadTomlFile(modifier_path);
-  } catch (const std::exception& ex) {
-    return ex.what();
+  const auto runtime_config =
+      RuntimeConfigLoader::LoadFromFiles(validator_path, modifier_path);
+  if (!runtime_config) {
+    return FormatError(runtime_config.error());
   }
-
-  std::string error_message;
-  if (!ValidatorConfigValidator::validate(validator_toml, error_message)) {
-    return "Validator config invalid: " + error_message;
-  }
-  if (!ModifierConfigValidator::validate(modifier_toml, error_message)) {
-    return "Modifier config invalid: " + error_message;
-  }
-
-  try {
-    validator_config = ParseValidatorConfig(validator_toml);
-    modifier_config = ParseModifierConfig(modifier_toml);
-  } catch (const std::exception& ex) {
-    return std::string("Failed to convert configs: ") + ex.what();
-  }
+  validator_config = runtime_config->validator_config;
+  modifier_config = runtime_config->modifier_config;
   return {};
 }
 

@@ -108,7 +108,13 @@ def replace_path(src: Path, dst: Path) -> None:
         shutil.copy2(src, dst)
 
 
-def sync_runtime_workspace(build_bin_dir: Path, workspace_dir: Path) -> None:
+def sync_runtime_workspace(
+    build_bin_dir: Path,
+    workspace_dir: Path,
+    *,
+    config_dir: Path | None = None,
+    notices_dir: Path | None = None,
+) -> None:
     if not build_bin_dir.exists():
         raise FileNotFoundError(f"Dist output directory not found: {build_bin_dir}")
 
@@ -126,8 +132,14 @@ def sync_runtime_workspace(build_bin_dir: Path, workspace_dir: Path) -> None:
         shutil.copy2(entry, workspace_dir / entry.name)
         copied_files.append(entry.name)
 
-    replace_path(build_bin_dir / "config", workspace_dir / "config")
-    print(f"==> Synced runtime artifacts to {workspace_dir} ({len(copied_files)} files + config)")
+    replace_path(config_dir or (build_bin_dir / "config"), workspace_dir / "config")
+    if notices_dir is not None:
+        replace_path(notices_dir, workspace_dir / "notices")
+    print(
+        "==> Synced runtime artifacts to "
+        f"{workspace_dir} ({len(copied_files)} files + config"
+        f"{' + notices' if notices_dir is not None else ''})"
+    )
 
 
 def sync_latest_project_outputs(project_output_root: Path, run_output_dir: Path) -> None:
@@ -142,6 +154,9 @@ def sync_latest_project_outputs(project_output_root: Path, run_output_dir: Path)
             PYTHON_TEST_LOG_FILENAME,
             RUN_MANIFEST_FILENAME,
             "logs",
+            "cache",
+            "exports",
+            "record_templates",
             "txt2josn",
             "exported_files",
         ]:
@@ -165,10 +180,11 @@ def sync_latest_project_outputs(project_output_root: Path, run_output_dir: Path)
             latest_output_root / RUN_MANIFEST_FILENAME,
         )
         replace_path(run_output_dir / "logs", latest_output_root / "logs")
-        replace_path(run_output_dir / "txt2josn", latest_output_root / "txt2josn")
+        replace_path(run_output_dir / "cache", latest_output_root / "cache")
+        replace_path(run_output_dir / "exports", latest_output_root / "exports")
         replace_path(
-            run_output_dir / "exported_files",
-            latest_output_root / "exported_files",
+            run_output_dir / "record_templates",
+            latest_output_root / "record_templates",
         )
         (project_output_root / "latest_run.txt").write_text(
             run_output_dir.name,

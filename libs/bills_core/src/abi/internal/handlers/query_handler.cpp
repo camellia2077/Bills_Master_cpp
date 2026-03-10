@@ -4,10 +4,11 @@
 #include <cctype>
 #include <exception>
 #include <map>
-#include <regex>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "common/iso_period.hpp"
 
 #if BILLS_CORE_MODULES_ENABLED
 import bill.core.abi;
@@ -36,11 +37,6 @@ namespace fs = core_abi::fs;
 #endif
 
 namespace {
-constexpr int kMinSupportedYear = 1900;
-constexpr int kMaxSupportedYear = 9999;
-constexpr int kMinSupportedMonth = 1;
-constexpr int kMaxSupportedMonth = 12;
-
 auto ToAsciiLower(std::string value) -> std::string {
   std::ranges::transform(value, value.begin(),
                          [](unsigned char character) -> char {
@@ -50,32 +46,23 @@ auto ToAsciiLower(std::string value) -> std::string {
 }
 
 auto ParseYearString(const std::string& raw, int& year) -> bool {
-  if (raw.size() != 4U) {
+  const auto parsed_year = bills::core::common::iso_period::parse_year(raw);
+  if (!parsed_year.has_value()) {
     return false;
   }
-  try {
-    year = std::stoi(raw);
-  } catch (...) {
-    return false;
-  }
-  return year >= kMinSupportedYear && year <= kMaxSupportedYear;
+  year = *parsed_year;
+  return true;
 }
 
 auto ParseMonthString(const std::string& raw, int& year, int& month) -> bool {
-  static const std::regex kIsoMonthRegex(R"(^(\d{4})-(0[1-9]|1[0-2])$)");
-  std::smatch match;
-  if (!std::regex_match(raw, match, kIsoMonthRegex) || match.size() != 3U) {
+  const auto parsed_period =
+      bills::core::common::iso_period::parse_year_month(raw);
+  if (!parsed_period.has_value()) {
     return false;
   }
-  try {
-    year = std::stoi(match[1].str());
-    month = std::stoi(match[2].str());
-  } catch (...) {
-    return false;
-  }
-
-  return year >= kMinSupportedYear && year <= kMaxSupportedYear &&
-         month >= kMinSupportedMonth && month <= kMaxSupportedMonth;
+  year = parsed_period->year;
+  month = parsed_period->month;
+  return true;
 }
 
 }  // namespace
@@ -124,9 +111,12 @@ auto handle_query_command(const Json& request) -> std::string {
     Json data;
     data["type"] = kQueryTypeRaw;
     data["value"] = kQueryValue;
+    data["expected_format"] = kIsYearQuery ? "YYYY" : "YYYY-MM";
     return core_abi::make_response(
         false, core_abi::error_code::kParamInvalidRequest,
-        "Invalid query value format.", std::move(data));
+        kIsYearQuery ? "Year query requires YYYY."
+                     : "Month query requires YYYY-MM.",
+        std::move(data));
   }
 
   std::vector<fs::path> files;

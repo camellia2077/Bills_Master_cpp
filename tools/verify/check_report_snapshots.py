@@ -53,6 +53,8 @@ def should_compare_source(source_rel: str, compare_scope: str) -> bool:
         return suffix == ".tex"
     if compare_scope == "rst":
         return suffix == ".rst"
+    if compare_scope == "typ":
+        return suffix == ".typ"
     return False
 
 
@@ -207,7 +209,7 @@ def main() -> int:
     parser.add_argument(
         "--compare-scope",
         default="all",
-        choices=["all", "md", "json", "tex", "rst"],
+        choices=["all", "md", "json", "tex", "rst", "typ"],
         help="Limit comparison to selected file type.",
     )
     args = parser.parse_args()
@@ -225,10 +227,10 @@ def main() -> int:
     if args.compare_projects:
         project_a, project_b = args.compare_projects
         project_a_root = (
-            resolve_project_output_root(repo_root, project_a, args.output_group) / "exported_files"
+            resolve_project_output_root(repo_root, project_a, args.output_group) / "exports"
         )
         project_b_root = (
-            resolve_project_output_root(repo_root, project_b, args.output_group) / "exported_files"
+            resolve_project_output_root(repo_root, project_b, args.output_group) / "exports"
         )
         return compare_between_projects(
             manifest=manifest,
@@ -238,7 +240,7 @@ def main() -> int:
         )
 
     current_root = (
-        resolve_project_output_root(repo_root, args.project, args.output_group) / "exported_files"
+        resolve_project_output_root(repo_root, args.project, args.output_group) / "exports"
     )
     return compare_against_baseline(
         manifest=manifest,

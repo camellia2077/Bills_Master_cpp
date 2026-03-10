@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "domain/bill/bill_record.hpp"
 #include "billing/conversion/convert/bills_converter.hpp"
@@ -28,11 +29,23 @@ class BillProcessingPipeline {
                                     ParsedBill& bill_data);
   bool convert_content(const std::string& bill_content, ParsedBill& bill_data);
 
+  [[nodiscard]] auto last_failure_stage() const -> const std::string&;
+  [[nodiscard]] auto last_failure_message() const -> const std::string&;
+  [[nodiscard]] auto last_failure_messages() const
+      -> const std::vector<std::string>&;
+
  private:
+  void clear_last_failure();
+  void set_last_failure(std::string stage, std::string message);
+  void set_last_failure(std::string stage,
+                        const std::vector<std::string>& messages);
+
   std::unique_ptr<BillValidator> m_validator;
   std::unique_ptr<BillConverter> m_converter;
+  std::string last_failure_stage_;
+  std::string last_failure_message_;
+  std::vector<std::string> last_failure_messages_;
 };
 
 #endif  // BILLING_CONVERSION_BILLS_PROCESSING_PIPELINE_H_
-
 

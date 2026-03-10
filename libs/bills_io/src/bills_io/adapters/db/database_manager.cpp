@@ -53,12 +53,13 @@ void DatabaseManager::initialize_database() {
       "CREATE TABLE IF NOT EXISTS bills ("
       " id INTEGER PRIMARY KEY AUTOINCREMENT,"
       " bill_date TEXT NOT NULL UNIQUE,"
-      " year INTEGER NOT NULL,"
-      " month INTEGER NOT NULL,"
+      " year INTEGER NOT NULL CHECK(year BETWEEN 1900 AND 9999),"
+      " month INTEGER NOT NULL CHECK(month BETWEEN 1 AND 12),"
       " remark TEXT,"
       " total_income REAL NOT NULL DEFAULT 0,"
       " total_expense REAL NOT NULL DEFAULT 0,"
-      " balance REAL NOT NULL DEFAULT 0"
+      " balance REAL NOT NULL DEFAULT 0,"
+      " CHECK(bill_date = printf('%04d-%02d', year, month))"
       ");";
   // --- 修改结束 ---
   if (sqlite3_exec(m_db, create_bills_sql, nullptr, nullptr, &errmsg) !=

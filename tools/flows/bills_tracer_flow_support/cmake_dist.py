@@ -116,7 +116,7 @@ def build_cli(
             generator,
             f"-DCMAKE_BUILD_TYPE={build_type}",
             "-DBILL_COMPILER=clang",
-            "-DBILLS_CORE_BUILD_SHARED=ON",
+            "-DBILLS_CORE_BUILD_SHARED=OFF",
             *cmake_defines,
         ]
         run_command(configure_cmd)

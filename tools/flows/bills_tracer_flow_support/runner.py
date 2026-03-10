@@ -9,6 +9,11 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 from tools.toolchain.services.build_layout import (
     resolve_artifact_project_root,
     resolve_build_directory,
@@ -17,7 +22,7 @@ from tools.toolchain.services.build_layout import (
     sanitize_segment,
 )
 
-from .artifacts import (
+from tools.flows.bills_tracer_flow_support.artifacts import (
     PYTHON_TEST_LOG_FILENAME,
     RUN_MANIFEST_FILENAME,
     TEST_SUMMARY_FILENAME,
@@ -30,14 +35,22 @@ from .artifacts import (
     write_json_file,
     write_python_test_log,
 )
-from .cmake_dist import build_cli, resolve_build_dir
-from .config_writer import (
+from tools.flows.bills_tracer_flow_support.cmake_dist import build_cli, resolve_build_dir
+from tools.flows.bills_tracer_flow_support.config_distribution import (
+    WINDOWS_TARGET,
+    distribute_configs,
+)
+from tools.flows.bills_tracer_flow_support.config_writer import (
     cmake_format_defines,
     parse_formats,
     write_runtime_export_formats_config,
     write_temp_test_config,
 )
-from .models import BillsTracerRequest, BillsTracerRunPaths
+from tools.flows.bills_tracer_flow_support.models import (
+    BillsTracerRequest,
+    BillsTracerRunPaths,
+)
+from tools.notices.notices_support import generate_notices_outputs
 
 DEFAULT_OUTPUT_PROJECT = "bills_tracer"
 DEFAULT_BUILD_SCOPE = "shared"
@@ -154,7 +167,7 @@ def build_run_paths(repo_root: Path, request: BillsTracerRequest) -> BillsTracer
         run_id=run_id,
         run_output_dir=run_output_dir,
         test_workdir=runtime_base_dir,
-        import_dir=runtime_base_dir / "output" / "txt2josn",
+        import_dir=runtime_base_dir / "cache" / "txt2json",
         summary_path=run_output_dir / TEST_SUMMARY_FILENAME,
         python_test_log_path=run_output_dir / PYTHON_TEST_LOG_FILENAME,
     )
@@ -220,7 +233,22 @@ def main(argv: list[str] | None = None) -> int:
             target=request.target,
             cmake_defines=format_defines,
         )
-        sync_runtime_workspace(paths.build_bin_dir, paths.runtime_workspace_dir)
+        distributed_configs = distribute_configs(
+            repo_root / "config",
+            repo_root / "dist" / "config",
+            [WINDOWS_TARGET],
+        )
+        distributed_notices = generate_notices_outputs(
+            repo_root,
+            repo_root / "dist" / "notices",
+            [WINDOWS_TARGET],
+        )
+        sync_runtime_workspace(
+            paths.build_bin_dir,
+            paths.runtime_workspace_dir,
+            config_dir=distributed_configs[WINDOWS_TARGET],
+            notices_dir=distributed_notices[WINDOWS_TARGET],
+        )
         write_runtime_export_formats_config(
             paths.runtime_workspace_dir,
             list(request.export_formats),
@@ -228,7 +256,7 @@ def main(argv: list[str] | None = None) -> int:
     except subprocess.CalledProcessError as exc:
         print(f"Dist preparation failed with exit code {exc.returncode}.")
         return exc.returncode
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, ValueError, OSError) as exc:
         print(f"Dist preparation failed: {exc}")
         return 2
 
@@ -364,3 +392,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print("Dist preparation and CLI tests completed successfully.")
     return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -4,13 +4,12 @@
 
 #include <algorithm>
 #include <cctype>
-#include <iomanip>
-#include <optional>
 #include <ranges>
 #include <regex>
-#include <sstream>
 #include <stdexcept>
 #include <string_view>
+
+#include "common/iso_period.hpp"
 
 namespace {
 constexpr std::string_view kDatePrefix = "date:";
@@ -20,51 +19,6 @@ constexpr std::string_view kDefaultSource = "manually_add";
 constexpr std::string_view kIncomeType = "Income";
 constexpr std::string_view kExpenseType = "Expense";
 constexpr std::size_t kExpectedMatchSize = 3U;
-constexpr std::size_t kIsoMonthLength = 7U;
-constexpr std::size_t kYearDigits = 4U;
-constexpr std::size_t kMonthStart = 5U;
-constexpr std::size_t kMonthDigits = 2U;
-constexpr int kMinMonth = 1;
-constexpr int kMaxMonth = 12;
-
-struct IsoYearMonth {
-  int year = 0;
-  int month = 0;
-};
-
-auto IsAsciiDigit(char character) -> bool {
-  return std::isdigit(static_cast<unsigned char>(character)) != 0;
-}
-
-auto ParseIsoYearMonth(const std::string& date) -> std::optional<IsoYearMonth> {
-  if (date.size() != kIsoMonthLength || date[kYearDigits] != '-') {
-    return std::nullopt;
-  }
-
-  if (!IsAsciiDigit(date[0]) || !IsAsciiDigit(date[1]) ||
-      !IsAsciiDigit(date[2]) || !IsAsciiDigit(date[3])) {
-    return std::nullopt;
-  }
-
-  IsoYearMonth parsed_date;
-  try {
-    parsed_date.year = std::stoi(date.substr(0U, kYearDigits));
-  } catch (...) {
-    return std::nullopt;
-  }
-
-  if (!IsAsciiDigit(date[kMonthStart]) ||
-      !IsAsciiDigit(date[kMonthStart + 1U])) {
-    return std::nullopt;
-  }
-  parsed_date.month = std::stoi(date.substr(kMonthStart, kMonthDigits));
-
-  if (parsed_date.month < kMinMonth || parsed_date.month > kMaxMonth) {
-    return std::nullopt;
-  }
-
-  return parsed_date;
-}
 }  // namespace
 
 BillParser::BillParser(const Config& config) : m_config(config) {}
@@ -185,17 +139,15 @@ auto BillParser::parse(const std::vector<std::string>& lines) const
   bill_data.balance = bill_data.total_income + bill_data.total_expense;
 
   if (!bill_data.date.empty()) {
-    const auto kParsedDate = ParseIsoYearMonth(bill_data.date);
+    const auto kParsedDate =
+        bills::core::common::iso_period::parse_year_month(bill_data.date);
     if (!kParsedDate.has_value()) {
       throw std::runtime_error("账单日期格式无效，必须为 YYYY-MM。");
     }
     bill_data.year = kParsedDate->year;
     bill_data.month = kParsedDate->month;
-
-    std::ostringstream normalized_date_stream;
-    normalized_date_stream << bill_data.year << "-" << std::setw(2)
-                           << std::setfill('0') << bill_data.month;
-    bill_data.date = normalized_date_stream.str();
+    bill_data.date = bills::core::common::iso_period::format_year_month(
+        bill_data.year, bill_data.month);
   }
 
   return bill_data;

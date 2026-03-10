@@ -17,6 +17,11 @@ from tools.toolchain.services.build_layout import (
     resolve_build_directory,
     resolve_runtime_workspace_dir,
 )
+from tools.flows.bills_tracer_flow_support.config_distribution import (
+    WINDOWS_TARGET,
+    distribute_configs,
+)
+from tools.notices.notices_support import generate_notices_outputs
 
 PROJECT_DIR = REPO_ROOT / "apps" / "bills_cli"
 RUNTIME_SIDECAR_EXTS = {".dll", ".exe", ".manifest", ".pdb"}
@@ -70,10 +75,21 @@ def sync_runtime_artifacts(build_dir: Path) -> None:
         shutil.copy2(entry, runtime_workspace_dir / entry.name)
         copied_files.append(entry.name)
 
-    replace_path(build_bin_dir / "config", runtime_workspace_dir / "config")
+    distributed_configs = distribute_configs(
+        REPO_ROOT / "config",
+        REPO_ROOT / "dist" / "config",
+        [WINDOWS_TARGET],
+    )
+    distributed_notices = generate_notices_outputs(
+        REPO_ROOT,
+        REPO_ROOT / "dist" / "notices",
+        [WINDOWS_TARGET],
+    )
+    replace_path(distributed_configs[WINDOWS_TARGET], runtime_workspace_dir / "config")
+    replace_path(distributed_notices[WINDOWS_TARGET], runtime_workspace_dir / "notices")
     print(
         "==> Synced runtime artifacts to "
-        f"{runtime_workspace_dir} ({len(copied_files)} files + config)"
+        f"{runtime_workspace_dir} ({len(copied_files)} files + config + notices)"
     )
 
 
@@ -165,7 +181,11 @@ def ensure_cmake_configured(
             print("==> Using existing CMake configuration.")
             return
         print("==> Existing CMake cache does not match expected setup. Recreating dist directory.")
-        shutil.rmtree(build_dir)
+        try:
+            shutil.rmtree(build_dir)
+        except FileNotFoundError:
+            # Windows/Ninja can leave the tree in a partially removed state between runs.
+            pass
         build_dir.mkdir(parents=True, exist_ok=True)
 
     cmake_args = [
@@ -276,14 +296,14 @@ def main() -> int:
         "--core-shared",
         dest="core_shared",
         action="store_true",
-        default=True,
-        help="Emit bills_core as shared library into dist (default).",
+        default=False,
+        help="Emit bills_core as shared library into dist.",
     )
     parser.add_argument(
         "--core-static",
         dest="core_shared",
         action="store_false",
-        help="Emit bills_core as static library into dist.",
+        help="Emit bills_core as static library into dist (default).",
     )
     parser.add_argument(
         "extra",
@@ -332,7 +352,11 @@ def main() -> int:
             print("==> No compile output captured; skipping task split.")
         return 0
 
-    sync_runtime_artifacts(spec.build_dir)
+    try:
+        sync_runtime_artifacts(spec.build_dir)
+    except (FileNotFoundError, ValueError, OSError) as exc:
+        print(f"!!! Failed to distribute runtime config: {exc}")
+        return 2
     return 0
 
 

@@ -5,6 +5,8 @@
 #include <sstream>
 #include <string>
 
+#include "common/iso_period.hpp"
+
 // --- NEW: TxtStructureVerifier implementation ---
 auto TxtStructureVerifier::verify(const std::string& bill_content,
                                   ValidationResult& result) -> bool {
@@ -15,8 +17,8 @@ auto TxtStructureVerifier::verify(const std::string& bill_content,
   // Validate date
   if (std::getline(stream, line)) {
     line_num++;
-    if (!std::regex_match(line,
-                          std::regex(R"(^date:\d{4}-(0[1-9]|1[0-2])$)"))) {
+    if (!bills::core::common::iso_period::extract_year_month_from_date_header(line)
+             .has_value()) {
       result.add_error("Error (Line " + std::to_string(line_num) +
                        "): The first line must be 'date:YYYY-MM'. Found: '" +
                        line + "'");

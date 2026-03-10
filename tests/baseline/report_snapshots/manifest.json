@@ -1,42 +1,62 @@
 {
-  "monthly_md_2024_01": {
-    "source": "Markdown_bills/months/2024/2024-01.md",
-    "baseline": "monthly/2024-01.md",
-    "sha256": "b2029e39b5976421cba8e9284bcd856644b67835ebbc15434f99dc1ec29db53c"
+  "monthly_md_2025_01": {
+    "source": "Markdown_bills/months/2025/2025-01.md",
+    "baseline": "monthly/2025-01.md",
+    "sha256": "80da576fd3000be122e57b81ad1e4e28293bfd7cefb1155c0aa0be873a031a88"
   },
-  "monthly_json_2024_01": {
-    "source": "standard_json/months/2024/2024-01.json",
-    "baseline": "monthly/2024-01.json",
-    "sha256": "3d578d4eed23d9fc7f9438576e510791a9b5592480185aaf4994152fad86722f"
+  "monthly_json_2025_01": {
+    "source": "standard_json/months/2025/2025-01.json",
+    "baseline": "monthly/2025-01.json",
+    "sha256": "a5e5230ec2bdf32150fe812a1c6cc52562ed34d0cf0e81cbdc9fb72a660b3e4c"
   },
-  "yearly_md_2024": {
-    "source": "Markdown_bills/years/2024.md",
-    "baseline": "yearly/2024.md",
-    "sha256": "b15206d32e0d060fb28f6c344b5aa41e41c0138c8fb771ec864561b09eb0a2e6"
+  "monthly_typ_2025_01": {
+    "source": "Typst_bills/months/2025/2025-01.typ",
+    "baseline": "monthly/2025-01.typ",
+    "sha256": "63558093a3efa975e4aa925bfec347c2c8aa28629a015e72aa42dcefb8ff4717"
   },
-  "yearly_json_2024": {
-    "source": "standard_json/years/2024.json",
-    "baseline": "yearly/2024.json",
-    "sha256": "6a92e945d1a9cbeef2fded6db67f633b4c6c79c8d9d5a9c1095cb49a9d63c712"
+  "yearly_md_2025": {
+    "source": "Markdown_bills/years/2025.md",
+    "baseline": "yearly/2025.md",
+    "sha256": "788a5c7e4d23441fd4b920e00e090ba5571f9bd8264df29ad76209d9b9a598b6"
   },
-  "range_md_2024_03": {
-    "source": "Markdown_bills/months/2024/2024-03.md",
-    "baseline": "range/2024-03.md",
-    "sha256": "07b0309a69988d418ee548d1ad95f1e227cee5757974d92b3fd31b6cef061026"
+  "yearly_json_2025": {
+    "source": "standard_json/years/2025.json",
+    "baseline": "yearly/2025.json",
+    "sha256": "cd5a3aabd744793c352127e6489c64840c843141578cc214773dc10b1f3e4979"
   },
-  "range_md_2024_04": {
-    "source": "Markdown_bills/months/2024/2024-04.md",
-    "baseline": "range/2024-04.md",
-    "sha256": "ada49261b5d0c992daabff8813731d9ea6ebfa2ce6668c2b6a2cebdd839b548c"
+  "yearly_typ_2025": {
+    "source": "Typst_bills/years/2025.typ",
+    "baseline": "yearly/2025.typ",
+    "sha256": "784670394c870099aea43b0ee61705511ad311720691e6ebc721d3a681625fab"
   },
-  "range_json_2024_03": {
-    "source": "standard_json/months/2024/2024-03.json",
-    "baseline": "range/2024-03.json",
-    "sha256": "e709e34317e3b452c044decf5954981b3879a86931af2759d734c476c28ae8c6"
+  "range_md_2025_03": {
+    "source": "Markdown_bills/months/2025/2025-03.md",
+    "baseline": "range/2025-03.md",
+    "sha256": "e5d17ee919710c852ec25439bd79bd5ad587842ab5467d36985537db0113e131"
   },
-  "range_json_2024_04": {
-    "source": "standard_json/months/2024/2024-04.json",
-    "baseline": "range/2024-04.json",
-    "sha256": "5853420c712c7deafc39471b52545ff5d4bbf825ad918132876b18f11cf4400e"
+  "range_md_2025_04": {
+    "source": "Markdown_bills/months/2025/2025-04.md",
+    "baseline": "range/2025-04.md",
+    "sha256": "11d5228ca375c4196b89018fb06f795e68a388e382da6fa465f870084affff61"
+  },
+  "range_json_2025_03": {
+    "source": "standard_json/months/2025/2025-03.json",
+    "baseline": "range/2025-03.json",
+    "sha256": "c09e9588801d34f65a822610663f1e3d96d997942bddfff506c6d0cd2227724e"
+  },
+  "range_json_2025_04": {
+    "source": "standard_json/months/2025/2025-04.json",
+    "baseline": "range/2025-04.json",
+    "sha256": "03678535a2d98681efdbf649031ff7e1e378776585f842203cb3fec9376f3a4b"
+  },
+  "range_typ_2025_03": {
+    "source": "Typst_bills/months/2025/2025-03.typ",
+    "baseline": "range/2025-03.typ",
+    "sha256": "d609cd0846c7e322f0a407d485123997e9eca2efedba1b3681ab8c22d55eaa30"
+  },
+  "range_typ_2025_04": {
+    "source": "Typst_bills/months/2025/2025-04.typ",
+    "baseline": "range/2025-04.typ",
+    "sha256": "90f41dd345b8457bc3e252dd3f289bd8d17101bbdde88683f4463ca118b926a3"
   }
 }

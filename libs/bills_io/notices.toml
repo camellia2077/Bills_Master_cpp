@@ -1,0 +1,10 @@
+schema_version = "1"
+layer_id = "bills_io"
+
+[[deps]]
+package_id = "sqlite_amalgamation"
+cmake_targets = ["sqlite3_amalgamation"]
+
+[[deps]]
+package_id = "tomlplusplus"
+cmake_targets = ["tomlplusplus::tomlplusplus"]

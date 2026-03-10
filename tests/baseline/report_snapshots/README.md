@@ -3,13 +3,14 @@
 This directory stores frozen baseline files for report regression checks.
 
 Covered scenarios:
-- Monthly report: `2024-01`
-- Yearly report: `2024`
-- Date range reports: `2024-03`, `2024-04`
+- Monthly report: `2025-01`
+- Yearly report: `2025`
+- Date range reports: `2025-03`, `2025-04`
 
 Covered formats:
 - Markdown output (`Markdown_bills/...`)
 - Standard JSON output (`standard_json/...`)
+- Typst source output (`Typst_bills/...`)
 
 Scripts:
 - Freeze/update baseline:

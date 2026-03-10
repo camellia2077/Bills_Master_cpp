@@ -1,0 +1,5 @@
+package_id = "com_google_errorprone"
+display_name = "Error Prone Annotations"
+homepage = "https://errorprone.info/"
+license_spdx = "Apache-2.0"
+license_text_relpath = "third_party/texts/apache-2.0/LICENSE.txt"

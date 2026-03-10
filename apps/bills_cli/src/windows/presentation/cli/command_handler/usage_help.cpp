@@ -46,6 +46,30 @@ void print_help(const char* program_name) {
   std::println(
       "  Runs the full workflow (validate, convert, import) for bill files.\n");
 
+  std::cout << terminal::kGreen << "--- Record Tools ---\n" << terminal::kReset;
+
+  std::println("{}record template{} [--period YYYY-MM]", command_color,
+               terminal::kReset);
+  std::println(
+      "  Generates editable TXT templates from validator_config.toml order.");
+  std::println(
+      "  Use either --period, --start-period/--end-period, or "
+      "--start-year/--end-year.");
+  std::println(
+      "  Add --output-dir <dir> to write <YYYY>/<YYYY-MM>.txt files.\n");
+
+  std::println("{}record preview{} <path>", command_color, terminal::kReset);
+  std::println(
+      "  Dry-runs TXT parsing and shows period/totals without writing data.\n");
+
+  std::println("{}record list{} <path>", command_color, terminal::kReset);
+  std::println(
+      "  Recursively lists unique periods from TXT content headers.\n");
+
+  std::println("{}config inspect{}", command_color, terminal::kReset);
+  std::println(
+      "  Prints the ordered template layout derived from validator_config.toml.\n");
+
   std::cout << terminal::kGreen << "--- Query & Export ---\n" << terminal::kReset;
 
   std::println("{}--query year, -q y{} <year>", command_color, terminal::kReset);
@@ -77,7 +101,7 @@ void print_help(const char* program_name) {
 
   std::println("  --format, -f <format>");
   std::println(
-      "    Specify output format ('md', 'json', 'tex', 'rst', 'all', 'a'). "
+      "    Specify output format ('md', 'json', 'tex', 'rst', 'typ', 'all', 'a'). "
       "Defaults to 'md'.");
   std::println("    Use 'all' or 'a' to export in all available formats.");
   std::println("    Example: --format tex");
@@ -101,5 +125,11 @@ void print_help(const char* program_name) {
 
   std::println("  -V, --version");
   std::println("    Shows the program version.");
+
+  std::println("  --notices");
+  std::println("    Shows bundled open source notices as Markdown source text.");
+
+  std::println("  --notices-json");
+  std::println("    Shows bundled open source notices as raw JSON.");
 }
 

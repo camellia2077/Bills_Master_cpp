@@ -6,7 +6,7 @@
 #include <optional>
 #include <string>
 
-#include "path_builder.hpp"
+class OutputPathBuilder;
 
 class BillContentReader;
 class BillFileEnumerator;
@@ -31,7 +31,7 @@ class WorkflowController {
  private:
   bool ensure_initialized() const;
 
-  PathBuilder m_path_builder;
+  std::unique_ptr<OutputPathBuilder> m_output_path_builder;
   std::unique_ptr<BillContentReader> m_content_reader;
   std::unique_ptr<BillFileEnumerator> m_file_enumerator;
   std::unique_ptr<BillSerializer> m_serializer;

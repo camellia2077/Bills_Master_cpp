@@ -5,14 +5,15 @@
 #include <stdexcept>
 
 #include "bills_io/io_factory.hpp"
+#include "application/use_cases/workflow_use_case.hpp"
 #include "common/common_utils.hpp"
+#include "ports/output_path_builder.hpp"
 
 namespace terminal = common::terminal;
 
 // 构造函数现在创建并持有 FileHandler，并将其传递给依赖项
 WorkflowController::WorkflowController(const std::string& config_path,
                                        const std::string& modified_output_dir)
-    : m_path_builder(modified_output_dir)
 {
   m_config_provider = bills::io::CreateConfigProvider();
   Result<ConfigBundle> config_result = m_config_provider->Load(config_path);
@@ -24,11 +25,13 @@ WorkflowController::WorkflowController(const std::string& config_path,
   m_content_reader = bills::io::CreateBillContentReader();
   m_file_enumerator = bills::io::CreateBillFileEnumerator();
   m_serializer = bills::io::CreateBillSerializer();
+  m_output_path_builder =
+      bills::io::CreateYearPartitionOutputPathBuilder(modified_output_dir);
 
   m_use_case = std::make_unique<WorkflowUseCase>(
       std::move(config_result->validator_config),
       std::move(config_result->modifier_config), *m_content_reader,
-      *m_file_enumerator, *m_serializer, m_path_builder);
+      *m_file_enumerator, *m_serializer, *m_output_path_builder);
 }
 
 WorkflowController::~WorkflowController() = default;

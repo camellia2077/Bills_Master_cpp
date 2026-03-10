@@ -13,11 +13,8 @@
 #include "ports/bills_file_enumerator.hpp"
 #include "ports/bills_serializer.hpp"
 #include "ports/config_provider.hpp"
-#include "ports/month_report_formatter_provider.hpp"
+#include "ports/output_path_builder.hpp"
 #include "ports/report_data_gateway.hpp"
-#include "ports/yearly_report_formatter_provider.hpp"
-#include "application/use_cases/workflow_use_case.hpp"
-#include "reports/core/report_export_service.hpp"
 
 namespace bills::io {
 
@@ -27,15 +24,13 @@ namespace bills::io {
 [[nodiscard]] auto CreateBillSerializer() -> std::unique_ptr<BillSerializer>;
 [[nodiscard]] auto CreateBillRepository(std::string db_path)
     -> std::unique_ptr<BillRepository>;
+[[nodiscard]] auto CreateYearPartitionOutputPathBuilder(std::string base_output_dir)
+    -> std::unique_ptr<OutputPathBuilder>;
 [[nodiscard]] auto CreateConfigProvider() -> std::unique_ptr<ConfigProvider>;
 [[nodiscard]] auto CreateReportDbSession(std::string db_path)
     -> std::unique_ptr<SqliteReportDbSession>;
 [[nodiscard]] auto CreateReportDataGateway(sqlite3* db_connection)
     -> std::unique_ptr<ReportDataGateway>;
-[[nodiscard]] auto CreateMonthReportFormatterProvider()
-    -> std::unique_ptr<MonthReportFormatterProvider>;
-[[nodiscard]] auto CreateYearlyReportFormatterProvider()
-    -> std::unique_ptr<YearlyReportFormatterProvider>;
 
 }  // namespace bills::io
 

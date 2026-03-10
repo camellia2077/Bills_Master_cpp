@@ -5,20 +5,16 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 class ReportDataGateway;
-class MonthReportFormatterProvider;
-class YearlyReportFormatterProvider;
 class ReportExporter;
 
 class ReportExportService {
  public:
-  // Constructor with fully injected adapters/providers
   explicit ReportExportService(
       std::unique_ptr<ReportDataGateway> report_data_gateway,
-      std::unique_ptr<MonthReportFormatterProvider> month_formatter_provider,
-      std::unique_ptr<YearlyReportFormatterProvider> year_formatter_provider,
-      const std::string& export_base_dir = "exported_files",
+      const std::string& export_base_dir = "exports",
       const std::map<std::string, std::string>& format_folder_names = {});
 
   ~ReportExportService();
@@ -51,11 +47,10 @@ class ReportExportService {
       const std::string& export_pipeline = "model-first");
   bool export_all_yearly_reports(const std::string& format_name,
                                  const std::string& export_pipeline = "model-first");
+  [[nodiscard]] static auto ListAvailableFormats() -> std::vector<std::string>;
 
  private:
   std::unique_ptr<ReportDataGateway> m_report_data_gateway;
-  std::unique_ptr<MonthReportFormatterProvider> m_month_formatter_provider;
-  std::unique_ptr<YearlyReportFormatterProvider> m_year_formatter_provider;
   std::unique_ptr<ReportExporter> m_report_exporter;
 };
 

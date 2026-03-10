@@ -12,7 +12,7 @@ root = "dist/tests/logic/pipeline_runner/reporting_graph_generator"
 PYTHONUNBUFFERED = "1"
 
 [reporting.input]
-db_path = "dist/tests/runtime/bills_tracer/runs/<latest>/bills.sqlite3"
+db_path = "dist/tests/runtime/bills_tracer/runs/<latest>/db/bills.sqlite3"
 
 [reporting.output]
 output_directory = "dist/tests/artifact/reporting/graph_generator"

@@ -21,15 +21,17 @@ auto QueryCommand::execute(const std::vector<std::string>& args,
   std::vector<std::string> values(args.begin() + 1, args.end());
 
   if (query_type == "year" || query_type == "y") {
-    if (values.empty()) {
-      throw std::runtime_error("Missing <year> for 'query year' command.");
+    if (values.size() != 1U) {
+      throw std::runtime_error(
+          "Query year expects exactly one <YYYY> argument.");
     }
     return controller.handle_export("year", values, m_format_str,
                                     m_export_pipeline);
   }
   if (query_type == "month" || query_type == "m") {
-    if (values.empty()) {
-      throw std::runtime_error("Missing <month> for 'query month' command.");
+    if (values.size() != 1U) {
+      throw std::runtime_error(
+          "Query month expects exactly one <YYYY-MM> argument.");
     }
     return controller.handle_export("month", values, m_format_str,
                                     m_export_pipeline);

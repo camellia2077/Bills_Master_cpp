@@ -35,7 +35,7 @@ auto ExportCommand::execute(const std::vector<std::string>& args,
 auto ExportCommand::handle_export_all(AppController& controller) -> bool {
   std::vector<std::string> formats_to_process;
   if (m_format_str == "all" || m_format_str == "a") {
-    formats_to_process = {"md", "json", "tex", "rst"};
+    formats_to_process = controller.list_enabled_export_formats();
     std::println("\n--- Batch export for all formats requested ---");
   } else {
     formats_to_process.push_back(m_format_str);

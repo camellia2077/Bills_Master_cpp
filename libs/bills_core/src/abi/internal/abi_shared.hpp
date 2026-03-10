@@ -24,7 +24,7 @@ namespace constants {
 inline constexpr const char* kAbiVersion = "1.0.0";
 inline constexpr const char* kValidatorConfigName = "validator_config.toml";
 inline constexpr const char* kModifierConfigName = "modifier_config.toml";
-inline constexpr const char* kDefaultConvertOutputDir = "output/txt2josn";
+inline constexpr const char* kDefaultConvertOutputDir = "cache/txt2json";
 inline constexpr int kResponseSchemaVersion = 2;
 inline constexpr int kCapabilitiesSchemaVersion = 1;
 inline constexpr int kErrorCodeSchemaVersion = 1;
@@ -39,6 +39,7 @@ inline constexpr const char* kParamInvalidRequest = "param.invalid_request";
 inline constexpr const char* kParamUnknownCommand = "param.unknown_command";
 inline constexpr const char* kParamInvalidConfig = "param.invalid_config";
 inline constexpr const char* kParamInvalidInputPath = "param.invalid_input_path";
+inline constexpr const char* kParamInvalidOutputPath = "param.invalid_output_path";
 
 inline constexpr const char* kBusinessNoInputFiles = "business.no_input_files";
 inline constexpr const char* kBusinessValidationFailed =
@@ -61,6 +62,10 @@ auto build_capabilities() -> Json;
 auto make_capabilities_json() -> std::string;
 
 auto read_text_file(const fs::path& file_path) -> std::string;
+auto format_pipeline_failure(const BillProcessingPipeline& pipeline,
+                             std::string_view fallback_stage,
+                             std::string_view fallback_message)
+    -> std::string;
 auto list_txt_files(const fs::path& input_path) -> std::vector<fs::path>;
 auto list_json_files(const fs::path& input_path) -> std::vector<fs::path>;
 auto build_convert_output_path(const fs::path& output_dir,
@@ -74,6 +79,10 @@ auto handle_convert_command(const Json& request) -> std::string;
 auto handle_ingest_command(const Json& request) -> std::string;
 auto handle_import_command(const Json& request) -> std::string;
 auto handle_query_command(const Json& request) -> std::string;
+auto handle_template_generate_command(const Json& request) -> std::string;
+auto handle_record_preview_command(const Json& request) -> std::string;
+auto handle_config_inspect_command(const Json& request) -> std::string;
+auto handle_list_periods_command(const Json& request) -> std::string;
 
 }  // namespace bills::core::abi
 

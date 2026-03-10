@@ -3,6 +3,14 @@
 #define COMMON_PROCESS_STATS_H_
 
 #include <string>
+#include <utility>
+#include <vector>
+
+struct ProcessFailureDetail {
+  std::string path;
+  std::string stage;
+  std::string message;
+};
 
 /**
  * @struct ProcessStats
@@ -12,6 +20,15 @@
 struct ProcessStats {
   int success = 0;
   int failure = 0;
+  std::vector<ProcessFailureDetail> failure_details;
+
+  void add_failure(std::string path, std::string stage, std::string message) {
+    failure_details.push_back(ProcessFailureDetail{
+        .path = std::move(path),
+        .stage = std::move(stage),
+        .message = std::move(message),
+    });
+  }
 
   /**
    * @brief Compatibility no-op. Core keeps stats but does not print.

@@ -261,7 +261,7 @@ If none of the above is valid, return `param.invalid_config`.
   "command": "convert",
   "params": {
     "input_path": "path/to/txt-or-dir",
-    "output_dir": "output/txt2josn",
+    "output_dir": "cache/txt2json",
     "write_files": true,
     "include_serialized_json": false,
     "config_dir": "path/to/config-dir"
@@ -270,7 +270,7 @@ If none of the above is valid, return `param.invalid_config`.
 ```
 
 Defaults:
-- `output_dir = "output/txt2josn"` (kept for compatibility)
+- `output_dir = "cache/txt2json"`
 - `write_files = true`
 - `include_serialized_json = false`
 
@@ -304,7 +304,7 @@ Defaults:
   "command": "ingest",
   "params": {
     "input_path": "path/to/txt-or-dir",
-    "output_dir": "output/txt2josn",
+    "output_dir": "cache/txt2json",
     "write_json": false,
     "include_serialized_json": false,
     "config_dir": "path/to/config-dir"
@@ -313,7 +313,7 @@ Defaults:
 ```
 
 Defaults:
-- `output_dir = "output/txt2josn"`
+- `output_dir = "cache/txt2json"`
 - `write_json = false`
 - `include_serialized_json = false`
 
@@ -391,13 +391,13 @@ Defaults:
   "params": {
     "type": "year | y | month | m",
     "value": "YYYY or YYYYMM",
-    "input_path": "output/txt2josn"
+    "input_path": "cache/txt2json"
   }
 }
 ```
 
 Defaults:
-- `input_path = "output/txt2josn"`
+- `input_path = "cache/txt2json"`
 
 Validation rules:
 - `type = year|y` -> `value` must be `YYYY` and range `[1900, 9999]`.

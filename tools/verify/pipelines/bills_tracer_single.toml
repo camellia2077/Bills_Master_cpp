@@ -14,7 +14,7 @@ PYTHONUNBUFFERED = "1"
 [[steps]]
 id = "run_bills_tracer"
 name = "Run bills_tracer default workflow"
-command = ["{python}", "tools/flows/bills_tracer_flow.py", "--formats", "md,json,tex,rst"]
+command = ["{python}", "tools/flows/bills_tracer_flow.py", "--formats", "md,json,tex,rst,typ"]
 cwd = "{repo_root}"
 timeout_seconds = 7200
 retries = 0

@@ -107,6 +107,23 @@ auto bills_core_invoke_json(const char* request_json_utf8) -> const char* {
     return abi::allocate_owned_string(abi::handle_query_command(request));
   }
 
+  if (command == "template_generate") {
+    return abi::allocate_owned_string(
+        abi::handle_template_generate_command(request));
+  }
+
+  if (command == "record_preview") {
+    return abi::allocate_owned_string(abi::handle_record_preview_command(request));
+  }
+
+  if (command == "config_inspect") {
+    return abi::allocate_owned_string(abi::handle_config_inspect_command(request));
+  }
+
+  if (command == "list_periods") {
+    return abi::allocate_owned_string(abi::handle_list_periods_command(request));
+  }
+
   Json data;
   data["command"] = command;
   return abi::allocate_owned_string(

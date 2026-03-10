@@ -11,12 +11,20 @@
 class ExportController;
 class WorkflowController;
 
+struct RecordTemplateOptions {
+  std::string period;
+  std::string start_period;
+  std::string end_period;
+  std::string start_year;
+  std::string end_year;
+  std::string output_dir;
+};
+
 class AppController {
  public:
-  // [修改] 更新默认路径，将它们指向 output/ 目录
-  explicit AppController(std::string db_path = "output/bills.sqlite3",
+  explicit AppController(std::string db_path = "",
                          const std::string& config_path = "./config",
-                         std::string modified_output_dir = "output/txt2josn");
+                         std::string modified_output_dir = "");
   ~AppController();
 
   bool handle_validation(const std::string& path);
@@ -24,12 +32,19 @@ class AppController {
   bool handle_ingest(const std::string& path, bool write_json);
   bool handle_import(const std::string& path);
   bool handle_full_workflow(const std::string& path);
+  bool handle_record_template(const RecordTemplateOptions& options);
+  bool handle_record_preview(const std::string& path);
+  bool handle_record_list(const std::string& path);
+  bool handle_config_inspect();
   bool handle_export(const std::string& type,
                      const std::vector<std::string>& values,
                      const std::string& format_str = "md",
                      const std::string& export_pipeline = "model-first");
+  [[nodiscard]] auto list_enabled_export_formats() const
+      -> std::vector<std::string>;
 
   static void display_version();
+  static auto display_notices(bool raw_json) -> bool;
 
  private:
   auto load_enabled_formats(const std::string& config_path) -> std::set<std::string>;

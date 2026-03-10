@@ -9,10 +9,6 @@
 #include <sstream>
 
 namespace {
-constexpr unsigned char kUtf8BomByte1 = 0xEF;
-constexpr unsigned char kUtf8BomByte2 = 0xBB;
-constexpr unsigned char kUtf8BomByte3 = 0xBF;
-constexpr std::size_t kUtf8BomSize = 3U;
 constexpr unsigned char kUtf8TimesByte1 = 0xC3;
 constexpr unsigned char kUtf8TimesByte2 = 0x97;
 }  // namespace
@@ -65,15 +61,7 @@ void BillProcessor::_apply_auto_renewal(std::vector<std::string>& lines) {
 
 // 重写此函数以处理包含加减乘法的表达式
 void BillProcessor::_sum_up_line(std::string& line) {
-  // 1. 预先清理行首的 BOM (Byte Order Mark)
-  if (line.size() >= kUtf8BomSize &&
-      static_cast<unsigned char>(line[0]) == kUtf8BomByte1 &&
-      static_cast<unsigned char>(line[1]) == kUtf8BomByte2 &&
-      static_cast<unsigned char>(line[2]) == kUtf8BomByte3) {
-    line.erase(0, kUtf8BomSize);
-  }
-
-  // 2. 匹配数学表达式部分和描述部分
+  // 1. 匹配数学表达式部分和描述部分
   // 更新正则：
   // - 允许操作符包含 + - * ×
   // - 使用非捕获组和或运算 (?:[+*\-]|×) 来安全匹配操作符
@@ -103,7 +91,7 @@ void BillProcessor::_sum_up_line(std::string& line) {
       return;
     }
 
-    // 3. 清理表达式：移除空白，并将 '×' 替换为 '*'
+    // 2. 清理表达式：移除空白，并将 '×' 替换为 '*'
     std::string clean_expr;
     for (size_t i = 0; i < expression.length(); ++i) {
       char current_char = expression[i];

@@ -1,0 +1,5 @@
+package_id = "androidx_interpolator"
+display_name = "AndroidX Interpolator"
+homepage = "https://developer.android.com/jetpack/androidx/releases/interpolator"
+license_spdx = "Apache-2.0"
+license_text_relpath = "third_party/texts/apache-2.0/LICENSE.txt"

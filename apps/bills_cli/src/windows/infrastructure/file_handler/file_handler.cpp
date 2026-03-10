@@ -43,7 +43,7 @@ auto FileHandler::find_files_by_extension(const std::string& input_path_str,
 }
 
 auto FileHandler::read_text_file(const fs::path& file_path) -> std::string {
-  std::ifstream file(file_path);
+  std::ifstream file(file_path, std::ios::binary);
   if (!file.is_open()) {
     throw std::runtime_error("错误: 无法打开文件 '" + file_path.string() + "'");
   }

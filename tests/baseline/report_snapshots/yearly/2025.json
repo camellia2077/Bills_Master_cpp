@@ -1,0 +1,97 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "report_type": "yearly",
+    "generated_at_utc": "2026-03-08T23:36:23Z",
+    "source": "bills_core"
+  },
+  "scope": {
+    "period_start": "2025-01",
+    "period_end": "2025-12",
+    "remark": "",
+    "data_found": true
+  },
+  "summary": {
+    "total_income": 134453.55000000002,
+    "total_expense": -16603.429999999997,
+    "balance": 117850.12000000002
+  },
+  "items": {
+    "categories": [],
+    "monthly_summary": [
+      {
+        "month": 1,
+        "income": 9586.68,
+        "expense": -1511.57,
+        "balance": 11098.25
+      },
+      {
+        "month": 2,
+        "income": 13962.87,
+        "expense": -1097.59,
+        "balance": 15060.460000000001
+      },
+      {
+        "month": 3,
+        "income": 10577.77,
+        "expense": -1310.69,
+        "balance": 11888.460000000001
+      },
+      {
+        "month": 4,
+        "income": 12205.52,
+        "expense": -1063.35,
+        "balance": 13268.87
+      },
+      {
+        "month": 5,
+        "income": 11117.2,
+        "expense": -1077.41,
+        "balance": 12194.61
+      },
+      {
+        "month": 6,
+        "income": 12937.66,
+        "expense": -1400.72,
+        "balance": 14338.38
+      },
+      {
+        "month": 7,
+        "income": 11237.27,
+        "expense": -1625.79,
+        "balance": 12863.060000000001
+      },
+      {
+        "month": 8,
+        "income": 12532.91,
+        "expense": -1412.12,
+        "balance": 13945.029999999999
+      },
+      {
+        "month": 9,
+        "income": 9812.19,
+        "expense": -1407.08,
+        "balance": 11219.27
+      },
+      {
+        "month": 10,
+        "income": 9744.44,
+        "expense": -1664.71,
+        "balance": 11409.150000000001
+      },
+      {
+        "month": 11,
+        "income": 12615.74,
+        "expense": -1602.97,
+        "balance": 14218.71
+      },
+      {
+        "month": 12,
+        "income": 8123.3,
+        "expense": -1429.43,
+        "balance": 9552.73
+      }
+    ]
+  },
+  "extensions": {}
+}

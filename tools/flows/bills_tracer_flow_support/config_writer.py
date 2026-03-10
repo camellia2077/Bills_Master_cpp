@@ -4,21 +4,24 @@ from pathlib import Path
 
 FORMAT_CONFIG = {
     "json": {
-        "cmake_option": "",
+        "cmake_option": "BILLS_CORE_ENABLE_RENDERER_JSON",
     },
     "md": {
-        "cmake_option": "ENABLE_FMT_MD",
+        "cmake_option": "BILLS_CORE_ENABLE_RENDERER_MD",
     },
     "rst": {
-        "cmake_option": "ENABLE_FMT_RST",
+        "cmake_option": "BILLS_CORE_ENABLE_RENDERER_RST",
     },
     "tex": {
-        "cmake_option": "ENABLE_FMT_TEX",
+        "cmake_option": "BILLS_CORE_ENABLE_RENDERER_TEX",
+    },
+    "typ": {
+        "cmake_option": "BILLS_CORE_ENABLE_RENDERER_TYP",
     },
 }
 RUNTIME_EXPORT_FORMATS_FILENAME = "export_formats.toml"
-CLEANUP_FILES = ["bills.sqlite3"]
-CLEANUP_DIRS = ["dist", "config", "output"]
+CLEANUP_FILES: list[str] = []
+CLEANUP_DIRS = ["db", "cache", "exports", "logs", "record_templates", "config", "notices"]
 
 
 def parse_formats(raw_formats: str) -> list[str]:
@@ -43,8 +46,6 @@ def cmake_format_defines(formats: list[str]) -> list[str]:
     defines: list[str] = []
     for fmt, cfg in FORMAT_CONFIG.items():
         option = cfg["cmake_option"]
-        if not option:
-            continue
         defines.append(f"-D{option}={'ON' if fmt in enabled else 'OFF'}")
     return defines
 

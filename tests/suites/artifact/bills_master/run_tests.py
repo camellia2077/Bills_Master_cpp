@@ -23,7 +23,9 @@ TestPreparer: Any = None
 DateExportTasks: Any = None
 ExportTasks: Any = None
 ImportTasks: Any = None
+MetadataTasks: Any = None
 QueryTasks: Any = None
+RecordTasks: Any = None
 
 
 def _bootstrap_imports() -> None:
@@ -35,14 +37,16 @@ def _bootstrap_imports() -> None:
     global DateExportTasks
     global ExportTasks
     global ImportTasks
+    global MetadataTasks
     global QueryTasks
+    global RecordTasks
 
     build_layout = importlib.import_module("tools.toolchain.services.build_layout")
-    framework_config = importlib.import_module("framework._test_internal.app_config")
-    framework_constants = importlib.import_module("framework._test_internal.constants")
-    executor_module = importlib.import_module("framework._test_internal.executor")
-    preparer_module = importlib.import_module("framework._test_internal.preparer")
-    tasks_module = importlib.import_module("framework._test_internal.tasks")
+    framework_config = importlib.import_module("framework.internal.app_config")
+    framework_constants = importlib.import_module("framework.internal.constants")
+    executor_module = importlib.import_module("framework.internal.executor")
+    preparer_module = importlib.import_module("framework.internal.preparer")
+    tasks_module = importlib.import_module("framework.internal.tasks")
 
     resolve_artifact_project_root = build_layout.resolve_artifact_project_root
     config = framework_config
@@ -52,7 +56,9 @@ def _bootstrap_imports() -> None:
     DateExportTasks = tasks_module.DateExportTasks
     ExportTasks = tasks_module.ExportTasks
     ImportTasks = tasks_module.ImportTasks
+    MetadataTasks = tasks_module.MetadataTasks
     QueryTasks = tasks_module.QueryTasks
+    RecordTasks = tasks_module.RecordTasks
 
 
 _bootstrap_imports()
@@ -63,6 +69,7 @@ FORMAT_OUTPUT_SPECS = {
     "md": ("Markdown_bills", ".md"),
     "tex": ("LaTeX_bills", ".tex"),
     "rst": ("reST_bills", ".rst"),
+    "typ": ("Typst_bills", ".typ"),
 }
 
 
@@ -115,11 +122,36 @@ def resolve_summary_path(project_output_root: Path) -> Path:
     return project_output_root / "latest" / SUMMARY_FILENAME
 
 
+def prepare_run_output_root(run_output_root: Path, summary_path: Path) -> None:
+    cleanup_dirs = [
+        run_output_root / "cache",
+        run_output_root / "exports",
+        run_output_root / "logs",
+        run_output_root / "record_templates",
+        run_output_root / "txt2josn",
+        run_output_root / "exported_files",
+    ]
+    cleanup_files = [
+        run_output_root / "test_python_output.log",
+        run_output_root / "run_manifest.json",
+        summary_path,
+    ]
+
+    for directory in cleanup_dirs:
+        if directory.exists():
+            shutil.rmtree(directory)
+    for file_path in cleanup_files:
+        if file_path.exists():
+            file_path.unlink()
+
+
 def archive_project_outputs(run_output_root: Path, runtime_base_dir: Path) -> None:
-    shared_output_root = runtime_base_dir / "output"
     mappings = [
-        (shared_output_root / "txt2josn", run_output_root / "txt2josn"),
-        (shared_output_root / "exported_files", run_output_root / "exported_files"),
+        (
+            runtime_base_dir / "cache" / "txt2json",
+            run_output_root / "cache" / "txt2json",
+        ),
+        (runtime_base_dir / "exports", run_output_root / "exports"),
     ]
     for source_dir, target_dir in mappings:
         if not source_dir.exists():
@@ -131,9 +163,9 @@ def archive_project_outputs(run_output_root: Path, runtime_base_dir: Path) -> No
 
 
 def validate_export_outputs(run_output_root: Path) -> list[str]:
-    exported_root = run_output_root / "exported_files"
+    exported_root = run_output_root / "exports"
     if not exported_root.exists():
-        return [f"missing exported_files directory: {exported_root}"]
+        return [f"missing exports directory: {exported_root}"]
 
     errors: list[str] = []
     for fmt in config.EXPORT_FORMATS:
@@ -165,10 +197,12 @@ def main():
     print(f"[TEST_START] {datetime.now().isoformat(timespec='seconds')}")
 
     runtime_base_dir = resolve_runtime_base_dir()
+    os.environ["BILLS_TRACER_RUNTIME_WORKSPACE_DIR"] = str(runtime_base_dir)
     test_root = str(runtime_base_dir)
     project_output_root = resolve_artifact_project_root(REPO_ROOT, config.OUTPUT_PROJECT)
     run_output_root = resolve_run_output_root(project_output_root)
     summary_path = resolve_summary_path(project_output_root)
+    prepare_run_output_root(run_output_root, summary_path)
     preparer = TestPreparer(test_root)
 
     # --- 步骤 1: 清理环境 (根据开关决定是否执行) ---
@@ -279,6 +313,8 @@ def run_test_sequence(runtime_base_dir: Path, preparer, run_output_root: Path):
     querier = QueryTasks(executor)
     exporter = ExportTasks(executor)
     date_exporter = DateExportTasks(executor)
+    metadata_tasks = MetadataTasks(executor)
+    record_tasks = RecordTasks(executor, config.BILLS_DIR, str(run_output_root))
 
     # --- 执行测试序列 ---
     print(f"\n{constants.CYAN}========== Starting Test Sequence =========={constants.RESET}")
@@ -291,6 +327,10 @@ def run_test_sequence(runtime_base_dir: Path, preparer, run_output_root: Path):
             final_result = exporter.run()
         else:
             final_result = date_exporter.run()
+    if final_result:
+        final_result = metadata_tasks.run()
+    if final_result:
+        final_result = record_tasks.run()
 
     # --- 报告最终结果 ---
     if final_result:

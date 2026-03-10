@@ -29,6 +29,11 @@ class ValidationResult {
    */
   bool has_errors() const;
 
+  [[nodiscard]] auto error_messages() const -> const std::vector<std::string>&;
+
+  [[nodiscard]] auto warning_messages() const
+      -> const std::vector<std::string>&;
+
   /**
    * @brief 保留兼容 API；core 默认静默，不执行控制台输出。
    */

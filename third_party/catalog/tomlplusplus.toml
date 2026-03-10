@@ -1,0 +1,5 @@
+package_id = "tomlplusplus"
+display_name = "tomlplusplus"
+homepage = "https://github.com/marzer/tomlplusplus"
+license_spdx = "MIT"
+license_text_relpath = "third_party/texts/mit/LICENSE.txt"
