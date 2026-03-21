@@ -24,6 +24,7 @@ namespace constants {
 inline constexpr const char* kAbiVersion = "1.0.0";
 inline constexpr const char* kValidatorConfigName = "validator_config.toml";
 inline constexpr const char* kModifierConfigName = "modifier_config.toml";
+inline constexpr const char* kExportFormatsConfigName = "export_formats.toml";
 inline constexpr const char* kDefaultConvertOutputDir = "cache/txt2json";
 inline constexpr int kResponseSchemaVersion = 2;
 inline constexpr int kCapabilitiesSchemaVersion = 1;
@@ -83,6 +84,9 @@ auto handle_template_generate_command(const Json& request) -> std::string;
 auto handle_record_preview_command(const Json& request) -> std::string;
 auto handle_config_inspect_command(const Json& request) -> std::string;
 auto handle_list_periods_command(const Json& request) -> std::string;
+auto handle_validate_config_bundle_command(const Json& request) -> std::string;
+auto handle_validate_record_batch_command(const Json& request) -> std::string;
+auto handle_preflight_import_command(const Json& request) -> std::string;
 
 }  // namespace bills::core::abi
 

@@ -7,45 +7,31 @@
 #include <string>
 
 #include "reports/standard_json/standard_report_dto.hpp"
+#include "standard_report_render_support.hpp"
 
 namespace {
-
-auto parse_period_month(const std::string& period_start, int& year, int& month)
-    -> bool {
-  if (period_start.size() < 7U || period_start[4] != '-') {
-    return false;
-  }
-  try {
-    year = std::stoi(period_start.substr(0U, 4U));
-    month = std::stoi(period_start.substr(5U, 2U));
-  } catch (...) {
-    return false;
-  }
-  return month >= 1 && month <= 12;
-}
+namespace render_support = bills::reports::render_support;
 
 auto render_monthly(const StandardReport& report) -> std::string {
-  int year = 0;
-  int month = 0;
-  const bool parsed_period = parse_period_month(report.period_start, year, month);
-  const std::string year_text =
-      parsed_period ? std::to_string(year) : report.period_start.substr(0U, 4U);
-  const std::string month_text =
-      parsed_period ? std::to_string(month) : report.period_start;
+  const std::string period_label =
+      render_support::FormatMonthlyPeriodLabel(report.period_start);
+  const std::string title = render_support::MonthlyTitleText(report.period_start);
 
   if (!report.data_found) {
-    return "未找到 " + year_text + "年" + month_text + "月的任何数据。\n";
+    return "未找到 " + period_label + " 的任何数据。\n";
   }
 
-  const std::string title = year_text + "年" + month_text + "月 消费报告";
   std::ostringstream output;
   output << std::fixed << std::setprecision(2);
   output << title << "\n";
   output << std::string(title.length() * 2, '=') << "\n\n";
-  output << "总收入: CNY" << report.total_income << "\n";
-  output << "总支出: CNY" << report.total_expense << "\n";
-  output << "结余: CNY" << report.balance << "\n";
-  output << "备注: " << report.remark << "\n\n";
+  output << "总览\n";
+  output << "----\n\n";
+  output << "- 收入: CNY" << report.total_income << "\n";
+  output << "- 支出: CNY" << report.total_expense << "\n";
+  output << "- 结余: CNY" << report.balance << "\n";
+  output << "- 备注: " << render_support::MonthlyRemarkOrDash(report.remark)
+         << "\n\n";
 
   for (const auto& category : report.categories) {
     output << category.name << "\n";

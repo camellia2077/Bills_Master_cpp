@@ -1,10 +1,13 @@
 package com.billstracer.android.data
 
 import android.content.Context
+import android.net.Uri
+import androidx.documentfile.provider.DocumentFile
 import com.billstracer.android.BuildConfig
 import com.billstracer.android.model.AppEnvironment
 import com.billstracer.android.model.BundledConfigFile
 import com.billstracer.android.model.BundledNotices
+import com.billstracer.android.model.ExportedRecordFilesResult
 import com.billstracer.android.model.ImportResult
 import com.billstracer.android.model.InvalidRecordFile
 import com.billstracer.android.model.ListedRecordPeriodsResult
@@ -30,6 +33,8 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class BillsNativeRepository(
     context: Context,
@@ -85,30 +90,30 @@ class BillsNativeRepository(
         val env = initialize()
         parseImportResult(
             BillsNativeBindings.importBundledSampleNative(
-                env.bundledSampleFile.absolutePath,
+                env.bundledSampleInputPath.absolutePath,
                 env.configRoot.absolutePath,
                 env.dbFile.absolutePath,
             ),
         )
     }
 
-    override suspend fun queryBundledYear(): QueryResult = withContext(Dispatchers.IO) {
+    override suspend fun queryYear(isoYear: String): QueryResult = withContext(Dispatchers.IO) {
         val env = initialize()
         parseQueryResult(
             rawJson = BillsNativeBindings.queryYearNative(
                 env.dbFile.absolutePath,
-                env.bundledSampleYear,
+                isoYear,
             ),
             type = QueryType.YEAR,
         )
     }
 
-    override suspend fun queryBundledMonth(): QueryResult = withContext(Dispatchers.IO) {
+    override suspend fun queryMonth(isoMonth: String): QueryResult = withContext(Dispatchers.IO) {
         val env = initialize()
         parseQueryResult(
             rawJson = BillsNativeBindings.queryMonthNative(
                 env.dbFile.absolutePath,
-                env.bundledSampleMonth,
+                isoMonth,
             ),
             type = QueryType.MONTH,
         )
@@ -182,6 +187,87 @@ class BillsNativeRepository(
         )
     }
 
+    override suspend fun clearRecordFiles(): Int = withContext(Dispatchers.IO) {
+        val env = initialize()
+        val txtFiles = env.recordsRoot.walkTopDown()
+            .filter { file -> file.isFile && file.extension.equals("txt", ignoreCase = true) }
+            .toList()
+        txtFiles.forEach { file -> file.delete() }
+        env.recordsRoot.walkBottomUp()
+            .filter { file -> file.isDirectory && file != env.recordsRoot }
+            .forEach { directory ->
+                if (directory.listFiles().isNullOrEmpty()) {
+                    directory.delete()
+                }
+        }
+        txtFiles.size
+    }
+
+    override suspend fun exportRecordFiles(targetDirectoryUri: Uri): ExportedRecordFilesResult = withContext(Dispatchers.IO) {
+        val env = initialize()
+        val txtFiles = env.recordsRoot.walkTopDown()
+            .filter { file -> file.isFile && file.extension.equals("txt", ignoreCase = true) }
+            .filterNot { file -> file.hasHiddenRelativePath(recordsRoot = env.recordsRoot) }
+            .sortedBy { file -> file.relativeTo(env.recordsRoot).invariantSeparatorsPath }
+            .toList()
+        val configFiles = env.configRoot.walkTopDown()
+            .filter { file -> file.isFile && file.extension.equals("toml", ignoreCase = true) }
+            .filterNot { file -> file.hasHiddenRelativePath(recordsRoot = env.configRoot) }
+            .sortedBy { file -> file.relativeTo(env.configRoot).invariantSeparatorsPath }
+            .toList()
+
+        if (txtFiles.isEmpty() && configFiles.isEmpty()) {
+            return@withContext ExportedRecordFilesResult(
+                exportedRecordFiles = 0,
+                exportedConfigFiles = 0,
+            )
+        }
+
+        val selectedDirectory = DocumentFile.fromTreeUri(applicationContext, targetDirectoryUri)
+            ?: error("Failed to open the selected export folder.")
+        require(selectedDirectory.isDirectory) {
+            "The selected export folder is not a directory."
+        }
+        require(selectedDirectory.canWrite()) {
+            "The selected export folder is not writable."
+        }
+        val exportFolderName = buildExportFolderName()
+        val exportRoot = createUniqueChildDirectory(
+            parent = selectedDirectory,
+            baseName = exportFolderName,
+        )
+        try {
+            txtFiles.forEach { sourceFile ->
+                exportWorkspaceFile(
+                    sourceFile = sourceFile,
+                    exportRoot = exportRoot,
+                    bundleSection = "records",
+                    relativePath = sourceFile.relativeTo(env.recordsRoot).invariantSeparatorsPath,
+                )
+            }
+            configFiles.forEach { sourceFile ->
+                exportWorkspaceFile(
+                    sourceFile = sourceFile,
+                    exportRoot = exportRoot,
+                    bundleSection = "config",
+                    relativePath = sourceFile.relativeTo(env.configRoot).invariantSeparatorsPath,
+                )
+            }
+        } catch (error: Throwable) {
+            exportRoot.deleteRecursively()
+            throw error
+        }
+
+        ExportedRecordFilesResult(
+            exportedRecordFiles = txtFiles.size,
+            exportedConfigFiles = configFiles.size,
+            destinationDisplayPath = buildDestinationDisplayPath(
+                selectedDirectory = selectedDirectory,
+                exportRoot = exportRoot,
+            ),
+        )
+    }
+
     override suspend fun clearDatabase(): Boolean = withContext(Dispatchers.IO) {
         val env = initialize()
         assetBundleManager.clearDatabaseFiles(env.dbFile)
@@ -190,7 +276,7 @@ class BillsNativeRepository(
     private suspend fun prepareEnvironment(): AppEnvironment {
         val workspace = assetBundleManager.materializeWorkspace()
         return AppEnvironment(
-            bundledSampleFile = workspace.bundledSampleFile,
+            bundledSampleInputPath = workspace.bundledSampleInputPath,
             bundledSampleLabel = BuildConfig.BUNDLED_SAMPLE_LABEL,
             bundledSampleYear = BuildConfig.BUNDLED_SAMPLE_YEAR,
             bundledSampleMonth = BuildConfig.BUNDLED_SAMPLE_MONTH,
@@ -366,6 +452,119 @@ class BillsNativeRepository(
 
     private fun JsonObject.double(key: String): Double =
         this[key]?.jsonPrimitive?.doubleOrNull ?: 0.0
+
+    private fun buildExportFolderName(): String {
+        val timestamp = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
+            .format(LocalDateTime.now())
+        return "workspace_export_$timestamp"
+    }
+
+    private fun buildDestinationDisplayPath(
+        selectedDirectory: DocumentFile,
+        exportRoot: DocumentFile,
+    ): String {
+        val selectedFolderLabel = selectedDirectory.name?.takeIf { it.isNotBlank() } ?: "selected folder"
+        val exportFolderLabel = exportRoot.name?.takeIf { it.isNotBlank() } ?: "workspace export"
+        return "$selectedFolderLabel/$exportFolderLabel"
+    }
+
+    private fun exportWorkspaceFile(
+        sourceFile: File,
+        exportRoot: DocumentFile,
+        bundleSection: String,
+        relativePath: String,
+    ) {
+        val resolver = applicationContext.contentResolver
+        var destinationDirectory = ensureChildDirectory(exportRoot, bundleSection)
+        val pathSegments = relativePath.split('/').filter { it.isNotBlank() }
+        require(pathSegments.isNotEmpty()) {
+            "Invalid export relative path: $relativePath"
+        }
+        pathSegments.dropLast(1).forEach { pathSegment ->
+            destinationDirectory = ensureChildDirectory(destinationDirectory, pathSegment)
+        }
+        val destinationFileName = pathSegments.last()
+        destinationDirectory.findFile(destinationFileName)?.let { existingFile ->
+            require(!existingFile.isDirectory) {
+                "Export destination already contains a directory named '$destinationFileName'."
+            }
+            require(existingFile.delete()) {
+                "Failed to replace existing export file '$destinationFileName'."
+            }
+        }
+        val destinationFile = destinationDirectory.createFile(
+            exportMimeTypeFor(sourceFile),
+            destinationFileName,
+        ) ?: error("Failed to create export destination for $relativePath.")
+        try {
+            resolver.openOutputStream(destinationFile.uri)?.use { outputStream ->
+                sourceFile.inputStream().use { inputStream ->
+                    inputStream.copyTo(outputStream)
+                }
+            } ?: error("Failed to open export destination for $relativePath.")
+        } catch (error: Throwable) {
+            destinationFile.delete()
+            throw error
+        }
+    }
+
+    private fun createUniqueChildDirectory(
+        parent: DocumentFile,
+        baseName: String,
+    ): DocumentFile {
+        repeat(100) { index ->
+            val candidateName = if (index == 0) {
+                baseName
+            } else {
+                "${baseName}_$index"
+            }
+            val existing = parent.findFile(candidateName)
+            if (existing == null) {
+                return parent.createDirectory(candidateName)
+                    ?: error("Failed to create export folder '$candidateName'.")
+            }
+            if (existing.isDirectory && existing.listFiles().isEmpty()) {
+                return existing
+            }
+        }
+        error("Failed to allocate a unique export folder in the selected directory.")
+    }
+
+    private fun ensureChildDirectory(
+        parent: DocumentFile,
+        directoryName: String,
+    ): DocumentFile {
+        val existing = parent.findFile(directoryName)
+        if (existing != null) {
+            require(existing.isDirectory) {
+                "Export destination already contains a file named '$directoryName'."
+            }
+            return existing
+        }
+        return parent.createDirectory(directoryName)
+            ?: error("Failed to create export subdirectory '$directoryName'.")
+    }
+
+    private fun DocumentFile.deleteRecursively() {
+        if (isDirectory) {
+            listFiles().forEach { child ->
+                child.deleteRecursively()
+            }
+        }
+        delete()
+    }
+
+    private fun File.hasHiddenRelativePath(recordsRoot: File): Boolean =
+        relativeTo(recordsRoot)
+            .invariantSeparatorsPath
+            .split('/')
+            .any { segment -> segment.startsWith(".") }
+
+    private fun exportMimeTypeFor(sourceFile: File): String =
+        when (sourceFile.extension.lowercase()) {
+            "toml" -> "application/toml"
+            else -> "text/plain"
+        }
 
     private fun recordFileForPeriod(recordsRoot: File, period: String): File {
         val year = period.substringBefore('-', missingDelimiterValue = period)

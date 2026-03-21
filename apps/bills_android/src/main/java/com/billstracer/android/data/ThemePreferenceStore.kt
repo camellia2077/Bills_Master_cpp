@@ -6,8 +6,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.billstracer.android.model.ThemeColor
 import com.billstracer.android.model.ThemeMode
-import com.billstracer.android.model.ThemePalette
 import com.billstracer.android.model.ThemePreferences
 import kotlinx.coroutines.flow.first
 
@@ -26,21 +26,23 @@ internal class ThemePreferenceStore(
             mode = preferences[themeModeKey]
                 ?.let { rawValue -> rawValue.valueOfOrNull<ThemeMode>() }
                 ?: ThemeMode.SYSTEM,
-            palette = preferences[themePaletteKey]
-                ?.let { rawValue -> rawValue.valueOfOrNull<ThemePalette>() }
-                ?: ThemePalette.EMBER,
+            color = preferences[themeColorKey]
+                ?.let { rawValue -> rawValue.valueOfOrNull<ThemeColor>() }
+                ?: ThemeColor.SLATE,
         )
     }
 
     suspend fun save(themePreferences: ThemePreferences): ThemePreferences {
         dataStore.edit { preferences ->
             preferences[themeModeKey] = themePreferences.mode.name
-            preferences[themePaletteKey] = themePreferences.palette.name
+            preferences[themeColorKey] = themePreferences.color.name
+            preferences.remove(themePaletteKey)
         }
         return themePreferences
     }
 
     private companion object {
+        val themeColorKey = stringPreferencesKey("theme_color")
         val themeModeKey = stringPreferencesKey("theme_mode")
         val themePaletteKey = stringPreferencesKey("theme_palette")
 

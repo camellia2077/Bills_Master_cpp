@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.billstracer.android.data.BillsNativeRepository
+import com.billstracer.android.model.ThemeColor
 import com.billstracer.android.model.ThemeMode
-import com.billstracer.android.model.ThemePalette
 import com.billstracer.android.model.ThemePreferences
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -22,10 +22,12 @@ class BillsNativeRepositoryInstrumentedTest {
         val environment = repository.initialize()
 
         val imported = repository.importBundledSample()
-        val yearResult = repository.queryBundledYear()
+        val yearResult = repository.queryYear(environment.bundledSampleYear)
 
-        assertTrue(imported.processed >= 1)
-        assertTrue(environment.bundledSampleFile.exists())
+        assertEquals(12, imported.processed)
+        assertEquals(12, imported.imported)
+        assertTrue(environment.bundledSampleInputPath.exists())
+        assertTrue(environment.bundledSampleInputPath.isDirectory)
         assertEquals("2025", environment.bundledSampleYear)
         assertEquals("0.4.2", environment.coreVersion.versionName)
         assertEquals("2026-03-10", environment.coreVersion.lastUpdated)
@@ -78,8 +80,8 @@ class BillsNativeRepositoryInstrumentedTest {
         val repository = BillsNativeRepository(context)
         val originalTheme = repository.initialize().themePreferences
         val updatedTheme = ThemePreferences(
+            color = ThemeColor.EMERALD,
             mode = ThemeMode.DARK,
-            palette = ThemePalette.HARBOR,
         )
 
         try {

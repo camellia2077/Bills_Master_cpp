@@ -1,9 +1,11 @@
 package com.billstracer.android.ui
 
+import android.net.Uri
 import com.billstracer.android.data.BillsRepository
 import com.billstracer.android.model.AppEnvironment
 import com.billstracer.android.model.BundledConfigFile
 import com.billstracer.android.model.BundledNotices
+import com.billstracer.android.model.ExportedRecordFilesResult
 import com.billstracer.android.model.ImportResult
 import com.billstracer.android.model.InvalidRecordFile
 import com.billstracer.android.model.ListedRecordPeriodsResult
@@ -12,8 +14,8 @@ import com.billstracer.android.model.QueryType
 import com.billstracer.android.model.RecordEditorDocument
 import com.billstracer.android.model.RecordPreviewFile
 import com.billstracer.android.model.RecordPreviewResult
+import com.billstracer.android.model.ThemeColor
 import com.billstracer.android.model.ThemeMode
-import com.billstracer.android.model.ThemePalette
 import com.billstracer.android.model.ThemePreferences
 import com.billstracer.android.model.VersionInfo
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +55,7 @@ class BillsViewModelTest {
         advanceUntilIdle()
 
         assertEquals(false, viewModel.uiState.value.isInitializing)
-        assertEquals("2025-01", viewModel.uiState.value.bundledSampleLabel)
+        assertEquals("2025 full-year sample", viewModel.uiState.value.bundledSampleLabel)
         assertEquals("2025", viewModel.uiState.value.bundledSampleYear)
         assertEquals("2025-01", viewModel.uiState.value.bundledSampleMonth)
         assertEquals(3, viewModel.uiState.value.bundledConfigs.size)
@@ -62,11 +64,16 @@ class BillsViewModelTest {
             viewModel.uiState.value.bundledConfigs.last().fileName,
         )
         assertEquals(ThemeMode.SYSTEM, viewModel.uiState.value.themePreferences.mode)
-        assertEquals(ThemePalette.EMBER, viewModel.uiState.value.themePreferences.palette)
+        assertEquals(ThemeColor.SLATE, viewModel.uiState.value.themePreferences.color)
         assertEquals(true, viewModel.uiState.value.bundledNotices?.markdownText?.contains("Open Source Notices"))
         assertEquals("0.4.2", viewModel.uiState.value.coreVersion?.versionName)
-        assertEquals("0.1.0", viewModel.uiState.value.androidVersion?.versionName)
+        assertEquals("0.1.1", viewModel.uiState.value.androidVersion?.versionName)
+        assertEquals(YearMonth.now().year.toString(), viewModel.uiState.value.recordPeriodYearInput)
+        assertEquals("%02d".format(YearMonth.now().monthValue), viewModel.uiState.value.recordPeriodMonthInput)
         assertTrue(viewModel.uiState.value.recordPeriodInput.matches(Regex("""\d{4}-\d{2}""")))
+        assertEquals("2025", viewModel.uiState.value.queryYearInput)
+        assertEquals("2025", viewModel.uiState.value.queryPeriodYearInput)
+        assertEquals("01", viewModel.uiState.value.queryPeriodMonthInput)
         assertNotNull(viewModel.uiState.value.statusMessage)
     }
 
@@ -78,7 +85,7 @@ class BillsViewModelTest {
         viewModel.importBundledSample()
         advanceUntilIdle()
 
-        assertEquals(1, viewModel.uiState.value.importResult?.imported)
+        assertEquals(12, viewModel.uiState.value.importResult?.imported)
     }
 
     @Test
@@ -97,13 +104,45 @@ class BillsViewModelTest {
 
     @Test
     fun runBundledMonthQueryStoresResult() = runTest {
-        val viewModel = BillsViewModel(FakeBillsRepository())
+        val repository = FakeBillsRepository()
+        val viewModel = BillsViewModel(repository)
         advanceUntilIdle()
 
+        viewModel.updateQueryPeriodYearInput("2025")
+        viewModel.updateQueryPeriodMonthInput("03")
         viewModel.runBundledMonthQuery()
         advanceUntilIdle()
 
         assertEquals(QueryType.MONTH, viewModel.uiState.value.queryResult?.type)
+        assertEquals("2025-03", repository.lastQueriedMonth)
+    }
+
+    @Test
+    fun runBundledYearQueryUsesEditableInput() = runTest {
+        val repository = FakeBillsRepository()
+        val viewModel = BillsViewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.updateQueryYearInput("2024")
+        viewModel.runBundledYearQuery()
+        advanceUntilIdle()
+
+        assertEquals(QueryType.YEAR, viewModel.uiState.value.queryResult?.type)
+        assertEquals("2024", repository.lastQueriedYear)
+    }
+
+    @Test
+    fun invalidQueryYearDoesNotRun() = runTest {
+        val repository = FakeBillsRepository()
+        val viewModel = BillsViewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.updateQueryYearInput("24")
+        viewModel.runBundledYearQuery()
+        advanceUntilIdle()
+
+        assertEquals(null, repository.lastQueriedYear)
+        assertEquals("Year query must use 4 digits.", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -111,13 +150,31 @@ class BillsViewModelTest {
         val viewModel = BillsViewModel(FakeBillsRepository())
         advanceUntilIdle()
 
-        viewModel.updateRecordPeriodInput("2026-03")
+        viewModel.updateRecordPeriodYearInput("2026")
+        viewModel.updateRecordPeriodMonthInput("03")
         viewModel.openRecordPeriod()
         advanceUntilIdle()
 
         assertEquals("2026-03", viewModel.uiState.value.activeRecordDocument?.period)
         assertEquals(false, viewModel.uiState.value.activeRecordDocument?.persisted)
         assertTrue(viewModel.uiState.value.recordDraftText.contains("date:2026-03"))
+    }
+
+    @Test
+    fun invalidManualRecordMonthDoesNotOpenRecord() = runTest {
+        val viewModel = BillsViewModel(FakeBillsRepository())
+        advanceUntilIdle()
+
+        viewModel.updateRecordPeriodYearInput("2026")
+        viewModel.updateRecordPeriodMonthInput("13")
+        viewModel.openRecordPeriod()
+        advanceUntilIdle()
+
+        assertEquals(null, viewModel.uiState.value.activeRecordDocument)
+        assertEquals(
+            "Manual period must use YYYY-MM, and month must be between 01 and 12.",
+            viewModel.uiState.value.errorMessage,
+        )
     }
 
     @Test
@@ -201,6 +258,27 @@ class BillsViewModelTest {
     }
 
     @Test
+    fun clearRecordFilesRemovesSavedTxtAndResetsRecordUiState() = runTest {
+        val repository = FakeBillsRepository().apply {
+            savedRecords["2026-03"] = "date:2026-03\nremark:\n"
+        }
+        val viewModel = BillsViewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.updateRecordPeriodInput("2026-03")
+        viewModel.openRecordPeriod()
+        advanceUntilIdle()
+        viewModel.clearRecordFiles()
+        advanceUntilIdle()
+
+        assertEquals(0, repository.savedRecords.size)
+        assertEquals(null, viewModel.uiState.value.activeRecordDocument)
+        assertEquals("", viewModel.uiState.value.recordDraftText)
+        assertEquals("Cleared 1 TXT record file(s).", viewModel.uiState.value.statusMessage)
+        assertEquals(emptyList<String>(), viewModel.uiState.value.listedRecordPeriods?.periods)
+    }
+
+    @Test
     fun saveSelectedConfigPersistsEditedToml() = runTest {
         val repository = FakeBillsRepository()
         val viewModel = BillsViewModel(repository)
@@ -263,12 +341,12 @@ class BillsViewModelTest {
         advanceUntilIdle()
 
         viewModel.updateThemeModeDraft(ThemeMode.DARK)
-        viewModel.updateThemePaletteDraft(ThemePalette.HARBOR)
+        viewModel.updateThemeColorDraft(ThemeColor.EMERALD)
 
         assertEquals(ThemeMode.SYSTEM, repository.savedTheme.mode)
-        assertEquals(ThemePalette.EMBER, repository.savedTheme.palette)
+        assertEquals(ThemeColor.SLATE, repository.savedTheme.color)
         assertEquals(ThemeMode.DARK, viewModel.uiState.value.themeDraft.mode)
-        assertEquals(ThemePalette.HARBOR, viewModel.uiState.value.themeDraft.palette)
+        assertEquals(ThemeColor.EMERALD, viewModel.uiState.value.themeDraft.color)
     }
 
     @Test
@@ -278,13 +356,13 @@ class BillsViewModelTest {
         advanceUntilIdle()
 
         viewModel.updateThemeModeDraft(ThemeMode.DARK)
-        viewModel.updateThemePaletteDraft(ThemePalette.HARBOR)
+        viewModel.updateThemeColorDraft(ThemeColor.EMERALD)
         viewModel.applyThemeDraft()
         advanceUntilIdle()
 
-        assertEquals("Applied theme Harbor.", viewModel.uiState.value.statusMessage)
+        assertEquals("Applied Emerald in Dark mode.", viewModel.uiState.value.statusMessage)
         assertEquals(ThemeMode.DARK, repository.savedTheme.mode)
-        assertEquals(ThemePalette.HARBOR, repository.savedTheme.palette)
+        assertEquals(ThemeColor.EMERALD, repository.savedTheme.color)
         assertEquals(repository.savedTheme, viewModel.uiState.value.themePreferences)
         assertEquals(repository.savedTheme, viewModel.uiState.value.themeDraft)
     }
@@ -298,10 +376,12 @@ private class FakeBillsRepository : BillsRepository {
     )
     val savedRecords = linkedMapOf<String, String>()
     var savedTheme = ThemePreferences()
+    var lastQueriedYear: String? = null
+    var lastQueriedMonth: String? = null
 
     override suspend fun initialize(): AppEnvironment = AppEnvironment(
-        bundledSampleFile = File("samples/2025-01.txt"),
-        bundledSampleLabel = "2025-01",
+        bundledSampleInputPath = File("samples/2025"),
+        bundledSampleLabel = "2025 full-year sample",
         bundledSampleYear = "2025",
         bundledSampleMonth = "2025-01",
         configRoot = File("config"),
@@ -312,8 +392,8 @@ private class FakeBillsRepository : BillsRepository {
             lastUpdated = "2026-03-10",
         ),
         androidVersion = VersionInfo(
-            versionName = "0.1.0",
-            versionCode = 1,
+            versionName = "0.1.1",
+            versionCode = 2,
         ),
         bundledConfigs = savedConfigs.map { (fileName, rawText) ->
             BundledConfigFile(fileName, rawText)
@@ -341,45 +421,51 @@ private class FakeBillsRepository : BillsRepository {
     override suspend fun importBundledSample(): ImportResult = ImportResult(
         ok = true,
         code = "ok",
-        message = "2025-01",
-        processed = 1,
-        success = 1,
+        message = "2025 full-year sample",
+        processed = 12,
+        success = 12,
         failure = 0,
-        imported = 1,
+        imported = 12,
         rawJson = """{"ok":true}""",
     )
 
-    override suspend fun queryBundledYear(): QueryResult = QueryResult(
+    override suspend fun queryYear(isoYear: String): QueryResult {
+        lastQueriedYear = isoYear
+        return QueryResult(
         ok = true,
-        message = "2025",
+        message = isoYear,
         type = QueryType.YEAR,
-        year = 2025,
+        year = isoYear.toIntOrNull(),
         month = null,
         matchedBills = 1,
         totalIncome = 10.0,
         totalExpense = -5.0,
         balance = 5.0,
         monthlySummary = emptyList(),
-        standardReportMarkdown = "# 2025",
+        standardReportMarkdown = "# $isoYear",
         standardReportJson = "{}",
         rawJson = """{"ok":true}""",
     )
+    }
 
-    override suspend fun queryBundledMonth(): QueryResult = QueryResult(
+    override suspend fun queryMonth(isoMonth: String): QueryResult {
+        lastQueriedMonth = isoMonth
+        return QueryResult(
         ok = true,
-        message = "2025-01",
+        message = isoMonth,
         type = QueryType.MONTH,
-        year = 2025,
-        month = 1,
+        year = isoMonth.substringBefore('-').toIntOrNull(),
+        month = isoMonth.substringAfter('-').toIntOrNull(),
         matchedBills = 1,
         totalIncome = 10.0,
         totalExpense = -5.0,
         balance = 5.0,
         monthlySummary = emptyList(),
-        standardReportMarkdown = "# 2025-01",
+        standardReportMarkdown = "# $isoMonth",
         standardReportJson = "{}",
         rawJson = """{"ok":true}""",
     )
+    }
 
     override suspend fun openRecordPeriod(period: String): RecordEditorDocument {
         val persistedText = savedRecords[period]
@@ -445,6 +531,19 @@ private class FakeBillsRepository : BillsRepository {
         rawJson = """{"ok":true}""",
     )
 
+    override suspend fun clearRecordFiles(): Int {
+        val removed = savedRecords.size
+        savedRecords.clear()
+        return removed
+    }
+
+    override suspend fun exportRecordFiles(targetDirectoryUri: Uri): ExportedRecordFilesResult =
+        ExportedRecordFilesResult(
+            exportedRecordFiles = savedRecords.size,
+            exportedConfigFiles = savedConfigs.size,
+            destinationDisplayPath = targetDirectoryUri.toString(),
+        )
+
     override suspend fun clearDatabase(): Boolean = true
 }
 
@@ -470,6 +569,14 @@ private class FailingBillsRepository : BillsRepository by FakeBillsRepository() 
         imported = 0,
         rawJson = """{"ok":false}""",
     )
+
+    override suspend fun queryYear(isoYear: String): QueryResult {
+        error("year query not expected")
+    }
+
+    override suspend fun queryMonth(isoMonth: String): QueryResult {
+        error("month query not expected")
+    }
 
     override suspend fun openRecordPeriod(period: String): RecordEditorDocument {
         error("record open not expected")
@@ -500,4 +607,8 @@ private class FailingBillsRepository : BillsRepository by FakeBillsRepository() 
         invalidFiles = emptyList<InvalidRecordFile>(),
         rawJson = """{"ok":true}""",
     )
+
+    override suspend fun clearRecordFiles(): Int {
+        error("clear record files not expected")
+    }
 }

@@ -2,71 +2,25 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
-import shutil
+import sys
 from pathlib import Path
 
-SNAPSHOT_MATRIX = {
-    "monthly_md_2025_01": (
-        "Markdown_bills/months/2025/2025-01.md",
-        "monthly/2025-01.md",
-    ),
-    "monthly_json_2025_01": (
-        "standard_json/months/2025/2025-01.json",
-        "monthly/2025-01.json",
-    ),
-    "monthly_typ_2025_01": (
-        "Typst_bills/months/2025/2025-01.typ",
-        "monthly/2025-01.typ",
-    ),
-    "yearly_md_2025": (
-        "Markdown_bills/years/2025.md",
-        "yearly/2025.md",
-    ),
-    "yearly_json_2025": (
-        "standard_json/years/2025.json",
-        "yearly/2025.json",
-    ),
-    "yearly_typ_2025": (
-        "Typst_bills/years/2025.typ",
-        "yearly/2025.typ",
-    ),
-    "range_md_2025_03": (
-        "Markdown_bills/months/2025/2025-03.md",
-        "range/2025-03.md",
-    ),
-    "range_md_2025_04": (
-        "Markdown_bills/months/2025/2025-04.md",
-        "range/2025-04.md",
-    ),
-    "range_json_2025_03": (
-        "standard_json/months/2025/2025-03.json",
-        "range/2025-03.json",
-    ),
-    "range_json_2025_04": (
-        "standard_json/months/2025/2025-04.json",
-        "range/2025-04.json",
-    ),
-    "range_typ_2025_03": (
-        "Typst_bills/months/2025/2025-03.typ",
-        "range/2025-03.typ",
-    ),
-    "range_typ_2025_04": (
-        "Typst_bills/months/2025/2025-04.typ",
-        "range/2025-04.typ",
-    ),
-}
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-
-def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    digest.update(path.read_bytes())
-    return digest.hexdigest()
+from tools.verify.report_snapshot_support import (  # noqa: E402
+    SNAPSHOT_MATRIX,
+    compare_mode_for_manifest_item,
+    freeze_baseline_content,
+    sha256,
+    scope_for_manifest_item,
+)
 
 
 def main() -> int:
-    repo_root = Path(__file__).resolve().parents[2]
+    repo_root = REPO_ROOT
     source_root = (
         repo_root / "dist" / "tests" / "artifact" / "bills_tracer" / "latest" / "exports"
     )
@@ -75,7 +29,9 @@ def main() -> int:
     manifest: dict[str, dict[str, str]] = {}
     copied = 0
 
-    for key, (source_rel, baseline_rel) in SNAPSHOT_MATRIX.items():
+    for key, item in SNAPSHOT_MATRIX.items():
+        source_rel = item["source"]
+        baseline_rel = item["baseline"]
         source_path = source_root / source_rel
         baseline_path = baseline_root / baseline_rel
         if not source_path.exists():
@@ -83,10 +39,18 @@ def main() -> int:
             return 2
 
         baseline_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source_path, baseline_path)
+        baseline_path.write_text(
+            freeze_baseline_content(
+                source_path.read_text(encoding="utf-8"),
+                compare_mode_for_manifest_item(item),
+            ),
+            encoding="utf-8",
+        )
         manifest[key] = {
             "source": source_rel,
             "baseline": baseline_rel,
+            "scope": scope_for_manifest_item(item),
+            "compare_mode": compare_mode_for_manifest_item(item),
             "sha256": sha256(baseline_path),
         }
         copied += 1

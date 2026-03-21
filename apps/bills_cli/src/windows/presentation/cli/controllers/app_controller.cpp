@@ -15,12 +15,12 @@
 #include "common/cli_version.hpp"
 #include "common/common_utils.hpp"
 #include "record_template/record_template_service.hpp"
+#include "reports/core/export_format_config.hpp"
 #include "reports/core/standard_report_renderer_registry.hpp"
 #include "nlohmann/json.hpp"
 
 namespace terminal = common::terminal;
 #include "export/export_controller.hpp"
-#include <toml++/toml.hpp>
 #include "workflow/workflow_controller.hpp"
 #if BILLS_CORE_MODULES_ENABLED
 import bill.core.common.version;
@@ -125,6 +125,22 @@ auto ReadTextFile(const fs::path& file_path) -> std::string {
   return buffer.str();
 }
 
+auto FormatValidationIssueForLog(const ValidationIssue& issue) -> std::string {
+  std::ostringstream out;
+  out << issue.code << ": " << issue.message;
+  if (!issue.field_path.empty()) {
+    out << " [field=" << issue.field_path << "]";
+  }
+  if (issue.line > 0) {
+    out << " [line=" << issue.line;
+    if (issue.column > 0) {
+      out << ", column=" << issue.column;
+    }
+    out << "]";
+  }
+  return out.str();
+}
+
 auto JoinPeriods(const std::vector<std::string>& periods) -> std::string {
   if (periods.empty()) {
     return "(none)";
@@ -213,47 +229,29 @@ AppController::~AppController() = default;
 auto AppController::load_enabled_formats(const std::string& config_path)
     -> std::set<std::string> {
   std::set<std::string> enabled_formats;
-  const auto available_formats = AvailableBuildFormats();
   const fs::path config_file = fs::path(config_path) / kExportFormatConfigName;
-
-  try {
-    if (!fs::is_regular_file(config_file)) {
-      enabled_formats = available_formats;
-      std::cerr << terminal::kYellow << "Warning: " << terminal::kReset
-                << "Export format config not found: " << config_file.string()
-                << ". Falling back to build format set: "
-                << JoinFormats(enabled_formats) << "." << std::endl;
-      return enabled_formats;
-    }
-
-    const toml::table config_toml = toml::parse_file(config_file.string());
-    const toml::array* format_list =
-        config_toml["enabled_formats"].as_array();
-
-    if (format_list == nullptr) {
-      throw std::runtime_error(
-          "'enabled_formats' must be a TOML array in " + config_file.string());
-    }
-
-    for (const auto& item : *format_list) {
-      const auto value = item.value<std::string>();
-      if (!value.has_value()) {
-        continue;
-      }
-      const std::string normalized = normalize_format(*value);
-      if (!normalized.empty()) {
-        enabled_formats.insert(normalized);
-      }
-    }
-  } catch (const std::exception& ex) {
-    std::cerr << terminal::kYellow << "Warning: " << terminal::kReset
-              << "Failed to load export formats from " << config_file.string()
-              << ". Reason: " << ex.what()
-              << ". Falling back to build format set: "
-              << JoinFormats(available_formats) << "." << std::endl;
-    enabled_formats = available_formats;
+  const auto validation = ExportFormatConfig::ValidateFile(config_file);
+  std::set<std::string> available_formats(validation.available_formats.begin(),
+                                          validation.available_formats.end());
+  if (available_formats.empty()) {
+    available_formats = AvailableBuildFormats();
   }
 
+  if (!validation.ok) {
+    const std::string detail =
+        validation.issues.empty()
+            ? "Unknown export format validation error."
+            : FormatValidationIssueForLog(validation.issues.front());
+    std::cerr << terminal::kYellow << "Warning: " << terminal::kReset
+              << "Failed to load export formats from " << config_file.string()
+              << ". Reason: " << detail
+              << ". Falling back to build format set: "
+              << JoinFormats(available_formats) << "." << std::endl;
+    return available_formats;
+  }
+
+  enabled_formats.insert(validation.enabled_formats.begin(),
+                         validation.enabled_formats.end());
   if (enabled_formats.empty()) {
     enabled_formats = available_formats;
     std::cerr << terminal::kYellow << "Warning: " << terminal::kReset

@@ -24,7 +24,18 @@ class RecordTemplateService {
       const std::filesystem::path& config_dir)
       -> RecordTemplateResult<RecordPreviewResult>;
 
+  [[nodiscard]] static auto ValidateRecordBatch(
+      const std::filesystem::path& input_path,
+      const std::filesystem::path& config_dir)
+      -> RecordTemplateResult<RecordPreviewResult>;
+
   [[nodiscard]] static auto PreviewRecords(
+      const std::filesystem::path& input_path,
+      const std::filesystem::path& validator_config_path,
+      const std::filesystem::path& modifier_config_path)
+      -> RecordTemplateResult<RecordPreviewResult>;
+
+  [[nodiscard]] static auto ValidateRecordBatch(
       const std::filesystem::path& input_path,
       const std::filesystem::path& validator_config_path,
       const std::filesystem::path& modifier_config_path)

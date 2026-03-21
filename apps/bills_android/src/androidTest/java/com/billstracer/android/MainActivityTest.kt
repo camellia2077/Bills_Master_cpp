@@ -2,7 +2,10 @@ package com.billstracer.android
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -25,6 +28,7 @@ class MainActivityTest {
         composeRule.onNodeWithText("Report").fetchSemanticsNode()
         composeRule.onNodeWithText("Config").fetchSemanticsNode()
         composeRule.onNodeWithText("Import bundled sample").fetchSemanticsNode()
+        composeRule.onNodeWithText("Clear all TXT files").fetchSemanticsNode()
         composeRule.onNodeWithText("Clear database").fetchSemanticsNode()
         composeRule.onNodeWithText("Record").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
@@ -33,16 +37,21 @@ class MainActivityTest {
         composeRule.onNodeWithTag("record_year_selector_button").assertIsDisplayed()
         composeRule.onNodeWithTag("record_month_selector_button").assertIsDisplayed()
         composeRule.onNodeWithTag("record_open_existing_button").assertIsDisplayed()
-        composeRule.onNodeWithTag("record_new_current_button").assertIsDisplayed()
         composeRule.onNodeWithTag("record_manual_period_field").assertIsDisplayed()
+        composeRule.onNodeWithTag("record_manual_period_year_field").assertIsDisplayed()
+        composeRule.onNodeWithTag("record_manual_period_month_field").assertIsDisplayed()
         composeRule.onNodeWithTag("record_open_manual_button").assertIsDisplayed()
         composeRule.onNodeWithTag("record_refresh_button").assertIsDisplayed()
         composeRule.onNodeWithText("Report").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText("Query fixed year 2025").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("query_year_field").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Query fixed year 2025").fetchSemanticsNode()
-        composeRule.onNodeWithText("Query fixed month 2025-01").fetchSemanticsNode()
+        composeRule.onNodeWithTag("query_year_field").assertIsDisplayed()
+        composeRule.onNodeWithTag("query_month_period_field").assertIsDisplayed()
+        composeRule.onNodeWithTag("query_month_year_field").assertIsDisplayed()
+        composeRule.onNodeWithTag("query_month_month_field").assertIsDisplayed()
+        composeRule.onNodeWithTag("query_run_year_button").assertIsDisplayed()
+        composeRule.onNodeWithTag("query_run_month_button").assertIsDisplayed()
         composeRule.onNodeWithText("Config").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText("validator_config.toml").fetchSemanticsNodes().isNotEmpty()
@@ -55,7 +64,8 @@ class MainActivityTest {
         composeRule.onNodeWithTag("config_theme_button").assertIsDisplayed()
         composeRule.onNodeWithTag("config_about_button").assertIsDisplayed()
         composeRule.onNodeWithTag("config_theme_button").performClick()
-        composeRule.onNodeWithTag("theme_palette_ember").assertIsDisplayed()
+        composeRule.onNodeWithTag("theme_preview_card").assertIsDisplayed()
+        composeRule.onNodeWithTag("theme_color_selector").assertIsDisplayed()
         composeRule.onNodeWithTag("config_about_button").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText("NOTICE.md").fetchSemanticsNodes().isNotEmpty()
@@ -68,7 +78,12 @@ class MainActivityTest {
     @Test
     fun recordTabOpensTemplateAndEnablesSaveFlow() {
         composeRule.onNodeWithText("Record").performClick()
-        composeRule.onNodeWithTag("record_manual_period_field").performTextReplacement("2026-03")
+        composeRule.onNodeWithTag("record_manual_period_year_field").performTextReplacement("2026")
+        composeRule.onNodeWithTag("record_manual_period_month_field").performTextReplacement("3")
+        composeRule.onNodeWithTag("record_manual_period_month_field").assertTextEquals("03")
+        composeRule.onNodeWithTag("record_manual_period_month_field").performTextReplacement("13")
+        composeRule.onNodeWithTag("record_open_manual_button").assertIsNotEnabled()
+        composeRule.onNodeWithTag("record_manual_period_month_field").performTextReplacement("03")
         composeRule.onNodeWithTag("record_open_manual_button").performClick()
 
         composeRule.waitUntil(timeoutMillis = 10_000) {
@@ -79,6 +94,17 @@ class MainActivityTest {
             .performTextReplacement("date:2026-03\nremark:test\n\nmeal\nmeal_low\n")
         composeRule.onNodeWithTag("record_preview_button").assertIsEnabled()
         composeRule.onNodeWithTag("record_save_button").assertIsEnabled()
+    }
+
+    @Test
+    fun reportTabUsesEditableDateInputs() {
+        composeRule.onNodeWithText("Report").performClick()
+        composeRule.onNodeWithTag("query_year_field").performTextReplacement("2024")
+        composeRule.onNodeWithTag("query_run_year_button").assertIsEnabled()
+        composeRule.onNodeWithTag("query_month_year_field").performTextReplacement("2025")
+        composeRule.onNodeWithTag("query_month_month_field").performTextReplacement("3")
+        composeRule.onNodeWithTag("query_month_month_field").assertTextEquals("03")
+        composeRule.onNodeWithTag("query_run_month_button").assertIsEnabled()
     }
 
     @Test
@@ -101,7 +127,7 @@ class MainActivityTest {
         composeRule.onNodeWithTag("config_theme_button").performClick()
 
         composeRule.onNodeWithTag("theme_mode_dark").performClick()
-        composeRule.onNodeWithTag("theme_palette_harbor").performClick()
+        composeRule.onNodeWithTag("theme_color_emerald").performClick()
         composeRule.onNodeWithTag("theme_apply_button").assertIsEnabled()
         composeRule.onNodeWithText("Theme changes are pending. Press Apply Theme to persist them with DataStore.").assertIsDisplayed()
     }
@@ -116,5 +142,10 @@ class MainActivityTest {
 
         composeRule.onNodeWithText("processed").assertIsDisplayed()
         composeRule.onNodeWithText("imported").assertIsDisplayed()
+    }
+
+    @Test
+    fun dataTabShowsClearTxtButton() {
+        composeRule.onNodeWithTag("data_clear_txt_button").assertIsDisplayed()
     }
 }

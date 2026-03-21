@@ -9,7 +9,10 @@ Covered scenarios:
 
 Covered formats:
 - Markdown output (`Markdown_bills/...`)
-- Standard JSON output (`standard_json/...`)
+- Standard JSON render output (`standard_json/...`)
+- StandardReport canonical JSON golden (`standard_report/...`)
+- LaTeX output (`LaTeX_bills/...`)
+- reStructuredText output (`reST_bills/...`)
 - Typst source output (`Typst_bills/...`)
 
 Scripts:
@@ -19,4 +22,7 @@ Scripts:
   - `python tools/verify/check_report_snapshots.py`
 
 Notes:
-- JSON comparison ignores `meta.generated_at_utc`.
+- Render JSON snapshot comparison ignores `meta.generated_at_utc` but keeps renderer field order.
+- StandardReport golden comparison ignores `meta.generated_at_utc` and compares canonicalized JSON.
+- Unified verify entry can run the full fixture export + golden checks:
+  - `python tools/run.py verify bills`

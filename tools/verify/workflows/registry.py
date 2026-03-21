@@ -254,7 +254,7 @@ def workflow_specs() -> list[WorkflowSpec]:
         ),
         WorkflowSpec(
             "report-snapshot",
-            "compare exported reports with frozen snapshots",
+            "compare exported reports and standard-report goldens with frozen snapshots",
             _run_report_snapshot,
         ),
         WorkflowSpec(

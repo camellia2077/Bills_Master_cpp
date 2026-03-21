@@ -30,6 +30,16 @@
   - 基于结果继续修复或向用户汇报
 - agent 不需要替用户手工操作测试工作区，只需要关注命令输出与最终测试结果
 
+## Android Build Policy
+
+- Android 本地默认验证只编译 `debug` 版本
+- 默认命令使用 `python tools/flows/build_bills_android.py --preset debug`
+- 仅在以下场景主动编译 `release`：
+  - 用户明确要求
+  - 发布或签名验证
+  - shrink/minify/resource shrink 相关问题
+  - 仅 `release` 可复现的问题
+
 ## Result Reading
 
 - 优先查看终端输出中的失败信息、错误栈、summary

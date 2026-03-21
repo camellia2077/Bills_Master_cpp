@@ -18,7 +18,13 @@
 
 用于记录 `bills_core` 内核能力与 ABI / record / query / config 等共享能力的历史。
 
+- `docs/release/core/v0.4/v0.4.1.md`
+- `docs/release/core/v0.4/v0.4.0.md`
 - `docs/release/core/v0.3/v0.3.2.md`
+- `docs/release/core/v0.3/v0.3.1.md`
+- `docs/release/core/v0.3/v0.3.0.md`
+- `docs/release/core/v0.2/v0.2.8.md`
+- `docs/release/core/v0.2/v0.2.7.md`
 
 ## clients
 
@@ -34,4 +40,5 @@
 
 用于记录 `bills_android` 页面结构、主题、Config、Notices、Record 交互和 APK 打包资产的历史。
 
+- `docs/release/clients/android/0.1.1.md`
 - `docs/release/clients/android/0.1.0.md`

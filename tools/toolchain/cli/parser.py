@@ -35,7 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     dist_parser.add_argument(
         "target",
-        choices=["bills", "core", "log-generator"],
+        choices=["bills", "core", "log-generator", "android"],
         help="Target to emit into dist/.",
     )
     dist_parser.add_argument(

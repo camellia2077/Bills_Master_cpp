@@ -38,7 +38,7 @@ class QueryResultDisplayTest {
         composeRule.setContent {
             BillsAndroidTheme {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    QueryResultDisplay(
+                    queryResultDisplay(
                         result = QueryResult(
                             ok = true,
                             message = "ok",
@@ -83,17 +83,65 @@ class QueryResultDisplayTest {
     }
 
     @Test
-    fun monthQueryShowsMarkdownBeforeStructuredSummary() {
+    fun monthQueryDefaultsToNativeJsonViewAndTogglesToMarkdown() {
         val markdown = """
             # DATE:202501
             ## income_salary
             - CNY9586.68 工资
         """.trimIndent()
+        val standardReportJson = """
+            {
+              "meta": {
+                "schema_version": "1.0",
+                "report_type": "monthly",
+                "generated_at_utc": "2026-03-10T00:00:00Z",
+                "source": "android-test"
+              },
+              "scope": {
+                "period_start": "2025-01-01",
+                "period_end": "2025-01-31",
+                "remark": "sample month",
+                "data_found": true
+              },
+              "summary": {
+                "total_income": 9586.68,
+                "total_expense": -1511.57,
+                "balance": 8075.11
+              },
+              "items": {
+                "categories": [
+                  {
+                    "name": "income_salary",
+                    "total": 9586.68,
+                    "sub_categories": [
+                      {
+                        "name": "salary",
+                        "subtotal": 9586.68,
+                        "transactions": [
+                          {
+                            "parent_category": "income_salary",
+                            "sub_category": "salary",
+                            "transaction_type": "income",
+                            "description": "工资",
+                            "source": "txt",
+                            "comment": "",
+                            "amount": 9586.68
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "monthly_summary": []
+              },
+              "extensions": {}
+            }
+        """.trimIndent()
 
         composeRule.setContent {
             BillsAndroidTheme {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    QueryResultDisplay(
+                    queryResultDisplay(
                         result = QueryResult(
                             ok = true,
                             message = "ok",
@@ -106,7 +154,7 @@ class QueryResultDisplayTest {
                             balance = 8075.11,
                             monthlySummary = emptyList(),
                             standardReportMarkdown = markdown,
-                            standardReportJson = "{}",
+                            standardReportJson = standardReportJson,
                             rawJson = """{"ok":true}""",
                         ),
                     )
@@ -114,15 +162,28 @@ class QueryResultDisplayTest {
             }
         }
 
-        composeRule.onNodeWithText("Markdown Report").assertIsDisplayed()
-        composeRule.onNodeWithTag("query_markdown_text").assertIsDisplayed()
-        composeRule.onNodeWithText(markdown).assertIsDisplayed()
+        composeRule.onNodeWithTag("query_monthly_standard_card").assertIsDisplayed()
+        composeRule.onNodeWithText("Monthly Report").assertIsDisplayed()
+        composeRule.onNodeWithText("2025-01-01 to 2025-01-31").assertIsDisplayed()
+        composeRule.onNodeWithText("sample month").assertIsDisplayed()
+        composeRule.onNodeWithText("income_salary").assertIsDisplayed()
+        composeRule.onNodeWithText("工资").assertIsDisplayed()
+        composeRule.onNodeWithText("Show Markdown").assertIsDisplayed()
         composeRule.onNodeWithText("Structured Summary").assertIsDisplayed()
-        composeRule.onNodeWithText("Show Raw JSON").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("query_markdown_card").assertCountEquals(0)
 
-        val markdownTop = composeRule.onNodeWithTag("query_markdown_card").fetchSemanticsNode().boundsInRoot.top
+        val nativeTop = composeRule.onNodeWithTag("query_monthly_standard_card").fetchSemanticsNode().boundsInRoot.top
         val summaryTop = composeRule.onNodeWithTag("query_summary_card").fetchSemanticsNode().boundsInRoot.top
 
-        assertTrue(markdownTop < summaryTop)
+        assertTrue(nativeTop < summaryTop)
+
+        composeRule.onNodeWithTag("query_toggle_button").performClick()
+
+        composeRule.onNodeWithTag("query_markdown_card").assertIsDisplayed()
+        composeRule.onNodeWithTag("query_markdown_text").assertIsDisplayed()
+        composeRule.onNodeWithText("DATE:202501").assertIsDisplayed()
+        composeRule.onNodeWithText("CNY9586.68 工资").assertIsDisplayed()
+        composeRule.onNodeWithText("Show Native View").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("query_monthly_standard_card").assertCountEquals(0)
     }
 }

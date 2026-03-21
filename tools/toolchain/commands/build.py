@@ -16,6 +16,12 @@ class BuildTargetSpec:
 
 
 BUILD_TARGETS: dict[str, BuildTargetSpec] = {
+    "android": BuildTargetSpec(
+        entry_name="build_bills_android.py",
+        fixed_args=[],
+        supports_isolated=False,
+        supports_tidy=False,
+    ),
     "bills": BuildTargetSpec(
         entry_name="build_bills_master.py",
         fixed_args=[],

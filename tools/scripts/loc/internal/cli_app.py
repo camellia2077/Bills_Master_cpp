@@ -200,7 +200,7 @@ class LocCliApplication:
 
     @staticmethod
     def _repo_root() -> Path:
-        return Path(__file__).resolve().parents[3]
+        return Path(__file__).resolve().parents[4]
 
     @staticmethod
     def _tool_root() -> Path:

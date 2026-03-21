@@ -116,6 +116,21 @@ auto bills_core_invoke_json(const char* request_json_utf8) -> const char* {
     return abi::allocate_owned_string(abi::handle_record_preview_command(request));
   }
 
+  if (command == "validate_config_bundle") {
+    return abi::allocate_owned_string(
+        abi::handle_validate_config_bundle_command(request));
+  }
+
+  if (command == "validate_record_batch") {
+    return abi::allocate_owned_string(
+        abi::handle_validate_record_batch_command(request));
+  }
+
+  if (command == "preflight_import") {
+    return abi::allocate_owned_string(
+        abi::handle_preflight_import_command(request));
+  }
+
   if (command == "config_inspect") {
     return abi::allocate_owned_string(abi::handle_config_inspect_command(request));
   }

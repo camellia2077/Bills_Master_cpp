@@ -1,0 +1,96 @@
+{
+  "extensions": {},
+  "items": {
+    "categories": [],
+    "monthly_summary": [
+      {
+        "balance": 11098.25,
+        "expense": -1511.57,
+        "income": 9586.68,
+        "month": 1
+      },
+      {
+        "balance": 15060.460000000001,
+        "expense": -1097.59,
+        "income": 13962.87,
+        "month": 2
+      },
+      {
+        "balance": 11888.460000000001,
+        "expense": -1310.69,
+        "income": 10577.77,
+        "month": 3
+      },
+      {
+        "balance": 13268.87,
+        "expense": -1063.35,
+        "income": 12205.52,
+        "month": 4
+      },
+      {
+        "balance": 12194.61,
+        "expense": -1077.41,
+        "income": 11117.2,
+        "month": 5
+      },
+      {
+        "balance": 14338.38,
+        "expense": -1400.72,
+        "income": 12937.66,
+        "month": 6
+      },
+      {
+        "balance": 12863.060000000001,
+        "expense": -1625.79,
+        "income": 11237.27,
+        "month": 7
+      },
+      {
+        "balance": 13945.029999999999,
+        "expense": -1412.12,
+        "income": 12532.91,
+        "month": 8
+      },
+      {
+        "balance": 11219.27,
+        "expense": -1407.08,
+        "income": 9812.19,
+        "month": 9
+      },
+      {
+        "balance": 11409.150000000001,
+        "expense": -1664.71,
+        "income": 9744.44,
+        "month": 10
+      },
+      {
+        "balance": 14218.71,
+        "expense": -1602.97,
+        "income": 12615.74,
+        "month": 11
+      },
+      {
+        "balance": 9552.73,
+        "expense": -1429.43,
+        "income": 8123.3,
+        "month": 12
+      }
+    ]
+  },
+  "meta": {
+    "report_type": "yearly",
+    "schema_version": "1.0.0",
+    "source": "bills_core"
+  },
+  "scope": {
+    "data_found": true,
+    "period_end": "2025-12",
+    "period_start": "2025-01",
+    "remark": ""
+  },
+  "summary": {
+    "balance": 117850.12000000002,
+    "total_expense": -16603.429999999997,
+    "total_income": 134453.55000000002
+  }
+}

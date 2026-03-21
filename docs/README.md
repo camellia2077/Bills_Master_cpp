@@ -21,6 +21,11 @@
 - `docs/modules/bills_io/module_map.md`
 - `docs/modules/bills_io/change_guide.md`
 - `docs/modules/bills_io/dist_and_test.md`
+- `docs/modules/bills_android/README.md`
+- `docs/modules/bills_android/architecture.md`
+- `docs/modules/bills_android/module_map.md`
+- `docs/modules/bills_android/change_guide.md`
+- `docs/modules/bills_android/dist_and_test.md`
 - `docs/modules/bills_cli/architecture.md`
 - `docs/modules/bills_cli/module_map.md`
 - `docs/modules/bills_cli/change_guide.md`
@@ -37,6 +42,10 @@
 ## roadmap
 
 - `docs/roadmap/TODO.md`（唯一待办入口）
+
+## notes
+
+- `docs/notes/android_apk_build.md`（Android APK 编译命令与产物说明）
 
 ## tools
 

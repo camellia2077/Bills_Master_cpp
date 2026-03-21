@@ -2,61 +2,169 @@
   "monthly_md_2025_01": {
     "source": "Markdown_bills/months/2025/2025-01.md",
     "baseline": "monthly/2025-01.md",
-    "sha256": "80da576fd3000be122e57b81ad1e4e28293bfd7cefb1155c0aa0be873a031a88"
+    "scope": "md",
+    "compare_mode": "text",
+    "sha256": "3436a88068fc2473a40156780423b8bed542d1a1fef0da52550e3e6387361c66"
   },
   "monthly_json_2025_01": {
     "source": "standard_json/months/2025/2025-01.json",
     "baseline": "monthly/2025-01.json",
-    "sha256": "a5e5230ec2bdf32150fe812a1c6cc52562ed34d0cf0e81cbdc9fb72a660b3e4c"
+    "scope": "json",
+    "compare_mode": "json-render",
+    "sha256": "a43dfdea03174fc4af700dae1fdd40204ae490570e6e27c2cf8ed210d9c06b2a"
+  },
+  "monthly_tex_2025_01": {
+    "source": "LaTeX_bills/months/2025/2025-01.tex",
+    "baseline": "monthly/2025-01.tex",
+    "scope": "tex",
+    "compare_mode": "text",
+    "sha256": "0f10941aa629d22799c1c2a226e8a2e8c413d2e308b79400e0fbb725f4720898"
+  },
+  "monthly_rst_2025_01": {
+    "source": "reST_bills/months/2025/2025-01.rst",
+    "baseline": "monthly/2025-01.rst",
+    "scope": "rst",
+    "compare_mode": "text",
+    "sha256": "7669c4c4db9660dcc4a137efeec0c26f6bc35053bc55f9f1201fed21cb5cdc89"
   },
   "monthly_typ_2025_01": {
     "source": "Typst_bills/months/2025/2025-01.typ",
     "baseline": "monthly/2025-01.typ",
-    "sha256": "63558093a3efa975e4aa925bfec347c2c8aa28629a015e72aa42dcefb8ff4717"
+    "scope": "typ",
+    "compare_mode": "text",
+    "sha256": "0f6007ee5e7f7506a874d2ed86438e8efb9aefa851a1057740484064cd4a8399"
+  },
+  "monthly_standard_report_2025_01": {
+    "source": "standard_json/months/2025/2025-01.json",
+    "baseline": "standard_report/monthly/2025-01.json",
+    "scope": "standard-report",
+    "compare_mode": "standard-report-json",
+    "sha256": "66e65d0f483adfe8765434605936f84e4a7b41a23a14164010ccb23fe2b36002"
   },
   "yearly_md_2025": {
     "source": "Markdown_bills/years/2025.md",
     "baseline": "yearly/2025.md",
+    "scope": "md",
+    "compare_mode": "text",
     "sha256": "788a5c7e4d23441fd4b920e00e090ba5571f9bd8264df29ad76209d9b9a598b6"
   },
   "yearly_json_2025": {
     "source": "standard_json/years/2025.json",
     "baseline": "yearly/2025.json",
-    "sha256": "cd5a3aabd744793c352127e6489c64840c843141578cc214773dc10b1f3e4979"
+    "scope": "json",
+    "compare_mode": "json-render",
+    "sha256": "0a858e965be4ebbd1506880bd988de0fec1025166e87efe1139ede61c8e7f3cd"
+  },
+  "yearly_tex_2025": {
+    "source": "LaTeX_bills/years/2025.tex",
+    "baseline": "yearly/2025.tex",
+    "scope": "tex",
+    "compare_mode": "text",
+    "sha256": "a4e70b5871fa998e3e8e6711f04e7b535ab5446b1de3c834642855ab24d15f25"
+  },
+  "yearly_rst_2025": {
+    "source": "reST_bills/years/2025.rst",
+    "baseline": "yearly/2025.rst",
+    "scope": "rst",
+    "compare_mode": "text",
+    "sha256": "90dbd17af733ca6b39ef9d783b13b8716e666ae15ea26799404124521d1d01a5"
   },
   "yearly_typ_2025": {
     "source": "Typst_bills/years/2025.typ",
     "baseline": "yearly/2025.typ",
+    "scope": "typ",
+    "compare_mode": "text",
     "sha256": "784670394c870099aea43b0ee61705511ad311720691e6ebc721d3a681625fab"
+  },
+  "yearly_standard_report_2025": {
+    "source": "standard_json/years/2025.json",
+    "baseline": "standard_report/yearly/2025.json",
+    "scope": "standard-report",
+    "compare_mode": "standard-report-json",
+    "sha256": "8ad8c5e411b49538cc16e9cf61ed9fe38d7c89252d4e5bcd6b42190d8458b359"
   },
   "range_md_2025_03": {
     "source": "Markdown_bills/months/2025/2025-03.md",
     "baseline": "range/2025-03.md",
-    "sha256": "e5d17ee919710c852ec25439bd79bd5ad587842ab5467d36985537db0113e131"
+    "scope": "md",
+    "compare_mode": "text",
+    "sha256": "f25b080a8b660cee826d1dc28cdcf78b964eb6c6796d557ccf2966edabb60fe9"
   },
   "range_md_2025_04": {
     "source": "Markdown_bills/months/2025/2025-04.md",
     "baseline": "range/2025-04.md",
-    "sha256": "11d5228ca375c4196b89018fb06f795e68a388e382da6fa465f870084affff61"
+    "scope": "md",
+    "compare_mode": "text",
+    "sha256": "a70e9182cfb0361292b8a3f6468475b87c1638bb8ee02b0ff1e13d5e282ebb11"
   },
   "range_json_2025_03": {
     "source": "standard_json/months/2025/2025-03.json",
     "baseline": "range/2025-03.json",
-    "sha256": "c09e9588801d34f65a822610663f1e3d96d997942bddfff506c6d0cd2227724e"
+    "scope": "json",
+    "compare_mode": "json-render",
+    "sha256": "6bf841a0617fe49b4a680a4203c98ba4c0ffd756ca1112a7c7a0101b1fcd4ae1"
   },
   "range_json_2025_04": {
     "source": "standard_json/months/2025/2025-04.json",
     "baseline": "range/2025-04.json",
-    "sha256": "03678535a2d98681efdbf649031ff7e1e378776585f842203cb3fec9376f3a4b"
+    "scope": "json",
+    "compare_mode": "json-render",
+    "sha256": "a0a7c400cdaad5cec2212710ff811cffe1abbc1c2584cee27bc8c69ad2fe596a"
+  },
+  "range_tex_2025_03": {
+    "source": "LaTeX_bills/months/2025/2025-03.tex",
+    "baseline": "range/2025-03.tex",
+    "scope": "tex",
+    "compare_mode": "text",
+    "sha256": "4cf62d1c730850a18c56133412f2a4029e1305451938be65edc613a35796b449"
+  },
+  "range_tex_2025_04": {
+    "source": "LaTeX_bills/months/2025/2025-04.tex",
+    "baseline": "range/2025-04.tex",
+    "scope": "tex",
+    "compare_mode": "text",
+    "sha256": "c85b5ad19cc57219198cc64136237da547d8d8e37ae3baba363961f035eb9e44"
+  },
+  "range_rst_2025_03": {
+    "source": "reST_bills/months/2025/2025-03.rst",
+    "baseline": "range/2025-03.rst",
+    "scope": "rst",
+    "compare_mode": "text",
+    "sha256": "2d9eaceca125005d3a05b3286ba58da24d1c740168ccd39ec0cfc03150071c59"
+  },
+  "range_rst_2025_04": {
+    "source": "reST_bills/months/2025/2025-04.rst",
+    "baseline": "range/2025-04.rst",
+    "scope": "rst",
+    "compare_mode": "text",
+    "sha256": "924c7feabd34767181e0997df03bdb362e65bf94ec931c52858e2e2f3013d08f"
   },
   "range_typ_2025_03": {
     "source": "Typst_bills/months/2025/2025-03.typ",
     "baseline": "range/2025-03.typ",
-    "sha256": "d609cd0846c7e322f0a407d485123997e9eca2efedba1b3681ab8c22d55eaa30"
+    "scope": "typ",
+    "compare_mode": "text",
+    "sha256": "b042ffda9aacd0fc7a2803f17e7fd73834b13a6db81a1553ea9cb40175750566"
   },
   "range_typ_2025_04": {
     "source": "Typst_bills/months/2025/2025-04.typ",
     "baseline": "range/2025-04.typ",
-    "sha256": "90f41dd345b8457bc3e252dd3f289bd8d17101bbdde88683f4463ca118b926a3"
+    "scope": "typ",
+    "compare_mode": "text",
+    "sha256": "ccf0a5159c5c9300d7c4f2b029ee4dea0e653ddf3d662d0ef418316445193b16"
+  },
+  "range_standard_report_2025_03": {
+    "source": "standard_json/months/2025/2025-03.json",
+    "baseline": "standard_report/range/2025-03.json",
+    "scope": "standard-report",
+    "compare_mode": "standard-report-json",
+    "sha256": "6be36bc78cdf4a6e820c47e142c1a83be24357c0cc4d0c9ec70d61f21fec9fa6"
+  },
+  "range_standard_report_2025_04": {
+    "source": "standard_json/months/2025/2025-04.json",
+    "baseline": "standard_report/range/2025-04.json",
+    "scope": "standard-report",
+    "compare_mode": "standard-report-json",
+    "sha256": "dc93e1cc4e905b240d7b64c9e93c5ce61e3a0f28e08c074220b52f5d96d566f5"
   }
 }

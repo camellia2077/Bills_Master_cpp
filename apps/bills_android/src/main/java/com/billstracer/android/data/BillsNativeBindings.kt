@@ -6,7 +6,7 @@ internal object BillsNativeBindings {
     }
 
     external fun importBundledSampleNative(
-        samplePath: String,
+        inputPath: String,
         configDir: String,
         dbPath: String,
     ): String
@@ -29,6 +29,15 @@ internal object BillsNativeBindings {
     external fun previewRecordPathNative(
         inputPath: String,
         configDir: String,
+    ): String
+
+    external fun validateConfigBundleNative(
+        validatorConfigText: String,
+        modifierConfigText: String,
+        exportFormatsText: String,
+        validatorDisplayPath: String,
+        modifierDisplayPath: String,
+        exportFormatsDisplayPath: String,
     ): String
 
     external fun listRecordPeriodsNative(

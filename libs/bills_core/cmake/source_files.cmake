@@ -24,6 +24,7 @@ set(COMMON_SOURCES
 )
 
 set(CONFIG_LOADING_SOURCES
+    "${CONFIG_LOADING_DIR}/config_bundle_validation.cpp"
     "${CONFIG_LOADING_DIR}/runtime_config_loader.cpp"
 )
 
@@ -44,6 +45,7 @@ set(SERIALIZATION_SOURCES
 )
 
 set(REPORTS_SOURCES
+    "${REPORTS_DIR}/core/export_format_config.cpp"
     "${REPORTS_DIR}/core/report_export_service.cpp"
     "${REPORTS_DIR}/core/report_exporter.cpp"
     "${REPORTS_DIR}/core/standard_report_renderer_registry.cpp"
@@ -58,6 +60,7 @@ set(REPORTS_SOURCES
 
 set(RECORD_TEMPLATE_SOURCES
     "${RECORD_TEMPLATE_DIR}/file_support.cpp"
+    "${RECORD_TEMPLATE_DIR}/import_preflight_service.cpp"
     "${RECORD_TEMPLATE_DIR}/ordered_template_layout_loader.cpp"
     "${RECORD_TEMPLATE_DIR}/period_support.cpp"
     "${RECORD_TEMPLATE_DIR}/record_template_service.cpp"
@@ -71,6 +74,7 @@ set(ABI_SOURCES
     "${ABI_DIR}/internal/handlers/convert_handler.cpp"
     "${ABI_DIR}/internal/handlers/ingest_import_handler.cpp"
     "${ABI_DIR}/internal/handlers/query_handler.cpp"
+    "${ABI_DIR}/internal/handlers/config_record_validation_handler.cpp"
     "${ABI_DIR}/internal/handlers/record_template_handler.cpp"
 )
 

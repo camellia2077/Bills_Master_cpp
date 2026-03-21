@@ -67,6 +67,15 @@ data class ListedRecordPeriodsResult(
     val rawJson: String,
 )
 
+data class ExportedRecordFilesResult(
+    val exportedRecordFiles: Int,
+    val exportedConfigFiles: Int,
+    val destinationDisplayPath: String? = null,
+) {
+    val exported: Int
+        get() = exportedRecordFiles + exportedConfigFiles
+}
+
 enum class ThemeMode(
     val displayName: String,
 ) {
@@ -75,22 +84,43 @@ enum class ThemeMode(
     DARK("Dark"),
 }
 
-enum class ThemePalette(
+enum class ThemeColor(
     val displayName: String,
 ) {
-    EMBER("Ember"),
-    HARBOR("Harbor"),
-    GROVE("Grove"),
-    CANYON("Canyon"),
+    ROSE("Rose"),
+    ORANGE("Orange"),
+    PEACH("Peach"),
+    AMBER("Amber"),
+    GOLD("Gold"),
+    MINT("Mint"),
+    EMERALD("Emerald"),
+    TEAL("Teal"),
+    TURQUOISE("Turquoise"),
+    CYAN("Cyan"),
+    SKY("Sky"),
+    PERIWINKLE("Periwinkle"),
+    LAVENDER("Lavender"),
+    VIOLET("Violet"),
+    PINK("Pink"),
+    SAKURA("Sakura"),
+    MAGENTA("Magenta"),
+    COBALT("Cobalt"),
+    NAVY("Navy"),
+    CRIMSON("Crimson"),
+    BURGUNDY("Burgundy"),
+    LIME("Lime"),
+    COCOA("Cocoa"),
+    GRAPHITE("Graphite"),
+    SLATE("Slate"),
 }
 
 data class ThemePreferences(
     val mode: ThemeMode = ThemeMode.SYSTEM,
-    val palette: ThemePalette = ThemePalette.EMBER,
+    val color: ThemeColor = ThemeColor.SLATE,
 )
 
 data class AppEnvironment(
-    val bundledSampleFile: File,
+    val bundledSampleInputPath: File,
     val bundledSampleLabel: String,
     val bundledSampleYear: String,
     val bundledSampleMonth: String,
@@ -146,7 +176,7 @@ data class QueryResult(
 data class BillsUiState(
     val isInitializing: Boolean = true,
     val isWorking: Boolean = false,
-    val statusMessage: String = "Preparing bundled samples and private workspace...",
+    val statusMessage: String = "Preparing private workspace...",
     val bundledSampleLabel: String = "",
     val bundledSampleYear: String = "",
     val bundledSampleMonth: String = "",
@@ -157,7 +187,12 @@ data class BillsUiState(
     val configDrafts: Map<String, String> = emptyMap(),
     val selectedExistingRecordYear: String = "",
     val selectedExistingRecordMonth: String = "",
+    val recordPeriodYearInput: String = "",
+    val recordPeriodMonthInput: String = "",
     val recordPeriodInput: String = "",
+    val queryYearInput: String = "",
+    val queryPeriodYearInput: String = "",
+    val queryPeriodMonthInput: String = "",
     val activeRecordDocument: RecordEditorDocument? = null,
     val recordDraftText: String = "",
     val listedRecordPeriods: ListedRecordPeriodsResult? = null,

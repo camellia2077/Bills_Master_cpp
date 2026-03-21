@@ -31,7 +31,7 @@ internal class AssetBundleManager(
         materializePersistentConfig(configRoot)
 
         return AppWorkspacePaths(
-            bundledSampleFile = File(assetsRoot, "testdata/bills/${BuildConfig.BUNDLED_SAMPLE_RELATIVE_PATH}"),
+            bundledSampleInputPath = File(assetsRoot, "testdata/bills/${BuildConfig.BUNDLED_SAMPLE_INPUT_RELATIVE_PATH}"),
             configRoot = configRoot,
             recordsRoot = recordsRoot,
             noticesRoot = File(assetsRoot, "notices"),
@@ -91,7 +91,7 @@ internal class AssetBundleManager(
 }
 
 internal data class AppWorkspacePaths(
-    val bundledSampleFile: File,
+    val bundledSampleInputPath: File,
     val configRoot: File,
     val recordsRoot: File,
     val noticesRoot: File,

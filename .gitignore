@@ -19,6 +19,9 @@ output/
 *.rst
 *.tex
 *.typ
+!tests/baseline/report_snapshots/**/*.rst
+!tests/baseline/report_snapshots/**/*.tex
+!tests/baseline/report_snapshots/**/*.typ
 
 # C/C++ / CMake / Ninja build outputs
 *.o

@@ -20,12 +20,20 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val bundledSampleRelativePath = "2025/2025-01.txt"
-val bundledSampleLabel = "2025-01"
+val bundledSampleRelativePath = "2025"
+val bundledSampleLabel = "2025 full-year sample"
 val bundledSampleYear = "2025"
 val bundledSampleMonth = "2025-01"
-val androidPresentationVersionCode = 1
-val androidPresentationVersionName = "0.1.0"
+val androidPresentationVersionCode = 2
+val androidPresentationVersionName = "0.1.1"
+
+private object AndroidUiDependencyVersions {
+    const val composeBom = "2025.08.01"
+    const val activityCompose = "1.10.1"
+    const val documentFile = "1.1.0"
+    const val lifecycle = "2.10.0"
+}
+
 val generatedAssetsDir = layout.buildDirectory.dir("generated/assets/main")
 val generatedAssetsPath = generatedAssetsDir.get().asFile
 val distributedAndroidConfigDir = rootProject.layout.projectDirectory.dir("dist/config/android")
@@ -33,6 +41,23 @@ val distributedAndroidNoticesDir = rootProject.layout.projectDirectory.dir("dist
 val noticesMetadataDir = layout.buildDirectory.dir("generated/noticesMetadata")
 val releaseRuntimeArtifactsFile = noticesMetadataDir.map { it.file("release-runtime-artifacts.json") }
 val debugRuntimeArtifactsFile = noticesMetadataDir.map { it.file("debug-runtime-artifacts.json") }
+val releaseSigningStoreFile = providers.gradleProperty("BILLS_ANDROID_RELEASE_STORE_FILE").orNull
+val releaseSigningStorePassword = providers.gradleProperty("BILLS_ANDROID_RELEASE_STORE_PASSWORD").orNull
+val releaseSigningKeyAlias = providers.gradleProperty("BILLS_ANDROID_RELEASE_KEY_ALIAS").orNull
+val releaseSigningKeyPassword = providers.gradleProperty("BILLS_ANDROID_RELEASE_KEY_PASSWORD").orNull
+val localNlohmannJsonSourceDir = providers.gradleProperty("BILLS_ANDROID_NLOHMANN_JSON_SOURCE_DIR").orNull
+val localTomlplusplusSourceDir = providers.gradleProperty("BILLS_ANDROID_TOMLPLUSPLUS_SOURCE_DIR").orNull
+val localSqliteAmalgamationSourceDir = providers.gradleProperty("BILLS_ANDROID_SQLITE_AMALGAMATION_SOURCE_DIR").orNull
+val hasExplicitReleaseSigning =
+    !releaseSigningStoreFile.isNullOrBlank() &&
+        !releaseSigningStorePassword.isNullOrBlank() &&
+        !releaseSigningKeyAlias.isNullOrBlank() &&
+        !releaseSigningKeyPassword.isNullOrBlank()
+
+fun cmakePathOrNull(rawPath: String?): String? =
+    rawPath
+        ?.takeIf { it.isNotBlank() }
+        ?.let { File(it).absolutePath.replace('\\', '/') }
 
 @DisableCachingByDefault(because = "Writes resolved runtime artifact metadata to a generated JSON file.")
 abstract class WriteResolvedRuntimeArtifactsTask : DefaultTask() {
@@ -172,12 +197,12 @@ android {
 
     defaultConfig {
         applicationId = "com.billstracer.android"
-        minSdk = 26
+        minSdk = 35
         targetSdk = 36
         versionCode = androidPresentationVersionCode
         versionName = androidPresentationVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "BUNDLED_SAMPLE_RELATIVE_PATH", "\"$bundledSampleRelativePath\"")
+        buildConfigField("String", "BUNDLED_SAMPLE_INPUT_RELATIVE_PATH", "\"$bundledSampleRelativePath\"")
         buildConfigField("String", "BUNDLED_SAMPLE_LABEL", "\"$bundledSampleLabel\"")
         buildConfigField("String", "BUNDLED_SAMPLE_YEAR", "\"$bundledSampleYear\"")
         buildConfigField("String", "BUNDLED_SAMPLE_MONTH", "\"$bundledSampleMonth\"")
@@ -185,7 +210,7 @@ android {
         buildConfigField("int", "PRESENTATION_VERSION_CODE", androidPresentationVersionCode.toString())
 
         ndk {
-            abiFilters += listOf("arm64-v8a", "x86_64")
+            abiFilters += listOf("arm64-v8a")
         }
 
         externalNativeBuild {
@@ -195,6 +220,15 @@ android {
                     "-DBILLS_ENABLE_MODULES=OFF",
                     "-DBILLS_CORE_BUILD_SHARED=OFF",
                 )
+                cmakePathOrNull(localNlohmannJsonSourceDir)?.let { sourceDir ->
+                    arguments += "-DFETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON=$sourceDir"
+                }
+                cmakePathOrNull(localTomlplusplusSourceDir)?.let { sourceDir ->
+                    arguments += "-DFETCHCONTENT_SOURCE_DIR_TOMLPLUSPLUS=$sourceDir"
+                }
+                cmakePathOrNull(localSqliteAmalgamationSourceDir)?.let { sourceDir ->
+                    arguments += "-DFETCHCONTENT_SOURCE_DIR_SQLITE_AMALGAMATION=$sourceDir"
+                }
             }
         }
     }
@@ -202,6 +236,36 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    signingConfigs {
+        create("release") {
+            if (hasExplicitReleaseSigning) {
+                storeFile = rootProject.file(requireNotNull(releaseSigningStoreFile))
+                storePassword = requireNotNull(releaseSigningStorePassword)
+                keyAlias = requireNotNull(releaseSigningKeyAlias)
+                keyPassword = requireNotNull(releaseSigningKeyPassword)
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("debug") {
+            isDebuggable = true
+        }
+        getByName("release") {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            signingConfig = if (hasExplicitReleaseSigning) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+        }
     }
 
     compileOptions {
@@ -237,18 +301,24 @@ android {
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
+    val composeBom = enforcedPlatform(
+        "androidx.compose:compose-bom:${AndroidUiDependencyVersions.composeBom}",
+    )
 
     implementation(composeBom)
+    debugImplementation(composeBom)
     androidTestImplementation(composeBom)
 
-    implementation("androidx.activity:activity-compose:1.10.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
+    implementation("androidx.activity:activity-compose:${AndroidUiDependencyVersions.activityCompose}")
+    implementation("androidx.documentfile:documentfile:${AndroidUiDependencyVersions.documentFile}")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:${AndroidUiDependencyVersions.lifecycle}")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:${AndroidUiDependencyVersions.lifecycle}")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:${AndroidUiDependencyVersions.lifecycle}")
     implementation("androidx.datastore:datastore-preferences:1.2.0")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.foundation:foundation-layout")
     implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.compose.runtime:runtime")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("com.google.android.material:material:1.12.0")
@@ -303,8 +373,8 @@ val generateBundledNotices by tasks.registering(Exec::class) {
 }
 
 val syncBundledAssets by tasks.registering(Sync::class) {
-    from(rootProject.layout.projectDirectory.file("testdata/bills/$bundledSampleRelativePath")) {
-        into("testdata/bills/2025")
+    from(rootProject.layout.projectDirectory.dir("testdata/bills/$bundledSampleRelativePath")) {
+        into("testdata/bills/$bundledSampleRelativePath")
     }
     dependsOn(generateDistributedAndroidConfig)
     from(distributedAndroidConfigDir) {

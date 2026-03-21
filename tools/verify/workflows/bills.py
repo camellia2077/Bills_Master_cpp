@@ -8,6 +8,7 @@ from tools.toolchain.services.build_layout import (
     resolve_artifact_latest_dir,
     resolve_logic_pipeline_root,
 )
+from tools.verify.report_snapshot_support import COMPARE_SCOPE_STANDARD_REPORT
 
 from .common import (
     detect_output_project,
@@ -15,6 +16,78 @@ from .common import (
     validate_test_summary,
 )
 from .pipeline_helpers import run_pipeline_steps
+
+SUPPORTED_VERIFY_FORMATS = {"md", "json", "tex", "rst", "typ"}
+
+
+def parse_requested_formats(forwarded: list[str]) -> list[str]:
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--formats", default="md,json,tex,rst,typ")
+    args, _ = parser.parse_known_args(forwarded)
+    raw_formats = str(args.formats).strip()
+    formats = [item.strip().lower() for item in raw_formats.split(",") if item.strip()]
+    if not formats:
+        raise ValueError("No valid format found in --formats.")
+
+    deduped: list[str] = []
+    for fmt in formats:
+        if fmt not in SUPPORTED_VERIFY_FORMATS:
+            raise ValueError(
+                f"Unsupported format '{fmt}' for verify bills. "
+                f"Supported: {', '.join(sorted(SUPPORTED_VERIFY_FORMATS))}."
+            )
+        if fmt not in deduped:
+            deduped.append(fmt)
+    return deduped
+
+
+def build_snapshot_compare_steps(
+    *,
+    repo_root: Path,
+    python_exe: str,
+    output_project: str,
+    formats: list[str],
+    depends_on: list[str],
+) -> list[dict]:
+    compare_entry = repo_root / "tools" / "verify" / "check_report_snapshots.py"
+    steps: list[dict] = []
+    for fmt in formats:
+        steps.append(
+            {
+                "id": f"snapshot_compare_{fmt}",
+                "name": f"Compare {fmt} snapshots",
+                "command": [
+                    python_exe,
+                    str(compare_entry),
+                    "--project",
+                    output_project,
+                    "--compare-scope",
+                    fmt,
+                ],
+                "cwd": "{repo_root}",
+                "timeout_seconds": 1800,
+                "depends_on": list(depends_on),
+            }
+        )
+    if "json" in formats:
+        steps.append(
+            {
+                "id": "snapshot_compare_standard_report",
+                "name": "Compare standard-report goldens",
+                "command": [
+                    python_exe,
+                    str(compare_entry),
+                    "--project",
+                    output_project,
+                    "--compare-scope",
+                    COMPARE_SCOPE_STANDARD_REPORT,
+                ],
+                "cwd": "{repo_root}",
+                "timeout_seconds": 1800,
+                "depends_on": list(depends_on),
+            }
+        )
+    return steps
 
 
 def run_bills_workflow(
@@ -27,6 +100,11 @@ def run_bills_workflow(
     if "--formats" not in effective_forwarded:
         effective_forwarded = [*effective_forwarded, "--formats", "md,json,tex,rst,typ"]
     output_project = detect_output_project(forwarded)
+    try:
+        requested_formats = parse_requested_formats(effective_forwarded)
+    except ValueError as exc:
+        print(f"[ERROR] {exc}")
+        return 2
     flow_entry = repo_root / "tools" / "flows" / "bills_tracer_flow.py"
     latest_root = resolve_artifact_latest_dir(repo_root, output_project)
     steps = [
@@ -43,6 +121,15 @@ def run_bills_workflow(
             ],
         }
     ]
+    steps.extend(
+        build_snapshot_compare_steps(
+            repo_root=repo_root,
+            python_exe=python_exe,
+            output_project=output_project,
+            formats=requested_formats,
+            depends_on=["bills_tracer"],
+        )
+    )
     return run_pipeline_steps(
         repo_root=repo_root,
         python_exe=python_exe,
@@ -75,7 +162,7 @@ def run_bills_parallel_smoke(
     parser.add_argument(
         "--compare-scope",
         default="all",
-        choices=["all", "md", "json", "tex", "rst", "typ"],
+        choices=["all", "md", "json", "tex", "rst", "typ", "standard-report"],
     )
     parser.add_argument(
         "--dist-scope",

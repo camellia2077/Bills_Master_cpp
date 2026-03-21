@@ -19,6 +19,8 @@ inline constexpr const char* kValidatorConfigName =
     ::bills::core::abi::constants::kValidatorConfigName;
 inline constexpr const char* kModifierConfigName =
     ::bills::core::abi::constants::kModifierConfigName;
+inline constexpr const char* kExportFormatsConfigName =
+    ::bills::core::abi::constants::kExportFormatsConfigName;
 inline constexpr const char* kDefaultConvertOutputDir =
     ::bills::core::abi::constants::kDefaultConvertOutputDir;
 inline constexpr int kResponseSchemaVersion =
@@ -80,6 +82,9 @@ using ::bills::core::abi::handle_import_command;
 using ::bills::core::abi::handle_query_command;
 using ::bills::core::abi::handle_template_generate_command;
 using ::bills::core::abi::handle_record_preview_command;
+using ::bills::core::abi::handle_validate_config_bundle_command;
+using ::bills::core::abi::handle_validate_record_batch_command;
+using ::bills::core::abi::handle_preflight_import_command;
 using ::bills::core::abi::handle_config_inspect_command;
 using ::bills::core::abi::handle_list_periods_command;
 }  // namespace bills::core::modules::abi

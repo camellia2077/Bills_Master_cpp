@@ -12,6 +12,10 @@ class StandardReportJsonSerializer {
   [[nodiscard]] static auto ToJson(const StandardReport& report)
       -> nlohmann::ordered_json;
   [[nodiscard]] static auto ToString(const StandardReport& report) -> std::string;
+  [[nodiscard]] static auto FromJson(
+      const nlohmann::ordered_json& report_json) -> StandardReport;
+  [[nodiscard]] static auto FromString(const std::string& report_json)
+      -> StandardReport;
 };
 
 #endif  // REPORTS_STANDARD_JSON_STANDARD_REPORT_JSON_SERIALIZER_H_

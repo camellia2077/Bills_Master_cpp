@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "common/Result.hpp"
+#include "common/validation_issue.hpp"
 
 enum class RecordTemplateErrorCategory {
   kRequest,
@@ -89,6 +90,8 @@ struct TemplateGenerationResult {
 struct RecordPreviewFile {
   std::filesystem::path path;
   bool ok = false;
+  std::string file_name_period;
+  bool file_name_matches_period = true;
   std::string period;
   int year = 0;
   int month = 0;
@@ -97,6 +100,7 @@ struct RecordPreviewFile {
   double total_expense = 0.0;
   double balance = 0.0;
   std::string error;
+  std::vector<ValidationIssue> issues;
 };
 
 struct RecordPreviewResult {

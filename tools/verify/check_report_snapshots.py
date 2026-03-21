@@ -15,47 +15,25 @@ from tools.toolchain.services.build_layout import (
     resolve_artifact_latest_dir,
     resolve_artifact_project_root,
 )
+from tools.verify.report_snapshot_support import (
+    VALID_COMPARE_SCOPES,
+    compare_mode_for_manifest_item,
+    normalize_content,
+    should_collect_extra_source,
+    should_compare_manifest_item,
+)
 
 
-def normalize_text_content(content: str) -> str:
-    # Normalize EOL and ignore final newline-only differences.
-    return content.replace("\r\n", "\n").rstrip("\n")
-
-
-def normalize_standard_json(content: str) -> str:
-    payload = json.loads(content)
-    meta = payload.get("meta")
-    if isinstance(meta, dict):
-        meta.pop("generated_at_utc", None)
-    return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-
-
-def compare_file(current_path: Path, baseline_path: Path) -> bool:
-    if current_path.suffix.lower() == ".json":
-        current_text = normalize_standard_json(current_path.read_text(encoding="utf-8"))
-        baseline_text = normalize_standard_json(baseline_path.read_text(encoding="utf-8"))
-        return current_text == baseline_text
-
-    current_text = normalize_text_content(current_path.read_text(encoding="utf-8"))
-    baseline_text = normalize_text_content(baseline_path.read_text(encoding="utf-8"))
+def compare_file(current_path: Path, baseline_path: Path, *, compare_mode: str) -> bool:
+    current_text = normalize_content(
+        current_path.read_text(encoding="utf-8"),
+        compare_mode,
+    )
+    baseline_text = normalize_content(
+        baseline_path.read_text(encoding="utf-8"),
+        compare_mode,
+    )
     return current_text == baseline_text
-
-
-def should_compare_source(source_rel: str, compare_scope: str) -> bool:
-    suffix = Path(source_rel).suffix.lower()
-    if compare_scope == "all":
-        return True
-    if compare_scope == "md":
-        return suffix == ".md"
-    if compare_scope == "json":
-        return suffix == ".json"
-    if compare_scope == "tex":
-        return suffix == ".tex"
-    if compare_scope == "rst":
-        return suffix == ".rst"
-    if compare_scope == "typ":
-        return suffix == ".typ"
-    return False
 
 
 def compare_against_baseline(
@@ -67,11 +45,11 @@ def compare_against_baseline(
     failed: list[str] = []
     compared = 0
     for key, item in manifest.items():
-        source_rel = item["source"]
-        if not should_compare_source(source_rel, compare_scope):
+        if not should_compare_manifest_item(item, compare_scope):
             continue
         compared += 1
 
+        source_rel = item["source"]
         baseline_rel = item["baseline"]
         current_path = current_root / source_rel
         baseline_path = baseline_root / baseline_rel
@@ -82,7 +60,11 @@ def compare_against_baseline(
         if not baseline_path.exists():
             failed.append(f"{key}: missing baseline file {baseline_path}")
             continue
-        if not compare_file(current_path, baseline_path):
+        if not compare_file(
+            current_path,
+            baseline_path,
+            compare_mode=compare_mode_for_manifest_item(item),
+        ):
             failed.append(f"{key}: content mismatch")
 
     if failed:
@@ -104,7 +86,7 @@ def compare_between_projects(
     manifest_sources = {
         item["source"]
         for item in manifest.values()
-        if should_compare_source(item["source"], compare_scope)
+        if should_compare_manifest_item(item, compare_scope)
     }
     files_a = collect_scoped_files(project_a_root, compare_scope)
     files_b = collect_scoped_files(project_b_root, compare_scope)
@@ -113,11 +95,11 @@ def compare_between_projects(
     failed: list[str] = []
     compared = 0
     for key, item in manifest.items():
-        source_rel = item["source"]
-        if source_rel not in manifest_sources:
+        if not should_compare_manifest_item(item, compare_scope):
             continue
         compared += 1
 
+        source_rel = item["source"]
         project_a_path = project_a_root / source_rel
         project_b_path = project_b_root / source_rel
 
@@ -127,7 +109,11 @@ def compare_between_projects(
         if not project_b_path.exists():
             failed.append(f"{key}: missing project B file {project_b_path}")
             continue
-        if not compare_file(project_a_path, project_b_path):
+        if not compare_file(
+            project_a_path,
+            project_b_path,
+            compare_mode=compare_mode_for_manifest_item(item),
+        ):
             failed.append(f"{key}: content mismatch")
 
     # Compare additional files that are not listed in manifest (e.g. tex).
@@ -142,7 +128,7 @@ def compare_between_projects(
             failed.append(f"missing project B file {project_b_root / relative}")
             continue
         compared += 1
-        if not compare_file(project_a_path, project_b_path):
+        if not compare_file(project_a_path, project_b_path, compare_mode="text"):
             failed.append(f"{relative}: content mismatch")
 
     if failed:
@@ -166,7 +152,7 @@ def collect_scoped_files(root: Path, compare_scope: str) -> dict[str, Path]:
         if not path.is_file():
             continue
         relative = path.relative_to(root).as_posix()
-        if not should_compare_source(relative, compare_scope):
+        if not should_collect_extra_source(relative, compare_scope):
             continue
         files[relative] = path
     return files
@@ -209,7 +195,7 @@ def main() -> int:
     parser.add_argument(
         "--compare-scope",
         default="all",
-        choices=["all", "md", "json", "tex", "rst", "typ"],
+        choices=VALID_COMPARE_SCOPES,
         help="Limit comparison to selected file type.",
     )
     args = parser.parse_args()

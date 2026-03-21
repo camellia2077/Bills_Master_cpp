@@ -1,0 +1,312 @@
+{
+  "extensions": {},
+  "items": {
+    "categories": [
+      {
+        "name": "daily",
+        "sub_categories": [
+          {
+            "name": "daily_consumables",
+            "subtotal": -0.61,
+            "transactions": [
+              {
+                "amount": -0.61,
+                "comment": "",
+                "description": "牙膏",
+                "parent_category": "daily",
+                "source": "",
+                "sub_category": "daily_consumables",
+                "transaction_type": ""
+              }
+            ]
+          },
+          {
+            "name": "daily_fees",
+            "subtotal": -25.89,
+            "transactions": [
+              {
+                "amount": -25.89,
+                "comment": "",
+                "description": "哈喽",
+                "parent_category": "daily",
+                "source": "",
+                "sub_category": "daily_fees",
+                "transaction_type": ""
+              }
+            ]
+          }
+        ],
+        "total": -26.5
+      },
+      {
+        "name": "fitness",
+        "sub_categories": [
+          {
+            "name": "fitness_diet",
+            "subtotal": -197.2,
+            "transactions": [
+              {
+                "amount": -30.24,
+                "comment": "",
+                "description": "牛奶",
+                "parent_category": "fitness",
+                "source": "",
+                "sub_category": "fitness_diet",
+                "transaction_type": ""
+              },
+              {
+                "amount": -35.19,
+                "comment": "",
+                "description": "复合维生素",
+                "parent_category": "fitness",
+                "source": "",
+                "sub_category": "fitness_diet",
+                "transaction_type": ""
+              },
+              {
+                "amount": -131.77,
+                "comment": "",
+                "description": "蛋白粉",
+                "parent_category": "fitness",
+                "source": "",
+                "sub_category": "fitness_diet",
+                "transaction_type": ""
+              }
+            ]
+          }
+        ],
+        "total": -197.2
+      },
+      {
+        "name": "income",
+        "sub_categories": [
+          {
+            "name": "income_salary",
+            "subtotal": 12205.52,
+            "transactions": [
+              {
+                "amount": 12205.52,
+                "comment": "",
+                "description": "工资",
+                "parent_category": "income",
+                "source": "",
+                "sub_category": "income_salary",
+                "transaction_type": ""
+              }
+            ]
+          }
+        ],
+        "total": 12205.52
+      },
+      {
+        "name": "meal",
+        "sub_categories": [
+          {
+            "name": "meal_drinks",
+            "subtotal": -107.47,
+            "transactions": [
+              {
+                "amount": -107.47,
+                "comment": "",
+                "description": "无糖饮料",
+                "parent_category": "meal",
+                "source": "",
+                "sub_category": "meal_drinks",
+                "transaction_type": ""
+              }
+            ]
+          },
+          {
+            "name": "meal_fruits",
+            "subtotal": -30.48,
+            "transactions": [
+              {
+                "amount": -30.48,
+                "comment": "",
+                "description": "西瓜",
+                "parent_category": "meal",
+                "source": "",
+                "sub_category": "meal_fruits",
+                "transaction_type": ""
+              }
+            ]
+          },
+          {
+            "name": "meal_high",
+            "subtotal": -86.21,
+            "transactions": [
+              {
+                "amount": -86.21,
+                "comment": "",
+                "description": "醉碳花",
+                "parent_category": "meal",
+                "source": "",
+                "sub_category": "meal_high",
+                "transaction_type": ""
+              }
+            ]
+          },
+          {
+            "name": "meal_low",
+            "subtotal": -359.09,
+            "transactions": [
+              {
+                "amount": -359.09,
+                "comment": "",
+                "description": "饭",
+                "parent_category": "meal",
+                "source": "",
+                "sub_category": "meal_low",
+                "transaction_type": ""
+              }
+            ]
+          },
+          {
+            "name": "meal_snacks",
+            "subtotal": -20.09,
+            "transactions": [
+              {
+                "amount": -20.09,
+                "comment": "",
+                "description": "蛋挞",
+                "parent_category": "meal",
+                "source": "",
+                "sub_category": "meal_snacks",
+                "transaction_type": ""
+              }
+            ]
+          }
+        ],
+        "total": -603.34
+      },
+      {
+        "name": "pet",
+        "sub_categories": [
+          {
+            "name": "pet_tortoises",
+            "subtotal": -64.56,
+            "transactions": [
+              {
+                "amount": -6.49,
+                "comment": "",
+                "description": "红耳龟",
+                "parent_category": "pet",
+                "source": "",
+                "sub_category": "pet_tortoises",
+                "transaction_type": ""
+              },
+              {
+                "amount": -10.75,
+                "comment": "",
+                "description": "南石",
+                "parent_category": "pet",
+                "source": "",
+                "sub_category": "pet_tortoises",
+                "transaction_type": ""
+              },
+              {
+                "amount": -47.32,
+                "comment": "",
+                "description": "小青",
+                "parent_category": "pet",
+                "source": "",
+                "sub_category": "pet_tortoises",
+                "transaction_type": ""
+              }
+            ]
+          }
+        ],
+        "total": -64.56
+      },
+      {
+        "name": "purchase",
+        "sub_categories": [
+          {
+            "name": "purchase_clothes",
+            "subtotal": -32.8,
+            "transactions": [
+              {
+                "amount": -32.8,
+                "comment": "",
+                "description": "衣服",
+                "parent_category": "purchase",
+                "source": "",
+                "sub_category": "purchase_clothes",
+                "transaction_type": ""
+              }
+            ]
+          },
+          {
+            "name": "purchase_toys",
+            "subtotal": -56.24,
+            "transactions": [
+              {
+                "amount": -56.24,
+                "comment": "",
+                "description": "手办",
+                "parent_category": "purchase",
+                "source": "",
+                "sub_category": "purchase_toys",
+                "transaction_type": ""
+              }
+            ]
+          }
+        ],
+        "total": -89.03999999999999
+      },
+      {
+        "name": "web",
+        "sub_categories": [
+          {
+            "name": "web_games",
+            "subtotal": -37.85,
+            "transactions": [
+              {
+                "amount": -37.85,
+                "comment": "",
+                "description": "原神月卡",
+                "parent_category": "web",
+                "source": "",
+                "sub_category": "web_games",
+                "transaction_type": ""
+              }
+            ]
+          },
+          {
+            "name": "web_services",
+            "subtotal": -44.86,
+            "transactions": [
+              {
+                "amount": -44.86,
+                "comment": "",
+                "description": "迷雾",
+                "parent_category": "web",
+                "source": "",
+                "sub_category": "web_services",
+                "transaction_type": ""
+              }
+            ]
+          }
+        ],
+        "total": -82.71000000000001
+      }
+    ],
+    "monthly_summary": []
+  },
+  "meta": {
+    "report_type": "monthly",
+    "schema_version": "1.0.0",
+    "source": "bills_core"
+  },
+  "scope": {
+    "data_found": true,
+    "period_end": "2025-04",
+    "period_start": "2025-04",
+    "remark": ""
+  },
+  "summary": {
+    "balance": 11142.17,
+    "total_expense": -1063.35,
+    "total_income": 12205.52
+  }
+}

@@ -14,6 +14,7 @@
 #include <utility>
 #include <vector>
 
+#include "abi/bills_core_abi.h"
 #include "application/use_cases/workflow_use_case.hpp"
 #include "bills_io/io_factory.hpp"
 #include "common/Result.hpp"
@@ -50,6 +51,19 @@ auto make_response(bool ok, std::string code, std::string message,
   response["message"] = std::move(message);
   response["data"] = std::move(data);
   return response.dump(2);
+}
+
+auto invoke_core_abi(const Json& request) -> std::string {
+  const std::string request_json = request.dump();
+  const char* raw_response = bills_core_invoke_json(request_json.c_str());
+  if (raw_response == nullptr) {
+    return make_response(false, "system.native_failure",
+                         "Failed to allocate ABI response.");
+  }
+
+  std::string response(raw_response);
+  bills_core_free_string(raw_response);
+  return response;
 }
 
 auto from_jstring(JNIEnv* env, jstring value) -> std::string {
@@ -337,17 +351,17 @@ auto reset_legacy_database_if_needed(const std::string& db_path) -> bool {
   return should_reset;
 }
 
-auto import_sample(const std::string& sample_path, const std::string& config_dir,
+auto import_sample(const std::string& input_path, const std::string& config_dir,
                    const std::string& db_path) -> std::string {
-  if (sample_path.empty() || config_dir.empty() || db_path.empty()) {
+  if (input_path.empty() || config_dir.empty() || db_path.empty()) {
     return make_response(false, "param.invalid_argument",
-                         "samplePath, configDir, and dbPath must be non-empty.");
+                         "inputPath, configDir, and dbPath must be non-empty.");
   }
-  if (!fs::exists(sample_path)) {
+  if (!fs::exists(input_path)) {
     Json data;
-    data["sample_path"] = sample_path;
+    data["input_path"] = input_path;
     return make_response(false, "param.invalid_argument",
-                         "Bundled sample path does not exist.", std::move(data));
+                         "Bundled sample input path does not exist.", std::move(data));
   }
 
   const ConfigBundle config_bundle = load_config_bundle(config_dir);
@@ -372,17 +386,17 @@ auto import_sample(const std::string& sample_path, const std::string& config_dir
   WorkflowUseCase use_case(config_bundle.validator_config,
                            config_bundle.modifier_config, *content_reader,
                            *file_enumerator, *serializer, *output_path_builder);
-  const auto result = use_case.Ingest(sample_path, *repository, false);
+  const auto result = use_case.Ingest(input_path, *repository, false);
   if (!result) {
     Json data;
-    data["sample_path"] = sample_path;
+    data["input_path"] = input_path;
     data["db_path"] = db_path;
     return make_response(false, "business.import_failed",
                          FormatError(result.error()), std::move(data));
   }
 
   Json data;
-  data["sample_path"] = sample_path;
+  data["input_path"] = input_path;
   data["config_dir"] = config_dir;
   data["db_path"] = db_path;
   data["database_reset"] = database_reset;
@@ -534,31 +548,39 @@ auto preview_record_path(const std::string& input_path,
                          "inputPath and configDir must be non-empty.");
   }
 
-  const auto result = RecordTemplateService::PreviewRecords(input_path, config_dir);
-  if (!result) {
-    return make_record_template_failure_response(
-        result.error(), "Failed to preview record file.");
+  Json request;
+  request["command"] = "validate_record_batch";
+  request["params"] = {
+      {"input_path", input_path},
+      {"config_dir", config_dir},
+  };
+  return invoke_core_abi(request);
+}
+
+auto validate_config_bundle(const std::string& validator_config_text,
+                            const std::string& modifier_config_text,
+                            const std::string& export_formats_text,
+                            const std::string& validator_display_path,
+                            const std::string& modifier_display_path,
+                            const std::string& export_formats_display_path)
+    -> std::string {
+  if (validator_config_text.empty() || modifier_config_text.empty() ||
+      export_formats_text.empty()) {
+    return make_response(false, "param.invalid_argument",
+                         "All config texts must be non-empty.");
   }
 
-  Json data;
-  data["input_path"] = result->input_path.string();
-  data["processed"] = result->processed;
-  data["success"] = result->success;
-  data["failure"] = result->failure;
-  data["periods"] = result->periods;
-  Json files = Json::array();
-  for (const auto& file : result->files) {
-    files.push_back(json_for_record_preview_file(file));
-  }
-  data["files"] = std::move(files);
-
-  if (result->failure == 0U) {
-    return make_response(true, "ok", "Record preview completed successfully.",
-                         std::move(data));
-  }
-  return make_response(false, "business.record_preview_failed",
-                       "One or more record files failed preview.",
-                       std::move(data));
+  Json request;
+  request["command"] = "validate_config_bundle";
+  request["params"] = {
+      {"validator_config_text", validator_config_text},
+      {"modifier_config_text", modifier_config_text},
+      {"export_formats_text", export_formats_text},
+      {"validator_display_path", validator_display_path},
+      {"modifier_display_path", modifier_display_path},
+      {"export_formats_display_path", export_formats_display_path},
+  };
+  return invoke_core_abi(request);
 }
 
 auto list_record_periods(const std::string& input_path) -> std::string {
@@ -610,10 +632,10 @@ auto core_version_info() -> std::string {
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_billstracer_android_data_BillsNativeBindings_importBundledSampleNative(
-    JNIEnv* env, jclass, jstring sample_path, jstring config_dir,
+    JNIEnv* env, jclass, jstring input_path, jstring config_dir,
     jstring db_path) {
   try {
-    return to_jstring(env, import_sample(from_jstring(env, sample_path),
+    return to_jstring(env, import_sample(from_jstring(env, input_path),
                                          from_jstring(env, config_dir),
                                          from_jstring(env, db_path)));
   } catch (const std::exception& error) {
@@ -665,6 +687,28 @@ Java_com_billstracer_android_data_BillsNativeBindings_previewRecordPathNative(
   try {
     return to_jstring(env, preview_record_path(from_jstring(env, input_path),
                                                from_jstring(env, config_dir)));
+  } catch (const std::exception& error) {
+    return to_jstring(
+        env, make_response(false, "system.native_failure", error.what()));
+  }
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_billstracer_android_data_BillsNativeBindings_validateConfigBundleNative(
+    JNIEnv* env, jclass, jstring validator_config_text,
+    jstring modifier_config_text, jstring export_formats_text,
+    jstring validator_display_path, jstring modifier_display_path,
+    jstring export_formats_display_path) {
+  try {
+    return to_jstring(
+        env,
+        validate_config_bundle(
+            from_jstring(env, validator_config_text),
+            from_jstring(env, modifier_config_text),
+            from_jstring(env, export_formats_text),
+            from_jstring(env, validator_display_path),
+            from_jstring(env, modifier_display_path),
+            from_jstring(env, export_formats_display_path)));
   } catch (const std::exception& error) {
     return to_jstring(
         env, make_response(false, "system.native_failure", error.what()));

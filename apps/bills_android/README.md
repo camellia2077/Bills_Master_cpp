@@ -17,3 +17,12 @@ with Compose.
 - Bundled input: root `testdata/bills/2025/2025-01.txt`
 - Bundled config source: root `config/*.toml`
 - Bundled Android config payload: `dist/config/android/*.toml`
+
+## Docs
+
+- `apps/bills_android/AGENTS.md`
+- `docs/modules/bills_android/README.md`
+- `docs/modules/bills_android/architecture.md`
+- `docs/modules/bills_android/module_map.md`
+- `docs/modules/bills_android/change_guide.md`
+- `docs/modules/bills_android/dist_and_test.md`
