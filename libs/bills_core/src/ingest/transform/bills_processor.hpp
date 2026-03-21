@@ -1,0 +1,38 @@
+// ingest/transform/bills_processor.hpp
+
+#ifndef INGEST_TRANSFORM_BILLS_PROCESSOR_H_
+#define INGEST_TRANSFORM_BILLS_PROCESSOR_H_
+
+#include <string>
+#include <vector>
+
+#include "config/modifier_data.hpp"
+
+/**
+ * @class BillProcessor
+ * @brief 负责对原始账单文本行进行预处理。
+ *
+ * 包括计算行内表达式、应用自动续费规则等。
+ */
+class BillProcessor {
+ public:
+  explicit BillProcessor(const Config& config);
+
+  /**
+   * @brief 执行所有预处理修改。
+   * @param lines 原始的文本行向量，将被就地修改。
+   */
+  void process(std::vector<std::string>& lines);
+
+ private:
+  const Config& m_config;
+
+  void _apply_auto_renewal(std::vector<std::string>& lines);
+  static void _sum_up_line(std::string& line);
+  // is_title 是一个辅助函数，在 BillContentTransformer
+  // 中也有，这里为了独立也保留一份
+  static bool _is_title(const std::string& line);
+};
+
+#endif  // INGEST_TRANSFORM_BILLS_PROCESSOR_H_
+

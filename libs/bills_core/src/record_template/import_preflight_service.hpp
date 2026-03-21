@@ -1,19 +1,18 @@
 #ifndef RECORD_TEMPLATE_IMPORT_PREFLIGHT_SERVICE_HPP_
 #define RECORD_TEMPLATE_IMPORT_PREFLIGHT_SERVICE_HPP_
 
-#include <filesystem>
 #include <string>
 #include <vector>
 
-#include "config_loading/config_bundle_validation.hpp"
+#include "common/source_document.hpp"
+#include "config/config_bundle_service.hpp"
 #include "record_template/record_template_types.hpp"
 
 struct ImportPreflightRequest {
-  std::filesystem::path input_path;
-  std::filesystem::path config_dir;
-  std::filesystem::path validator_config_path;
-  std::filesystem::path modifier_config_path;
-  std::filesystem::path export_formats_path;
+  std::string input_label = "inline_batch";
+  SourceDocumentBatch documents;
+  ConfigBundleValidationReport config_validation;
+  RuntimeConfigBundle config_bundle;
   std::vector<std::string> existing_workspace_periods;
   std::vector<std::string> existing_db_periods;
 };

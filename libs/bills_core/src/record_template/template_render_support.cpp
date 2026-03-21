@@ -4,9 +4,8 @@
 #include <vector>
 
 auto TemplateRenderSupport::BuildRelativeTemplatePath(std::string_view period)
-    -> std::filesystem::path {
-  return std::filesystem::path(std::string(period.substr(0U, 4U))) /
-         std::filesystem::path(std::string(period) + ".txt");
+    -> std::string {
+  return std::string(period.substr(0U, 4U)) + "/" + std::string(period) + ".txt";
 }
 
 auto TemplateRenderSupport::RenderTemplate(std::string_view period,

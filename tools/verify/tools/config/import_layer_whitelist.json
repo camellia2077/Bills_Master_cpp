@@ -1,34 +1,303 @@
 {
   "schema_version": 1,
+  "generated_at": "2026-03-21T19:06:21",
+  "policy": "Call-layer files should default to import. Quoted includes must be explicitly allowlisted.",
+  "call_layer_roots": {
+    "cli_presentation": "apps/bills_cli/src/windows/presentation"
+  },
   "allowed_quoted_includes": {
-    "apps/bills_cli/src/windows/presentation/cli/command_handler/command_dispatcher.cpp": [{"header":"command_dispatcher.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"commands/export_command.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"commands/ingest_command.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"commands/query_command.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"commands/simple_command.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"common/common_utils.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"controllers/app_controller.hpp","owner":"phase3-command-controller-decouple","reason":"i_command 改为前置声明后，命令分发实现需显式包含控制器声明以解析成员函数指针。"},{"header":"usage_help.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/export_command.cpp": [{"header":"controllers/app_controller.hpp","owner":"phase3-command-controller-decouple","reason":"i_command 改为前置声明后，导出命令实现需显式包含控制器声明以调用 handle_export。"},{"header":"export_command.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/export_command.hpp": [{"header":"command_handler/commands/interface/i_command.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/ingest_command.cpp": [{"header":"controllers/app_controller.hpp","owner":"phase3-command-controller-decouple","reason":"i_command 改为前置声明后，导入命令实现需显式包含控制器声明以调用 handle_ingest。"},{"header":"ingest_command.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/ingest_command.hpp": [{"header":"command_handler/commands/interface/i_command.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/interface/i_command.hpp": [],
-    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/query_command.cpp": [{"header":"controllers/app_controller.hpp","owner":"phase3-command-controller-decouple","reason":"i_command 改为前置声明后，查询命令实现需显式包含控制器声明以调用 handle_export。"},{"header":"query_command.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/query_command.hpp": [{"header":"command_handler/commands/interface/i_command.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/simple_command.cpp": [{"header":"simple_command.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/simple_command.hpp": [{"header":"command_handler/commands/interface/i_command.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "apps/bills_cli/src/windows/presentation/cli/command_handler/usage_help.cpp": [{"header":"common/common_utils.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"usage_help.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "apps/bills_cli/src/windows/presentation/cli/controllers/app_controller.cpp": [{"header":"app_controller.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"common/cli_version.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"common/common_utils.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"common/version.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"export/export_controller.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"nlohmann/json.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"workflow/workflow_controller.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "apps/bills_cli/src/windows/presentation/cli/controllers/export/export_controller.cpp": [{"header":"bills_io/io_factory.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"common/common_utils.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"export_controller.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "apps/bills_cli/src/windows/presentation/cli/controllers/workflow/path_builder.cpp": [{"header":"common/common_utils.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"path_builder.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "apps/bills_cli/src/windows/presentation/cli/controllers/workflow/path_builder.hpp": [{"header":"ports/output_path_builder.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "apps/bills_cli/src/windows/presentation/cli/controllers/workflow/workflow_controller.cpp": [{"header":"bills_io/io_factory.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"common/common_utils.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"workflow_controller.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "apps/bills_cli/src/windows/presentation/cli/controllers/workflow/workflow_controller.hpp": [{"header":"path_builder.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "apps/bills_cli/src/windows/presentation/cli/main_command.cpp": [{"header":"command_handler/command_dispatcher.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "libs/bills_core/src/abi/internal/handlers/convert_handler.cpp": [{"header":"abi/internal/abi_shared.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "libs/bills_core/src/abi/internal/handlers/ingest_import_handler.cpp": [{"header":"abi/internal/abi_shared.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "libs/bills_core/src/abi/internal/handlers/query_handler.cpp": [{"header":"abi/internal/abi_shared.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "libs/bills_core/src/abi/internal/handlers/validate_handler.cpp": [{"header":"abi/internal/abi_shared.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "libs/bills_core/src/application/use_cases/workflow_use_case.cpp": [{"header":"billing/conversion/bills_processing_pipeline.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"ports/bills_content_reader.hpp","owner":"phase2-application-use-case","reason":"Moved from header to implementation to reduce call-layer header coupling; keep include in cpp for use-case port interactions."},{"header":"ports/bills_file_enumerator.hpp","owner":"phase2-application-use-case","reason":"Moved from header to implementation to reduce call-layer header coupling; keep include in cpp for use-case port interactions."},{"header":"ports/bills_repository.hpp","owner":"phase2-application-use-case","reason":"Moved from header to implementation to reduce call-layer header coupling; keep include in cpp for use-case port interactions."},{"header":"ports/bills_serializer.hpp","owner":"phase2-application-use-case","reason":"Moved from header to implementation to reduce call-layer header coupling; keep include in cpp for use-case port interactions."},{"header":"ports/output_path_builder.hpp","owner":"phase2-application-use-case","reason":"Moved from header to implementation to reduce call-layer header coupling; keep include in cpp for use-case port interactions."},{"header":"workflow_use_case.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "libs/bills_core/src/application/use_cases/workflow_use_case.hpp": [{"header":"billing/conversion/modifier/_shared_structures/bills_data_structures.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"billing/conversion/validator/config/bills_config.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"common/process_stats.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"common/Result.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "libs/bills_core/src/reports/core/report_export_service.cpp": [{"header":"common/common_utils.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"common/process_stats.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"ports/month_report_formatter_provider.hpp","owner":"phase2-reports-core","reason":"Moved from header to implementation to reduce call-layer header coupling; keep include in cpp for provider wiring."},{"header":"ports/report_data_gateway.hpp","owner":"phase2-reports-core","reason":"Moved from header to implementation to reduce call-layer header coupling; keep include in cpp for provider wiring."},{"header":"ports/yearly_report_formatter_provider.hpp","owner":"phase2-reports-core","reason":"Moved from header to implementation to reduce call-layer header coupling; keep include in cpp for provider wiring."},{"header":"report_export_service.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"report_exporter.hpp","owner":"phase2-reports-core","reason":"Moved from header to implementation to reduce call-layer header coupling; keep include in cpp for exporter creation."},{"header":"reports/standard_json/standard_report_assembler.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"reports/standard_json/standard_report_json_serializer.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"standard_json_latex_renderer.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"standard_json_markdown_renderer.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"standard_json_typst_renderer.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "libs/bills_core/src/reports/core/report_exporter.cpp": [{"header":"common/common_utils.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"report_exporter.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "libs/bills_core/src/reports/core/standard_json_latex_renderer.cpp": [{"header":"nlohmann/json.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"reports/standard_json/standard_report_json_serializer.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"standard_json_latex_renderer.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "libs/bills_core/src/reports/core/standard_json_markdown_renderer.cpp": [{"header":"nlohmann/json.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"reports/standard_json/standard_report_json_serializer.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"standard_json_markdown_renderer.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}],
-    "libs/bills_core/src/reports/core/standard_json_typst_renderer.cpp": [{"header":"nlohmann/json.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"},{"header":"standard_json_typst_renderer.hpp","owner":"phase0-baseline","reason":"Phase0 baseline keep; pending migration to import"}]
+    "apps/bills_cli/src/windows/presentation/cli/command_handler/command_dispatcher.cpp": [
+      {
+        "header": "command_dispatcher.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "commands/config_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "commands/export_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "commands/ingest_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "commands/query_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "commands/record_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "commands/simple_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "common/common_utils.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "controllers/app_controller.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "usage_help.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/config_command.cpp": [
+      {
+        "header": "config_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "controllers/app_controller.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/config_command.hpp": [
+      {
+        "header": "command_handler/commands/interface/i_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/export_command.cpp": [
+      {
+        "header": "controllers/app_controller.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "export_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/export_command.hpp": [
+      {
+        "header": "command_handler/commands/interface/i_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/ingest_command.cpp": [
+      {
+        "header": "controllers/app_controller.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "ingest_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/ingest_command.hpp": [
+      {
+        "header": "command_handler/commands/interface/i_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/query_command.cpp": [
+      {
+        "header": "controllers/app_controller.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "query_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/query_command.hpp": [
+      {
+        "header": "command_handler/commands/interface/i_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/record_command.cpp": [
+      {
+        "header": "controllers/app_controller.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "record_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/record_command.hpp": [
+      {
+        "header": "command_handler/commands/interface/i_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/simple_command.cpp": [
+      {
+        "header": "simple_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/command_handler/commands/simple_command.hpp": [
+      {
+        "header": "command_handler/commands/interface/i_command.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/command_handler/usage_help.cpp": [
+      {
+        "header": "common/common_utils.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "usage_help.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/controllers/app_controller.cpp": [
+      {
+        "header": "app_controller.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "bills_io/host_flow_support.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "common/cli_version.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "common/common_utils.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "common/version.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "export/export_controller.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "nlohmann/json.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "record_template/record_template_service.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "reporting/renderers/standard_report_renderer_registry.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "workflow/workflow_controller.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/controllers/export/export_controller.cpp": [
+      {
+        "header": "bills_io/adapters/reports/report_export_service.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "bills_io/io_factory.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "common/common_utils.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "export_controller.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/controllers/workflow/workflow_controller.cpp": [
+      {
+        "header": "bills_io/adapters/io/year_partition_output_path_builder.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "bills_io/host_flow_support.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "bills_io/io_factory.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "common/common_utils.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "ingest/bill_workflow_service.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      },
+      {
+        "header": "workflow_controller.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/controllers/workflow/workflow_controller.hpp": [
+      {
+        "header": "ingest/bill_workflow_service.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ],
+    "apps/bills_cli/src/windows/presentation/cli/main_command.cpp": [
+      {
+        "header": "command_handler/command_dispatcher.hpp",
+        "owner": "phase3-core-canonicalization",
+        "reason": "Phase 3 canonicalized call-layer include; retained pending import migration."
+      }
+    ]
   }
 }

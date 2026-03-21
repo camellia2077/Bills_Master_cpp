@@ -266,3 +266,12 @@ def should_collect_extra_source(source_rel: str, compare_scope: str) -> bool:
     if compare_scope == "typ":
         return suffix == ".typ"
     return False
+
+
+def compare_mode_for_extra_source(source_rel: str) -> str:
+    normalized = source_rel.replace("\\", "/")
+    if normalized.endswith(".json") and (
+        normalized.startswith("JSON_bills/") or normalized.startswith("standard_json/")
+    ):
+        return JSON_RENDER_COMPARE_MODE
+    return TEXT_COMPARE_MODE

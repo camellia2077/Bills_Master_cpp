@@ -4,7 +4,6 @@
 
 #include "common/iso_period.hpp"
 #include "common/text_normalizer.hpp"
-#include "record_template/file_support.hpp"
 
 namespace {
 
@@ -123,32 +122,15 @@ auto RecordTemplatePeriodSupport::ExtractPeriodFromNormalizedText(
   std::string first_line;
   if (!std::getline(stream, first_line)) {
     return std::unexpected(MakeRecordTemplateError(
-        RecordTemplateErrorCategory::kInputPath, "Bill file is empty."));
+        RecordTemplateErrorCategory::kInputData, "Bill file is empty."));
   }
 
   const auto period =
       bills::core::common::iso_period::extract_year_month_from_date_header(first_line);
   if (!period.has_value()) {
     return std::unexpected(MakeRecordTemplateError(
-        RecordTemplateErrorCategory::kInputPath,
+        RecordTemplateErrorCategory::kInputData,
         "The first line must be 'date:YYYY-MM'."));
   }
   return *period;
-}
-
-auto RecordTemplatePeriodSupport::ExtractPeriodFromFile(
-    const std::filesystem::path& file_path)
-    -> RecordTemplateResult<std::string> {
-  const auto content = RecordTemplateFileSupport::ReadTextFile(file_path);
-  if (!content) {
-    return std::unexpected(content.error());
-  }
-
-  const auto normalized_text = NormalizeBillText(*content);
-  if (!normalized_text) {
-    return std::unexpected(MakeRecordTemplateErrorFromCommon(
-        normalized_text.error(), RecordTemplateErrorCategory::kInputPath));
-  }
-
-  return ExtractPeriodFromNormalizedText(*normalized_text);
 }

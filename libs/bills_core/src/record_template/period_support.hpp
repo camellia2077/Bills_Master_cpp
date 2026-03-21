@@ -1,7 +1,6 @@
 #ifndef RECORD_TEMPLATE_PERIOD_SUPPORT_HPP_
 #define RECORD_TEMPLATE_PERIOD_SUPPORT_HPP_
 
-#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -15,10 +14,6 @@ class RecordTemplatePeriodSupport {
 
   [[nodiscard]] static auto ExtractPeriodFromNormalizedText(
       const std::string& normalized_text)
-      -> RecordTemplateResult<std::string>;
-
-  [[nodiscard]] static auto ExtractPeriodFromFile(
-      const std::filesystem::path& file_path)
       -> RecordTemplateResult<std::string>;
 };
 

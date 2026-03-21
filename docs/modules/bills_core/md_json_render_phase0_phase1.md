@@ -53,10 +53,10 @@ legacy/model-first/json-first
 ## 3. Phase 1：契约收敛（StandardReport 作为唯一事实源）
 
 ### 3.1 契约所有权（Owner）
-- 结构体事实源：`libs/bills_core/src/reports/standard_json/standard_report_dto.hpp`
-- 组装层：`libs/bills_core/src/reports/standard_json/standard_report_assembler.cpp`
-- JSON 渲染层：`libs/bills_core/src/reports/standard_json/standard_report_json_serializer.cpp`
-- 导出编排层：`libs/bills_core/src/reports/core/report_export_service.cpp`
+- 结构体事实源：`libs/bills_core/src/reporting/standard_report/standard_report_dto.hpp`
+- 组装层：`libs/bills_core/src/reporting/standard_report/standard_report_assembler.cpp`
+- JSON 渲染层：`libs/bills_core/src/reporting/standard_report/standard_report_json_serializer.cpp`
+- 当前宿主导出编排层：`libs/bills_io/src/bills_io/adapters/reports/report_export_service.cpp`
 
 ### 3.2 分层边界（Phase 1 决议）
 - **业务聚合层**：仅负责 `*ReportData -> StandardReport`，不做格式细节。

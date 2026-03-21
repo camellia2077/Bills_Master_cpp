@@ -7,7 +7,7 @@
 - Positioning: JSON is one renderer output of `StandardReport`, not an independent business source.
 
 ## 1.1 Ownership & Boundary
-- `StandardReport` owner: `libs/bills_core/src/reports/standard_json/standard_report_dto.hpp`
+- `StandardReport` owner: `libs/bills_core/src/reporting/standard_report/standard_report_dto.hpp`
 - Assembler boundary: `*ReportData -> StandardReport`
 - Serializer boundary: `StandardReport -> JSON string`
 - Renderer boundary: output-specific rendering (`md/tex/json`) belongs to presentation/export layer

@@ -5,15 +5,12 @@
 #include <filesystem>
 #include <string>
 
-#include "ports/output_path_builder.hpp"
-
-class YearPartitionOutputPathBuilder final : public OutputPathBuilder {
+class YearPartitionOutputPathBuilder {
  public:
   explicit YearPartitionOutputPathBuilder(std::string base_output_dir);
 
   [[nodiscard]] auto build_output_path(
-      const std::filesystem::path& input_file) const
-      -> std::filesystem::path override;
+      const std::filesystem::path& input_file) const -> std::filesystem::path;
 
  private:
   std::filesystem::path base_output_dir_;

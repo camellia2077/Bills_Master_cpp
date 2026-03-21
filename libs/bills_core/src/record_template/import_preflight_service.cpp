@@ -2,37 +2,20 @@
 
 #include <map>
 #include <set>
-#include <tuple>
 
 #include "common/iso_period.hpp"
 #include "record_template/record_template_service.hpp"
 
 namespace {
-namespace fs = std::filesystem;
-
-auto ResolveConfigPaths(const ImportPreflightRequest& request)
-    -> RecordTemplateResult<std::tuple<fs::path, fs::path, fs::path>> {
-  if (!request.config_dir.empty()) {
-    return std::tuple{
-        request.config_dir / "validator_config.toml",
-        request.config_dir / "modifier_config.toml",
-        request.config_dir / "export_formats.toml",
-    };
-  }
-  if (request.validator_config_path.empty() ||
-      request.modifier_config_path.empty() ||
-      request.export_formats_path.empty()) {
-    return std::unexpected(MakeRecordTemplateError(
-        RecordTemplateErrorCategory::kRequest,
-        "Provide either config_dir or all config file paths for preflight_import."));
-  }
-  return std::tuple{request.validator_config_path, request.modifier_config_path,
-                    request.export_formats_path};
-}
-
-auto ParsePeriodFromFileName(const fs::path& path) -> std::string {
+auto ParsePeriodFromFileName(const std::string& display_path) -> std::string {
+  const std::size_t slash = display_path.find_last_of("/\\");
+  const std::size_t stem_begin = slash == std::string::npos ? 0 : slash + 1;
+  const std::size_t dot = display_path.find_last_of('.');
+  const std::size_t stem_end =
+      (dot == std::string::npos || dot < stem_begin) ? display_path.size() : dot;
+  const std::string stem = display_path.substr(stem_begin, stem_end - stem_begin);
   const auto parsed =
-      bills::core::common::iso_period::parse_year_month(path.stem().string());
+      bills::core::common::iso_period::parse_year_month(stem);
   if (!parsed.has_value()) {
     return {};
   }
@@ -55,23 +38,13 @@ auto CollectSorted(const std::set<std::string>& values) -> std::vector<std::stri
 auto ImportPreflightService::Run(const ImportPreflightRequest& request)
     -> RecordTemplateResult<ImportPreflightResult> {
   ImportPreflightResult result;
-  const auto config_paths = ResolveConfigPaths(request);
-  if (!config_paths) {
-    return std::unexpected(config_paths.error());
-  }
-
-  const auto& [validator_config_path, modifier_config_path, export_formats_path] =
-      *config_paths;
-  const auto config_bundle = ConfigBundleValidationService::ValidateFromFiles(
-      validator_config_path, modifier_config_path, export_formats_path);
-  result.config_validation =
-      config_bundle ? config_bundle->report : config_bundle.error();
+  result.config_validation = request.config_validation;
   if (!result.config_validation.ok) {
     return result;
   }
 
   const auto preview_result = RecordTemplateService::ValidateRecordBatch(
-      request.input_path, validator_config_path, modifier_config_path);
+      request.documents, request.config_bundle, request.input_label);
   if (!preview_result) {
     return std::unexpected(preview_result.error());
   }

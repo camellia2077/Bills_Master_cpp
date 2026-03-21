@@ -1,5 +1,5 @@
 module;
-#include "common/result.hpp"
+#include "common/Result.hpp"
 
 export module bill.core.common.result;
 

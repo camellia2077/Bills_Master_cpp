@@ -1,56 +1,40 @@
 #ifndef RECORD_TEMPLATE_RECORD_TEMPLATE_SERVICE_HPP_
 #define RECORD_TEMPLATE_RECORD_TEMPLATE_SERVICE_HPP_
 
-#include <filesystem>
-
+#include "common/source_document.hpp"
+#include "config/config_bundle_service.hpp"
+#include "config/config_document_types.hpp"
 #include "record_template/record_template_types.hpp"
 
 class RecordTemplateService {
  public:
-  [[nodiscard]] static auto LoadOrderedTemplateLayout(
-      const std::filesystem::path& validator_config_path)
-      -> RecordTemplateResult<OrderedTemplateLayout>;
-
-  [[nodiscard]] static auto LoadOrderedTemplateLayoutFromConfigDir(
-      const std::filesystem::path& config_dir)
+  [[nodiscard]] static auto BuildOrderedTemplateLayout(
+      const ValidatorConfigDocument& validator_document)
       -> RecordTemplateResult<OrderedTemplateLayout>;
 
   [[nodiscard]] static auto GenerateTemplates(
       const TemplateGenerationRequest& request)
       -> RecordTemplateResult<TemplateGenerationResult>;
 
-  [[nodiscard]] static auto PreviewRecords(
-      const std::filesystem::path& input_path,
-      const std::filesystem::path& config_dir)
-      -> RecordTemplateResult<RecordPreviewResult>;
-
   [[nodiscard]] static auto ValidateRecordBatch(
-      const std::filesystem::path& input_path,
-      const std::filesystem::path& config_dir)
+      const SourceDocumentBatch& documents,
+      const RuntimeConfigBundle& config_bundle,
+      std::string input_label = "inline_batch")
       -> RecordTemplateResult<RecordPreviewResult>;
 
   [[nodiscard]] static auto PreviewRecords(
-      const std::filesystem::path& input_path,
-      const std::filesystem::path& validator_config_path,
-      const std::filesystem::path& modifier_config_path)
-      -> RecordTemplateResult<RecordPreviewResult>;
-
-  [[nodiscard]] static auto ValidateRecordBatch(
-      const std::filesystem::path& input_path,
-      const std::filesystem::path& validator_config_path,
-      const std::filesystem::path& modifier_config_path)
+      const SourceDocumentBatch& documents,
+      const RuntimeConfigBundle& config_bundle,
+      std::string input_label = "inline_batch")
       -> RecordTemplateResult<RecordPreviewResult>;
 
   [[nodiscard]] static auto InspectConfig(
-      const std::filesystem::path& config_dir)
-      -> RecordTemplateResult<ConfigInspectResult>;
-
-  [[nodiscard]] static auto InspectValidatorFile(
-      const std::filesystem::path& validator_config_path)
+      const ValidatorConfigDocument& validator_document)
       -> RecordTemplateResult<ConfigInspectResult>;
 
   [[nodiscard]] static auto ListPeriods(
-      const std::filesystem::path& input_path)
+      const SourceDocumentBatch& documents,
+      std::string input_label = "inline_batch")
       -> RecordTemplateResult<ListedPeriodsResult>;
 };
 

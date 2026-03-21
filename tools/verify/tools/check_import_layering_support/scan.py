@@ -19,9 +19,6 @@ CPP_SUFFIXES = {
 }
 
 CALL_LAYER_ROOTS = {
-    "core_application": "libs/bills_core/src/application",
-    "core_reports_core": "libs/bills_core/src/reports/core",
-    "core_abi_handlers": "libs/bills_core/src/abi/internal/handlers",
     "cli_presentation": "apps/bills_cli/src/windows/presentation",
 }
 

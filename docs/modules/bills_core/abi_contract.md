@@ -1,25 +1,67 @@
 # bills_core ABI Contract
 
-## ABI 层职责
+## 定位
 
-- 接收外部命令参数。
-- 调用 core/use case。
-- 统一输出状态码、错误信息、结果 payload。
+`libs/bills_core/src/abi/bills_core_abi.cpp` 现在是纯数据 ABI 入口。
 
-## 约束边界
+ABI 不再负责：
 
-- ABI handler 不承载业务规则，仅做编排与映射。
-- 参数校验失败与业务执行失败要区分错误类别。
-- 返回结构保持向后兼容；新增字段优先可选。
+- 扫描目录
+- 读取 TOML
+- 读取 / 写入文本或 JSON 文件
+- 拼装 `input_path` / `output_dir` / `config_dir`
 
-## 模块化建议
+这些宿主职责统一交给 `bills_io` 或调用方。
 
-- 按命令拆分 handler（如 `validate/convert/import/query/export`）。
-- 每个 handler 独立 `.cpp` 编译单元，避免单文件过大回归风险。
+## 输入模型
+
+- 请求根仍为 JSON 对象：
+  - `command`
+  - `params`
+- 记录 / 导入 / 查询主线统一通过文档批次传输：
+  - `documents: [{ "display_path": "...", "text": "..." }]`
+- 配置主线统一通过配置文档对象传输：
+  - `validator_document`
+  - `modifier_document`
+  - `export_formats_document`
+
+## 当前命令
+
+- `version`
+- `capabilities`
+- `ping`
+- `validate_config_bundle`
+- `template_generate`
+- `validate_record_batch`
+- `preflight_import`
+- `validate`
+- `convert`
+- `ingest`
+- `import`
+- `query`
+
+## 返回模型
+
+所有响应统一包含：
+
+- `ok`
+- `code`
+- `message`
+- `data`
+- `error_layer`
+- `abi_version`
+- `response_schema_version`
+- `error_code_schema_version`
+
+## 边界规则
+
+- ABI 只做参数解包、调用纯数据服务、结果封装
+- 不再承诺旧路径型字段兼容
+- 若命令需要配置校验、文档读取或产物写回，应由调用方先经 `bills_io` 处理
 
 ## 变更检查清单
 
-1. 是否影响现有命令入参与出参。
-2. 是否更新错误码或错误文本映射。
-3. 是否通过 `python tools/verify/verify.py`。
-4. 是否需要更新调用方文档或 schema。
+1. 是否新增或删除纯数据字段
+2. 是否影响 `tests/suites/logic/bills_core_abi_support/scenarios.py`
+3. 是否同步更新 `capabilities` 的命令列表
+4. 是否通过 `python tools/verify/verify.py core-abi`

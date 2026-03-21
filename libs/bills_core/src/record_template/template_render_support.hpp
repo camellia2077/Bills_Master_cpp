@@ -1,7 +1,6 @@
 #ifndef RECORD_TEMPLATE_TEMPLATE_RENDER_SUPPORT_HPP_
 #define RECORD_TEMPLATE_TEMPLATE_RENDER_SUPPORT_HPP_
 
-#include <filesystem>
 #include <string>
 #include <string_view>
 
@@ -10,7 +9,7 @@
 class TemplateRenderSupport {
  public:
   [[nodiscard]] static auto BuildRelativeTemplatePath(std::string_view period)
-      -> std::filesystem::path;
+      -> std::string;
 
   [[nodiscard]] static auto RenderTemplate(std::string_view period,
                                            const OrderedTemplateLayout& layout)

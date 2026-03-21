@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "billing/structures/common_data.hpp"
+#include "domain/bill/bill_record.hpp"
 
 /**
  * @class DatabaseManager
@@ -43,4 +43,3 @@ class DatabaseManager {
 };
 
 #endif  // BILLS_IO_ADAPTERS_DB_DATABASE_MANAGER_H_
-

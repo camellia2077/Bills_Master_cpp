@@ -11,12 +11,12 @@ set(BILLS_CORE_SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}/../bills_core/src")
 
 set(BILLS_IO_SOURCES
     "${BILLS_IO_SOURCE_ROOT}/bills_io/io_factory.cpp"
-    "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/io/file_bill_content_reader.cpp"
-    "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/io/file_bill_file_enumerator.cpp"
+    "${BILLS_IO_SOURCE_ROOT}/bills_io/host_flow_support.cpp"
+    "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/config/config_document_parser.cpp"
     "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/io/year_partition_output_path_builder.cpp"
-    "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/config/toml_bill_config_loader.cpp"
-    "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/config/toml_config_provider.cpp"
-    "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/config/toml_modifier_config_loader.cpp"
+    "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/io/source_document_io.cpp"
+    "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/io/json_bill_document_io.cpp"
+    "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/reports/report_export_service.cpp"
     "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/db/sqlite_bill_repository.cpp"
     "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/db/bill_inserter.cpp"
     "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/db/database_manager.cpp"

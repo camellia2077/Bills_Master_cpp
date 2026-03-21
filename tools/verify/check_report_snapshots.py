@@ -18,6 +18,7 @@ from tools.toolchain.services.build_layout import (
 from tools.verify.report_snapshot_support import (
     VALID_COMPARE_SCOPES,
     compare_mode_for_manifest_item,
+    compare_mode_for_extra_source,
     normalize_content,
     should_collect_extra_source,
     should_compare_manifest_item,
@@ -128,7 +129,11 @@ def compare_between_projects(
             failed.append(f"missing project B file {project_b_root / relative}")
             continue
         compared += 1
-        if not compare_file(project_a_path, project_b_path, compare_mode="text"):
+        if not compare_file(
+            project_a_path,
+            project_b_path,
+            compare_mode=compare_mode_for_extra_source(relative),
+        ):
             failed.append(f"{relative}: content mismatch")
 
     if failed:

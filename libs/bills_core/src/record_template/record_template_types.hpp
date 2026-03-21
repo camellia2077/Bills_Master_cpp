@@ -3,7 +3,6 @@
 
 #include <cstddef>
 #include <expected>
-#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -13,8 +12,8 @@
 enum class RecordTemplateErrorCategory {
   kRequest,
   kConfig,
-  kInputPath,
-  kOutputPath,
+  kInputData,
+  kOutputData,
   kSystem,
 };
 
@@ -68,27 +67,21 @@ struct TemplateGenerationRequest {
   std::string end_period;
   std::string start_year;
   std::string end_year;
-  std::filesystem::path config_dir;
-  std::filesystem::path validator_config_path;
-  bool write_files = false;
-  std::filesystem::path output_dir;
+  OrderedTemplateLayout layout;
 };
 
 struct GeneratedTemplateFile {
   std::string period;
-  std::filesystem::path relative_path;
+  std::string relative_path;
   std::string text;
-  std::filesystem::path output_path;
 };
 
 struct TemplateGenerationResult {
-  bool write_files = false;
-  std::filesystem::path output_dir;
   std::vector<GeneratedTemplateFile> templates;
 };
 
 struct RecordPreviewFile {
-  std::filesystem::path path;
+  std::string path;
   bool ok = false;
   std::string file_name_period;
   bool file_name_matches_period = true;
@@ -104,7 +97,7 @@ struct RecordPreviewFile {
 };
 
 struct RecordPreviewResult {
-  std::filesystem::path input_path;
+  std::string input_path;
   std::size_t processed = 0;
   std::size_t success = 0;
   std::size_t failure = 0;
@@ -120,12 +113,12 @@ struct ConfigInspectResult {
 };
 
 struct InvalidPeriodFile {
-  std::filesystem::path path;
+  std::string path;
   std::string error;
 };
 
 struct ListedPeriodsResult {
-  std::filesystem::path input_path;
+  std::string input_path;
   std::size_t processed = 0;
   std::size_t valid = 0;
   std::size_t invalid = 0;
