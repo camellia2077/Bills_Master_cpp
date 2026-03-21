@@ -1,21 +1,27 @@
 # bills_io Agent Guide
 
-`libs/bills_io` 目录只保留入口约束，详细说明统一在 `docs/modules/bills_io/`。
+`libs/bills_io` 是跨端 IO 与宿主装配层。这个文件只保留 agent 需要的最小导航和边界。
 
-## 必读顺序
+## Read First
 
 1. `libs/bills_io/README.md`
-2. `docs/modules/bills_io/README.md`
-3. `docs/modules/bills_io/module_map.md`
-4. `docs/modules/bills_io/change_guide.md`
+2. `docs/modules/bills_io/module_map.md`
+3. `docs/modules/bills_io/change_guide.md`
+4. 需要看整体边界时再看 `docs/modules/bills_io/architecture.md`
 
-## 约束
+## Use This Module When
 
-- `bills_io` 仅实现适配器，不承载业务规则
-- 业务规则应落在 `libs/bills_core`
-- 通过 `ports` 契约对接，不反向依赖 presentation
+- 你在改配置文档读取、源文档输入、JSON 文件读写、sqlite 仓储、导出落地
+- 你在改 CLI/Android 的共享宿主拼装
 
-## 验证
+## Boundaries
 
-- 修改后至少执行一次：`python tools/verify/verify.py`
-- 失败需修复后重跑，直到返回码 `0`
+- 这里不承载业务规则
+- 业务规则优先去 `libs/bills_core`
+- 不要让 `bills_io` 反向依赖表现层
+- 优先从 `module_map.md` 找目录，再去 `rg`
+
+## Verify
+
+- `python tools/verify/verify.py import-layer-check --stats`
+- `python tools/verify/verify.py boundary-layer-check --stats`

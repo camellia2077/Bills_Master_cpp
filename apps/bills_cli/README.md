@@ -1,16 +1,20 @@
 # bills_cli
 
-本目录仅保留 CLI 代码与导航入口，详细文档统一在 `docs/`。
+`apps/bills_cli` 只承接 CLI 表现层、命令解析和宿主装配。详细说明统一放在 `docs/modules/bills_cli/`。
 
-## 先看这些文档
+## Start Here
 
-- `apps/bills_cli/AGENTS.md`
-- `docs/modules/bills_cli/module_map.md`
-- `docs/modules/bills_cli/change_guide.md`
-- `docs/modules/bills_cli/architecture.md`
-- `docs/modules/bills_cli/dist_and_test.md`
-- `docs/modules/module_standards.md`
+1. `apps/bills_cli/AGENTS.md`
+2. `docs/modules/bills_cli/module_map.md`
+3. `docs/modules/bills_cli/change_guide.md`
+4. `docs/modules/bills_cli/dist_and_test.md`
 
-## 本地验证
+## Quick Pointers
 
-- 统一入口：`python tools/verify/verify.py`
+- 找目录和主线：`docs/modules/bills_cli/module_map.md`
+- 判断改动落点：`docs/modules/bills_cli/change_guide.md`
+- 看整体边界：`docs/modules/bills_cli/architecture.md`
+
+## Quick Verify
+
+- `python tools/verify/verify.py bills`

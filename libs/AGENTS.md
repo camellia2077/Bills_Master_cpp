@@ -1,38 +1,26 @@
 # libs Agent Guide
 
-`libs/` 目录用于放核心业务与基础适配模块。这里的 `AGENTS.md` 只负责总导航与边界提醒，详细模块说明继续看各模块自己的 `README.md`、`AGENTS.md` 与 `docs/modules/`。
+`libs/` 是核心业务和 IO 适配层的总入口。这个文件只负责告诉 agent 先去哪一个模块，再去看各模块自己的薄链接文档。
 
-## 推荐阅读顺序
+## Read First
 
-1. 先确认改动属于哪个模块：
-   - 业务规则 / 报表编排 / ABI / ports：`libs/bills_core`
-   - IO / TOML 配置读取 / sqlite / formatter provider：`libs/bills_io`
+1. 先判断改动属于哪个模块：
+   - 业务规则、导入、查询、报表、ABI：`libs/bills_core`
+   - 配置文档读取、源文档 IO、sqlite、导出落地：`libs/bills_io`
 2. 进入对应模块后，先读：
    - `libs/<module>/README.md`
    - `libs/<module>/AGENTS.md`
-3. 再看对应 docs 落地页：
-   - `docs/modules/bills_core/README.md`
-   - `docs/modules/bills_io/README.md`
+3. 再按需要看：
+   - `docs/modules/bills_core/module_map.md`
+   - `docs/modules/bills_io/module_map.md`
 
-## 模块边界
+## Boundaries
 
-- `libs/bills_core`
-  - 放业务规则、use case、reports、ABI、ports
-  - 不承载平台/CLI 细节
-- `libs/bills_io`
-  - 放文件、TOML、sqlite、formatter provider 等适配器实现
-  - 不承载业务规则
-- `apps/bills_cli`
-  - 负责表现层与命令分发
-  - 不新增核心业务规则
+- `bills_core` 只承接纯业务规则
+- `bills_io` 只承接 IO 适配和宿主装配
+- 表现层改动优先去 `apps/bills_cli` 或 `apps/bills_android`
 
-## 修改前先判断
+## Verify
 
-- 如果你在改“规则是什么”，优先去 `libs/bills_core`
-- 如果你在改“数据怎么读/写/装配”，优先去 `libs/bills_io`
-- 如果你在改 CLI 参数、命令分发或控制器，去 `apps/bills_cli`
-
-## 验证
-
-- 修改 `libs/` 下代码后，至少执行一次：`python tools/verify/verify.py`
-- 若本次改动只涉及文档，可跳过代码验证
+- `python tools/verify/verify.py`
+- 纯文档改动可跳过代码验证

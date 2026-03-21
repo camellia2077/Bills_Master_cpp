@@ -1,28 +1,20 @@
 # bills_android
 
-Android MVP app for importing one bundled `testdata/bills/2025/2025-01.txt`
-sample into a private SQLite database and querying fixed year/month summaries
-with Compose.
+`apps/bills_android` 只承接 Android 表现层、平台适配和 JNI 宿主装配。详细说明统一放在 `docs/modules/bills_android/`。
 
-## Commands
+## Start Here
 
-- `./gradlew :apps:bills_android:tasks`
-- `./gradlew :apps:bills_android:assembleDebug`
-- `python tools/flows/distribute_configs.py --targets android`
+1. `apps/bills_android/AGENTS.md`
+2. `docs/modules/bills_android/module_map.md`
+3. `docs/modules/bills_android/change_guide.md`
+4. `docs/modules/bills_android/dist_and_test.md`
 
-## Layout
+## Quick Pointers
 
-- Gradle outputs: `apps/bills_android/build`
-- Native staging: `apps/bills_android/.cxx`
-- Bundled input: root `testdata/bills/2025/2025-01.txt`
-- Bundled config source: root `config/*.toml`
-- Bundled Android config payload: `dist/config/android/*.toml`
+- 找目录和主线：`docs/modules/bills_android/module_map.md`
+- 判断改动落点：`docs/modules/bills_android/change_guide.md`
+- 看整体边界：`docs/modules/bills_android/architecture.md`
 
-## Docs
+## Quick Verify
 
-- `apps/bills_android/AGENTS.md`
-- `docs/modules/bills_android/README.md`
-- `docs/modules/bills_android/architecture.md`
-- `docs/modules/bills_android/module_map.md`
-- `docs/modules/bills_android/change_guide.md`
-- `docs/modules/bills_android/dist_and_test.md`
+- `python tools/run.py dist android --preset debug`
