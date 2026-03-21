@@ -7,13 +7,6 @@ from . import app_config as config
 from . import constants
 
 
-def with_export_pipeline(base_args):
-    pipeline = str(config.EXPORT_PIPELINE).strip()
-    if not pipeline:
-        return base_args
-    return [*base_args, "--export-pipeline", pipeline]
-
-
 class ImportTasks:
     """Import类负责执行数据校验、修改和导入任务。"""
 
@@ -26,9 +19,9 @@ class ImportTasks:
         print(f"{constants.CYAN}--- 2. Running Import Tasks ---{constants.RESET}")
         ingest_mode = config.INGEST_MODE.lower()
         if ingest_mode == "ingest":
-            cmd_args = ["--ingest", self.bills_path]
+            cmd_args = ["workspace", "ingest", self.bills_path]
             if config.INGEST_WRITE_JSON:
-                cmd_args.append("--json")
+                cmd_args.append("--write-json-cache")
             if not self.executor.run("Ingest", cmd_args, "1_ingest.log"):
                 return False
             return True
@@ -40,20 +33,32 @@ class ImportTasks:
             )
             return False
 
-        if not self.executor.run("Validate", ["--validate", self.bills_path], "1_validate.log"):
+        if not self.executor.run(
+            "Validate",
+            ["workspace", "validate", self.bills_path],
+            "1_validate.log",
+        ):
             return False
 
-        if not self.executor.run("Convert", ["--convert", self.bills_path], "2_convert.log"):
+        if not self.executor.run(
+            "Convert",
+            ["workspace", "convert", self.bills_path, "--write-json-cache"],
+            "2_convert.log",
+        ):
             return False
 
         if not os.path.exists(self.import_path):
             print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
             print(
-                f"      {constants.RED}错误: '--convert' 命令执行了, 但未能创建 import 目录: '{self.import_path}'{constants.RESET}"
+                f"      {constants.RED}错误: 'workspace convert --write-json-cache' 已执行, 但未能创建 import 目录: '{self.import_path}'{constants.RESET}"
             )
             return False
 
-        if not self.executor.run("Import", ["--import", self.import_path], "3_import.log"):
+        if not self.executor.run(
+            "Import",
+            ["workspace", "import-json", self.import_path],
+            "3_import.log",
+        ):
             return False
 
         return True
@@ -69,13 +74,13 @@ class QueryTasks:
         print(f"{constants.CYAN}--- 3. Running Query Tasks ---{constants.RESET}")
         if not self.executor.run(
             "Query Year",
-            with_export_pipeline(["--query", "year", config.TEST_DATES["single_year"]]),
+            ["report", "show", "year", config.TEST_DATES["single_year"]],
             "4_query_year.log",
         ):
             return False
         if not self.executor.run(
             "Query Month",
-            with_export_pipeline(["--query", "month", config.TEST_DATES["single_month"]]),
+            ["report", "show", "month", config.TEST_DATES["single_month"]],
             "5_query_month.log",
         ):
             return False
@@ -83,7 +88,7 @@ class QueryTasks:
 
 
 class ExportTasks:
-    """“全部导出”类：遍历所有格式执行 --export all 任务。"""
+    """“全部导出”类：遍历所有格式执行 `report export all` 任务。"""
 
     def __init__(self, executor):
         self.executor = executor
@@ -95,7 +100,7 @@ class ExportTasks:
             log_filename = f"6_export_all_{fmt}.log"
             if not self.executor.run(
                 step_name,
-                with_export_pipeline(["--export", "all", "--format", fmt]),
+                ["report", "export", "all", "--format", fmt],
                 log_filename,
             ):
                 return False
@@ -103,7 +108,7 @@ class ExportTasks:
 
 
 class DateExportTasks:
-    """“日期导出”类：遍历所有格式对每个日期场景执行 --export date 测试。"""
+    """“日期导出”类：遍历所有格式对 year/month/range 子命令做覆盖。"""
 
     def __init__(self, executor):
         self.executor = executor
@@ -115,34 +120,43 @@ class DateExportTasks:
         for fmt in config.EXPORT_FORMATS:
             step_name = f"Export Year {config.TEST_DATES['single_year']} ({fmt.upper()})"
             log_filename = f"10_export_date_year_{fmt}.log"
-            cmd_args = with_export_pipeline(
-                ["-e", "d", config.TEST_DATES["single_year"], "-f", fmt]
-            )
+            cmd_args = [
+                "report",
+                "export",
+                "year",
+                config.TEST_DATES["single_year"],
+                "--format",
+                fmt,
+            ]
             if not self.executor.run(step_name, cmd_args, log_filename):
                 return False
 
         for fmt in config.EXPORT_FORMATS:
             step_name = f"Export Month {config.TEST_DATES['single_month']} ({fmt.upper()})"
             log_filename = f"11_export_date_month_{fmt}.log"
-            cmd_args = with_export_pipeline(
-                ["-e", "d", config.TEST_DATES["single_month"], "-f", fmt]
-            )
+            cmd_args = [
+                "report",
+                "export",
+                "month",
+                config.TEST_DATES["single_month"],
+                "--format",
+                fmt,
+            ]
             if not self.executor.run(step_name, cmd_args, log_filename):
                 return False
 
         for fmt in config.EXPORT_FORMATS:
             step_name = f"Export Range ({fmt.upper()})"
             log_filename = f"12_export_date_range_{fmt}.log"
-            cmd_args = with_export_pipeline(
-                [
-                    "-e",
-                    "d",
-                    config.TEST_DATES["range_start"],
-                    config.TEST_DATES["range_end"],
-                    "-f",
-                    fmt,
-                ]
-            )
+            cmd_args = [
+                "report",
+                "export",
+                "range",
+                config.TEST_DATES["range_start"],
+                config.TEST_DATES["range_end"],
+                "--format",
+                fmt,
+            ]
             if not self.executor.run(step_name, cmd_args, log_filename):
                 return False
 
@@ -158,9 +172,9 @@ class MetadataTasks:
     def run(self):
         print(f"{constants.CYAN}--- 5. Running Metadata Tasks ---{constants.RESET}")
         tasks = [
-            ("Version", ["--version"], "20_version.log"),
-            ("Notices Markdown", ["--notices"], "21_notices.log"),
-            ("Notices JSON", ["--notices-json"], "22_notices_json.log"),
+            ("Version", ["meta", "version"], "20_version.log"),
+            ("Notices Markdown", ["meta", "notices"], "21_notices.log"),
+            ("Notices JSON", ["meta", "notices", "--json"], "22_notices_json.log"),
             ("Config Inspect", ["config", "inspect"], "23_config_inspect.log"),
         ]
         for step_name, args, log_filename in tasks:
@@ -185,8 +199,8 @@ class RecordTasks:
         if not self.executor.run(
             "Record Template",
             [
-                "record",
                 "template",
+                "generate",
                 "--period",
                 config.TEST_DATES["single_month"],
                 "--output-dir",
@@ -210,14 +224,14 @@ class RecordTasks:
 
         if not self.executor.run(
             "Record Preview",
-            ["record", "preview", str(generated_file)],
+            ["template", "preview", str(generated_file)],
             "25_record_preview.log",
         ):
             return False
 
         if not self.executor.run(
             "Record List",
-            ["record", "list", str(record_output_dir)],
+            ["template", "list-periods", str(record_output_dir)],
             "26_record_list.log",
         ):
             return False

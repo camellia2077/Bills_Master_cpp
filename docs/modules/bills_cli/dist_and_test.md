@@ -6,7 +6,7 @@
 
 ## 定向建议
 
-- 改 CLI 命令/控制器后，至少执行：
+- 改 CLI parser/feature handler 后，至少执行：
   - `python tools/verify/verify.py bills`
 - 改 dist/目录结构后，追加执行：
   - `python tools/verify/verify.py bills-dist`

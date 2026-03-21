@@ -14,14 +14,13 @@ add_custom_target(copy_config
 #  可执行文件目标定义
 # ==============================================================================
 add_executable(bill_master_cli
-    "${CLI_PRESENTATION_DIR}/main_command.cpp"
-    ${PLATFORM_SOURCES}
+    "${CLI_ENTRY_DIR}/main_command.cpp"
+    ${CLI_APP_SOURCES}
 )
 
 target_include_directories(bill_master_cli PRIVATE
     "${SOURCE_ROOT}"
     "${CORE_SOURCE_ROOT}"
-    "${CLI_PRESENTATION_DIR}"
 )
 target_link_libraries(bill_master_cli PRIVATE
     ${COMMON_LINK_LIBRARIES}

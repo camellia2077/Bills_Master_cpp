@@ -5,7 +5,7 @@
 
 #include <string>
 
-#include "billing/structures/common_data.hpp"
+#include "domain/bill/bill_record.hpp"
 
 /**
  * @class BillInserter
@@ -27,4 +27,3 @@ class BillInserter {
 };
 
 #endif  // WINDOWS_INFRASTRUCTURE_ADAPTERS_DB_BILL_INSERTER_H_
-

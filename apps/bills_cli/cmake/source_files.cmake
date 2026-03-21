@@ -2,36 +2,41 @@
 #  源文件收集
 # ==============================================================================
 set(CORE_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/bills_core/src")
-set(CLI_PRESENTATION_DIR "${SOURCE_ROOT}/windows/presentation/cli")
-set(WINDOWS_INFRA_DIR "${SOURCE_ROOT}/windows/infrastructure")
-set(FILEHANDLER_DIR "${WINDOWS_INFRA_DIR}/file_handler")
-set(COMMAND_HANDLER_DIR "${CLI_PRESENTATION_DIR}/command_handler")
-set(CONTROLLERS_DIR "${CLI_PRESENTATION_DIR}/controllers")
+set(PRESENTATION_DIR "${SOURCE_ROOT}/presentation")
+set(CLI_ENTRY_DIR "${PRESENTATION_DIR}/entry")
+set(CLI_PARSING_DIR "${PRESENTATION_DIR}/parsing")
+set(CLI_OUTPUT_DIR "${PRESENTATION_DIR}/output")
+set(CLI_FEATURES_DIR "${PRESENTATION_DIR}/features")
+set(CLI_WORKSPACE_FEATURE_DIR "${CLI_FEATURES_DIR}/workspace")
+set(CLI_REPORT_FEATURE_DIR "${CLI_FEATURES_DIR}/report")
+set(CLI_TEMPLATE_FEATURE_DIR "${CLI_FEATURES_DIR}/template")
+set(CLI_CONFIG_FEATURE_DIR "${CLI_FEATURES_DIR}/config")
+set(CLI_META_FEATURE_DIR "${CLI_FEATURES_DIR}/meta")
 
-set(CONTROLLER_SOURCES
-    "${CONTROLLERS_DIR}/app_controller.cpp"
-    "${CONTROLLERS_DIR}/export/export_controller.cpp"
-    "${CONTROLLERS_DIR}/workflow/workflow_controller.cpp"
-    "${CONTROLLERS_DIR}/workflow/path_builder.cpp"
+set(CLI_ENTRY_SOURCES
+    "${CLI_ENTRY_DIR}/cli_app.cpp"
+    "${CLI_ENTRY_DIR}/runtime_context.cpp"
 )
 
-set(COMMAND_HANDLER_SOURCES
-    "${COMMAND_HANDLER_DIR}/command_dispatcher.cpp"
-    "${COMMAND_HANDLER_DIR}/usage_help.cpp"
-    "${COMMAND_HANDLER_DIR}/commands/config_command.cpp"
-    "${COMMAND_HANDLER_DIR}/commands/export_command.cpp"
-    "${COMMAND_HANDLER_DIR}/commands/ingest_command.cpp"
-    "${COMMAND_HANDLER_DIR}/commands/query_command.cpp"
-    "${COMMAND_HANDLER_DIR}/commands/record_command.cpp"
-    "${COMMAND_HANDLER_DIR}/commands/simple_command.cpp"
+set(CLI_PARSING_SOURCES
+    "${CLI_PARSING_DIR}/cli_parser.cpp"
 )
 
-set(FILEHANDLER_SOURCES
-    "${FILEHANDLER_DIR}/file_handler.cpp"
+set(CLI_OUTPUT_SOURCES
+    "${CLI_OUTPUT_DIR}/help_text.cpp"
 )
 
-set(PLATFORM_SOURCES
-    ${COMMAND_HANDLER_SOURCES}
-    ${FILEHANDLER_SOURCES}
-    ${CONTROLLER_SOURCES}
+set(CLI_FEATURE_SOURCES
+    "${CLI_WORKSPACE_FEATURE_DIR}/workspace_handler.cpp"
+    "${CLI_REPORT_FEATURE_DIR}/report_handler.cpp"
+    "${CLI_TEMPLATE_FEATURE_DIR}/template_handler.cpp"
+    "${CLI_CONFIG_FEATURE_DIR}/config_handler.cpp"
+    "${CLI_META_FEATURE_DIR}/meta_handler.cpp"
+)
+
+set(CLI_APP_SOURCES
+    ${CLI_ENTRY_SOURCES}
+    ${CLI_PARSING_SOURCES}
+    ${CLI_OUTPUT_SOURCES}
+    ${CLI_FEATURE_SOURCES}
 )
