@@ -33,7 +33,11 @@ add_subdirectory(
 )
 
 add_library(bills_android_native SHARED
-    android_bridge.cpp
+    jni_common.cpp
+    workspace_bridge.cpp
+    query_bridge.cpp
+    editor_bridge.cpp
+    settings_bridge.cpp
 )
 
 find_library(ANDROID_LIB android)

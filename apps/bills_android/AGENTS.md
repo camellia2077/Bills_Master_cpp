@@ -16,8 +16,9 @@
 - 账单规则、报表规则、ABI 契约优先复用 `libs/bills_core`
 - 跨端 IO 能力优先复用 `libs/bills_io`；Android 目录只补平台桥接、资产同步、私有工作区管理
 - 修改 JNI / native 桥接时，至少同步检查：
-  - `apps/bills_android/src/main/java/com/billstracer/android/data/BillsNativeBindings.kt`
-  - `apps/bills_android/src/main/cpp/android_bridge.cpp`
+  - `apps/bills_android/src/main/java/com/billstracer/android/data/native/`
+  - `apps/bills_android/src/main/cpp/jni_common.*`
+  - `apps/bills_android/src/main/cpp/*_bridge.cpp`
 
 ## 验证
 

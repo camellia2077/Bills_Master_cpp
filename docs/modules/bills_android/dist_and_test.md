@@ -13,11 +13,11 @@
 
 ## 定向建议
 
-- 改 Compose / ViewModel / repository 后，至少执行：
+- 改 Compose / ViewModel / service 后，至少执行：
   - `python tools/run.py dist android --preset debug`
 - 改纯 Kotlin 状态逻辑，可追加：
   - `./gradlew :apps:bills_android:testDebugUnitTest`
-- 改 Activity、Compose 页面、native repository 且本机有设备 / 模拟器，可追加：
+- 改 Activity、Compose 页面、service / JNI 且本机有设备 / 模拟器，可追加：
   - `./gradlew :apps:bills_android:connectedDebugAndroidTest`
 - 仅当用户明确要求，或问题只在发布链路出现时，再执行：
   - `python tools/run.py dist android --preset release`
