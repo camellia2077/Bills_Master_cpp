@@ -281,10 +281,12 @@ auto json_for_batch_result(const BillWorkflowBatchResult& result) -> Json {
     Json item{{"path", file.display_path},
               {"ok", file.ok},
               {"stage", file.stage},
+              {"stage_group", file.stage_group},
               {"error", file.error},
               {"year", file.year},
               {"month", file.month},
               {"transaction_count", file.transaction_count}};
+    item["issues"] = json_for_validation_issues(file.issues);
     if (!file.serialized_json.empty()) {
       item["serialized_json"] = file.serialized_json;
     }
@@ -546,7 +548,26 @@ auto bills_core_invoke_json(const char* request_json_utf8) -> const char* {
                {"success", preview->success},
                {"failure", preview->failure},
                {"all_valid", ok},
-               {"periods", preview->periods}}));
+               {"periods", preview->periods},
+               {"files", [&preview]() {
+                  Json files = Json::array();
+                  for (const auto& file : preview->files) {
+                    files.push_back(Json{
+                        {"path", file.path},
+                        {"ok", file.ok},
+                        {"period", file.period},
+                        {"year", file.year},
+                        {"month", file.month},
+                        {"transaction_count", file.transaction_count},
+                        {"total_income", file.total_income},
+                        {"total_expense", file.total_expense},
+                        {"balance", file.balance},
+                        {"error", file.error},
+                        {"issues", json_for_validation_issues(file.issues)},
+                    });
+                  }
+                  return files;
+                }()}}));
     }
     const bool include_serialized_json =
         params.value("include_serialized_json", false);

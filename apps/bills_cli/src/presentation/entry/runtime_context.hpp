@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "common/Result.hpp"
+#include <common/Result.hpp>
 
 namespace bills::cli {
 

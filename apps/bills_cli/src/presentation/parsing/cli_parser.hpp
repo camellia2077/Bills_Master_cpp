@@ -4,8 +4,12 @@
 #include <string>
 #include <vector>
 
-#include "common/Result.hpp"
-#include "presentation/parsing/cli_request.hpp"
+#include <common/Result.hpp>
+#if defined(BILLS_CLI_MODULES_ENABLED)
+import bill.cli.presentation.parsing.cli_request;
+#else
+#include <presentation/parsing/cli_request.hpp>
+#endif
 
 namespace bills::cli {
 

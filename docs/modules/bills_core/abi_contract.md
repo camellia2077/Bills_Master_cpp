@@ -62,6 +62,5 @@ ABI 不再负责：
 ## 变更检查清单
 
 1. 是否新增或删除纯数据字段
-2. 是否影响 `tests/suites/logic/bills_core_abi_support/scenarios.py`
-3. 是否同步更新 `capabilities` 的命令列表
-4. 是否通过 `python tools/verify/verify.py core-abi`
+2. 是否同步更新 `capabilities` 的命令列表
+3. 是否需要补充调用方侧集成验证

@@ -1,19 +1,33 @@
-#include "presentation/entry/cli_app.hpp"
+#if defined(BILLS_CLI_MODULES_ENABLED)
+import bill.cli.presentation.entry.cli_app;
+import bill.cli.presentation.entry.runtime_context;
+import bill.cli.presentation.features.config_handler;
+import bill.cli.presentation.features.meta_handler;
+import bill.cli.presentation.features.report_handler;
+import bill.cli.presentation.features.template_handler;
+import bill.cli.presentation.features.workspace_handler;
+import bill.cli.presentation.output.help_text;
+import bill.cli.presentation.parsing.cli_request;
+import bill.cli.presentation.parsing.cli_parser;
+#else
+#include <presentation/entry/cli_app.hpp>
+#include <presentation/entry/runtime_context.hpp>
+#include <presentation/features/config/config_handler.hpp>
+#include <presentation/features/meta/meta_handler.hpp>
+#include <presentation/features/report/report_handler.hpp>
+#include <presentation/features/template/template_handler.hpp>
+#include <presentation/features/workspace/workspace_handler.hpp>
+#include <presentation/output/help_text.hpp>
+#include <presentation/parsing/cli_parser.hpp>
+#endif
+
+#include <pch.hpp>
+#include <common/Result.hpp>
 
 #include <exception>
 #include <iostream>
 #include <string>
 #include <vector>
-
-#include "common/Result.hpp"
-#include "presentation/entry/runtime_context.hpp"
-#include "presentation/features/config/config_handler.hpp"
-#include "presentation/features/meta/meta_handler.hpp"
-#include "presentation/features/report/report_handler.hpp"
-#include "presentation/features/template/template_handler.hpp"
-#include "presentation/features/workspace/workspace_handler.hpp"
-#include "presentation/output/help_text.hpp"
-#include "presentation/parsing/cli_parser.hpp"
 
 namespace bills::cli {
 namespace {

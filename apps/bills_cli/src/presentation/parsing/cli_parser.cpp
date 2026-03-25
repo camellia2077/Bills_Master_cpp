@@ -1,4 +1,12 @@
-#include "presentation/parsing/cli_parser.hpp"
+#if defined(BILLS_CLI_MODULES_ENABLED)
+import bill.cli.presentation.parsing.cli_parser;
+import bill.cli.presentation.parsing.cli_request;
+#else
+#include <presentation/parsing/cli_parser.hpp>
+#endif
+
+#include <pch.hpp>
+#include <common/Result.hpp>
 
 #include <filesystem>
 #include <optional>
@@ -36,7 +44,8 @@ auto ParseWorkspaceRequest(const std::vector<std::string>& args)
   if (args.size() < 2U) {
     return ParseError(
         "Missing workspace subcommand. Use 'workspace validate', "
-        "'workspace convert', 'workspace ingest', or 'workspace import-json'.");
+        "'workspace convert', 'workspace ingest', 'workspace import-json', "
+        "'workspace export-bundle', or 'workspace import-bundle'.");
   }
 
   WorkspaceRequest request;
@@ -49,6 +58,10 @@ auto ParseWorkspaceRequest(const std::vector<std::string>& args)
     request.action = WorkspaceAction::kIngest;
   } else if (subcommand == "import-json") {
     request.action = WorkspaceAction::kImportJson;
+  } else if (subcommand == "export-bundle") {
+    request.action = WorkspaceAction::kExportBundle;
+  } else if (subcommand == "import-bundle") {
+    request.action = WorkspaceAction::kImportBundle;
   } else {
     return ParseError("Unknown workspace subcommand: '" + subcommand + "'.");
   }
@@ -69,6 +82,18 @@ auto ParseWorkspaceRequest(const std::vector<std::string>& args)
       request.db_path = std::filesystem::path(*value);
       continue;
     }
+    if (arg == "--output") {
+      if (request.action != WorkspaceAction::kExportBundle) {
+        return ParseError(
+            "Option '--output' is only valid for 'workspace export-bundle'.");
+      }
+      auto value = ConsumeValue(args, index, arg);
+      if (!value) {
+        return std::unexpected(value.error());
+      }
+      request.output_path = std::filesystem::path(*value);
+      continue;
+    }
     if (arg == "--write-json-cache") {
       if (request.action != WorkspaceAction::kConvert &&
           request.action != WorkspaceAction::kIngest) {
@@ -84,11 +109,37 @@ auto ParseWorkspaceRequest(const std::vector<std::string>& args)
     positional_args.push_back(arg);
   }
 
-  if (positional_args.size() != 1U) {
-    return ParseError(
-        "Workspace commands require exactly one <path> argument.");
+  switch (request.action) {
+    case WorkspaceAction::kValidate:
+    case WorkspaceAction::kConvert:
+    case WorkspaceAction::kIngest:
+    case WorkspaceAction::kImportJson: {
+      if (positional_args.size() != 1U) {
+        return ParseError(
+            "Workspace commands require exactly one <path> argument.");
+      }
+      request.input_path = std::filesystem::path(positional_args.front());
+      break;
+    }
+    case WorkspaceAction::kExportBundle: {
+      if (positional_args.size() != 1U) {
+        return ParseError(
+            "workspace export-bundle expects <records-dir> [--output <bundle.zip>].");
+      }
+      request.input_path = std::filesystem::path(positional_args.front());
+      break;
+    }
+    case WorkspaceAction::kImportBundle: {
+      if (positional_args.size() != 2U) {
+        return ParseError(
+            "workspace import-bundle expects <bundle.zip> <records-dir>.");
+      }
+      request.input_path = std::filesystem::path(positional_args[0]);
+      request.target_path = std::filesystem::path(positional_args[1]);
+      break;
+    }
   }
-  request.input_path = std::filesystem::path(positional_args.front());
+
   return CliRequest{request};
 }
 

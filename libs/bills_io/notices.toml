@@ -8,3 +8,7 @@ cmake_targets = ["sqlite3_amalgamation"]
 [[deps]]
 package_id = "tomlplusplus"
 cmake_targets = ["tomlplusplus::tomlplusplus"]
+
+[[deps]]
+package_id = "miniz"
+cmake_targets = ["miniz"]

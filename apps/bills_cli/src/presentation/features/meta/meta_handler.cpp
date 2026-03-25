@@ -1,10 +1,18 @@
-#include "presentation/features/meta/meta_handler.hpp"
+#if defined(BILLS_CLI_MODULES_ENABLED)
+import bill.cli.presentation.features.meta_handler;
+import bill.cli.presentation.entry.runtime_context;
+import bill.cli.presentation.parsing.cli_request;
+import bill.cli.deps.cli_version;
+import bill.cli.deps.common_utils;
+import bill.cli.deps.core_version;
+#else
+#include <presentation/features/meta/meta_handler.hpp>
+#endif
+
+#include <pch.hpp>
+#include <common/Result.hpp>
 
 #include <iostream>
-
-#include "common/cli_version.hpp"
-#include "common/common_utils.hpp"
-#include "common/version.hpp"
 
 namespace terminal = common::terminal;
 

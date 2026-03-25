@@ -1,4 +1,10 @@
-#include "presentation/entry/cli_app.hpp"
+#if defined(BILLS_CLI_MODULES_ENABLED)
+import bill.cli.presentation.entry.cli_app;
+#else
+#include <presentation/entry/cli_app.hpp>
+#endif
+
+#include <pch.hpp>
 
 #ifdef _WIN32
 #include <windows.h>

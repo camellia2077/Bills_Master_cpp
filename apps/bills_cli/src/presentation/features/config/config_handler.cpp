@@ -1,25 +1,35 @@
-#include "presentation/features/config/config_handler.hpp"
+#if defined(BILLS_CLI_MODULES_ENABLED)
+import bill.cli.presentation.features.config_handler;
+import bill.cli.presentation.entry.runtime_context;
+import bill.cli.presentation.parsing.cli_request;
+import bill.cli.deps.io_host_flow_support;
+import bill.cli.deps.common_utils;
+#else
+#include <presentation/features/config/config_handler.hpp>
+#endif
+
+#include <pch.hpp>
+#include <common/Result.hpp>
+#include <nlohmann/json.hpp>
 
 #include <iostream>
-
-#include "bills_io/host_flow_support.hpp"
-#include "common/common_utils.hpp"
-#include "nlohmann/json.hpp"
-#include "record_template/record_template_service.hpp"
 
 namespace terminal = common::terminal;
 
 namespace bills::cli {
 namespace {
 
-auto ToJson(const ConfigInspectResult& inspect_result) -> nlohmann::json {
+auto ToJson(const bills::io::HostConfigInspectionResult& inspect_result)
+    -> nlohmann::json {
   nlohmann::json json;
-  json["schema_version"] = inspect_result.schema_version;
-  json["date_format"] = inspect_result.date_format;
-  json["metadata_headers"] = inspect_result.metadata_headers;
+  json["schema_version"] = inspect_result.inspect.schema_version;
+  json["date_format"] = inspect_result.inspect.date_format;
+  json["metadata_headers"] = inspect_result.inspect.metadata_headers;
+  json["enabled_export_formats"] = inspect_result.enabled_export_formats;
+  json["available_export_formats"] = inspect_result.available_export_formats;
 
   nlohmann::json categories = nlohmann::json::array();
-  for (const auto& category : inspect_result.categories) {
+  for (const auto& category : inspect_result.inspect.categories) {
     nlohmann::json item;
     item["parent_item"] = category.parent_item;
     item["description"] = category.description;
@@ -37,18 +47,10 @@ ConfigHandler::ConfigHandler(const RuntimeContext& context) : context_(context) 
 auto ConfigHandler::Handle(const ConfigRequest& request) const -> bool {
   switch (request.action) {
     case ConfigAction::kInspect: {
-      const auto validated_documents =
-          bills::io::LoadValidatedConfigContext(context_.config_dir);
-      if (!validated_documents) {
-        std::cerr << terminal::kRed << "Error: " << terminal::kReset
-                  << FormatError(validated_documents.error()) << '\n';
-        return false;
-      }
-      const auto inspect_result = RecordTemplateService::InspectConfig(
-          validated_documents->documents.validator);
+      const auto inspect_result = bills::io::InspectConfig(context_.config_dir);
       if (!inspect_result) {
         std::cerr << terminal::kRed << "Error: " << terminal::kReset
-                  << FormatRecordTemplateError(inspect_result.error()) << '\n';
+                  << FormatError(inspect_result.error()) << '\n';
         return false;
       }
       std::cout << ToJson(*inspect_result).dump(2) << '\n';
@@ -56,7 +58,7 @@ auto ConfigHandler::Handle(const ConfigRequest& request) const -> bool {
     }
 
     case ConfigAction::kFormats: {
-      const auto formats = LoadEnabledFormats(context_);
+      const auto formats = bills::io::ListEnabledExportFormats(context_.config_dir);
       if (!formats) {
         std::cerr << terminal::kRed << "Error: " << terminal::kReset
                   << FormatError(formats.error()) << '\n';

@@ -4,6 +4,7 @@
 
 #include "ingest/json/bills_json_serializer.hpp"
 #include "ingest/pipeline/bills_processing_pipeline.hpp"
+#include "ingest/workflow_validation_issue_support.hpp"
 
 namespace {
 
@@ -22,12 +23,17 @@ auto make_success_result(const std::string& display_path, const ParsedBill& bill
 }
 
 auto make_failure_result(const std::string& display_path, std::string stage,
-                         std::string error) -> BillWorkflowFileResult {
+                         std::string error,
+                         std::vector<ValidationIssue> issues = {})
+    -> BillWorkflowFileResult {
   BillWorkflowFileResult result;
   result.display_path = display_path;
   result.ok = false;
+  result.stage_group =
+      std::string(bills::core::ingest::MapWorkflowIssueStage(stage));
   result.stage = std::move(stage);
   result.error = std::move(error);
+  result.issues = std::move(issues);
   return result;
 }
 
@@ -63,11 +69,16 @@ auto BillWorkflowService::Validate(const SourceDocumentBatch& documents,
         ParsedBill bill;
         if (!pipeline.validate_and_convert_content(document.text,
                                                    document.display_path, bill)) {
-          return make_failure_result(
-              document.display_path, pipeline.last_failure_stage(),
+          const std::string failure_message =
               pipeline.last_failure_message().empty()
                   ? "Bill validation failed."
-                  : pipeline.last_failure_message());
+                  : pipeline.last_failure_message();
+          return make_failure_result(
+              document.display_path, pipeline.last_failure_stage(),
+              failure_message,
+              bills::core::ingest::BuildWorkflowIssues(
+                  pipeline.last_failure_stage(), failure_message,
+                  pipeline.last_failure_messages(), document.display_path));
         }
         return make_success_result(document.display_path, bill, false);
       });
@@ -84,11 +95,16 @@ auto BillWorkflowService::Convert(const SourceDocumentBatch& documents,
         ParsedBill bill;
         if (!pipeline.validate_and_convert_content(document.text,
                                                    document.display_path, bill)) {
-          return make_failure_result(
-              document.display_path, pipeline.last_failure_stage(),
+          const std::string failure_message =
               pipeline.last_failure_message().empty()
                   ? "Bill conversion failed."
-                  : pipeline.last_failure_message());
+                  : pipeline.last_failure_message();
+          return make_failure_result(
+              document.display_path, pipeline.last_failure_stage(),
+              failure_message,
+              bills::core::ingest::BuildWorkflowIssues(
+                  pipeline.last_failure_stage(), failure_message,
+                  pipeline.last_failure_messages(), document.display_path));
         }
         return make_success_result(document.display_path, bill,
                                    include_serialized_json);
@@ -109,17 +125,24 @@ auto BillWorkflowService::Ingest(const SourceDocumentBatch& documents,
         ParsedBill bill;
         if (!pipeline.validate_and_convert_content(document.text,
                                                    document.display_path, bill)) {
-          return make_failure_result(
-              document.display_path, pipeline.last_failure_stage(),
+          const std::string failure_message =
               pipeline.last_failure_message().empty()
                   ? "Bill ingest failed."
-                  : pipeline.last_failure_message());
+                  : pipeline.last_failure_message();
+          return make_failure_result(
+              document.display_path, pipeline.last_failure_stage(),
+              failure_message,
+              bills::core::ingest::BuildWorkflowIssues(
+                  pipeline.last_failure_stage(), failure_message,
+                  pipeline.last_failure_messages(), document.display_path));
         }
         try {
           repository.InsertBill(bill);
         } catch (const std::exception& error) {
-          return make_failure_result(document.display_path, "insert_repository",
-                                     error.what());
+          return make_failure_result(
+              document.display_path, "insert_repository", error.what(),
+              bills::core::ingest::BuildWorkflowIssues(
+                  "insert_repository", error.what(), {}, document.display_path));
         }
         return make_success_result(document.display_path, bill,
                                    include_serialized_json);
@@ -135,8 +158,11 @@ auto BillWorkflowService::ImportJson(const SourceDocumentBatch& documents,
       repository.InsertBill(bill);
       return make_success_result(document.display_path, bill, false);
     } catch (const std::exception& error) {
-      return make_failure_result(document.display_path, "import_json",
-                                 error.what());
+      return make_failure_result(
+          document.display_path, "import_json", error.what(),
+          bills::core::ingest::BuildWorkflowIssues(
+              "import_json", error.what(), {}, document.display_path,
+              "record_json"));
     }
   });
 }

@@ -14,8 +14,15 @@ class SourceDocumentIo {
                                             std::string_view extension)
       -> Result<SourceDocumentBatch>;
 
+  [[nodiscard]] static auto LoadByExtensionRelative(
+      const std::filesystem::path& root_path, std::string_view extension)
+      -> Result<SourceDocumentBatch>;
+
   [[nodiscard]] static auto ReadText(const std::filesystem::path& file_path)
       -> Result<std::string>;
+
+  [[nodiscard]] static auto WriteText(const std::filesystem::path& file_path,
+                                      std::string_view text) -> Result<void>;
 
   [[nodiscard]] static auto WriteDocuments(
       const std::filesystem::path& output_root,

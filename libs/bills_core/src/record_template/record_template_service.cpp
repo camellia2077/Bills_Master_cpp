@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "ingest/pipeline/bills_processing_pipeline.hpp"
+#include "ingest/workflow_validation_issue_support.hpp"
 #include "common/iso_period.hpp"
 #include "common/text_normalizer.hpp"
 #include "record_template/ordered_template_layout_loader.hpp"
@@ -27,46 +28,6 @@ auto parse_period_from_display_path(const std::string& display_path) -> std::str
   }
   return bills::core::common::iso_period::format_year_month(parsed->year,
                                                             parsed->month);
-}
-
-auto map_pipeline_stage(std::string_view detailed_stage) -> std::string_view {
-  if (detailed_stage == "validate_bill") {
-    return "business";
-  }
-  return "parse";
-}
-
-auto build_pipeline_issue_code(std::string_view detailed_stage) -> std::string {
-  return "record." + std::string(map_pipeline_stage(detailed_stage)) + "." +
-         std::string(detailed_stage.empty() ? "validation_failed"
-                                            : detailed_stage);
-}
-
-auto build_pipeline_issues(const BillProcessingPipeline& pipeline,
-                           const std::string& display_path)
-    -> std::vector<ValidationIssue> {
-  const std::string stage =
-      pipeline.last_failure_stage().empty() ? "validation_failed"
-                                            : pipeline.last_failure_stage();
-  const std::string_view mapped_stage = map_pipeline_stage(stage);
-  const auto& messages = pipeline.last_failure_messages();
-  std::vector<ValidationIssue> issues;
-  if (messages.empty()) {
-    issues.push_back(MakeValidationIssue(
-        "record_txt", std::string(mapped_stage), build_pipeline_issue_code(stage),
-        pipeline.last_failure_message().empty() ? "Validation failed."
-                                                : pipeline.last_failure_message(),
-        display_path));
-    return issues;
-  }
-
-  issues.reserve(messages.size());
-  for (const auto& message : messages) {
-    issues.push_back(MakeValidationIssue(
-        "record_txt", std::string(mapped_stage), build_pipeline_issue_code(stage),
-        message, display_path));
-  }
-  return issues;
 }
 
 }  // namespace
@@ -123,26 +84,16 @@ auto RecordTemplateService::ValidateRecordBatch(
     preview_file.file_name_period = parse_period_from_display_path(document.display_path);
     preview_file.file_name_matches_period = true;
 
-    const auto normalized_text = NormalizeBillText(document.text);
-    if (!normalized_text) {
-      preview_file.ok = false;
-      preview_file.error = normalized_text.error().message_;
-      preview_file.issues.push_back(MakeValidationIssue(
-          "record_txt", "parse", "record.parse.read_failed",
-          normalized_text.error().message_, document.display_path));
-      ++preview_result.failure;
-      preview_result.files.push_back(std::move(preview_file));
-      continue;
-    }
-
     try {
       ParsedBill bill_data{};
       const bool ok = pipeline.validate_and_convert_content(
-          *normalized_text, document.display_path, bill_data);
+          document.text, document.display_path, bill_data);
       preview_file.ok = ok;
 
       if (!ok) {
-        preview_file.issues = build_pipeline_issues(pipeline, document.display_path);
+        preview_file.issues = bills::core::ingest::BuildWorkflowIssues(
+            pipeline.last_failure_stage(), pipeline.last_failure_message(),
+            pipeline.last_failure_messages(), document.display_path);
         preview_file.error = pipeline.last_failure_stage().empty()
                                  ? "Preview failed."
                                  : pipeline.last_failure_stage() + ": " +
@@ -164,9 +115,8 @@ auto RecordTemplateService::ValidateRecordBatch(
     } catch (const std::exception& error) {
       preview_file.ok = false;
       preview_file.error = error.what();
-      preview_file.issues.push_back(MakeValidationIssue(
-          "record_txt", "parse", "record.parse.read_failed", error.what(),
-          document.display_path));
+      preview_file.issues = bills::core::ingest::BuildWorkflowIssues(
+          "unhandled_exception", error.what(), {}, document.display_path);
       ++preview_result.failure;
     }
 

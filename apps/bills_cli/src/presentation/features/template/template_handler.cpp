@@ -1,11 +1,18 @@
-#include "presentation/features/template/template_handler.hpp"
+#if defined(BILLS_CLI_MODULES_ENABLED)
+import bill.cli.presentation.features.template_handler;
+import bill.cli.presentation.entry.runtime_context;
+import bill.cli.presentation.parsing.cli_request;
+import bill.cli.deps.io_host_flow_support;
+import bill.cli.deps.common_utils;
+#else
+#include <presentation/features/template/template_handler.hpp>
+#endif
+
+#include <pch.hpp>
+#include <common/Result.hpp>
 
 #include <iostream>
 #include <sstream>
-
-#include "bills_io/host_flow_support.hpp"
-#include "common/common_utils.hpp"
-#include "record_template/record_template_service.hpp"
 
 namespace terminal = common::terminal;
 
@@ -32,37 +39,20 @@ auto JoinPeriods(const std::vector<std::string>& periods) -> std::string {
 TemplateHandler::TemplateHandler(const RuntimeContext& context) : context_(context) {}
 
 auto TemplateHandler::Handle(const TemplateRequest& request) const -> bool {
-  const auto validated_documents =
-      bills::io::LoadValidatedConfigContext(context_.config_dir);
-  if (!validated_documents) {
-    std::cerr << terminal::kRed << "Error: " << terminal::kReset
-              << FormatError(validated_documents.error()) << '\n';
-    return false;
-  }
-
   switch (request.action) {
     case TemplateAction::kGenerate: {
-      const auto layout = RecordTemplateService::BuildOrderedTemplateLayout(
-          validated_documents->documents.validator);
-      if (!layout) {
-        std::cerr << terminal::kRed << "Error: " << terminal::kReset
-                  << FormatRecordTemplateError(layout.error()) << '\n';
-        return false;
-      }
-
-      TemplateGenerationRequest generation_request;
+      bills::io::HostTemplateGenerationRequest generation_request;
       generation_request.period = request.period;
       generation_request.start_period = request.start_period;
       generation_request.end_period = request.end_period;
       generation_request.start_year = request.start_year;
       generation_request.end_year = request.end_year;
-      generation_request.layout = *layout;
 
-      const auto result =
-          RecordTemplateService::GenerateTemplates(generation_request);
+      const auto result = bills::io::GenerateTemplatesFromConfig(
+          context_.config_dir, generation_request);
       if (!result) {
         std::cerr << terminal::kRed << "Error: " << terminal::kReset
-                  << FormatRecordTemplateError(result.error()) << '\n';
+                  << FormatError(result.error()) << '\n';
         return false;
       }
       if (result->templates.empty()) {
@@ -100,19 +90,11 @@ auto TemplateHandler::Handle(const TemplateRequest& request) const -> bool {
     }
 
     case TemplateAction::kPreview: {
-      const auto source_documents =
-          bills::io::LoadSourceDocuments(request.input_path, ".txt");
-      if (!source_documents) {
-        std::cerr << terminal::kRed << "Error: " << terminal::kReset
-                  << FormatError(source_documents.error()) << '\n';
-        return false;
-      }
-      const auto result = RecordTemplateService::PreviewRecords(
-          *source_documents, validated_documents->validated.runtime_config,
-          request.input_path.string());
+      const auto result = bills::io::PreviewRecordDocuments(
+          request.input_path, context_.config_dir);
       if (!result) {
         std::cerr << terminal::kRed << "Error: " << terminal::kReset
-                  << FormatRecordTemplateError(result.error()) << '\n';
+                  << FormatError(result.error()) << '\n';
         return false;
       }
       for (const auto& preview_file : result->files) {
@@ -136,18 +118,10 @@ auto TemplateHandler::Handle(const TemplateRequest& request) const -> bool {
     }
 
     case TemplateAction::kListPeriods: {
-      const auto source_documents =
-          bills::io::LoadSourceDocuments(request.input_path, ".txt");
-      if (!source_documents) {
-        std::cerr << terminal::kRed << "Error: " << terminal::kReset
-                  << FormatError(source_documents.error()) << '\n';
-        return false;
-      }
-      const auto result = RecordTemplateService::ListPeriods(
-          *source_documents, request.input_path.string());
+      const auto result = bills::io::ListRecordPeriods(request.input_path);
       if (!result) {
         std::cerr << terminal::kRed << "Error: " << terminal::kReset
-                  << FormatRecordTemplateError(result.error()) << '\n';
+                  << FormatError(result.error()) << '\n';
         return false;
       }
       for (const auto& period : result->periods) {

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "common/source_document.hpp"
+#include "common/validation_issue.hpp"
 #include "config/config_bundle_service.hpp"
 #include "domain/bill/bill_record.hpp"
 #include "ports/bills_repository.hpp"
@@ -13,7 +14,9 @@ struct BillWorkflowFileResult {
   std::string display_path;
   bool ok = false;
   std::string stage;
+  std::string stage_group;
   std::string error;
+  std::vector<ValidationIssue> issues;
   int year = 0;
   int month = 0;
   std::size_t transaction_count = 0;

@@ -2,7 +2,7 @@
 # Optional: "Ninja" or "Unix Makefiles"
 generator = "Ninja"
 
-# Optional: "clang" or "gcc" (leave empty to use CMake default)
+# Optional: "clang" (leave empty to use the repository default)
 compiler = "clang"
 
 # Path to the directory containing the top-level CMakeLists.txt

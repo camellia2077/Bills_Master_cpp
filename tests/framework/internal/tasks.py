@@ -1,5 +1,8 @@
 # tasks.py
+import json
 import os
+import shutil
+import zipfile
 from pathlib import Path
 
 # [MODIFICATION] Use relative imports
@@ -237,3 +240,408 @@ class RecordTasks:
             return False
 
         return True
+
+
+class BundleTasks:
+    """Parse bundle 类：负责执行 ZIP 导出/导入与失败回滚任务。"""
+
+    def __init__(self, executor, bills_path, runtime_base_dir, run_output_root):
+        self.executor = executor
+        self.bills_path = Path(bills_path)
+        self.runtime_base_dir = Path(runtime_base_dir)
+        self.run_output_root = Path(run_output_root)
+        self.runtime_config_dir = self.runtime_base_dir / "config"
+        self.bundle_output_dir = self.run_output_root / "bundles"
+
+    def run(self):
+        print(f"{constants.CYAN}--- 7. Running Parse Bundle Tasks ---{constants.RESET}")
+        self.bundle_output_dir.mkdir(parents=True, exist_ok=True)
+
+        explicit_bundle_path = self.bundle_output_dir / "parse_bundle_explicit.zip"
+        default_exports_dir = self.runtime_base_dir / "exports"
+
+        if not self.executor.run(
+            "Bundle Export (Explicit)",
+            [
+                "workspace",
+                "export-bundle",
+                str(self.bills_path),
+                "--output",
+                str(explicit_bundle_path),
+            ],
+            "27_bundle_export_explicit.log",
+        ):
+            return False
+        if not explicit_bundle_path.exists():
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 解析包未生成: '{explicit_bundle_path}'{constants.RESET}"
+            )
+            return False
+        if not self._validate_bundle_structure(explicit_bundle_path):
+            return False
+        if not self._validate_bundle_extract_only(explicit_bundle_path):
+            return False
+
+        if not self.executor.run(
+            "Bundle Export (Default)",
+            ["workspace", "export-bundle", str(self.bills_path)],
+            "28_bundle_export_default.log",
+        ):
+            return False
+        generated_default_bundles = sorted(default_exports_dir.glob("parse_bundle_*.zip"))
+        if len(generated_default_bundles) != 1:
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 默认导出 ZIP 数量异常: '{default_exports_dir}'{constants.RESET}"
+            )
+            return False
+
+        invalid_export_input = self.bundle_output_dir / "bundle_invalid_export_input"
+        invalid_bundle_path = self.bundle_output_dir / "parse_bundle_invalid_export.zip"
+        if invalid_export_input.exists():
+            shutil.rmtree(invalid_export_input)
+        invalid_export_input.mkdir(parents=True, exist_ok=True)
+        source_sample = self.bills_path / config.TEST_DATES["single_year"] / (
+            f"{config.TEST_DATES['single_month']}.txt"
+        )
+        invalid_export_sample_dir = invalid_export_input / config.TEST_DATES["single_year"]
+        invalid_export_sample_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_sample, invalid_export_sample_dir / source_sample.name)
+        (invalid_export_sample_dir / "invalid.txt").write_text(
+            "date:2025-13\nremark:bad\n\nUnknownParent\nUnknownSub\n-12 broken line\n",
+            encoding="utf-8",
+        )
+        if self.executor.run(
+            "Bundle Export (Invalid TXT)",
+            [
+                "workspace",
+                "export-bundle",
+                str(invalid_export_input),
+                "--output",
+                str(invalid_bundle_path),
+            ],
+            "29_bundle_export_invalid.log",
+        ):
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 非法 TXT 导出本应失败，但命令返回成功。{constants.RESET}"
+            )
+            return False
+        self._mark_last_expected_failure()
+        if invalid_bundle_path.exists():
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 非法 TXT 导出失败后仍生成 ZIP: '{invalid_bundle_path}'{constants.RESET}"
+            )
+            return False
+
+        target_import_dir = self.bundle_output_dir / "bundle_import_target"
+        if target_import_dir.exists():
+            shutil.rmtree(target_import_dir)
+        conflicting_record_path = (
+            target_import_dir
+            / config.TEST_DATES["single_year"]
+            / f"{config.TEST_DATES['single_month']}.txt"
+        )
+        conflicting_record_path.parent.mkdir(parents=True, exist_ok=True)
+        conflicting_record_path.write_text("corrupted bundle target\n", encoding="utf-8")
+        self._corrupt_runtime_config()
+
+        if not self.executor.run(
+            "Bundle Import (Success)",
+            [
+                "workspace",
+                "import-bundle",
+                str(explicit_bundle_path),
+                str(target_import_dir),
+            ],
+            "30_bundle_import_success.log",
+        ):
+            return False
+        if not self._validate_import_success(explicit_bundle_path, target_import_dir):
+            return False
+
+        config_snapshot = self._read_runtime_config_texts()
+        invalid_txt_bundle_path = self.bundle_output_dir / "parse_bundle_invalid_txt.zip"
+        self._rewrite_bundle(
+            source_bundle_path=explicit_bundle_path,
+            destination_bundle_path=invalid_txt_bundle_path,
+            replacements={
+                f"records/{config.TEST_DATES['single_year']}/{config.TEST_DATES['single_month']}.txt": (
+                    "date:2025-13\nremark:bad\n\nUnknownParent\nUnknownSub\n-5 invalid\n"
+                ),
+            },
+        )
+        atomicity_target_dir = self.bundle_output_dir / "bundle_import_atomicity_target"
+        if atomicity_target_dir.exists():
+            shutil.rmtree(atomicity_target_dir)
+        atomicity_target_dir.mkdir(parents=True, exist_ok=True)
+        if self.executor.run(
+            "Bundle Import (Invalid TXT)",
+            [
+                "workspace",
+                "import-bundle",
+                str(invalid_txt_bundle_path),
+                str(atomicity_target_dir),
+            ],
+            "31_bundle_import_invalid_txt.log",
+        ):
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 非法 TXT 导入本应失败，但命令返回成功。{constants.RESET}"
+            )
+            return False
+        self._mark_last_expected_failure()
+        if not self._assert_runtime_config_unchanged(config_snapshot):
+            return False
+        if any(path.is_file() for path in atomicity_target_dir.rglob("*.txt")):
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 非法 TXT 导入失败后仍写入了目标目录。{constants.RESET}"
+            )
+            return False
+
+        invalid_format_bundle_path = self.bundle_output_dir / "parse_bundle_invalid_format.zip"
+        self._rewrite_bundle(
+            source_bundle_path=explicit_bundle_path,
+            destination_bundle_path=invalid_format_bundle_path,
+            omit_entries={"config/export_formats.toml"},
+            extra_entries={"extra.txt": "unexpected"},
+        )
+        invalid_format_target_dir = self.bundle_output_dir / "bundle_import_invalid_format_target"
+        if invalid_format_target_dir.exists():
+            shutil.rmtree(invalid_format_target_dir)
+        invalid_format_target_dir.mkdir(parents=True, exist_ok=True)
+        if self.executor.run(
+            "Bundle Import (Invalid Format)",
+            [
+                "workspace",
+                "import-bundle",
+                str(invalid_format_bundle_path),
+                str(invalid_format_target_dir),
+            ],
+            "32_bundle_import_invalid_format.log",
+        ):
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 非法格式导入本应失败，但命令返回成功。{constants.RESET}"
+            )
+            return False
+        self._mark_last_expected_failure()
+        if not self._assert_runtime_config_unchanged(config_snapshot):
+            return False
+        if any(path.is_file() for path in invalid_format_target_dir.rglob("*.txt")):
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 非法格式导入失败后仍写入了目标目录。{constants.RESET}"
+            )
+            return False
+
+        return True
+
+    def _validate_bundle_structure(self, bundle_path: Path) -> bool:
+        with zipfile.ZipFile(bundle_path) as archive:
+            archive_names = sorted(archive.namelist())
+
+        required_entries = {
+            "manifest.json",
+            "config/validator_config.toml",
+            "config/modifier_config.toml",
+            "config/export_formats.toml",
+        }
+        if not required_entries.issubset(set(archive_names)):
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 解析包缺少必需条目: '{bundle_path}'{constants.RESET}"
+            )
+            return False
+        if not any(name.startswith("records/") and name.endswith(".txt") for name in archive_names):
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 解析包中未发现 records/*.txt 条目: '{bundle_path}'{constants.RESET}"
+            )
+            return False
+        if any(name.startswith("/") or "\\" in name or ".." in name.split("/") for name in archive_names):
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 解析包包含非法路径条目: '{bundle_path}'{constants.RESET}"
+            )
+            return False
+        return True
+
+    def _corrupt_runtime_config(self) -> None:
+        for file_name in (
+            "validator_config.toml",
+            "modifier_config.toml",
+            "export_formats.toml",
+        ):
+            (self.runtime_config_dir / file_name).write_text(
+                "# corrupted before bundle import\nnot valid = [\n",
+                encoding="utf-8",
+            )
+
+    def _read_runtime_config_texts(self) -> dict[str, str]:
+        result: dict[str, str] = {}
+        for file_name in (
+            "validator_config.toml",
+            "modifier_config.toml",
+            "export_formats.toml",
+        ):
+            result[file_name] = (self.runtime_config_dir / file_name).read_text(
+                encoding="utf-8"
+            )
+        return result
+
+    def _validate_import_success(self, bundle_path: Path, target_import_dir: Path) -> bool:
+        with zipfile.ZipFile(bundle_path) as archive:
+            bundled_validator = archive.read("config/validator_config.toml").decode("utf-8")
+            bundled_modifier = archive.read("config/modifier_config.toml").decode("utf-8")
+            bundled_formats = archive.read("config/export_formats.toml").decode("utf-8")
+            bundled_record = archive.read(
+                f"records/{config.TEST_DATES['single_year']}/{config.TEST_DATES['single_month']}.txt"
+            ).decode("utf-8")
+
+        expected_configs = {
+            "validator_config.toml": bundled_validator,
+            "modifier_config.toml": bundled_modifier,
+            "export_formats.toml": bundled_formats,
+        }
+        for file_name, expected_text in expected_configs.items():
+            actual_text = (self.runtime_config_dir / file_name).read_text(encoding="utf-8")
+            if self._normalize_text(actual_text) != self._normalize_text(expected_text):
+                print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+                print(
+                    f"      {constants.RED}错误: 导入后 config 未按 ZIP 覆盖: '{file_name}'{constants.RESET}"
+                )
+                return False
+
+        target_record = (
+            target_import_dir
+            / config.TEST_DATES["single_year"]
+            / f"{config.TEST_DATES['single_month']}.txt"
+        )
+        if not target_record.exists():
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 导入后 TXT 未解压到目标目录: '{target_record}'{constants.RESET}"
+            )
+            return False
+        if self._normalize_text(target_record.read_text(encoding="utf-8")) != self._normalize_text(
+            bundled_record
+        ):
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 导入后同名 TXT 未被覆盖为 ZIP 内容。{constants.RESET}"
+            )
+            return False
+        return True
+
+    def _validate_bundle_extract_only(self, bundle_path: Path) -> bool:
+        runtime_config_snapshot = self._read_runtime_config_texts()
+        extract_root = self.bundle_output_dir / "bundle_extract_only"
+        if extract_root.exists():
+            shutil.rmtree(extract_root)
+        extract_root.mkdir(parents=True, exist_ok=True)
+
+        with zipfile.ZipFile(bundle_path) as archive:
+            archive.extractall(extract_root)
+
+        expected_top_level = {"manifest.json", "config", "records"}
+        actual_top_level = {path.name for path in extract_root.iterdir()}
+        if actual_top_level != expected_top_level:
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 纯解压后的顶层结构异常: '{extract_root}'{constants.RESET}"
+            )
+            return False
+
+        config_root = extract_root / "config"
+        expected_config_files = {
+            "validator_config.toml",
+            "modifier_config.toml",
+            "export_formats.toml",
+        }
+        actual_config_files = {path.name for path in config_root.iterdir() if path.is_file()}
+        if actual_config_files != expected_config_files:
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 纯解压后的 config 文件集合异常: '{config_root}'{constants.RESET}"
+            )
+            return False
+
+        record_files = sorted(path for path in (extract_root / "records").rglob("*.txt"))
+        if not record_files:
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 纯解压后 records 目录中没有 TXT 文件。{constants.RESET}"
+            )
+            return False
+        if any(path.suffix.lower() != ".txt" for path in (extract_root / "records").rglob("*") if path.is_file()):
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 纯解压后的 records 目录中出现了非 TXT 文件。{constants.RESET}"
+            )
+            return False
+
+        manifest_payload = json.loads((extract_root / "manifest.json").read_text(encoding="utf-8"))
+        if manifest_payload.get("record_count") != len(record_files):
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: manifest.json 的 record_count 与纯解压结果不一致。{constants.RESET}"
+            )
+            return False
+        if not self._assert_runtime_config_unchanged(runtime_config_snapshot):
+            return False
+        return True
+
+    def _assert_runtime_config_unchanged(self, expected_snapshot: dict[str, str]) -> bool:
+        current_snapshot = self._read_runtime_config_texts()
+        if current_snapshot != expected_snapshot:
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 失败导入后 runtime config 发生了变化。{constants.RESET}"
+            )
+            return False
+        return True
+
+    def _rewrite_bundle(
+        self,
+        source_bundle_path: Path,
+        destination_bundle_path: Path,
+        *,
+        replacements: dict[str, str] | None = None,
+        omit_entries: set[str] | None = None,
+        extra_entries: dict[str, str] | None = None,
+    ) -> None:
+        replacements = replacements or {}
+        omit_entries = omit_entries or set()
+        extra_entries = extra_entries or {}
+
+        with zipfile.ZipFile(source_bundle_path) as source_archive:
+            bundle_entries = {
+                info.filename: source_archive.read(info.filename)
+                for info in source_archive.infolist()
+                if not info.is_dir()
+            }
+
+        for file_name in omit_entries:
+            bundle_entries.pop(file_name, None)
+        for file_name, replacement_text in replacements.items():
+            bundle_entries[file_name] = replacement_text.encode("utf-8")
+        for file_name, replacement_text in extra_entries.items():
+            bundle_entries[file_name] = replacement_text.encode("utf-8")
+
+        if destination_bundle_path.exists():
+            destination_bundle_path.unlink()
+        with zipfile.ZipFile(destination_bundle_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            for file_name in sorted(bundle_entries):
+                archive.writestr(file_name, bundle_entries[file_name])
+
+    def _normalize_text(self, text: str) -> str:
+        return text.replace("\r\n", "\n").replace("\r", "\n")
+
+    def _mark_last_expected_failure(self) -> None:
+        if not self.executor.records:
+            return
+        self.executor.records[-1]["status"] = "expected_fail"

@@ -1,4 +1,14 @@
-#include "presentation/entry/runtime_context.hpp"
+#if defined(BILLS_CLI_MODULES_ENABLED)
+import bill.cli.presentation.entry.runtime_context;
+import bill.cli.deps.io_host_flow_support;
+import bill.cli.deps.common_utils;
+import bill.cli.deps.renderer_registry;
+#else
+#include <presentation/entry/runtime_context.hpp>
+#endif
+
+#include <pch.hpp>
+#include <common/Result.hpp>
 
 #include <algorithm>
 #include <cstdlib>
@@ -9,10 +19,6 @@
 #include <set>
 #include <sstream>
 #include <system_error>
-
-#include "bills_io/host_flow_support.hpp"
-#include "common/common_utils.hpp"
-#include "reporting/renderers/standard_report_renderer_registry.hpp"
 
 #ifdef _WIN32
 #include <windows.h>

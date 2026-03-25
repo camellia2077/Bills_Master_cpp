@@ -1,8 +1,13 @@
 #ifndef PRESENTATION_FEATURES_WORKSPACE_WORKSPACE_HANDLER_HPP_
 #define PRESENTATION_FEATURES_WORKSPACE_WORKSPACE_HANDLER_HPP_
 
-#include "presentation/entry/runtime_context.hpp"
-#include "presentation/parsing/cli_request.hpp"
+#if defined(BILLS_CLI_MODULES_ENABLED)
+import bill.cli.presentation.entry.runtime_context;
+import bill.cli.presentation.parsing.cli_request;
+#else
+#include <presentation/entry/runtime_context.hpp>
+#include <presentation/parsing/cli_request.hpp>
+#endif
 
 namespace bills::cli {
 

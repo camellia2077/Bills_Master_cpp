@@ -13,11 +13,15 @@ enum class WorkspaceAction {
   kConvert,
   kIngest,
   kImportJson,
+  kExportBundle,
+  kImportBundle,
 };
 
 struct WorkspaceRequest {
   WorkspaceAction action = WorkspaceAction::kValidate;
   std::filesystem::path input_path;
+  std::optional<std::filesystem::path> target_path;
+  std::optional<std::filesystem::path> output_path;
   std::optional<std::filesystem::path> db_path;
   bool write_json_cache = false;
 };
