@@ -24,5 +24,5 @@
 
 - `python tools/verify/verify.py import-layer-check --stats`
 - `python tools/verify/verify.py report-consistency-gate`
-- `python tools/verify/verify.py core-abi`
+- `python tools/verify/verify.py core-dist`
 - `python tools/verify/verify.py module-mode-check`

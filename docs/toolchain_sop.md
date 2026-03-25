@@ -82,7 +82,7 @@
 ### 3.2 `verify`
 
 - 默认执行 baseline verify：
-- `python tools/verify/verify.py bills-dist`
+- `python tools/verify/verify.py bills-tracer-cli-dist`
 - 结果写入：
   - `temp/tidy/verify_result.json`
   - batch phase state
@@ -115,7 +115,7 @@
 ### 3.4 `build_gate`
 
 - 在 prepass 之后立即再次执行：
-- `python tools/verify/verify.py bills-dist`
+- `python tools/verify/verify.py bills-tracer-cli-dist`
 - 如果失败：
   - batch 状态写成 `needs_manual_after_fix`
   - `suspect_files` 指向本轮 prepass 改动过的文件

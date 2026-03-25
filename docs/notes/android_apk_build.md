@@ -7,9 +7,9 @@
 优先使用统一入口：
 
 - debug APK：
-  - `python tools/run.py dist android --preset debug`
+  - `python tools/run.py dist bills-tracer-android --preset debug`
 - release APK：
-  - `python tools/run.py dist android --preset release`
+  - `python tools/run.py dist bills-tracer-android --preset release`
 
 这条命令适合日常单变体编译，也更符合仓库当前“统一入口优先”的工具链约定。
 
@@ -18,21 +18,21 @@
 如果你需要一次编译多个变体，或者想直接使用 Android flow 脚本，可运行：
 
 - 默认只编译 debug：
-  - `python tools/flows/build_bills_android.py`
+  - `python tools/flows/build_bills_tracer_android.py`
 - 只编译 debug：
-  - `python tools/flows/build_bills_android.py --variants debug`
+  - `python tools/flows/build_bills_tracer_android.py --variants debug`
 - 只编译 release：
-  - `python tools/flows/build_bills_android.py --variants release`
+  - `python tools/flows/build_bills_tracer_android.py --variants release`
 - 同时编译 debug + release：
-  - `python tools/flows/build_bills_android.py --variants debug,release`
+  - `python tools/flows/build_bills_tracer_android.py --variants debug,release`
 - 同时编译两个变体并先 clean：
-  - `python tools/flows/build_bills_android.py --variants debug,release --clean`
+  - `python tools/flows/build_bills_tracer_android.py --variants debug,release --clean`
 
 统一入口和底层脚本是两层关系：
 
-- `python tools/run.py dist android --preset ...`
+- `python tools/run.py dist bills-tracer-android --preset ...`
   - 负责提供仓库统一的命令入口
-- `python tools/flows/build_bills_android.py`
+- `python tools/flows/build_bills_tracer_android.py`
   - 负责实际执行 Gradle、签名准备和 APK 复制
 
 ## 3. 常用附加参数
@@ -44,9 +44,9 @@
 
 示例：
 
-- `python tools/flows/build_bills_android.py`
-- `python tools/run.py dist android --preset release --clean`
-- `python tools/flows/build_bills_android.py --variants debug,release --skip_copy`
+- `python tools/flows/build_bills_tracer_android.py`
+- `python tools/run.py dist bills-tracer-android --preset release --clean`
+- `python tools/flows/build_bills_tracer_android.py --variants debug,release --skip_copy`
 
 ## 4. 产物位置
 

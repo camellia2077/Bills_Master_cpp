@@ -12,17 +12,27 @@
 
 - 本项目的 Python 构建、编译、测试入口统一在根目录 `tests/` 相关链路与 `tools/verify/verify.py`
 - agent 不需要手工拼接零散编译命令，优先通过 Python 入口触发构建与测试
+- Windows 原生静态构建必须使用 MSYS2 `mingw64` 工具链环境
+- Windows 下的 `bills-tracer-cli-dist` / `bills-tracer-log-generator-dist` 会默认附带导入表门禁，拒绝第三方 DLL、MinGW runtime DLL 和 `api-ms-win-crt-*`
 - 常用入口：
-- `python tools/verify/verify.py bills-build`
-  - `python tools/verify/verify.py bills`
-  - `python tools/verify/verify.py log-cli-test`
-  - `python tools/flows/build_bills_master.py --preset debug --scope shared --compiler clang`
-  - `python tests/suites/artifact/bills_master/run_tests.py`
+- `python tools/verify/verify.py bills-tracer-cli-dist`
+  - `python tools/verify/verify.py bills-tracer`
+  - `python tools/verify/verify.py bills-tracer-log-generator-cli-test`
+  - `python tools/verify/verify.py bills-tracer-core-dist`
+  - `python tools/flows/build_bills_tracer_cli.py --preset debug --scope shared`
+  - `python tests/suites/artifact/bills_tracer/run_tests.py`
+  - 针对 `tests/suites/toolchain/`、`tests/suites/reporting/` 这类 Python unittest，优先从仓库根目录运行 `python -m unittest ...`
+  - 示例：
+    - `python -m unittest tests.suites.toolchain.test_verify_cli`
+    - `python -m unittest tests.suites.toolchain.test_import_layering`
+    - `python -m unittest tests.suites.toolchain.test_boundary_layering`
+    - `python -m unittest tests.suites.toolchain.test_pipeline_runner`
   - 其他测试若已接入 `tools/verify/verify.py`，优先走该入口
 
 ## Execution Rules
 
 - 修改代码后，优先运行对应的 Python 验证入口
+- `tools/` 禁止依赖 `tests/`；`tests/` 可以依赖 `tools/` 做验证与断言
 - agent 的职责是：
   - 调用 Python 入口发起构建/测试
   - 读取终端输出
@@ -33,7 +43,7 @@
 ## Android Build Policy
 
 - Android 本地默认验证只编译 `debug` 版本
-- 默认命令使用 `python tools/flows/build_bills_android.py --preset debug`
+- 默认命令使用 `python tools/run.py dist bills-tracer-android --preset debug`
 - 仅在以下场景主动编译 `release`：
   - 用户明确要求
   - 发布或签名验证

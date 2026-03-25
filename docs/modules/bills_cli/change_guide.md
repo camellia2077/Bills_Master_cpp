@@ -22,5 +22,5 @@
 
 ## 提交前最小检查
 
-1. 跑 `python tools/verify/verify.py bills`
+1. 跑 `python tools/verify/verify.py bills-tracer`
 2. 跑 `python tools/verify/verify.py`

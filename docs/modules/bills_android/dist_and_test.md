@@ -2,25 +2,26 @@
 
 ## 统一验证入口
 
-- `python tools/run.py dist android --preset debug`
+- `python tools/run.py dist bills-tracer-android --preset debug`
 
 ## 底层 flow
 
-- `python tools/flows/build_bills_android.py --preset debug`
-- `python tools/flows/build_bills_android.py --variants debug,release`
+- `python tools/run.py dist bills-tracer-android --preset debug`
+- `python tools/flows/build_bills_tracer_android.py --preset debug`
+- `python tools/flows/build_bills_tracer_android.py --variants debug,release`
 
-`tools/run.py dist android` 会转发到 `tools/flows/build_bills_android.py`，日常优先走统一入口。
+`tools/run.py dist bills-tracer-android` 会转发到 `tools/flows/build_bills_tracer_android.py`，日常优先走统一入口。
 
 ## 定向建议
 
 - 改 Compose / ViewModel / service 后，至少执行：
-  - `python tools/run.py dist android --preset debug`
+  - `python tools/run.py dist bills-tracer-android --preset debug`
 - 改纯 Kotlin 状态逻辑，可追加：
   - `./gradlew :apps:bills_android:testDebugUnitTest`
 - 改 Activity、Compose 页面、service / JNI 且本机有设备 / 模拟器，可追加：
   - `./gradlew :apps:bills_android:connectedDebugAndroidTest`
 - 仅当用户明确要求，或问题只在发布链路出现时，再执行：
-  - `python tools/run.py dist android --preset release`
+  - `python tools/run.py dist bills-tracer-android --preset release`
 
 ## 产物与排查入口
 

@@ -25,4 +25,4 @@ Notes:
 - Render JSON snapshot comparison ignores `meta.generated_at_utc` but keeps renderer field order.
 - StandardReport golden comparison ignores `meta.generated_at_utc` and compares canonicalized JSON.
 - Unified verify entry can run the full fixture export + golden checks:
-  - `python tools/run.py verify bills`
+  - `python tools/run.py verify bills-tracer`

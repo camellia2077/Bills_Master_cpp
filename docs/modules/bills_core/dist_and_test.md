@@ -24,10 +24,10 @@
 
 - 内部逻辑测试（unit/component）：
   - `python tools/verify/verify.py logic-tests`
-  - 默认包含：`core-dist` + `core-abi`
+  - 默认包含：`bills-tracer-core-dist`
 - 结果产物测试（integration/e2e/snapshot）：
   - `python tools/verify/verify.py artifact-tests`
-  - 默认包含：`bills` + `report-consistency-gate`
+  - 默认包含：`bills-tracer` + `report-consistency-gate`
 - 全量测试（内部 + 产物）：
   - `python tools/verify/verify.py all-tests`
   - 默认为开发模式：不阻塞性能门禁，仅做一致性校验。
@@ -35,11 +35,19 @@
   - 若需要阻塞性能门禁：
     - `python tools/verify/verify.py artifact-tests -- --scope full --enforce-performance-gate`
 
+## Python Unittest 运行方式
+
+- 对 `tests/suites/toolchain/`、`tests/suites/reporting/` 下的 Python unittest，推荐从仓库根目录使用模块方式运行：
+  - `python -m unittest tests.suites.toolchain.test_verify_cli`
+  - `python -m unittest tests.suites.toolchain.test_import_layering`
+  - `python -m unittest tests.suites.toolchain.test_boundary_layering`
+  - `python -m unittest tests.suites.toolchain.test_pipeline_runner`
+- 不推荐直接执行 `python tests/suites/.../*.py`，这类脚本的 import 解析依赖仓库根目录模块上下文。
+
 ## 目录分组（logic / artifact）
 
 - 测试脚本目录：
-  - 逻辑层：`tests/suites/logic/bills_core_abi/run_tests.py`
-  - 产物层：`tests/suites/artifact/bills_master/run_tests.py`
+  - 产物层：`tests/suites/artifact/bills_tracer/run_tests.py`
 - 共享输入数据：
   - `testdata/bills/`
 - 测试输出目录：
@@ -52,35 +60,38 @@
 ## 常见子命令
 
 - 并行冒烟（model-first vs json-first）：
-  - `python tools/verify/verify.py bills-parallel-smoke`
+  - `python tools/verify/verify.py bills-tracer-parallel-smoke`
   - 可选：
-    - `python tools/verify/verify.py bills-parallel-smoke -- --compare-scope all`
-    - `python tools/verify/verify.py bills-parallel-smoke -- --model-project bills_a --json-project bills_b`
+    - `python tools/verify/verify.py bills-tracer-parallel-smoke -- --compare-scope all`
+    - `python tools/verify/verify.py bills-tracer-parallel-smoke -- --model-project bills_a --json-project bills_b`
 - 仅准备 bills CLI：
-  - `python tools/verify/verify.py bills-dist`
+  - `python tools/verify/verify.py bills-tracer-cli-dist`
 - 仅准备 `bills_core`：
-  - `python tools/verify/verify.py core-dist`
+  - `python tools/verify/verify.py bills-tracer-core-dist`
 - 仅准备 log_generator：
-  - `python tools/verify/verify.py log-dist`
+  - `python tools/verify/verify.py bills-tracer-log-generator-dist`
   - 若需要显式走底层 flow：
-    - `python tools/verify/verify.py log-dist -- dist --preset debug`
+    - `python tools/verify/verify.py bills-tracer-log-generator-dist -- dist --preset debug`
   - 默认 TOML pipeline：`tools/verify/pipelines/log_generator_dist.toml`
 - log_generator 完整命令行测试：
-  - `python tools/verify/verify.py log-cli-test`
+  - `python tools/verify/verify.py bills-tracer-log-generator-cli-test`
   - 默认 TOML pipeline：`tools/verify/pipelines/log_generator_cli.toml`
 - log_generator 运行时配置默认位于：
   - `dist/cmake/log_generator/debug/shared/bin/config/config.toml`
 - 生成 log_generator 测试输入（默认落盘到 artifact）：
-  - `python tools/flows/log_generator_flow.py generate --preset debug --start-year 2024 --end-year 2024`
+  - `python tools/flows/bills_tracer_log_generator_flow.py generate --preset debug --start-year 2024 --end-year 2024`
   - 生成命令会将 `config.toml` 复制到独立 runtime 目录后再执行生成器。
 - 显式将 log_generator 数据提升到共享 testdata：
-  - `python tools/flows/log_generator_flow.py promote-testdata`
+  - `python tools/flows/bills_tracer_log_generator_flow.py promote-testdata`
   - 执行记录：`dist/tests/artifact/log_generator/last_promote.json`
 - 模块模式双通道检查：
   - `python tools/verify/verify.py module-mode-check`
   - 可选参数示例：
     - `python tools/verify/verify.py module-mode-check -- --preset release`
-    - `python tools/verify/verify.py module-mode-check -- --compiler clang`
+- Windows 原生静态构建前提：
+  - 必须提供 `C:/msys64/mingw64/bin` 工具链环境
+  - Windows 下不再保留 `bills_core` shared-library / 专用 ABI smoke 路径
+  - `bills-tracer-cli-dist` / `bills-tracer-log-generator-dist` 在 Windows 下会额外执行导入表门禁，拒绝第三方 DLL、MinGW runtime DLL 和 `api-ms-win-crt-*`
 - tools 分层约束检查：
   - `python tools/verify/verify.py tools-layer-check`
 - 一致性门禁（含性能阈值）：
@@ -89,8 +100,8 @@
   - 默认性能阈值：`model-first` 相比 `json-first` 不超过 `+10%`
 - TOML 流程 Runner：
   - 通用入口：`python tools/verify/verify.py pipeline-run -- --config tools/verify/pipelines/bills_artifact.toml`
-  - bills 示例：`python tools/verify/verify.py pipeline-bills`
-  - log_generator 示例：`python tools/verify/verify.py pipeline-log-generator`
+  - bills_tracer 示例：`python tools/verify/verify.py pipeline-bills-tracer`
+  - log_generator 示例：`python tools/verify/verify.py pipeline-bills-tracer-log-generator`
 - reporting workflow（独立于核心门禁）：
   - compile2pdf：`python tools/verify/verify.py reporting-compile2pdf`
   - graph_generator：`python tools/verify/verify.py reporting-graph`

@@ -17,4 +17,5 @@
 
 ## Quick Verify
 
-- `python tools/verify/verify.py core-abi`
+- `python tools/verify/verify.py core-dist`
+- `python tools/verify/verify.py module-mode-check`

@@ -25,6 +25,6 @@
 
 ## 提交前最小检查
 
-1. 纯构建验证：`python tools/run.py dist android --preset debug`
+1. 纯构建验证：`python tools/run.py dist bills-tracer-android --preset debug`
 2. 改 `ViewModel` / 纯 Kotlin 逻辑后，可追加：`./gradlew :apps:bills_android:testDebugUnitTest`
 3. 改 Compose 页面或 native repository，且本机有设备 / 模拟器时，可追加：`./gradlew :apps:bills_android:connectedDebugAndroidTest`

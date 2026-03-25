@@ -7,9 +7,9 @@
 ## 定向建议
 
 - 改 CLI parser/feature handler 后，至少执行：
-  - `python tools/verify/verify.py bills`
+  - `python tools/verify/verify.py bills-tracer`
 - 改 dist/目录结构后，追加执行：
-  - `python tools/verify/verify.py bills-dist`
+  - `python tools/verify/verify.py bills-tracer-cli-dist`
 
 ## 失败排查
 

@@ -25,14 +25,12 @@
 
 ## Phase 0 Baseline Verify Commands
 - Prepare Windows CLI dist:
-  - `python tools/verify/verify.py bills-dist`
+  - `python tools/verify/verify.py bills-tracer-cli-dist`
 - Prepare dist + run CLI test suite:
-  - `python tools/verify/verify.py bills`
-- Prepare `bills_core` shared library dist:
-  - `python tools/verify/verify.py core-dist`
-- Run `bills_core` C ABI smoke tests:
-  - `python tools/verify/verify.py core-abi`
+  - `python tools/verify/verify.py bills-tracer`
+- Prepare `bills_core` static dist:
+  - `python tools/verify/verify.py bills-tracer-core-dist`
 
 ## Notes
-- In Phase 1, `bills_core` is configurable as `STATIC/SHARED`.
+- Windows no longer keeps a shared-library verification path for `bills_core`.
 - Default in CLI dist remains static to avoid runtime behavior drift during migration.

@@ -46,6 +46,7 @@
 ## notes
 
 - `docs/notes/android_apk_build.md`（Android APK 编译命令与产物说明）
+- `docs/notes/windows_exe_build.md`（Windows bills_tracer_cli 编译命令与产物说明）
 
 ## tools
 
@@ -69,7 +70,7 @@
 - `testdata/bills/`（跨端共享 canonical 输入数据）
 - 默认产物：`dist/tests/artifact/log_generator/`
   - 默认配置：`tests/generators/log_generator/scripts/config.toml`
-  - 显式同步数据：`python tools/flows/log_generator_flow.py promote-testdata`
+  - 显式同步数据：`python tools/flows/bills_tracer_log_generator_flow.py promote-testdata`
 - `tools/reporting/compile2pdf/`（报表产物转 PDF）
 - `tools/reporting/graph_generator/`（报表图表生成）
   - 统一入口（独立 workflow）：
