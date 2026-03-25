@@ -42,7 +42,7 @@ class AppSessionViewModelTest {
         assertEquals(false, viewModel.state.value.isInitializing)
         assertEquals("2025 full-year sample", viewModel.state.value.environment?.bundledSampleLabel)
         assertEquals("0.4.2", viewModel.state.value.coreVersion?.versionName)
-        assertEquals("0.1.1", viewModel.state.value.androidVersion?.versionName)
+        assertEquals("0.1.2", viewModel.state.value.androidVersion?.versionName)
         assertEquals("2025", viewModel.state.value.environment?.bundledSampleYear)
         assertEquals("2025-01", viewModel.state.value.environment?.bundledSampleMonth)
         assertTrue(viewModel.state.value.globalStatusMessage.isNotBlank())

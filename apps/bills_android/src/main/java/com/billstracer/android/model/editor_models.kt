@@ -7,6 +7,13 @@ data class RecordEditorDocument(
     val persisted: Boolean,
 )
 
+data class RecordDatabaseSyncResult(
+    val ok: Boolean,
+    val message: String,
+    val errorMessage: String? = null,
+    val rawJson: String,
+)
+
 data class RecordPreviewFile(
     val path: String,
     val ok: Boolean,
@@ -29,22 +36,5 @@ data class RecordPreviewResult(
     val failure: Int,
     val periods: List<String>,
     val files: List<RecordPreviewFile>,
-    val rawJson: String,
-)
-
-data class InvalidRecordFile(
-    val path: String,
-    val error: String,
-)
-
-data class ListedRecordPeriodsResult(
-    val ok: Boolean,
-    val code: String,
-    val message: String,
-    val processed: Int,
-    val valid: Int,
-    val invalid: Int,
-    val periods: List<String>,
-    val invalidFiles: List<InvalidRecordFile>,
     val rawJson: String,
 )

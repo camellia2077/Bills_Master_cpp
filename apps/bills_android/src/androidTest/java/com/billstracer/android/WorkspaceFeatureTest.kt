@@ -16,7 +16,10 @@ class WorkspaceFeatureTest {
 
     @Test
     fun workspacePageShowsImportAndClearActions() {
+        composeRule.onNodeWithTag("workspace_import_txt_directory_button").assertIsDisplayed()
+        composeRule.onNodeWithTag("workspace_import_records_button").assertIsDisplayed()
         composeRule.onNodeWithTag("workspace_export_button").assertIsDisplayed()
+        composeRule.onNodeWithTag("workspace_import_bundle_button").assertIsDisplayed()
         composeRule.onNodeWithTag("workspace_clear_txt_button").assertIsDisplayed()
         composeRule.onNodeWithTag("workspace_clear_database_button").assertIsDisplayed()
     }

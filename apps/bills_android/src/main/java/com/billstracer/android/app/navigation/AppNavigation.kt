@@ -13,6 +13,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -31,6 +32,8 @@ import com.billstracer.android.features.settings.SettingsScreen
 import com.billstracer.android.features.settings.SettingsViewModel
 import com.billstracer.android.features.workspace.WorkspaceScreen
 import com.billstracer.android.features.workspace.WorkspaceViewModel
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 private enum class AppTab(
     val label: String,
@@ -76,11 +79,25 @@ internal fun BillsAndroidApp(
 ) {
     val sessionState = sessionViewModel.state.collectAsStateWithLifecycle()
     var selectedTab by rememberSaveable { mutableStateOf(AppTab.WORKSPACE) }
-    val exportDirectoryLauncher = rememberLauncherForActivityResult(
+    val exportParseBundleLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/zip"),
+    ) { targetDocumentUri ->
+        if (targetDocumentUri != null) {
+            workspaceViewModel.exportParseBundle(targetDocumentUri)
+        }
+    }
+    val importParseBundleLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+    ) { sourceDocumentUri ->
+        if (sourceDocumentUri != null) {
+            workspaceViewModel.importParseBundle(sourceDocumentUri)
+        }
+    }
+    val importTxtDirectoryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree(),
-    ) { targetDirectoryUri ->
-        if (targetDirectoryUri != null) {
-            workspaceViewModel.exportWorkspaceFiles(targetDirectoryUri)
+    ) { sourceDirectoryUri ->
+        if (sourceDirectoryUri != null) {
+            workspaceViewModel.importTxtDirectoryToRecords(sourceDirectoryUri)
         }
     }
 
@@ -96,6 +113,14 @@ internal fun BillsAndroidApp(
             )
         },
     ) { innerPadding ->
+        LaunchedEffect(selectedTab) {
+            if (selectedTab == AppTab.EDITOR) {
+                editorViewModel.refreshDatabaseRecordPeriods()
+            }
+            if (selectedTab == AppTab.QUERY) {
+                queryViewModel.refreshAvailablePeriods()
+            }
+        }
         val contentModifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)
@@ -107,8 +132,21 @@ internal fun BillsAndroidApp(
                 WorkspaceScreen(
                     sessionState = sessionState.value,
                     state = state.value,
+                    onRequestImportTxtDirectory = {
+                        importTxtDirectoryLauncher.launch(null)
+                    },
+                    onImportRecordFilesToDatabase = workspaceViewModel::importRecordFilesToDatabase,
                     onImportBundledSample = workspaceViewModel::importBundledSample,
-                    onRequestExportDirectory = { exportDirectoryLauncher.launch(null) },
+                    onRequestExportDocument = {
+                        exportParseBundleLauncher.launch(
+                            "parse_bundle_${DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").format(LocalDateTime.now())}.zip",
+                        )
+                    },
+                    onRequestImportBundle = {
+                        importParseBundleLauncher.launch(
+                            arrayOf("application/zip", "application/octet-stream"),
+                        )
+                    },
                     onClearRecordFiles = workspaceViewModel::clearRecordFiles,
                     onClearDatabase = workspaceViewModel::clearDatabase,
                     modifier = contentModifier,
@@ -118,9 +156,9 @@ internal fun BillsAndroidApp(
                 val state = queryViewModel.state.collectAsStateWithLifecycle()
                 QueryScreen(
                     state = state.value,
-                    onQueryYearChange = queryViewModel::updateQueryYearInput,
-                    onQueryPeriodYearChange = queryViewModel::updateQueryPeriodYearInput,
-                    onQueryPeriodMonthChange = queryViewModel::updateQueryPeriodMonthInput,
+                    onSelectQueryYear = queryViewModel::selectQueryYear,
+                    onSelectQueryPeriodYear = queryViewModel::selectQueryPeriodYear,
+                    onSelectQueryPeriodMonth = queryViewModel::selectQueryPeriodMonth,
                     onRunYearQuery = queryViewModel::runYearQuery,
                     onRunMonthQuery = queryViewModel::runMonthQuery,
                     onSelectQueryViewMode = queryViewModel::selectQueryViewMode,
@@ -134,12 +172,8 @@ internal fun BillsAndroidApp(
                     onSelectExistingRecordYear = editorViewModel::selectExistingRecordYear,
                     onSelectExistingRecordMonth = editorViewModel::selectExistingRecordMonth,
                     onOpenSelectedExistingRecord = editorViewModel::openSelectedExistingRecord,
-                    onRecordPeriodYearChange = editorViewModel::updateRecordPeriodYearInput,
-                    onRecordPeriodMonthChange = editorViewModel::updateRecordPeriodMonthInput,
-                    onOpenManualRecord = editorViewModel::openManualRecord,
                     onPreviewRecord = editorViewModel::previewRecordDraft,
                     onSaveRecord = editorViewModel::saveRecordDraft,
-                    onRefreshRecordPeriods = editorViewModel::refreshRecordPeriods,
                     onRecordDraftChange = editorViewModel::updateRecordDraft,
                     onResetRecordDraft = editorViewModel::resetRecordDraft,
                     modifier = contentModifier,

@@ -21,8 +21,11 @@ import com.billstracer.android.platform.SectionGroupCard
 internal fun WorkspaceScreen(
     sessionState: AppSessionState,
     state: WorkspaceUiState,
+    onRequestImportTxtDirectory: () -> Unit,
+    onImportRecordFilesToDatabase: () -> Unit,
     onImportBundledSample: () -> Unit,
-    onRequestExportDirectory: () -> Unit,
+    onRequestExportDocument: () -> Unit,
+    onRequestImportBundle: () -> Unit,
     onClearRecordFiles: () -> Unit,
     onClearDatabase: () -> Unit,
     modifier: Modifier = Modifier,
@@ -56,8 +59,13 @@ internal fun WorkspaceScreen(
                     } else {
                         "Workspace is unavailable."
                     }
-                } else {
+                } else if (
+                    !environment.bundledSampleLabel.isNullOrBlank() &&
+                    !environment.bundledSampleMonth.isNullOrBlank()
+                ) {
                     "db=${environment.dbFile.name}  sample=${environment.bundledSampleLabel}  period=${environment.bundledSampleMonth}"
+                } else {
+                    "db=${environment.dbFile.name}"
                 },
                 style = MaterialTheme.typography.bodySmall,
                 fontFamily = FontFamily.Monospace,
@@ -75,10 +83,72 @@ internal fun WorkspaceScreen(
                 )
             }
         }
-        if (BuildConfig.DEBUG) {
-            SectionGroupCard(title = "Debug") {
+        SectionGroupCard(title = "Data") {
+            Text(
+                text = "Select a directory and copy valid TXT files into records/ only. This does not write to SQLite.",
+                style = MaterialTheme.typography.bodySmall,
+                fontFamily = FontFamily.Monospace,
+            )
+            Button(
+                onClick = onRequestImportTxtDirectory,
+                enabled = !state.isInitializing && !state.isWorking,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("workspace_import_txt_directory_button"),
+            ) {
+                Text("Import TXT from directory")
+            }
+            state.recordDirectoryImportResult?.let { result ->
                 Text(
-                    text = "Debug build only. Sample import and export tools are excluded from release builds.",
+                    text = "processed ${result.processed}  imported ${result.imported}  overwritten ${result.overwritten}  failure ${result.failure}  invalid ${result.invalid}  duplicate ${result.duplicatePeriodConflicts}",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace,
+                )
+                result.firstFailureMessage?.takeIf { it.isNotBlank() }?.let { failureMessage ->
+                    Text(
+                        text = failureMessage,
+                        color = if (result.failure > 0) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+            Text(
+                text = "Import the current TXT files under records/ into SQLite. This action is available in release builds.",
+                style = MaterialTheme.typography.bodySmall,
+                fontFamily = FontFamily.Monospace,
+            )
+            Button(
+                onClick = onImportRecordFilesToDatabase,
+                enabled = !state.isInitializing && !state.isWorking,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("workspace_import_records_button"),
+            ) {
+                Text("Import TXT into database")
+            }
+            state.dataImportResult?.let { result ->
+                Text(
+                    text = "processed ${result.processed}  imported ${result.imported}  failure ${result.failure}",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace,
+                )
+                if (!result.ok && result.message.isNotBlank()) {
+                    Text(
+                        text = result.message,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+        }
+        if (BuildConfig.DEBUG) {
+            SectionGroupCard(title = "Bundled Sample") {
+                Text(
+                    text = "Debug build only. Bundled sample import is excluded from release builds.",
                     style = MaterialTheme.typography.bodySmall,
                     fontFamily = FontFamily.Monospace,
                 )
@@ -89,16 +159,7 @@ internal fun WorkspaceScreen(
                 ) {
                     Text("Import bundled sample")
                 }
-                Button(
-                    onClick = onRequestExportDirectory,
-                    enabled = !state.isInitializing && !state.isWorking,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("workspace_export_button"),
-                ) {
-                    Text("Export TXT and configs")
-                }
-                state.importResult?.let { result ->
+                state.bundledSampleImportResult?.let { result ->
                     Text(
                         text = "processed ${result.processed}  imported ${result.imported}  failure ${result.failure}",
                         style = MaterialTheme.typography.bodySmall,
@@ -112,9 +173,41 @@ internal fun WorkspaceScreen(
                         )
                     }
                 }
+            }
+            SectionGroupCard(title = "Parse Bundle") {
+                Text(
+                    text = "Debug build only. Parse bundle export/import tools are excluded from release builds.",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace,
+                )
+                Button(
+                    onClick = onRequestExportDocument,
+                    enabled = !state.isInitializing && !state.isWorking,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("workspace_export_button"),
+                ) {
+                    Text("Export parse bundle")
+                }
+                Button(
+                    onClick = onRequestImportBundle,
+                    enabled = !state.isInitializing && !state.isWorking,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("workspace_import_bundle_button"),
+                ) {
+                    Text("Import parse bundle")
+                }
                 state.lastExportResult?.destinationDisplayPath?.let { destination ->
                     Text(
-                        text = "Last export: $destination",
+                        text = "Last bundle export: $destination",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                }
+                state.lastImportedBundleResult?.sourceDisplayPath?.let { source ->
+                    Text(
+                        text = "Last bundle import: $source",
                         style = MaterialTheme.typography.bodySmall,
                         fontFamily = FontFamily.Monospace,
                     )

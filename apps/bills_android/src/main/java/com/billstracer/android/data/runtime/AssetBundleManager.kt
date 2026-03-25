@@ -1,8 +1,8 @@
 package com.billstracer.android.data.runtime
 
 import android.content.Context
-import com.billstracer.android.BuildConfig
 import java.io.File
+import java.nio.charset.StandardCharsets
 
 internal class AssetBundleManager(
     private val context: Context,
@@ -22,19 +22,29 @@ internal class AssetBundleManager(
         val recordsRoot = File(workspaceRoot, "records")
         val dbRoot = File(workspaceRoot, "db")
         val dbFile = File(dbRoot, "bills.sqlite3")
+        val bundledSampleSpec = BundledSampleSpecProvider.current()
 
         assetsRoot.deleteRecursively()
         dbRoot.mkdirs()
         recordsRoot.mkdirs()
-        extractAssetTree("testdata", File(assetsRoot, "testdata"))
         extractAssetTree("notices", File(assetsRoot, "notices"))
+        bundledSampleSpec?.let { sample ->
+            materializeBundledSampleRecords(
+                workspaceRoot = workspaceRoot,
+                sample = sample,
+                recordsRoot = recordsRoot,
+            )
+        }
         materializePersistentConfig(configRoot)
 
         return AppWorkspacePaths(
-            bundledSampleInputPath = File(
-                assetsRoot,
-                "testdata/bills/${BuildConfig.BUNDLED_SAMPLE_INPUT_RELATIVE_PATH}",
-            ),
+            bundledSampleInputPath = bundledSampleSpec?.let { sample ->
+                File(
+                    recordsRoot,
+                    sample.relativeInputPath,
+                )
+            },
+            bundledSampleSpec = bundledSampleSpec,
             configRoot = configRoot,
             recordsRoot = recordsRoot,
             noticesRoot = File(assetsRoot, "notices"),
@@ -52,6 +62,26 @@ internal class AssetBundleManager(
         return existed
     }
 
+    private fun materializeBundledSampleRecords(
+        workspaceRoot: File,
+        sample: BundledSampleSpec,
+        recordsRoot: File,
+    ) {
+        val seedMarker = File(
+            workspaceRoot,
+            ".bundled_sample_seeded_${sample.relativeInputPath.replace('/', '_').replace('\\', '_')}",
+        )
+        if (seedMarker.exists()) {
+            return
+        }
+
+        copyAssetTreeIfMissing(
+            assetPath = "testdata/bills/${sample.relativeInputPath}",
+            destination = File(recordsRoot, sample.relativeInputPath),
+        )
+        seedMarker.writeText(sample.relativeInputPath, StandardCharsets.UTF_8)
+    }
+
     private fun extractAssetTree(assetPath: String, destination: File) {
         val entries = context.assets.list(assetPath).orEmpty()
         if (entries.isEmpty()) {
@@ -67,6 +97,27 @@ internal class AssetBundleManager(
         destination.mkdirs()
         for (entry in entries) {
             extractAssetTree("$assetPath/$entry", File(destination, entry))
+        }
+    }
+
+    private fun copyAssetTreeIfMissing(assetPath: String, destination: File) {
+        val entries = context.assets.list(assetPath).orEmpty()
+        if (entries.isEmpty()) {
+            if (destination.exists()) {
+                return
+            }
+            destination.parentFile?.mkdirs()
+            context.assets.open(assetPath).use { input ->
+                destination.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            return
+        }
+
+        destination.mkdirs()
+        for (entry in entries) {
+            copyAssetTreeIfMissing("$assetPath/$entry", File(destination, entry))
         }
     }
 
@@ -94,7 +145,8 @@ internal class AssetBundleManager(
 }
 
 internal data class AppWorkspacePaths(
-    val bundledSampleInputPath: File,
+    val bundledSampleInputPath: File?,
+    val bundledSampleSpec: BundledSampleSpec?,
     val configRoot: File,
     val recordsRoot: File,
     val noticesRoot: File,

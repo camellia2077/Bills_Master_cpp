@@ -22,6 +22,15 @@ import kotlinx.serialization.json.jsonPrimitive
 internal class DefaultQueryService(
     private val runtime: AndroidWorkspaceRuntime,
 ) : QueryService {
+    override suspend fun listAvailablePeriods(): List<String> = withContext(Dispatchers.IO) {
+        val workspace = runtime.initializeWorkspace()
+        parseAvailablePeriods(
+            QueryNativeBindings.listAvailablePeriodsNative(
+                workspace.dbFile.absolutePath,
+            ),
+        )
+    }
+
     override suspend fun queryYear(isoYear: String): QueryResult = withContext(Dispatchers.IO) {
         val workspace = runtime.initializeWorkspace()
         parseQueryResult(
@@ -73,5 +82,16 @@ internal class DefaultQueryService(
             standardReportJson = data["standard_report"]?.toString(),
             rawJson = rawJson,
         )
+    }
+
+    private fun parseAvailablePeriods(rawJson: String): List<String> {
+        val root = parseRoot(rawJson)
+        val data = root["data"]?.jsonObject ?: JsonObject(emptyMap())
+        if (!root.boolean("ok")) {
+            error(root.string("message"))
+        }
+        return data["periods"]?.jsonArray?.mapNotNull { item ->
+            item.jsonPrimitive.contentOrNull
+        }.orEmpty().distinct().sortedDescending()
     }
 }

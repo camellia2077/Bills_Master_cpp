@@ -2,14 +2,18 @@ package com.billstracer.android.platform
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
@@ -164,6 +168,9 @@ private fun MarkdownBlockView(
                 }
             }
         }
+        is MarkdownBlock.TableBlock -> {
+            MarkdownTable(block = block, style = style, color = color)
+        }
     }
 }
 
@@ -175,14 +182,81 @@ private fun markdownHeaderStyle(level: Int): TextStyle =
         else -> MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
     }
 
-private sealed class MarkdownBlock {
+@Composable
+private fun MarkdownTable(
+    block: MarkdownBlock.TableBlock,
+    style: TextStyle,
+    color: Color,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        MarkdownTableRow(
+            cells = block.headers,
+            isHeader = true,
+            style = style,
+            color = color,
+        )
+        block.rows.forEach { row ->
+            MarkdownTableRow(
+                cells = row,
+                isHeader = false,
+                style = style,
+                color = color,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MarkdownTableRow(
+    cells: List<String>,
+    isHeader: Boolean,
+    style: TextStyle,
+    color: Color,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        cells.forEach { cell ->
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = if (isHeader) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.60f)
+                },
+            ) {
+                Text(
+                    text = buildAnnotatedString { parseInlineMarkdown(cell, this) },
+                    modifier = Modifier
+                        .widthIn(min = 104.dp)
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                    style = if (isHeader) {
+                        style.copy(fontWeight = FontWeight.SemiBold)
+                    } else {
+                        style
+                    },
+                    color = color,
+                )
+            }
+        }
+    }
+}
+
+internal sealed class MarkdownBlock {
     data class Header(val text: String, val level: Int) : MarkdownBlock()
     data class Paragraph(val text: String) : MarkdownBlock()
     data class CodeBlock(val content: String) : MarkdownBlock()
     data class ListBlock(val items: List<MarkdownListItem>) : MarkdownBlock()
+    data class TableBlock(
+        val headers: List<String>,
+        val rows: List<List<String>>,
+    ) : MarkdownBlock()
 }
 
-private data class MarkdownListItem(
+internal data class MarkdownListItem(
     val text: String,
     val level: Int,
 )
@@ -223,7 +297,7 @@ private fun parseMarkdownSections(text: String): List<MarkdownSection> {
     return sections
 }
 
-private fun parseMarkdownBlocks(text: String): List<MarkdownBlock> {
+internal fun parseMarkdownBlocks(text: String): List<MarkdownBlock> {
     val lines = text.lines()
     val blocks = mutableListOf<MarkdownBlock>()
     var inCodeBlock = false
@@ -237,7 +311,9 @@ private fun parseMarkdownBlocks(text: String): List<MarkdownBlock> {
         }
     }
 
-    for (line in lines) {
+    var index = 0
+    while (index < lines.size) {
+        val line = lines[index]
         if (line.trim().startsWith("```")) {
             flushList()
             if (inCodeBlock) {
@@ -247,11 +323,21 @@ private fun parseMarkdownBlocks(text: String): List<MarkdownBlock> {
             } else {
                 inCodeBlock = true
             }
+            index += 1
             continue
         }
 
         if (inCodeBlock) {
             codeBlockBuffer.append(line).append("\n")
+            index += 1
+            continue
+        }
+
+        val tableParse = parseMarkdownTable(lines = lines, startIndex = index)
+        if (tableParse != null) {
+            flushList()
+            blocks.add(tableParse.block)
+            index = tableParse.nextIndex
             continue
         }
 
@@ -273,16 +359,97 @@ private fun parseMarkdownBlocks(text: String): List<MarkdownBlock> {
                 blocks.add(MarkdownBlock.Paragraph(trimmed))
             }
         }
+        index += 1
     }
 
     flushList()
     return blocks
 }
 
+private data class MarkdownTableParseResult(
+    val block: MarkdownBlock.TableBlock,
+    val nextIndex: Int,
+)
+
+private fun parseMarkdownTable(
+    lines: List<String>,
+    startIndex: Int,
+): MarkdownTableParseResult? {
+    if (startIndex + 1 >= lines.size) {
+        return null
+    }
+
+    val headerLine = lines[startIndex].trim()
+    val separatorLine = lines[startIndex + 1].trim()
+    if (!isMarkdownTableLine(headerLine) || !isMarkdownTableSeparatorLine(separatorLine)) {
+        return null
+    }
+
+    val headers = parseMarkdownTableCells(headerLine)
+    if (headers.isEmpty()) {
+        return null
+    }
+
+    val rows = mutableListOf<List<String>>()
+    var index = startIndex + 2
+    while (index < lines.size) {
+        val rowLine = lines[index].trim()
+        if (!isMarkdownTableLine(rowLine)) {
+            break
+        }
+        val cells = parseMarkdownTableCells(rowLine)
+        if (cells.isNotEmpty()) {
+            rows += normalizeMarkdownTableRow(cells, headers.size)
+        }
+        index += 1
+    }
+
+    return MarkdownTableParseResult(
+        block = MarkdownBlock.TableBlock(
+            headers = headers,
+            rows = rows,
+        ),
+        nextIndex = index,
+    )
+}
+
 private fun isMarkdownListLine(line: String): Boolean {
     val trimmedStart = line.trimStart()
     return trimmedStart.startsWith("- ") || trimmedStart.startsWith("* ")
 }
+
+private fun isMarkdownTableLine(line: String): Boolean {
+    val trimmed = line.trim()
+    return trimmed.startsWith("|") &&
+        trimmed.endsWith("|") &&
+        trimmed.count { it == '|' } >= 2
+}
+
+private fun isMarkdownTableSeparatorLine(line: String): Boolean {
+    if (!isMarkdownTableLine(line)) {
+        return false
+    }
+    return parseMarkdownTableCells(line).all { cell ->
+        cell.matches(Regex("^:?-{3,}:?$"))
+    }
+}
+
+private fun parseMarkdownTableCells(line: String): List<String> =
+    line.trim()
+        .removePrefix("|")
+        .removeSuffix("|")
+        .split('|')
+        .map { cell -> cell.trim() }
+
+private fun normalizeMarkdownTableRow(
+    cells: List<String>,
+    expectedSize: Int,
+): List<String> =
+    when {
+        cells.size == expectedSize -> cells
+        cells.size > expectedSize -> cells.take(expectedSize)
+        else -> cells + List(expectedSize - cells.size) { "" }
+    }
 
 private fun parseMarkdownListItem(line: String): MarkdownListItem? {
     val match = Regex("^([ \\t]*)([-*])\\s+(.*)$").find(line) ?: return null

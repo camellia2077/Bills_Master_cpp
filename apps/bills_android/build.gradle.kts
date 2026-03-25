@@ -25,7 +25,7 @@ val bundledSampleLabel = "2025 full-year sample"
 val bundledSampleYear = "2025"
 val bundledSampleMonth = "2025-01"
 val androidPresentationVersionCode = 2
-val androidPresentationVersionName = "0.1.1"
+val androidPresentationVersionName = "0.1.2"
 
 private object AndroidUiDependencyVersions {
     const val composeBom = "2025.08.01"
@@ -34,8 +34,10 @@ private object AndroidUiDependencyVersions {
     const val lifecycle = "2.10.0"
 }
 
-val generatedAssetsDir = layout.buildDirectory.dir("generated/assets/main")
-val generatedAssetsPath = generatedAssetsDir.get().asFile
+val generatedCommonAssetsDir = layout.buildDirectory.dir("generated/assets/common")
+val generatedCommonAssetsPath = generatedCommonAssetsDir.get().asFile
+val generatedDebugSampleAssetsDir = layout.buildDirectory.dir("generated/assets/debugSample")
+val generatedDebugSampleAssetsPath = generatedDebugSampleAssetsDir.get().asFile
 val distributedAndroidConfigDir = rootProject.layout.projectDirectory.dir("dist/config/android")
 val distributedAndroidNoticesDir = rootProject.layout.projectDirectory.dir("dist/notices/android")
 val noticesMetadataDir = layout.buildDirectory.dir("generated/noticesMetadata")
@@ -202,10 +204,6 @@ android {
         versionCode = androidPresentationVersionCode
         versionName = androidPresentationVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "BUNDLED_SAMPLE_INPUT_RELATIVE_PATH", "\"$bundledSampleRelativePath\"")
-        buildConfigField("String", "BUNDLED_SAMPLE_LABEL", "\"$bundledSampleLabel\"")
-        buildConfigField("String", "BUNDLED_SAMPLE_YEAR", "\"$bundledSampleYear\"")
-        buildConfigField("String", "BUNDLED_SAMPLE_MONTH", "\"$bundledSampleMonth\"")
         buildConfigField("String", "PRESENTATION_VERSION_NAME", "\"$androidPresentationVersionName\"")
         buildConfigField("int", "PRESENTATION_VERSION_CODE", androidPresentationVersionCode.toString())
 
@@ -219,6 +217,7 @@ android {
                     "-DANDROID_STL=c++_shared",
                     "-DBILLS_ENABLE_MODULES=OFF",
                     "-DBILLS_CORE_BUILD_SHARED=OFF",
+                    "-DBILLS_ANDROID_ENABLE_BUNDLED_SAMPLE=ON",
                 )
                 cmakePathOrNull(localNlohmannJsonSourceDir)?.let { sourceDir ->
                     arguments += "-DFETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON=$sourceDir"
@@ -265,6 +264,11 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
+            externalNativeBuild {
+                cmake {
+                    arguments += "-DBILLS_ANDROID_ENABLE_BUNDLED_SAMPLE=OFF"
+                }
+            }
         }
     }
 
@@ -293,7 +297,9 @@ android {
     }
 
     @Suppress("DEPRECATION")
-    sourceSets["main"].assets.srcDir(generatedAssetsPath)
+    sourceSets["main"].assets.srcDir(generatedCommonAssetsPath)
+    @Suppress("DEPRECATION")
+    sourceSets["debug"].assets.srcDir(generatedDebugSampleAssetsPath)
 
     testOptions {
         unitTests.isReturnDefaultValues = true
@@ -329,6 +335,7 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:5.14.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
 
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
@@ -372,10 +379,7 @@ val generateBundledNotices by tasks.registering(Exec::class) {
     )
 }
 
-val syncBundledAssets by tasks.registering(Sync::class) {
-    from(rootProject.layout.projectDirectory.dir("testdata/bills/$bundledSampleRelativePath")) {
-        into("testdata/bills/$bundledSampleRelativePath")
-    }
+val syncBundledCommonAssets by tasks.registering(Sync::class) {
     dependsOn(generateDistributedAndroidConfig)
     from(distributedAndroidConfigDir) {
         include("validator_config.toml", "modifier_config.toml", "export_formats.toml")
@@ -386,11 +390,24 @@ val syncBundledAssets by tasks.registering(Sync::class) {
         include("NOTICE.md", "notices.json")
         into("notices")
     }
-    into(generatedAssetsPath)
+    into(generatedCommonAssetsPath)
+}
+
+val syncBundledDebugSampleAssets by tasks.registering(Sync::class) {
+    from(rootProject.layout.projectDirectory.dir("testdata/bills/$bundledSampleRelativePath")) {
+        into("testdata/bills/$bundledSampleRelativePath")
+    }
+    into(generatedDebugSampleAssetsPath)
 }
 
 tasks.named("preBuild").configure {
-    dependsOn(syncBundledAssets)
+    dependsOn(syncBundledCommonAssets)
+}
+
+tasks.configureEach {
+    if (name == "preDebugBuild") {
+        dependsOn(syncBundledDebugSampleAssets)
+    }
 }
 
 afterEvaluate {

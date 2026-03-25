@@ -5,6 +5,10 @@ internal object QueryNativeBindings {
         NativeLibrary.ensureLoaded()
     }
 
+    external fun listAvailablePeriodsNative(
+        dbPath: String,
+    ): String
+
     external fun queryYearNative(
         dbPath: String,
         isoYear: String,

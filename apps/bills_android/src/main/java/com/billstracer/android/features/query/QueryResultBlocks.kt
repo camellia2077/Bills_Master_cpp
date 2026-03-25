@@ -28,7 +28,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.billstracer.android.model.MonthlySummaryItem
 import com.billstracer.android.model.QueryResult
 import com.billstracer.android.model.QueryType
 import com.billstracer.android.platform.MarkdownText
@@ -48,6 +47,19 @@ internal fun QueryResultDisplayContent(
         } else {
             null
         }
+    }
+    val yearlyStandardReport = remember(result.type, result.standardReportJson) {
+        if (result.type == QueryType.YEAR) {
+            parseYearlyStandardReport(result.standardReportJson)
+        } else {
+            null
+        }
+    }
+    val hasStructuredView = monthlyStandardReport != null || yearlyStandardReport != null
+    val effectiveViewMode = if (selectedViewMode == QueryViewMode.STRUCTURED && !hasStructuredView) {
+        QueryViewMode.MARKDOWN
+    } else {
+        selectedViewMode
     }
 
     Column(
@@ -78,26 +90,46 @@ internal fun QueryResultDisplayContent(
                     renderMarkdown = true,
                 )
             }
-            StructuredSummaryCard(
-                result = result,
-                monthlySummary = result.monthlySummary,
-            )
+        } else if (result.type == QueryType.YEAR && yearlyStandardReport != null) {
+            when (effectiveViewMode) {
+                QueryViewMode.STRUCTURED -> YearlyStandardReportCard(
+                    report = yearlyStandardReport,
+                    toggleLabel = "Show Markdown",
+                    onToggle = { onSelectViewMode(QueryViewMode.MARKDOWN) },
+                )
+                QueryViewMode.RAW_JSON -> QuerySourceCard(
+                    title = "Raw JSON",
+                    content = result.rawJson,
+                    toggleLabel = "Show Native View",
+                    onToggle = { onSelectViewMode(QueryViewMode.STRUCTURED) },
+                    isRawJson = true,
+                    renderMarkdown = false,
+                )
+                QueryViewMode.MARKDOWN -> QuerySourceCard(
+                    title = "Markdown Report",
+                    content = markdown,
+                    toggleLabel = "Show Native View",
+                    onToggle = { onSelectViewMode(QueryViewMode.STRUCTURED) },
+                    isRawJson = false,
+                    renderMarkdown = true,
+                )
+            }
         } else {
             QuerySourceCard(
-                title = if (selectedViewMode == QueryViewMode.RAW_JSON) "Raw JSON" else "Markdown Report",
-                content = if (selectedViewMode == QueryViewMode.RAW_JSON) result.rawJson else markdown,
-                toggleLabel = if (selectedViewMode == QueryViewMode.RAW_JSON) "Show Markdown" else "Show Raw JSON",
+                title = if (effectiveViewMode == QueryViewMode.RAW_JSON) "Raw JSON" else "Markdown Report",
+                content = if (effectiveViewMode == QueryViewMode.RAW_JSON) result.rawJson else markdown,
+                toggleLabel = if (effectiveViewMode == QueryViewMode.RAW_JSON) "Show Markdown" else "Show Raw JSON",
                 onToggle = {
                     onSelectViewMode(
-                        if (selectedViewMode == QueryViewMode.RAW_JSON) {
+                        if (effectiveViewMode == QueryViewMode.RAW_JSON) {
                             QueryViewMode.MARKDOWN
                         } else {
                             QueryViewMode.RAW_JSON
                         },
                     )
                 },
-                isRawJson = selectedViewMode == QueryViewMode.RAW_JSON,
-                renderMarkdown = false,
+                isRawJson = effectiveViewMode == QueryViewMode.RAW_JSON,
+                renderMarkdown = effectiveViewMode != QueryViewMode.RAW_JSON,
             )
         }
     }
@@ -221,67 +253,6 @@ internal fun formatPeriodLabel(periodStart: String, periodEnd: String): String {
 
 internal fun formatAmount(amount: Double): String =
     java.lang.String.format(java.util.Locale.US, "%,.2f", amount)
-
-@Composable
-private fun StructuredSummaryCard(
-    result: QueryResult,
-    monthlySummary: List<MonthlySummaryItem>,
-) {
-    val summaryItems = buildList {
-        add("type" to if (result.type == QueryType.YEAR) "year" else "month")
-        add("year" to (result.year?.toString() ?: "-"))
-        if (result.month != null) {
-            add("month" to result.month.toString().padStart(2, '0'))
-        }
-        add("matched" to result.matchedBills.toString())
-        add("income" to result.totalIncome.toString())
-        add("expense" to result.totalExpense.toString())
-        add("balance" to result.balance.toString())
-    }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("query_summary_card"),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-        ),
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "Structured Summary", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                summaryItems.forEach { (label, value) ->
-                    SummaryStatPill(label = label, value = value)
-                }
-            }
-            if (monthlySummary.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(14.dp))
-                Text(text = "Monthly Summary", style = MaterialTheme.typography.labelLarge)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    monthlySummary.forEach { entry ->
-                        SummaryStatPill(
-                            label = entry.month.toString().padStart(2, '0'),
-                            value = entry.balance.toString(),
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 internal fun SummaryStatPill(

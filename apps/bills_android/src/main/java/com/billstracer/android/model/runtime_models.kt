@@ -3,10 +3,10 @@ package com.billstracer.android.model
 import java.io.File
 
 data class AppEnvironment(
-    val bundledSampleInputPath: File,
-    val bundledSampleLabel: String,
-    val bundledSampleYear: String,
-    val bundledSampleMonth: String,
+    val bundledSampleInputPath: File? = null,
+    val bundledSampleLabel: String? = null,
+    val bundledSampleYear: String? = null,
+    val bundledSampleMonth: String? = null,
     val configRoot: File,
     val recordsRoot: File,
     val dbFile: File,

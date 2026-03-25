@@ -1,22 +1,21 @@
 #include <jni.h>
-#include <sqlite3.h>
 
 #include <algorithm>
 #include <cctype>
+#include <filesystem>
 #include <map>
-#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <vector>
 
-#include "bills_io/io_factory.hpp"
+#include "bills_io/host_flow_support.hpp"
 #include "jni_common.hpp"
-#include "query/query_service.hpp"
-#include "reporting/renderers/standard_report_renderer_registry.hpp"
-#include "reporting/report_render_service.hpp"
 
 namespace {
+
+namespace fs = std::filesystem;
 
 using bills::android::jni::Json;
 
@@ -30,56 +29,6 @@ auto is_ascii_digits(std::string_view value) -> bool {
          std::all_of(value.begin(), value.end(), [](unsigned char ch) -> bool {
            return std::isdigit(ch) != 0;
          });
-}
-
-auto count_matching_year_bills(sqlite3* db_connection, std::string_view iso_year)
-    -> int {
-  const char* sql = "SELECT COUNT(*) FROM bills WHERE substr(bill_date, 1, 4) = ?;";
-  sqlite3_stmt* statement = nullptr;
-  if (sqlite3_prepare_v2(db_connection, sql, -1, &statement, nullptr) !=
-      SQLITE_OK) {
-    throw std::runtime_error("Failed to prepare bill count query.");
-  }
-
-  sqlite3_bind_text(statement, 1, iso_year.data(),
-                    static_cast<int>(iso_year.size()), SQLITE_TRANSIENT);
-
-  int result = 0;
-  if (sqlite3_step(statement) == SQLITE_ROW) {
-    result = sqlite3_column_int(statement, 0);
-  }
-  sqlite3_finalize(statement);
-  return result;
-}
-
-auto count_matching_month_bills(sqlite3* db_connection,
-                                std::string_view iso_month) -> int {
-  const char* sql = "SELECT COUNT(*) FROM bills WHERE bill_date = ?;";
-  sqlite3_stmt* statement = nullptr;
-  if (sqlite3_prepare_v2(db_connection, sql, -1, &statement, nullptr) !=
-      SQLITE_OK) {
-    throw std::runtime_error("Failed to prepare bill count query.");
-  }
-
-  sqlite3_bind_text(statement, 1, iso_month.data(),
-                    static_cast<int>(iso_month.size()), SQLITE_TRANSIENT);
-
-  int result = 0;
-  if (sqlite3_step(statement) == SQLITE_ROW) {
-    result = sqlite3_column_int(statement, 0);
-  }
-  sqlite3_finalize(statement);
-  return result;
-}
-
-auto count_transactions(const MonthlyReportData& report) -> std::size_t {
-  std::size_t count = 0;
-  for (const auto& [_, parent] : report.aggregated_data) {
-    for (const auto& [__, sub] : parent.sub_categories) {
-      count += sub.transactions.size();
-    }
-  }
-  return count;
 }
 
 auto parse_iso_year(const std::string& value) -> std::optional<int> {
@@ -124,14 +73,53 @@ auto json_for_monthly_summary(const std::map<int, MonthlySummary>& monthly_summa
 }
 
 auto attach_rendered_report_payload(Json& data,
-                                    const StandardReport& standard_report) -> void {
-  if (StandardReportRendererRegistry::IsFormatAvailable("json")) {
-    data["standard_report"] = Json::parse(
-        StandardReportRendererRegistry::Render(standard_report, "json"));
+                                    const bills::io::HostQueryResult& query_result) -> void {
+  if (!query_result.standard_report_json.empty()) {
+    data["standard_report"] = Json::parse(query_result.standard_report_json);
   }
-  if (StandardReportRendererRegistry::IsFormatAvailable("md")) {
-    data["report_markdown"] =
-        StandardReportRendererRegistry::Render(standard_report, "md");
+  if (!query_result.report_markdown.empty()) {
+    data["report_markdown"] = query_result.report_markdown;
+  }
+}
+
+auto is_missing_bills_table_error(std::string_view message) -> bool {
+  return message.find("no such table: bills") != std::string_view::npos;
+}
+
+auto list_available_periods(const std::string& db_path) -> std::string {
+  if (db_path.empty()) {
+    return bills::android::jni::MakeResponse(false, "param.invalid_argument",
+                                             "dbPath must be non-empty.");
+  }
+
+  Json data;
+  data["db_path"] = db_path;
+  data["periods"] = Json::array();
+  data["count"] = 0;
+
+  if (!fs::exists(fs::path(db_path))) {
+    return bills::android::jni::MakeResponse(
+        true, "ok", "No imported months found in database.", std::move(data));
+  }
+
+  try {
+    const auto periods = bills::io::ListAvailableMonths(db_path);
+    if (!periods) {
+      throw std::runtime_error(FormatError(periods.error()));
+    }
+    data["periods"] = *periods;
+    data["count"] = periods->size();
+    return bills::android::jni::MakeResponse(
+        true, "ok",
+        periods->empty() ? "No imported months found in database."
+                         : "Available query periods loaded successfully.",
+        std::move(data));
+  } catch (const std::exception& error) {
+    if (is_missing_bills_table_error(error.what())) {
+      return bills::android::jni::MakeResponse(
+          true, "ok", "No imported months found in database.", std::move(data));
+    }
+    throw;
   }
 }
 
@@ -146,11 +134,16 @@ auto query_year(const std::string& db_path, const std::string& iso_year)
                                              "isoYear must use YYYY.");
   }
 
-  auto db_session = bills::io::CreateReportDbSession(db_path);
-  auto report_data_gateway =
-      bills::io::CreateReportDataGateway(db_session->GetConnectionHandle());
-  const auto query_result = QueryService::QueryYear(*report_data_gateway, iso_year);
-  if (!query_result.data_found) {
+  const auto query_result = bills::io::QueryYearReport(db_path, iso_year);
+  if (!query_result) {
+    Json data;
+    data["db_path"] = db_path;
+    data["iso_year"] = iso_year;
+    return bills::android::jni::MakeResponse(
+        false, "system.native_failure", FormatError(query_result.error()),
+        std::move(data));
+  }
+  if (!query_result->execution.data_found) {
     Json data;
     data["db_path"] = db_path;
     data["iso_year"] = iso_year;
@@ -159,19 +152,17 @@ auto query_year(const std::string& db_path, const std::string& iso_year)
         "No data matched the requested year.", std::move(data));
   }
 
-  const auto standard_report = ReportRenderService::BuildStandardReport(query_result);
   Json data;
   data["query_type"] = "year";
   data["query_value"] = iso_year;
-  data["year"] = query_result.year;
-  data["matched_bills"] =
-      count_matching_year_bills(db_session->GetConnectionHandle(), iso_year);
-  data["total_income"] = query_result.yearly_data.total_income;
-  data["total_expense"] = query_result.yearly_data.total_expense;
-  data["balance"] = query_result.yearly_data.balance;
+  data["year"] = query_result->execution.year;
+  data["matched_bills"] = query_result->matched_bills;
+  data["total_income"] = query_result->execution.yearly_data.total_income;
+  data["total_expense"] = query_result->execution.yearly_data.total_expense;
+  data["balance"] = query_result->execution.yearly_data.balance;
   data["monthly_summary"] =
-      json_for_monthly_summary(query_result.yearly_data.monthly_summary);
-  attach_rendered_report_payload(data, standard_report);
+      json_for_monthly_summary(query_result->execution.yearly_data.monthly_summary);
+  attach_rendered_report_payload(data, *query_result);
   return bills::android::jni::MakeResponse(
       true, "ok", "Year query completed successfully.", std::move(data));
 }
@@ -187,11 +178,16 @@ auto query_month(const std::string& db_path, const std::string& iso_month)
                                              "isoMonth must use YYYY-MM.");
   }
 
-  auto db_session = bills::io::CreateReportDbSession(db_path);
-  auto report_data_gateway =
-      bills::io::CreateReportDataGateway(db_session->GetConnectionHandle());
-  const auto query_result = QueryService::QueryMonth(*report_data_gateway, iso_month);
-  if (!query_result.data_found) {
+  const auto query_result = bills::io::QueryMonthReport(db_path, iso_month);
+  if (!query_result) {
+    Json data;
+    data["db_path"] = db_path;
+    data["iso_month"] = iso_month;
+    return bills::android::jni::MakeResponse(
+        false, "system.native_failure", FormatError(query_result.error()),
+        std::move(data));
+  }
+  if (!query_result->execution.data_found) {
     Json data;
     data["db_path"] = db_path;
     data["iso_month"] = iso_month;
@@ -200,25 +196,32 @@ auto query_month(const std::string& db_path, const std::string& iso_month)
         "No data matched the requested month.", std::move(data));
   }
 
-  const auto standard_report = ReportRenderService::BuildStandardReport(query_result);
   Json data;
   data["query_type"] = "month";
   data["query_value"] = iso_month;
-  data["year"] = query_result.year;
-  data["month"] = *query_result.month;
-  data["matched_bills"] =
-      count_matching_month_bills(db_session->GetConnectionHandle(), iso_month);
-  data["transaction_count"] = count_transactions(query_result.monthly_data);
-  data["total_income"] = query_result.monthly_data.total_income;
-  data["total_expense"] = query_result.monthly_data.total_expense;
-  data["balance"] = query_result.monthly_data.balance;
-  data["remark"] = query_result.monthly_data.remark;
-  attach_rendered_report_payload(data, standard_report);
+  data["year"] = query_result->execution.year;
+  data["month"] = *query_result->execution.month;
+  data["matched_bills"] = query_result->matched_bills;
+  data["transaction_count"] = query_result->transaction_count;
+  data["total_income"] = query_result->execution.monthly_data.total_income;
+  data["total_expense"] = query_result->execution.monthly_data.total_expense;
+  data["balance"] = query_result->execution.monthly_data.balance;
+  data["remark"] = query_result->execution.monthly_data.remark;
+  attach_rendered_report_payload(data, *query_result);
   return bills::android::jni::MakeResponse(
       true, "ok", "Month query completed successfully.", std::move(data));
 }
 
 }  // namespace
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_billstracer_android_data_nativebridge_QueryNativeBindings_listAvailablePeriodsNative(
+    JNIEnv* env, jclass, jstring db_path) {
+  return bills::android::jni::SafeCall(env, [&]() -> std::string {
+    return list_available_periods(
+        bills::android::jni::FromJString(env, db_path));
+  });
+}
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_billstracer_android_data_nativebridge_QueryNativeBindings_queryYearNative(

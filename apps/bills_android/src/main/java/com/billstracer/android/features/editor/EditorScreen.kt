@@ -31,9 +31,6 @@ import com.billstracer.android.model.RecordPreviewResult
 import com.billstracer.android.platform.PaneContent
 import com.billstracer.android.platform.SectionGroupCard
 import com.billstracer.android.platform.StatPill
-import com.billstracer.android.platform.YearMonthDigitsRow
-import com.billstracer.android.platform.yearMonthOrNull
-import com.billstracer.android.platform.yearMonthValidationMessage
 
 @Composable
 internal fun EditorScreen(
@@ -41,23 +38,18 @@ internal fun EditorScreen(
     onSelectExistingRecordYear: (String) -> Unit,
     onSelectExistingRecordMonth: (String) -> Unit,
     onOpenSelectedExistingRecord: () -> Unit,
-    onRecordPeriodYearChange: (String) -> Unit,
-    onRecordPeriodMonthChange: (String) -> Unit,
-    onOpenManualRecord: () -> Unit,
     onPreviewRecord: () -> Unit,
     onSaveRecord: () -> Unit,
-    onRefreshRecordPeriods: () -> Unit,
     onRecordDraftChange: (String) -> Unit,
     onResetRecordDraft: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val activeRecord = state.activeRecordDocument
-    val listedPeriods = state.listedRecordPeriods
     val hasUnsavedChanges = activeRecord != null && state.recordDraftText != activeRecord.rawText
-    val existingYears = listedPeriods?.periods.orEmpty()
+    val existingYears = state.databaseRecordPeriods
         .mapNotNull { period -> period.substringBefore('-').takeIf { it.length == 4 } }
         .distinct()
-    val existingMonths = listedPeriods?.periods.orEmpty()
+    val existingMonths = state.databaseRecordPeriods
         .filter { period ->
             state.selectedExistingRecordYear.isNotBlank() &&
                 period.startsWith("${state.selectedExistingRecordYear}-") &&
@@ -65,19 +57,42 @@ internal fun EditorScreen(
         }
         .map { period -> period.substringAfter('-') }
         .distinct()
-    val manualPeriodError = yearMonthValidationMessage(
-        yearInput = state.recordPeriodYearInput,
-        monthInput = state.recordPeriodMonthInput,
-    )
-    val isManualPeriodValid = yearMonthOrNull(
-        yearInput = state.recordPeriodYearInput,
-        monthInput = state.recordPeriodMonthInput,
-    ) != null
+    val hasAvailablePeriods = state.databaseRecordPeriods.isNotEmpty()
     var yearSelectorExpanded by rememberSaveable { mutableStateOf(false) }
     var monthSelectorExpanded by rememberSaveable { mutableStateOf(false) }
 
     PaneContent(modifier = modifier) {
-        SectionGroupCard(title = "Open Saved TXT") {
+        if (state.statusMessage.isNotBlank()) {
+            Text(
+                text = state.statusMessage,
+                style = MaterialTheme.typography.bodyMedium,
+                fontFamily = FontFamily.Monospace,
+                modifier = Modifier.testTag("editor_status_message"),
+            )
+        }
+        state.errorMessage?.takeIf { it.isNotBlank() }?.let { errorMessage ->
+            Surface(
+                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.92f),
+                shape = MaterialTheme.shapes.medium,
+            ) {
+                Text(
+                    text = errorMessage,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp)
+                        .testTag("editor_error_message"),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontFamily = FontFamily.Monospace,
+                )
+            }
+        }
+        SectionGroupCard(title = "Open Existing Period") {
+            Text(
+                text = "Editor months come from the SQLite bills table.",
+                style = MaterialTheme.typography.bodySmall,
+                fontFamily = FontFamily.Monospace,
+            )
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -141,104 +156,48 @@ internal fun EditorScreen(
                     }
                 }
             }
-            if (listedPeriods != null) {
-                Text(
-                    text = listedPeriods.message,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontFamily = FontFamily.Monospace,
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Button(
-                    onClick = onOpenSelectedExistingRecord,
-                    enabled = !state.isInitializing &&
-                        !state.isWorking &&
-                        state.selectedExistingRecordYear.isNotBlank() &&
-                        state.selectedExistingRecordMonth.isNotBlank(),
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag("editor_open_existing_button"),
-                ) {
-                    Text("Open Existing")
-                }
-                OutlinedButton(
-                    onClick = onRefreshRecordPeriods,
-                    enabled = !state.isInitializing && !state.isWorking,
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag("editor_refresh_button"),
-                ) {
-                    Text("Refresh Periods")
-                }
-            }
-            if (listedPeriods == null || listedPeriods.periods.isEmpty()) {
-                Text(
-                    text = "No saved record periods yet. Existing year/month choices only come from list_periods over records/*.txt content.",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontFamily = FontFamily.Monospace,
-                )
-            }
-            listedPeriods?.invalidFiles?.forEach { invalidFile ->
-                Text(
-                    text = "[INVALID] ${invalidFile.path} | ${invalidFile.error}",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontFamily = FontFamily.Monospace,
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
-        }
-        SectionGroupCard(title = "Open Or Create Period") {
-            Text(
-                text = "Period (defaults to current month)",
-                style = MaterialTheme.typography.bodyMedium,
-                fontFamily = FontFamily.Monospace,
-            )
-            YearMonthDigitsRow(
-                yearValue = state.recordPeriodYearInput,
-                monthValue = state.recordPeriodMonthInput,
-                onYearValueChange = onRecordPeriodYearChange,
-                onMonthValueChange = onRecordPeriodMonthChange,
-                enabled = !state.isInitializing && !state.isWorking,
-                rowTag = "editor_manual_period_field",
-                yearFieldTag = "editor_manual_period_year_field",
-                monthFieldTag = "editor_manual_period_month_field",
-                separatorTag = "editor_manual_period_separator",
-                modifier = Modifier.fillMaxWidth(),
-            )
-            manualPeriodError?.let { validationMessage ->
-                Text(
-                    text = validationMessage,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontFamily = FontFamily.Monospace,
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
-            OutlinedButton(
-                onClick = onOpenManualRecord,
-                enabled = !state.isInitializing && !state.isWorking && isManualPeriodValid,
+            Button(
+                onClick = onOpenSelectedExistingRecord,
+                enabled = !state.isInitializing &&
+                    !state.isWorking &&
+                    state.selectedExistingRecordYear.isNotBlank() &&
+                    state.selectedExistingRecordMonth.isNotBlank(),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("editor_open_manual_button"),
+                    .testTag("editor_open_existing_button"),
             ) {
-                Text("Open Or Create Period")
+                Text("Open Existing")
+            }
+            if (state.isInitializing) {
+                Text(
+                    text = "Loading imported months from database...",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace,
+                )
+            } else if (!hasAvailablePeriods) {
+                Text(
+                    text = "No imported months found in SQLite yet. Editor can only open months that already exist in the database.",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace,
+                    modifier = Modifier.testTag("editor_empty_state_message"),
+                )
+            } else {
+                Text(
+                    text = "Select a saved year/month and open the persisted TXT file under records/YYYY/YYYY-MM.txt.",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace,
+                )
             }
         }
         if (activeRecord == null) {
             Text(
-                text = "Open an existing TXT period from the selectors above, or open/create a TXT for the period entered here.",
+                text = "Choose a database-backed year/month above, then open its persisted TXT to start editing.",
                 style = MaterialTheme.typography.bodyMedium,
                 fontFamily = FontFamily.Monospace,
             )
         } else {
             Text(
-                text = if (activeRecord.persisted) {
-                    "Editing persisted TXT source: ${activeRecord.relativePath}"
-                } else {
-                    "Editing generated template: ${activeRecord.relativePath}"
-                },
+                text = "Editing persisted TXT source: ${activeRecord.relativePath}",
                 style = MaterialTheme.typography.bodySmall,
                 fontFamily = FontFamily.Monospace,
             )
@@ -254,7 +213,7 @@ internal fun EditorScreen(
             OutlinedTextField(
                 value = state.recordDraftText,
                 onValueChange = onRecordDraftChange,
-                enabled = !state.isInitializing && !state.isWorking,
+                enabled = !state.isWorking,
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 280.dp, max = 460.dp)
@@ -269,7 +228,7 @@ internal fun EditorScreen(
             ) {
                 Button(
                     onClick = onPreviewRecord,
-                    enabled = !state.isInitializing && !state.isWorking && state.recordDraftText.isNotBlank(),
+                    enabled = !state.isWorking && state.recordDraftText.isNotBlank(),
                     modifier = Modifier
                         .weight(1f)
                         .testTag("editor_preview_button"),
@@ -278,7 +237,7 @@ internal fun EditorScreen(
                 }
                 Button(
                     onClick = onSaveRecord,
-                    enabled = !state.isInitializing && !state.isWorking && hasUnsavedChanges,
+                    enabled = !state.isWorking && hasUnsavedChanges,
                     modifier = Modifier
                         .weight(1f)
                         .testTag("editor_save_button"),
@@ -287,7 +246,7 @@ internal fun EditorScreen(
                 }
                 OutlinedButton(
                     onClick = onResetRecordDraft,
-                    enabled = !state.isInitializing && !state.isWorking && hasUnsavedChanges,
+                    enabled = !state.isWorking && hasUnsavedChanges,
                     modifier = Modifier
                         .weight(1f)
                         .testTag("editor_reset_button"),

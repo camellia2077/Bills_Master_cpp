@@ -8,8 +8,10 @@ import com.billstracer.android.BuildConfig
 import com.billstracer.android.app.navigation.AppSessionBus
 import com.billstracer.android.data.services.WorkspaceService
 import com.billstracer.android.model.AppEnvironment
-import com.billstracer.android.model.ExportedRecordFilesResult
+import com.billstracer.android.model.ExportedParseBundleResult
+import com.billstracer.android.model.ImportedParseBundleResult
 import com.billstracer.android.model.ImportResult
+import com.billstracer.android.model.RecordDirectoryImportResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,8 +24,11 @@ data class WorkspaceUiState(
     val statusMessage: String = "",
     val errorMessage: String? = null,
     val environment: AppEnvironment? = null,
-    val importResult: ImportResult? = null,
-    val lastExportResult: ExportedRecordFilesResult? = null,
+    val bundledSampleImportResult: ImportResult? = null,
+    val dataImportResult: ImportResult? = null,
+    val recordDirectoryImportResult: RecordDirectoryImportResult? = null,
+    val lastExportResult: ExportedParseBundleResult? = null,
+    val lastImportedBundleResult: ImportedParseBundleResult? = null,
 )
 
 class WorkspaceViewModel(
@@ -41,15 +46,19 @@ class WorkspaceViewModel(
         viewModelScope.launch {
             runCatching { workspaceService.initializeEnvironment() }
                 .onSuccess { environment ->
+                    val readyMessage = if (
+                        BuildConfig.DEBUG &&
+                        !environment.bundledSampleLabel.isNullOrBlank()
+                    ) {
+                        "Workspace ready for ${environment.bundledSampleLabel}."
+                    } else {
+                        "Workspace ready."
+                    }
                     mutableState.update { current ->
                         current.copy(
                             isInitializing = false,
                             environment = environment,
-                            statusMessage = if (BuildConfig.DEBUG) {
-                                "Workspace ready for ${environment.bundledSampleLabel}."
-                            } else {
-                                "Workspace ready."
-                            },
+                            statusMessage = readyMessage,
                         )
                     }
                 }
@@ -61,6 +70,94 @@ class WorkspaceViewModel(
                             isInitializing = false,
                             errorMessage = message,
                             statusMessage = "Workspace setup failed.",
+                        )
+                    }
+                }
+        }
+    }
+
+    fun importRecordFilesToDatabase() {
+        viewModelScope.launch {
+            mutableState.update { current ->
+                current.copy(
+                    isWorking = true,
+                    errorMessage = null,
+                    statusMessage = "Importing current TXT record files into SQLite...",
+                )
+            }
+            sessionBus.publishStatus("Importing current TXT record files into SQLite...")
+            runCatching { workspaceService.importRecordFilesToDatabase() }
+                .onSuccess { result ->
+                    val message = if (result.ok) {
+                        "Imported ${result.imported} TXT record file(s) into SQLite."
+                    } else {
+                        result.message
+                    }
+                    if (result.ok) {
+                        sessionBus.publishStatus(message)
+                    } else {
+                        sessionBus.publishError(result.message, message)
+                    }
+                    mutableState.update { current ->
+                        current.copy(
+                            isWorking = false,
+                            dataImportResult = result,
+                            errorMessage = if (result.ok) null else result.message,
+                            statusMessage = message,
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    val message = error.message ?: "Record import failed."
+                    sessionBus.publishError(message, "Record import failed.")
+                    mutableState.update { current ->
+                        current.copy(
+                            isWorking = false,
+                            errorMessage = message,
+                            statusMessage = "Record import failed.",
+                        )
+                    }
+                }
+        }
+    }
+
+    fun importTxtDirectoryToRecords(sourceDirectoryUri: Uri) {
+        viewModelScope.launch {
+            val pendingMessage = "Importing TXT files from the selected directory into records/ only..."
+            mutableState.update { current ->
+                current.copy(
+                    isWorking = true,
+                    errorMessage = null,
+                    statusMessage = pendingMessage,
+                )
+            }
+            sessionBus.publishStatus(pendingMessage)
+            runCatching { workspaceService.importTxtDirectoryToRecords(sourceDirectoryUri) }
+                .onSuccess { result ->
+                    val message = buildRecordDirectoryImportMessage(result)
+                    val failureMessage = result.firstFailureMessage?.takeIf { result.failure > 0 }
+                    if (result.failure == 0) {
+                        sessionBus.publishStatus(message)
+                    } else {
+                        sessionBus.publishError(failureMessage ?: message, message)
+                    }
+                    mutableState.update { current ->
+                        current.copy(
+                            isWorking = false,
+                            recordDirectoryImportResult = result,
+                            errorMessage = failureMessage,
+                            statusMessage = message,
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    val message = error.message ?: "TXT directory import failed."
+                    sessionBus.publishError(message, "TXT directory import failed.")
+                    mutableState.update { current ->
+                        current.copy(
+                            isWorking = false,
+                            errorMessage = message,
+                            statusMessage = "TXT directory import failed.",
                         )
                     }
                 }
@@ -96,7 +193,7 @@ class WorkspaceViewModel(
                     mutableState.update { current ->
                         current.copy(
                             isWorking = false,
-                            importResult = result,
+                            bundledSampleImportResult = result,
                             errorMessage = if (result.ok) null else result.message,
                             statusMessage = message,
                         )
@@ -116,13 +213,13 @@ class WorkspaceViewModel(
         }
     }
 
-    fun exportWorkspaceFiles(targetDirectoryUri: Uri) {
+    fun exportParseBundle(targetDocumentUri: Uri) {
         if (!BuildConfig.DEBUG) {
             return
         }
         viewModelScope.launch {
             val pendingMessage =
-                "Exporting saved TXT record files and configs to the selected folder..."
+                "Exporting a parse bundle ZIP from saved TXT record files and configs..."
             mutableState.update { current ->
                 current.copy(
                     isWorking = true,
@@ -131,17 +228,17 @@ class WorkspaceViewModel(
                 )
             }
             sessionBus.publishStatus(pendingMessage)
-            runCatching { workspaceService.exportWorkspaceFiles(targetDirectoryUri) }
+            runCatching { workspaceService.exportParseBundle(targetDocumentUri) }
                 .onSuccess { result ->
                     val message = when {
                         result.exportedRecordFiles > 0 && result.exportedConfigFiles > 0 ->
-                            "Exported ${result.exportedRecordFiles} TXT record file(s) and ${result.exportedConfigFiles} TOML config file(s) to ${result.destinationDisplayPath}."
+                            "Exported a parse bundle with ${result.exportedRecordFiles} TXT record file(s) and ${result.exportedConfigFiles} TOML config file(s) to ${result.destinationDisplayPath}."
                         result.exportedRecordFiles > 0 ->
-                            "Exported ${result.exportedRecordFiles} TXT record file(s) to ${result.destinationDisplayPath}."
+                            "Exported a parse bundle with ${result.exportedRecordFiles} TXT record file(s) to ${result.destinationDisplayPath}."
                         result.exportedConfigFiles > 0 ->
-                            "Exported ${result.exportedConfigFiles} TOML config file(s) to ${result.destinationDisplayPath}."
+                            "Exported a parse bundle with ${result.exportedConfigFiles} TOML config file(s) to ${result.destinationDisplayPath}."
                         else ->
-                            "No TXT record files or config files were found to export."
+                            "No TXT record files or config files were found for parse bundle export."
                     }
                     sessionBus.publishStatus(message)
                     mutableState.update { current ->
@@ -154,13 +251,78 @@ class WorkspaceViewModel(
                 }
                 .onFailure { error ->
                     val message =
-                        error.message ?: "Failed to export TXT record files and config files."
-                    sessionBus.publishError(message, "Failed to export TXT record files and config files.")
+                        error.message ?: "Failed to export the parse bundle ZIP."
+                    sessionBus.publishError(message, "Failed to export the parse bundle ZIP.")
                     mutableState.update { current ->
                         current.copy(
                             isWorking = false,
                             errorMessage = message,
-                            statusMessage = "Failed to export TXT record files and config files.",
+                            statusMessage = "Failed to export the parse bundle ZIP.",
+                        )
+                    }
+                }
+        }
+    }
+
+    fun importParseBundle(sourceDocumentUri: Uri) {
+        if (!BuildConfig.DEBUG) {
+            return
+        }
+        viewModelScope.launch {
+            val pendingMessage =
+                "Importing a parse bundle ZIP into the private workspace..."
+            mutableState.update { current ->
+                current.copy(
+                    isWorking = true,
+                    errorMessage = null,
+                    statusMessage = pendingMessage,
+                )
+            }
+            sessionBus.publishStatus(pendingMessage)
+            runCatching { workspaceService.importParseBundle(sourceDocumentUri) }
+                .onSuccess { result ->
+                    val message = if (result.ok) {
+                        when {
+                            result.importedBills > 0 &&
+                                result.importedRecordFiles > 0 &&
+                                result.importedConfigFiles > 0 ->
+                                "Imported a parse bundle from ${result.sourceDisplayPath} with ${result.importedRecordFiles} TXT record file(s), ${result.importedConfigFiles} TOML config file(s), and synced ${result.importedBills} bill file(s) into SQLite."
+                            result.importedBills > 0 && result.importedRecordFiles > 0 ->
+                                "Imported a parse bundle from ${result.sourceDisplayPath} with ${result.importedRecordFiles} TXT record file(s) and synced ${result.importedBills} bill file(s) into SQLite."
+                            result.importedRecordFiles > 0 && result.importedConfigFiles > 0 ->
+                                "Imported a parse bundle from ${result.sourceDisplayPath} with ${result.importedRecordFiles} TXT record file(s) and ${result.importedConfigFiles} TOML config file(s)."
+                            result.importedRecordFiles > 0 ->
+                                "Imported a parse bundle from ${result.sourceDisplayPath} with ${result.importedRecordFiles} TXT record file(s)."
+                            result.importedConfigFiles > 0 ->
+                                "Imported a parse bundle from ${result.sourceDisplayPath} with ${result.importedConfigFiles} TOML config file(s)."
+                            else ->
+                                "Imported a parse bundle from ${result.sourceDisplayPath}."
+                        }
+                    } else {
+                        result.message
+                    }
+                    if (result.ok) {
+                        sessionBus.publishStatus(message)
+                    } else {
+                        sessionBus.publishError(result.message, message)
+                    }
+                    mutableState.update { current ->
+                        current.copy(
+                            isWorking = false,
+                            lastImportedBundleResult = result,
+                            errorMessage = if (result.ok) null else result.message,
+                            statusMessage = message,
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    val message = error.message ?: "Failed to import the parse bundle ZIP."
+                    sessionBus.publishError(message, "Failed to import the parse bundle ZIP.")
+                    mutableState.update { current ->
+                        current.copy(
+                            isWorking = false,
+                            errorMessage = message,
+                            statusMessage = "Failed to import the parse bundle ZIP.",
                         )
                     }
                 }
@@ -174,7 +336,8 @@ class WorkspaceViewModel(
                     isWorking = true,
                     errorMessage = null,
                     statusMessage = "Clearing the private SQLite database...",
-                    importResult = null,
+                    bundledSampleImportResult = null,
+                    dataImportResult = null,
                 )
             }
             sessionBus.publishStatus("Clearing the private SQLite database...")
@@ -243,6 +406,25 @@ class WorkspaceViewModel(
                         )
                     }
                 }
+        }
+    }
+
+    private fun buildRecordDirectoryImportMessage(result: RecordDirectoryImportResult): String {
+        if (result.processed == 0) {
+            return "No TXT files were found in the selected directory."
+        }
+        val overwriteSuffix = if (result.overwritten > 0) {
+            " Overwrote ${result.overwritten} existing file(s)."
+        } else {
+            ""
+        }
+        return when {
+            result.failure == 0 ->
+                "Imported ${result.imported} TXT record file(s) into records/ only.$overwriteSuffix"
+            result.imported > 0 ->
+                "Imported ${result.imported} TXT record file(s) into records/ only with ${result.failure} failure(s).$overwriteSuffix"
+            else ->
+                "No TXT record files were imported into records/. ${result.failure} file(s) failed."
         }
     }
 }

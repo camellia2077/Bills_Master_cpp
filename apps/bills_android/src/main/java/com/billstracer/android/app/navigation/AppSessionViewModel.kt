@@ -73,12 +73,13 @@ class AppSessionViewModel(
             }.onSuccess { (versions, themePreferences) ->
                 val (environment, coreVersion, androidVersion) = versions
                 sessionBus.updateThemePreferences(themePreferences)
+                val readyMessage = if (environment.bundledSampleLabel != null) {
+                    "Ready to import ${environment.bundledSampleLabel} into ${environment.dbFile.name}."
+                } else {
+                    "Private workspace ready: ${environment.dbFile.name}."
+                }
                 sessionBus.publishStatus(
-                    if (BuildConfig.DEBUG) {
-                        "Ready to import ${environment.bundledSampleLabel} into ${environment.dbFile.name}."
-                    } else {
-                        "Private workspace ready: ${environment.dbFile.name}."
-                    },
+                    readyMessage,
                 )
                 mutableState.update { current ->
                     current.copy(

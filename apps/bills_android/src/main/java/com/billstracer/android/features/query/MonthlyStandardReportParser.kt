@@ -1,15 +1,8 @@
 package com.billstracer.android.features.query
 
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-
-private val standardReportJsonParser = Json { ignoreUnknownKeys = true }
 
 internal data class MonthlyStandardReportUiModel(
     val periodStart: String,
@@ -94,12 +87,3 @@ internal fun parseMonthlyStandardReport(rawJson: String?): MonthlyStandardReport
         null
     }
 }
-
-private fun JsonObject.boolean(key: String): Boolean =
-    this[key]?.jsonPrimitive?.booleanOrNull ?: false
-
-private fun JsonObject.string(key: String): String =
-    this[key]?.jsonPrimitive?.contentOrNull.orEmpty()
-
-private fun JsonObject.double(key: String): Double =
-    this[key]?.jsonPrimitive?.doubleOrNull ?: 0.0

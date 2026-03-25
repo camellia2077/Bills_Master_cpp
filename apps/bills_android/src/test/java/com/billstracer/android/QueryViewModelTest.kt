@@ -30,43 +30,7 @@ class QueryViewModelTest {
     }
 
     @Test
-    fun runYearQueryUsesEditableInput() = runTest {
-        val queryService = FakeQueryService()
-        val viewModel = QueryViewModel(
-            workspaceService = FakeWorkspaceService(),
-            queryService = queryService,
-            sessionBus = AppSessionBus(),
-        )
-        advanceUntilIdle()
-
-        viewModel.updateQueryYearInput("2024")
-        viewModel.runYearQuery()
-        advanceUntilIdle()
-
-        assertEquals("2024", queryService.lastQueriedYear)
-        assertEquals(QueryViewMode.MARKDOWN, viewModel.state.value.selectedQueryViewMode)
-    }
-
-    @Test
-    fun invalidQueryYearDoesNotRun() = runTest {
-        val queryService = FakeQueryService()
-        val viewModel = QueryViewModel(
-            workspaceService = FakeWorkspaceService(),
-            queryService = queryService,
-            sessionBus = AppSessionBus(),
-        )
-        advanceUntilIdle()
-
-        viewModel.updateQueryYearInput("24")
-        viewModel.runYearQuery()
-        advanceUntilIdle()
-
-        assertEquals(null, queryService.lastQueriedYear)
-        assertEquals("Year query must use 4 digits.", viewModel.state.value.errorMessage)
-    }
-
-    @Test
-    fun monthQueryDefaultsToStructuredView() = runTest {
+    fun loadAvailablePeriodsDefaultsToMostRecentDatabasePeriod() = runTest {
         val viewModel = QueryViewModel(
             workspaceService = FakeWorkspaceService(),
             queryService = FakeQueryService(),
@@ -74,8 +38,82 @@ class QueryViewModelTest {
         )
         advanceUntilIdle()
 
-        viewModel.updateQueryPeriodYearInput("2025")
-        viewModel.updateQueryPeriodMonthInput("03")
+        assertEquals("2026", viewModel.state.value.queryYearInput)
+        assertEquals("2026", viewModel.state.value.queryPeriodYearInput)
+        assertEquals("03", viewModel.state.value.queryPeriodMonthInput)
+    }
+
+    @Test
+    fun runYearQueryUsesSelectedDatabaseYear() = runTest {
+        val queryService = FakeQueryService()
+        val viewModel = QueryViewModel(
+            workspaceService = FakeWorkspaceService(),
+            queryService = queryService,
+            sessionBus = AppSessionBus(),
+        )
+        advanceUntilIdle()
+
+        viewModel.selectQueryYear("2025")
+        viewModel.runYearQuery()
+        advanceUntilIdle()
+
+        assertEquals("2025", queryService.lastQueriedYear)
+        assertEquals(QueryViewMode.STRUCTURED, viewModel.state.value.selectedQueryViewMode)
+    }
+
+    @Test
+    fun emptyAvailablePeriodsLeaveSelectionsBlankAndBlockQueries() = runTest {
+        val queryService = FakeQueryService().apply {
+            availablePeriods = emptyList()
+        }
+        val viewModel = QueryViewModel(
+            workspaceService = FakeWorkspaceService(),
+            queryService = queryService,
+            sessionBus = AppSessionBus(),
+        )
+        advanceUntilIdle()
+
+        assertEquals("", viewModel.state.value.queryYearInput)
+        assertEquals("", viewModel.state.value.queryPeriodYearInput)
+        assertEquals("", viewModel.state.value.queryPeriodMonthInput)
+
+        viewModel.runYearQuery()
+        advanceUntilIdle()
+
+        assertEquals(null, queryService.lastQueriedYear)
+        assertEquals(
+            "Select an imported year before running the query.",
+            viewModel.state.value.errorMessage,
+        )
+    }
+
+    @Test
+    fun selectingMonthQueryYearChoosesFirstAvailableMonthForThatYear() = runTest {
+        val viewModel = QueryViewModel(
+            workspaceService = FakeWorkspaceService(),
+            queryService = FakeQueryService(),
+            sessionBus = AppSessionBus(),
+        )
+        advanceUntilIdle()
+
+        viewModel.selectQueryPeriodYear("2025")
+
+        assertEquals("2025", viewModel.state.value.queryPeriodYearInput)
+        assertEquals("12", viewModel.state.value.queryPeriodMonthInput)
+    }
+
+    @Test
+    fun monthQueryDefaultsToStructuredView() = runTest {
+        val queryService = FakeQueryService().apply {
+            availablePeriods = listOf("2025-03")
+        }
+        val viewModel = QueryViewModel(
+            workspaceService = FakeWorkspaceService(),
+            queryService = queryService,
+            sessionBus = AppSessionBus(),
+        )
+        advanceUntilIdle()
+
         viewModel.runMonthQuery()
         advanceUntilIdle()
 

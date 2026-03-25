@@ -12,16 +12,28 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class QueryServiceInstrumentedTest {
     @Test
+    fun listAvailablePeriodsReturnsImportedMonths() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val services = createAndroidServiceBundle(context)
+        services.workspaceService.importBundledSample()
+
+        val periods = services.queryService.listAvailablePeriods()
+
+        assertTrue(periods.isNotEmpty())
+    }
+
+    @Test
     fun queryYearReturnsReportData() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val services = createAndroidServiceBundle(context)
         val environment = services.workspaceService.initializeEnvironment()
         services.workspaceService.importBundledSample()
+        val bundledSampleYear = requireNotNull(environment.bundledSampleYear)
 
-        val query = services.queryService.queryYear(environment.bundledSampleYear)
+        val query = services.queryService.queryYear(bundledSampleYear)
 
         assertTrue(query.ok)
-        assertEquals(environment.bundledSampleYear.toInt(), query.year)
+        assertEquals(bundledSampleYear.toInt(), query.year)
         assertTrue(!query.standardReportMarkdown.isNullOrBlank())
     }
 }

@@ -12,20 +12,28 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class EditorServiceInstrumentedTest {
     @Test
-    fun openSavePreviewAndListUseEditorService() = runBlocking {
+    fun listSaveSyncOpenAndPreviewUseEditorService() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val services = createAndroidServiceBundle(context)
         val period = "2026-03"
+        val rawText = "date:2026-03\nremark:test\n\nmeal\nmeal_low 12 lunch\n"
 
-        val opened = services.editorService.openRecordPeriod(period)
-        val saved = services.editorService.saveRecordDocument(period, opened.rawText)
+        services.workspaceService.clearRecordFiles()
+        services.workspaceService.clearDatabase()
+
+        val initialPeriods = services.editorService.listDatabaseRecordPeriods()
+        val saved = services.editorService.saveRecordDocument(period, rawText)
+        val synced = services.editorService.syncSavedRecordToDatabase(period)
+        val periods = services.editorService.listDatabaseRecordPeriods()
+        val opened = services.editorService.openPersistedRecordPeriod(period)
         val preview = services.editorService.previewRecordDocument(period, opened.rawText)
-        val listed = services.editorService.listRecordPeriods()
 
+        assertTrue(initialPeriods.isEmpty())
+        assertEquals("2026/2026-03.txt", saved.relativePath)
+        assertTrue(synced.ok)
+        assertTrue(periods.contains(period))
         assertEquals(period, opened.period)
         assertTrue(opened.rawText.contains("date:$period"))
-        assertEquals("2026/2026-03.txt", saved.relativePath)
         assertTrue(preview.ok)
-        assertTrue(listed.periods.contains(period))
     }
 }

@@ -8,13 +8,14 @@ import com.billstracer.android.data.services.WorkspaceService
 import com.billstracer.android.model.AppEnvironment
 import com.billstracer.android.model.BundledConfigFile
 import com.billstracer.android.model.BundledNotices
-import com.billstracer.android.model.ExportedRecordFilesResult
+import com.billstracer.android.model.ExportedParseBundleResult
+import com.billstracer.android.model.ImportedParseBundleResult
 import com.billstracer.android.model.ImportResult
-import com.billstracer.android.model.InvalidRecordFile
-import com.billstracer.android.model.ListedRecordPeriodsResult
 import com.billstracer.android.model.MonthlySummaryItem
 import com.billstracer.android.model.QueryResult
 import com.billstracer.android.model.QueryType
+import com.billstracer.android.model.RecordDirectoryImportResult
+import com.billstracer.android.model.RecordDatabaseSyncResult
 import com.billstracer.android.model.RecordEditorDocument
 import com.billstracer.android.model.RecordPreviewFile
 import com.billstracer.android.model.RecordPreviewResult
@@ -46,20 +47,57 @@ internal class FakeWorkspaceService : WorkspaceService {
         imported = 12,
         rawJson = """{"ok":true}""",
     )
-    var exportedResult = ExportedRecordFilesResult(
+    var exportedResult = ExportedParseBundleResult(
         exportedRecordFiles = 1,
         exportedConfigFiles = 3,
-        destinationDisplayPath = "dest/folder",
+        destinationDisplayPath = "parse_bundle.zip",
+        rawJson = """{"ok":true}""",
+    )
+    var importedBundleResult = ImportedParseBundleResult(
+        ok = true,
+        code = "ok",
+        message = "Parse bundle import finished.",
+        importedRecordFiles = 1,
+        importedConfigFiles = 3,
+        importedBills = 1,
+        sourceDisplayPath = "parse_bundle.zip",
+        rawJson = """{"ok":true}""",
+    )
+    var recordsImportResult = ImportResult(
+        ok = true,
+        code = "ok",
+        message = "Record import finished.",
+        processed = 2,
+        success = 2,
+        failure = 0,
+        imported = 2,
+        rawJson = """{"ok":true}""",
+    )
+    var recordDirectoryImportResult = RecordDirectoryImportResult(
+        processed = 2,
+        imported = 2,
+        overwritten = 0,
+        failure = 0,
+        invalid = 0,
+        duplicatePeriodConflicts = 0,
     )
     var clearedRecordFiles = 1
     var clearedDatabase = true
 
     override suspend fun initializeEnvironment(): AppEnvironment = environment
 
+    override suspend fun importRecordFilesToDatabase(): ImportResult = recordsImportResult
+
+    override suspend fun importTxtDirectoryToRecords(sourceDirectoryUri: Uri): RecordDirectoryImportResult =
+        recordDirectoryImportResult
+
     override suspend fun importBundledSample(): ImportResult = importResult
 
-    override suspend fun exportWorkspaceFiles(targetDirectoryUri: Uri): ExportedRecordFilesResult =
+    override suspend fun exportParseBundle(targetDocumentUri: Uri): ExportedParseBundleResult =
         exportedResult
+
+    override suspend fun importParseBundle(sourceDocumentUri: Uri): ImportedParseBundleResult =
+        importedBundleResult
 
     override suspend fun clearRecordFiles(): Int = clearedRecordFiles
 
@@ -67,8 +105,11 @@ internal class FakeWorkspaceService : WorkspaceService {
 }
 
 internal class FakeQueryService : QueryService {
+    var availablePeriods: List<String> = listOf("2026-03", "2026-02", "2025-12")
     var lastQueriedYear: String? = null
     var lastQueriedMonth: String? = null
+
+    override suspend fun listAvailablePeriods(): List<String> = availablePeriods
 
     override suspend fun queryYear(isoYear: String): QueryResult {
         lastQueriedYear = isoYear
@@ -111,15 +152,35 @@ internal class FakeQueryService : QueryService {
 
 internal class FakeEditorService : EditorService {
     val savedRecords = linkedMapOf<String, String>()
+    val databasePeriods = linkedSetOf("2026-03", "2026-02")
+    val missingPersistedPeriods = linkedSetOf<String>()
+    val syncFailures = linkedMapOf<String, String>()
+    val syncedPeriods = mutableListOf<String>()
 
-    override suspend fun openRecordPeriod(period: String): RecordEditorDocument {
+    init {
+        databasePeriods.forEach { period ->
+            savedRecords[period] = "date:$period\nremark:\n\nmeal\nmeal_low\n"
+        }
+    }
+
+    override suspend fun listDatabaseRecordPeriods(): List<String> =
+        databasePeriods.toList().sortedDescending()
+
+    override suspend fun openPersistedRecordPeriod(period: String): RecordEditorDocument {
+        if (!databasePeriods.contains(period)) {
+            error("No imported month exists for $period.")
+        }
+        if (missingPersistedPeriods.contains(period)) {
+            error("No persisted TXT file exists for $period at ${period.substringBefore('-')}/$period.txt.")
+        }
         val persistedText = savedRecords[period]
+            ?: error("No persisted TXT file exists for $period at ${period.substringBefore('-')}/$period.txt.")
         val year = period.substringBefore('-')
         return RecordEditorDocument(
             period = period,
             relativePath = "$year/$period.txt",
-            rawText = persistedText ?: "date:$period\nremark:\n\nmeal\nmeal_low\n",
-            persisted = persistedText != null,
+            rawText = persistedText,
+            persisted = true,
         )
     }
 
@@ -131,6 +192,35 @@ internal class FakeEditorService : EditorService {
             relativePath = "$year/$period.txt",
             rawText = rawText,
             persisted = true,
+        )
+    }
+
+    override suspend fun syncSavedRecordToDatabase(period: String): RecordDatabaseSyncResult {
+        syncedPeriods += period
+        val explicitFailure = syncFailures[period]
+        if (explicitFailure != null) {
+            return RecordDatabaseSyncResult(
+                ok = false,
+                message = explicitFailure,
+                errorMessage = explicitFailure,
+                rawJson = """{"ok":false}""",
+            )
+        }
+        val rawText = savedRecords.getValue(period)
+        if (!rawText.startsWith("date:$period")) {
+            val message = "TXT header period does not match selected period '$period'."
+            return RecordDatabaseSyncResult(
+                ok = false,
+                message = message,
+                errorMessage = message,
+                rawJson = """{"ok":false}""",
+            )
+        }
+        databasePeriods += period
+        return RecordDatabaseSyncResult(
+            ok = true,
+            message = "TXT saved and synced to database successfully.",
+            rawJson = """{"ok":true}""",
         )
     }
 
@@ -156,19 +246,6 @@ internal class FakeEditorService : EditorService {
                     balance = -12.0,
                 ),
             ),
-            rawJson = """{"ok":true}""",
-        )
-
-    override suspend fun listRecordPeriods(): ListedRecordPeriodsResult =
-        ListedRecordPeriodsResult(
-            ok = true,
-            code = "ok",
-            message = if (savedRecords.isEmpty()) "No record files found yet." else "Record periods listed successfully.",
-            processed = savedRecords.size,
-            valid = savedRecords.size,
-            invalid = 0,
-            periods = savedRecords.keys.sorted(),
-            invalidFiles = emptyList(),
             rawJson = """{"ok":true}""",
         )
 }
@@ -210,7 +287,7 @@ internal class FakeSettingsService : SettingsService {
             versionName = "0.4.2",
             lastUpdated = "2026-03-10",
         ) to VersionInfo(
-            versionName = "0.1.1",
+            versionName = "0.1.2",
             versionCode = 2,
         )
 }
@@ -224,16 +301,4 @@ internal class FailingSettingsService : SettingsService by FakeSettingsService()
 internal val emeraldDarkTheme = ThemePreferences(
     color = ThemeColor.EMERALD,
     mode = ThemeMode.DARK,
-)
-
-internal val emptyListedPeriods = ListedRecordPeriodsResult(
-    ok = true,
-    code = "ok",
-    message = "No record files found yet.",
-    processed = 0,
-    valid = 0,
-    invalid = 0,
-    periods = emptyList(),
-    invalidFiles = emptyList<InvalidRecordFile>(),
-    rawJson = """{"ok":true}""",
 )

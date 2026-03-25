@@ -5,32 +5,25 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.billstracer.android.app.navigation.AppSessionBus
 import com.billstracer.android.data.services.EditorService
-import com.billstracer.android.model.ListedRecordPeriodsResult
 import com.billstracer.android.model.RecordEditorDocument
 import com.billstracer.android.model.RecordPreviewResult
-import com.billstracer.android.platform.sanitizeMonthInput
-import com.billstracer.android.platform.sanitizeYearInput
-import com.billstracer.android.platform.splitYearMonth
 import com.billstracer.android.platform.yearMonthOrNull
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.YearMonth
 
 data class EditorUiState(
     val isInitializing: Boolean = true,
     val isWorking: Boolean = false,
-    val statusMessage: String = "",
+    val statusMessage: String = "Loading editable months from database...",
     val errorMessage: String? = null,
+    val databaseRecordPeriods: List<String> = emptyList(),
     val selectedExistingRecordYear: String = "",
     val selectedExistingRecordMonth: String = "",
-    val recordPeriodYearInput: String = "",
-    val recordPeriodMonthInput: String = "",
     val activeRecordDocument: RecordEditorDocument? = null,
     val recordDraftText: String = "",
-    val listedRecordPeriods: ListedRecordPeriodsResult? = null,
     val recordPreviewResult: RecordPreviewResult? = null,
 )
 
@@ -38,30 +31,20 @@ class EditorViewModel(
     private val editorService: EditorService,
     private val sessionBus: AppSessionBus,
 ) : ViewModel() {
-    private val mutableState = MutableStateFlow(
-        EditorUiState().withManualRecordPeriod(YearMonth.now().toString()),
-    )
+    private val mutableState = MutableStateFlow(EditorUiState())
     val state: StateFlow<EditorUiState> = mutableState.asStateFlow()
 
     init {
-        refreshRecordPeriods(initialLoad = true)
+        refreshDatabaseRecordPeriods(initialLoad = true)
     }
 
-    fun updateRecordPeriodYearInput(year: String) {
-        mutableState.update { current ->
-            current.copy(recordPeriodYearInput = sanitizeYearInput(year))
-        }
-    }
-
-    fun updateRecordPeriodMonthInput(month: String) {
-        mutableState.update { current ->
-            current.copy(recordPeriodMonthInput = sanitizeMonthInput(month))
-        }
+    fun refreshDatabaseRecordPeriods() {
+        refreshDatabaseRecordPeriods(initialLoad = false)
     }
 
     fun selectExistingRecordYear(year: String) {
         mutableState.update { current ->
-            val months = monthsForYear(current.listedRecordPeriods, year)
+            val months = monthsForYear(current.databaseRecordPeriods, year)
             val selectedMonth = if (months.contains(current.selectedExistingRecordMonth)) {
                 current.selectedExistingRecordMonth
             } else {
@@ -80,32 +63,11 @@ class EditorViewModel(
         }
     }
 
-    fun openManualRecord() {
-        val period = yearMonthOrNull(
-            yearInput = state.value.recordPeriodYearInput,
-            monthInput = state.value.recordPeriodMonthInput,
-        )
-        if (period == null) {
-            mutableState.update { current ->
-                current.copy(
-                    errorMessage = "Manual period must use YYYY-MM, and month must be between 01 and 12.",
-                    statusMessage = "Manual period input is invalid.",
-                )
-            }
-            return
-        }
-        openRecordPeriod(period)
-    }
-
     fun openSelectedExistingRecord() {
         val period = yearMonthOrNull(
             yearInput = state.value.selectedExistingRecordYear,
             monthInput = state.value.selectedExistingRecordMonth,
         ) ?: return
-        openRecordPeriod(period)
-    }
-
-    private fun openRecordPeriod(period: String) {
         viewModelScope.launch {
             val pendingMessage = "Opening record period $period..."
             mutableState.update { current ->
@@ -116,41 +78,31 @@ class EditorViewModel(
                 )
             }
             sessionBus.publishStatus(pendingMessage)
-            runCatching {
-                val document = editorService.openRecordPeriod(period)
-                val listedPeriods = editorService.listRecordPeriods()
-                document to listedPeriods
-            }.onSuccess { (document, listedPeriods) ->
-                val message = if (document.persisted) {
-                    "Loaded persisted record ${document.period}."
-                } else {
-                    "Generated a fresh record template for ${document.period}."
-                }
-                sessionBus.publishStatus(message)
-                mutableState.update { current ->
-                    applyExistingRecordSelection(
+            runCatching { editorService.openPersistedRecordPeriod(period) }
+                .onSuccess { document ->
+                    val message = "Loaded persisted record ${document.period}."
+                    sessionBus.publishStatus(message)
+                    mutableState.update { current ->
                         current.copy(
                             isWorking = false,
                             activeRecordDocument = document,
                             recordDraftText = document.rawText,
                             recordPreviewResult = null,
                             statusMessage = message,
-                        ).withManualRecordPeriod(document.period),
-                        listedPeriods = listedPeriods,
-                        preferredPeriod = document.period,
-                    )
+                        )
+                    }
                 }
-            }.onFailure { error ->
-                val message = error.message ?: "Failed to open record period."
-                sessionBus.publishError(message, "Failed to open record period.")
-                mutableState.update { current ->
-                    current.copy(
-                        isWorking = false,
-                        errorMessage = message,
-                        statusMessage = "Failed to open record period.",
-                    )
+                .onFailure { error ->
+                    val message = error.message ?: "Failed to open record period."
+                    sessionBus.publishError(message, "Failed to open record period.")
+                    mutableState.update { current ->
+                        current.copy(
+                            isWorking = false,
+                            errorMessage = message,
+                            statusMessage = "Failed to open record period.",
+                        )
+                    }
                 }
-            }
         }
     }
 
@@ -233,22 +185,76 @@ class EditorViewModel(
             }
             sessionBus.publishStatus(pendingMessage)
             runCatching {
-                val savedDocument = editorService.saveRecordDocument(activeRecord.period, draft)
-                val listedPeriods = editorService.listRecordPeriods()
-                savedDocument to listedPeriods
-            }.onSuccess { (savedDocument, listedPeriods) ->
-                sessionBus.publishStatus("Saved ${savedDocument.relativePath}.")
-                mutableState.update { current ->
-                    applyExistingRecordSelection(
+                editorService.saveRecordDocument(activeRecord.period, draft)
+            }.onSuccess { savedDocument ->
+                runCatching {
+                    editorService.syncSavedRecordToDatabase(savedDocument.period)
+                }.onSuccess { syncResult ->
+                    if (!syncResult.ok) {
+                        val statusMessage = "Saved ${savedDocument.relativePath}, but database sync failed."
+                        val errorMessage = syncResult.errorMessage ?: syncResult.message
+                        sessionBus.publishError(errorMessage, statusMessage)
+                        mutableState.update { current ->
+                            current.copy(
+                                isWorking = false,
+                                activeRecordDocument = savedDocument,
+                                recordDraftText = savedDocument.rawText,
+                                errorMessage = errorMessage,
+                                statusMessage = statusMessage,
+                            )
+                        }
+                        return@onSuccess
+                    }
+
+                    runCatching { editorService.listDatabaseRecordPeriods() }
+                        .onSuccess { periods ->
+                            val message = syncResult.message.ifBlank {
+                                "Saved ${savedDocument.relativePath} and synced it to the database."
+                            }
+                            sessionBus.publishStatus(message)
+                            mutableState.update { current ->
+                                applyExistingRecordSelection(
+                                    current.copy(
+                                        isWorking = false,
+                                        activeRecordDocument = savedDocument,
+                                        recordDraftText = savedDocument.rawText,
+                                        errorMessage = null,
+                                        statusMessage = message,
+                                        databaseRecordPeriods = periods,
+                                    ),
+                                    periods = periods,
+                                    preferredPeriod = savedDocument.period,
+                                )
+                            }
+                        }
+                        .onFailure { error ->
+                            val message =
+                                "Saved ${savedDocument.relativePath} and synced it to the database, but failed to refresh editor months."
+                            val errorMessage = error.message ?: "Failed to refresh editor months."
+                            sessionBus.publishError(errorMessage, message)
+                            mutableState.update { current ->
+                                current.copy(
+                                    isWorking = false,
+                                    activeRecordDocument = savedDocument,
+                                    recordDraftText = savedDocument.rawText,
+                                    errorMessage = errorMessage,
+                                    statusMessage = message,
+                                )
+                            }
+                        }
+                }.onFailure { error ->
+                    val message = "Saved ${savedDocument.relativePath}, but database sync failed."
+                    val errorMessage = error.message ?: "Failed to sync the saved TXT into the database."
+                    sessionBus.publishError(errorMessage, message)
+                    mutableState.update { current ->
                         current.copy(
                             isWorking = false,
                             activeRecordDocument = savedDocument,
                             recordDraftText = savedDocument.rawText,
-                            statusMessage = "Saved ${savedDocument.relativePath}.",
-                        ),
-                        listedPeriods = listedPeriods,
-                        preferredPeriod = savedDocument.period,
-                    )
+                            errorMessage = errorMessage,
+                            statusMessage = message,
+                        )
+                    }
                 }
             }.onFailure { error ->
                 val message = error.message ?: "Failed to save record draft."
@@ -264,48 +270,50 @@ class EditorViewModel(
         }
     }
 
-    fun refreshRecordPeriods(initialLoad: Boolean = false) {
+    private fun refreshDatabaseRecordPeriods(
+        initialLoad: Boolean,
+        preferredPeriod: String? = state.value.activeRecordDocument?.period,
+    ) {
         viewModelScope.launch {
             if (!initialLoad) {
                 mutableState.update { current ->
                     current.copy(
                         isWorking = true,
                         errorMessage = null,
-                        statusMessage = "Scanning private record periods...",
+                        statusMessage = "Loading editable months from database...",
                     )
                 }
-                sessionBus.publishStatus("Scanning private record periods...")
             }
-            runCatching { editorService.listRecordPeriods() }
-                .onSuccess { listedPeriods ->
-                    val message = listedPeriods.message
-                    if (listedPeriods.ok) {
-                        sessionBus.publishStatus(message.ifBlank { "Record periods refreshed." })
+            runCatching { editorService.listDatabaseRecordPeriods() }
+                .onSuccess { periods ->
+                    val message = if (periods.isEmpty()) {
+                        "No imported months found in database."
                     } else {
-                        sessionBus.publishError(message, "Record periods refresh failed.")
+                        "Loaded ${periods.size} editable month(s) from database."
                     }
                     mutableState.update { current ->
                         applyExistingRecordSelection(
                             current.copy(
                                 isInitializing = false,
                                 isWorking = false,
-                                errorMessage = if (listedPeriods.ok) null else listedPeriods.message,
+                                errorMessage = null,
                                 statusMessage = message,
+                                databaseRecordPeriods = periods,
                             ),
-                            listedPeriods = listedPeriods,
-                            preferredPeriod = current.activeRecordDocument?.period,
+                            periods = periods,
+                            preferredPeriod = preferredPeriod,
                         )
                     }
                 }
                 .onFailure { error ->
-                    val message = error.message ?: "Failed to scan record periods."
-                    sessionBus.publishError(message, "Failed to scan record periods.")
+                    val message = error.message ?: "Failed to load database record periods."
+                    sessionBus.publishError(message, "Failed to load editor months.")
                     mutableState.update { current ->
                         current.copy(
                             isInitializing = false,
                             isWorking = false,
                             errorMessage = message,
-                            statusMessage = "Failed to scan record periods.",
+                            statusMessage = "Failed to load database record periods.",
                         )
                     }
                 }
@@ -330,17 +338,17 @@ private data class ExistingRecordSelection(
 
 private fun applyExistingRecordSelection(
     state: EditorUiState,
-    listedPeriods: ListedRecordPeriodsResult?,
+    periods: List<String>,
     preferredPeriod: String? = state.activeRecordDocument?.period,
 ): EditorUiState {
     val selection = resolveExistingRecordSelection(
         currentYear = state.selectedExistingRecordYear,
         currentMonth = state.selectedExistingRecordMonth,
-        listedPeriods = listedPeriods,
+        periods = periods,
         preferredPeriod = preferredPeriod,
     )
     return state.copy(
-        listedRecordPeriods = listedPeriods,
+        databaseRecordPeriods = periods,
         selectedExistingRecordYear = selection.year,
         selectedExistingRecordMonth = selection.month,
     )
@@ -349,10 +357,10 @@ private fun applyExistingRecordSelection(
 private fun resolveExistingRecordSelection(
     currentYear: String,
     currentMonth: String,
-    listedPeriods: ListedRecordPeriodsResult?,
+    periods: List<String>,
     preferredPeriod: String?,
 ): ExistingRecordSelection {
-    val years = yearsFromPeriods(listedPeriods)
+    val years = yearsFromPeriods(periods)
     if (years.isEmpty()) {
         return ExistingRecordSelection()
     }
@@ -364,7 +372,7 @@ private fun resolveExistingRecordSelection(
         currentYear.isNotBlank() && years.contains(currentYear) -> currentYear
         else -> years.first()
     }
-    val months = monthsForYear(listedPeriods, selectedYear)
+    val months = monthsForYear(periods, selectedYear)
     val selectedMonth = when {
         !preferredMonth.isNullOrBlank() &&
             preferredYear == selectedYear &&
@@ -379,23 +387,14 @@ private fun resolveExistingRecordSelection(
     )
 }
 
-private fun yearsFromPeriods(listedPeriods: ListedRecordPeriodsResult?): List<String> =
-    listedPeriods?.periods.orEmpty()
-        .mapNotNull { period -> period.substringBefore('-').takeIf { it.length == 4 } }
+private fun yearsFromPeriods(periods: List<String>): List<String> =
+    periods.mapNotNull { period -> period.substringBefore('-').takeIf { it.length == 4 } }
         .distinct()
 
 private fun monthsForYear(
-    listedPeriods: ListedRecordPeriodsResult?,
+    periods: List<String>,
     year: String,
-): List<String> = listedPeriods?.periods.orEmpty()
+): List<String> = periods
     .filter { period -> period.startsWith("$year-") && period.length == 7 }
     .map { period -> period.substringAfter('-') }
     .distinct()
-
-private fun EditorUiState.withManualRecordPeriod(period: String): EditorUiState {
-    val (year, month) = splitYearMonth(period)
-    return copy(
-        recordPeriodYearInput = year,
-        recordPeriodMonthInput = month,
-    )
-}
