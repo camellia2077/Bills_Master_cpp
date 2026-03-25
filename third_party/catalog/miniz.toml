@@ -1,0 +1,5 @@
+package_id = "miniz"
+display_name = "miniz"
+homepage = "https://github.com/richgel999/miniz"
+license_spdx = "MIT"
+license_text_relpath = "third_party/texts/mit/LICENSE.txt"
