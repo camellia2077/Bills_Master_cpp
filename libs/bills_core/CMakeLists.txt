@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
+include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/modules/compiler_select.cmake")
+
 project(BillsCore LANGUAGES CXX)
 
 option(BILLS_ENABLE_LTO_RELEASE "Enable LTO for Release builds" ON)
@@ -27,7 +29,16 @@ if(WIN32 AND MINGW AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -fuse-ld=lld")
 endif()
 
-if(BILLS_ENABLE_LTO_RELEASE AND NOT MSVC)
+set(BILLS_CORE_CAN_USE_LTO TRUE)
+if(WIN32 AND MINGW AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(BILLS_CORE_CAN_USE_LTO FALSE)
+    message(WARNING
+        "BILLS_ENABLE_LTO_RELEASE requested, but disabled for MinGW Clang "
+        "because static release linking is not stable with LTO on this project."
+    )
+endif()
+
+if(BILLS_ENABLE_LTO_RELEASE AND NOT MSVC AND BILLS_CORE_CAN_USE_LTO)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -flto")
     set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -flto")
@@ -39,15 +50,19 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_BINARY_DIR})
 
 option(BILLS_CORE_BUILD_SHARED "Build bills_core as a shared library" ON)
+if(WIN32 AND BILLS_CORE_BUILD_SHARED)
+    message(FATAL_ERROR
+        "Windows no longer supports BILLS_CORE_BUILD_SHARED=ON. "
+        "Use the static bills_core archive instead."
+    )
+endif()
 
 set(CORE_SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}/src")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/source_files.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/modules/native_dependencies.cmake")
 
 if(NOT TARGET nlohmann_json::nlohmann_json)
     find_package(nlohmann_json REQUIRED)
-endif()
-if(NOT TARGET tomlplusplus::tomlplusplus)
-    find_package(tomlplusplus CONFIG REQUIRED)
 endif()
 
 if(BILLS_CORE_BUILD_SHARED)
@@ -125,7 +140,21 @@ target_link_libraries(bills_core PUBLIC
     nlohmann_json::nlohmann_json
     tomlplusplus::tomlplusplus
 )
-find_library(BILLS_STDCXXEXP_LIBRARY stdc++exp)
+set(BILLS_STDCXXEXP_LIBRARY "")
+if(WIN32 AND MINGW)
+    set(BILLS_STDCXXEXP_LIBRARY "")
+elseif(WIN32 AND NOT ANDROID)
+    get_filename_component(BILLS_TOOLCHAIN_BIN_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
+    get_filename_component(BILLS_TOOLCHAIN_ROOT "${BILLS_TOOLCHAIN_BIN_DIR}" DIRECTORY)
+    find_library(
+        BILLS_STDCXXEXP_LIBRARY
+        stdc++exp
+        HINTS "${BILLS_TOOLCHAIN_ROOT}/lib"
+        NO_DEFAULT_PATH
+    )
+else()
+    find_library(BILLS_STDCXXEXP_LIBRARY stdc++exp)
+endif()
 if(BILLS_STDCXXEXP_LIBRARY AND NOT ANDROID)
     target_link_libraries(bills_core PUBLIC ${BILLS_STDCXXEXP_LIBRARY})
 endif()

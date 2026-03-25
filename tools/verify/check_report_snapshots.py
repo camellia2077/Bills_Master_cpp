@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+from _bootstrap import bootstrap_repo_root
+
+REPO_ROOT = bootstrap_repo_root(__file__)
 
 from tools.toolchain.services.build_layout import (
     resolve_artifact_latest_dir,

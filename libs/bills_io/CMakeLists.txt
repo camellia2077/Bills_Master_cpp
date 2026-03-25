@@ -1,10 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(BillsIo LANGUAGES CXX)
+project(BillsIo LANGUAGES C CXX)
 
-if(NOT TARGET tomlplusplus::tomlplusplus)
-    find_package(tomlplusplus CONFIG REQUIRED)
-endif()
+include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/modules/native_dependencies.cmake")
 
 set(BILLS_IO_SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}/src")
 set(BILLS_CORE_SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}/../bills_core/src")
@@ -15,6 +13,7 @@ set(BILLS_IO_SOURCES
     "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/config/config_document_parser.cpp"
     "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/io/year_partition_output_path_builder.cpp"
     "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/io/source_document_io.cpp"
+    "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/io/zip_archive_io.cpp"
     "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/io/json_bill_document_io.cpp"
     "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/reports/report_export_service.cpp"
     "${BILLS_IO_SOURCE_ROOT}/bills_io/adapters/db/sqlite_bill_repository.cpp"
@@ -42,6 +41,9 @@ if(TARGET nlohmann_json::nlohmann_json)
 endif()
 if(TARGET tomlplusplus::tomlplusplus)
     target_link_libraries(bills_io PUBLIC tomlplusplus::tomlplusplus)
+endif()
+if(TARGET miniz)
+    target_link_libraries(bills_io PUBLIC miniz)
 endif()
 
 target_compile_features(bills_io PUBLIC cxx_std_23)

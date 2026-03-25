@@ -6,21 +6,7 @@ from pathlib import Path
 
 @dataclass
 class DistConfig:
-    default_target: str = "bills"
-
-
-@dataclass
-class VerifyWindowsConfig:
-    dll_search_dirs: list[str] = field(
-        default_factory=lambda: [
-            "C:/msys64/ucrt64/bin",
-        ]
-    )
-
-
-@dataclass
-class VerifyConfig:
-    windows: VerifyWindowsConfig = field(default_factory=VerifyWindowsConfig)
+    default_target: str = "bills-tracer-cli"
 
 
 @dataclass
@@ -150,7 +136,6 @@ class TidyConfig:
 @dataclass
 class ToolchainConfig:
     dist: DistConfig = field(default_factory=DistConfig)
-    verify: VerifyConfig = field(default_factory=VerifyConfig)
     scope: ScopeConfig = field(default_factory=ScopeConfig)
     tidy: TidyConfig = field(default_factory=TidyConfig)
 
@@ -162,7 +147,6 @@ def load_toolchain_config(config_path: Path) -> ToolchainConfig:
             "Legacy config section [build] is no longer supported. Rename it to [dist]."
         )
     dist_data = data.get("dist", {})
-    verify_data = data.get("verify", {})
     scope_data = data.get("scope", {})
     tidy_data = data.get("tidy", {})
     fix_strategy_data = tidy_data.get("fix_strategy", {})
@@ -175,16 +159,6 @@ def load_toolchain_config(config_path: Path) -> ToolchainConfig:
         default_target = dist_data.get("default_target")
         if isinstance(default_target, str) and default_target.strip():
             config.dist.default_target = default_target.strip()
-
-    if isinstance(verify_data, dict):
-        windows_data = verify_data.get("windows", {})
-        if isinstance(windows_data, dict):
-            config.verify.windows.dll_search_dirs = _get_str_list(
-                windows_data,
-                "dll_search_dirs",
-                config.verify.windows.dll_search_dirs,
-                allow_empty=True,
-            )
 
     if isinstance(scope_data, dict):
         config.scope.default_roots = _get_str_list(

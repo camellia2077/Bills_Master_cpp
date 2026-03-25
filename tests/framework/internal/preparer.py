@@ -14,7 +14,7 @@ class TestPreparer:
 
     def __init__(self, base_dir):
         self.base_dir = base_dir
-        self.exe_name = "bill_master_cli.exe"
+        self.exe_name = "bills_tracer_cli.exe"
 
     def _copy_exe_sidecars(self):
         copied_files = []

@@ -1,19 +1,7 @@
 import os
-import subprocess
-import sys
 from pathlib import Path
 
-
-def run_command(command: list[str], cwd: Path) -> None:
-    print(f"==> Running command: {' '.join(command)}")
-    try:
-        subprocess.run(command, check=True, cwd=cwd)
-    except FileNotFoundError:
-        print(f"!!! Error: Command '{command[0]}' not found. Is it installed and in your PATH?")
-        sys.exit(1)
-    except subprocess.CalledProcessError as exc:
-        print(f"\n!!! A dist preparation step failed with exit code {exc.returncode}.")
-        sys.exit(exc.returncode)
+from tools.flows.cmake_support.process import run_command
 
 
 def setup_environment(project_dir: Path) -> Path:

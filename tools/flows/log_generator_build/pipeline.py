@@ -38,7 +38,7 @@ def run_build(
 
     handle_clean(build_dir, dist_config["generator"], clean_flag)
 
-    ensure_cmake_configured(
+    spec = ensure_cmake_configured(
         build_dir=build_dir,
         build_type=build_type,
         generator=dist_config["generator"],
@@ -47,7 +47,7 @@ def run_build(
     )
 
     print(f"==> Compiling the project ({build_type} Mode)...")
-    build_target(build_dir)
+    build_target(spec)
 
     duration = int(time.monotonic() - start_time)
     minutes, seconds = divmod(duration, 60)
@@ -70,7 +70,7 @@ def run_target_only(
     if not source_dir.is_absolute():
         source_dir = (project_dir / source_dir).resolve()
 
-    ensure_cmake_configured(
+    spec = ensure_cmake_configured(
         build_dir=build_dir,
         build_type=build_type,
         generator=dist_config["generator"],
@@ -79,5 +79,17 @@ def run_target_only(
     )
 
     print(f"==> Running target: {target}...")
-    build_target(build_dir, target=target)
+    build_target(
+        spec.__class__(
+            project_dir=spec.project_dir,
+            build_dir=spec.build_dir,
+            source_dir=spec.source_dir,
+            generator=spec.generator,
+            build_type=spec.build_type,
+            compiler=spec.compiler,
+            target=target,
+            cmake_defines=spec.cmake_defines,
+            build_args=spec.build_args,
+        )
+    )
     print(f"\n==> Target '{target}' finished successfully.")

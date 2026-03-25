@@ -1,16 +1,18 @@
 from __future__ import annotations
 
 import os
-import sys
 from datetime import datetime
 from pathlib import Path
+
+try:
+    from ._bootstrap import bootstrap_repo_root
+except ImportError:
+    from _bootstrap import bootstrap_repo_root
 
 from .io_ops import replace_path, write_json_file
 from .utils import run_command
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+REPO_ROOT = bootstrap_repo_root(__file__)
 
 from tools.toolchain.services.build_layout import (
     resolve_artifact_project_root,

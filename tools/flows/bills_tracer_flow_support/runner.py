@@ -9,10 +9,12 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parents[2]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+try:
+    from ._bootstrap import bootstrap_repo_root
+except ImportError:
+    from _bootstrap import bootstrap_repo_root
+
+REPO_ROOT = bootstrap_repo_root(__file__)
 
 from tools.toolchain.services.build_layout import (
     resolve_artifact_project_root,
@@ -59,7 +61,7 @@ DEFAULT_MAX_RUNS = 20
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Prepare bill_master_cli into dist/cmake and run command-line tests."
+        description="Prepare bills_tracer_cli into dist/cmake and run command-line tests."
     )
     parser.add_argument(
         "--dist-scope",
@@ -74,7 +76,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Preset to use for the CLI dist.",
     )
     parser.add_argument("--generator", default="Ninja")
-    parser.add_argument("--target", default="bill_master_cli")
+    parser.add_argument("--target", default="bills_tracer_cli")
     parser.add_argument("--bills-dir", default="testdata/bills")
     parser.add_argument("--formats", default="md")
     parser.add_argument("--ingest-mode", default="stepwise", choices=["stepwise", "ingest"])
@@ -144,7 +146,7 @@ def build_run_paths(repo_root: Path, request: BillsTracerRequest) -> BillsTracer
     project_output_root = resolve_artifact_project_root(repo_root, request.output_project)
     runtime_project_root = resolve_runtime_project_root(repo_root, request.output_project)
     runtime_workspace_dir = resolve_runtime_workspace_dir(repo_root, request.output_project)
-    test_runner = test_root / "suites" / "artifact" / "bills_master" / "run_tests.py"
+    test_runner = test_root / "suites" / "artifact" / "bills_tracer" / "run_tests.py"
     runtime_base_dir = make_runtime_base_dir(
         runtime_project_root=runtime_project_root,
         output_project=request.output_project,
@@ -218,7 +220,7 @@ def main(argv: list[str] | None = None) -> int:
     format_defines = cmake_format_defines(list(request.export_formats))
     build_spec = resolve_build_directory(
         repo_root,
-        target="bills",
+        target="bills-tracer-cli",
         preset=request.preset,
         scope=request.dist_scope,
         instance_id=paths.build_dir.name if request.dist_scope == "isolated" else "",
@@ -305,7 +307,7 @@ def main(argv: list[str] | None = None) -> int:
         )
 
         env = os.environ.copy()
-        env["BILLS_MASTER_TEST_CONFIG"] = str(temp_config_path)
+        env["BILLS_TRACER_TEST_CONFIG"] = str(temp_config_path)
         print(f"==> {request.python_executable} {paths.test_runner}")
         test_cmd = [request.python_executable, str(paths.test_runner)]
         started_at = datetime.now()

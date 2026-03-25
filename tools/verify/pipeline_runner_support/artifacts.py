@@ -3,31 +3,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from tools.toolchain.core.path_ops import replace_path
 from tools.toolchain.services.build_layout import (
     assert_no_legacy_layout,
     resolve_logic_pipeline_root,
 )
-
-
-def replace_path(src: Path, dst: Path) -> None:
-    if not src.exists():
-        return
-    dst.parent.mkdir(parents=True, exist_ok=True)
-    if dst.exists():
-        if dst.is_dir():
-            import shutil
-
-            shutil.rmtree(dst)
-        else:
-            dst.unlink()
-    if src.is_dir():
-        import shutil
-
-        shutil.copytree(src, dst)
-    else:
-        import shutil
-
-        shutil.copy2(src, dst)
 
 
 def write_json(path: Path, payload: dict) -> None:

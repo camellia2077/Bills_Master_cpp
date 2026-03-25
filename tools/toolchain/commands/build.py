@@ -16,26 +16,26 @@ class BuildTargetSpec:
 
 
 BUILD_TARGETS: dict[str, BuildTargetSpec] = {
-    "android": BuildTargetSpec(
-        entry_name="build_bills_android.py",
+    "bills-tracer-android": BuildTargetSpec(
+        entry_name="build_bills_tracer_android.py",
         fixed_args=[],
         supports_isolated=False,
         supports_tidy=False,
     ),
-    "bills": BuildTargetSpec(
-        entry_name="build_bills_master.py",
+    "bills-tracer-cli": BuildTargetSpec(
+        entry_name="build_bills_tracer_cli.py",
         fixed_args=[],
         supports_isolated=True,
         supports_tidy=True,
     ),
-    "core": BuildTargetSpec(
-        entry_name="build_bills_core.py",
+    "bills-tracer-core": BuildTargetSpec(
+        entry_name="build_bills_tracer_core.py",
         fixed_args=[],
         supports_isolated=False,
         supports_tidy=False,
     ),
-    "log-generator": BuildTargetSpec(
-        entry_name="log_generator_flow.py",
+    "bills-tracer-log-generator": BuildTargetSpec(
+        entry_name="bills_tracer_log_generator_flow.py",
         fixed_args=["dist"],
         supports_isolated=False,
         supports_tidy=False,

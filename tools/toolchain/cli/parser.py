@@ -35,7 +35,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     dist_parser.add_argument(
         "target",
-        choices=["bills", "core", "log-generator", "android"],
+        choices=[
+            "bills-tracer-cli",
+            "bills-tracer-core",
+            "bills-tracer-log-generator",
+            "bills-tracer-android",
+        ],
         help="Target to emit into dist/.",
     )
     dist_parser.add_argument(
@@ -106,7 +111,7 @@ def build_parser() -> argparse.ArgumentParser:
     tidy_parser = subparsers.add_parser(
         "tidy",
         help="Run clang-tidy and capture raw logs.",
-        description="Run clang-tidy through the existing bills dist helper and capture raw logs for later splitting.",
+        description="Run clang-tidy through the existing bills_tracer_cli dist helper and capture raw logs for later splitting.",
     )
     tidy_parser.add_argument(
         "--jobs",

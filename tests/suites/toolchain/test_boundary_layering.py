@@ -8,12 +8,12 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
-from tools.verify.tools.check_boundary_layering_support.metadata import (
+from tools.verify.checks.check_boundary_layering_support.metadata import (
     load_allowlist,
     write_baseline,
 )
-from tools.verify.tools.check_boundary_layering_support.policy import check_policy, print_stats
-from tools.verify.tools.check_boundary_layering_support.scan import scan_scope
+from tools.verify.checks.check_boundary_layering_support.policy import check_policy, print_stats
+from tools.verify.checks.check_boundary_layering_support.scan import scan_scope
 
 
 class BoundaryLayeringTests(unittest.TestCase):
@@ -64,7 +64,7 @@ class BoundaryLayeringTests(unittest.TestCase):
             buffer = io.StringIO()
             with redirect_stdout(buffer):
                 with patch.dict(
-                    "tools.verify.tools.check_boundary_layering_support.policy.BOUNDARY_LAYER_ROOTS",
+                    "tools.verify.checks.check_boundary_layering_support.policy.BOUNDARY_LAYER_ROOTS",
                     {"core_abi": "libs/bills_core/src/abi"},
                     clear=True,
                 ):

@@ -19,7 +19,6 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/suites/artifact/bills_master/run_tests.py" = ["E402"]
-"tests/suites/logic/bills_core_abi/run_tests.py" = ["E402"]
 "tests/suites/logic/log_generator_cli/run_tests.py" = ["E402"]
 "tools/flows/bills_tracer_flow.py" = ["E402"]
 "tools/flows/build_bills_core.py" = ["E402"]
@@ -31,6 +30,6 @@ ignore = [
 "tools/verify/check_report_snapshots.py" = ["E402"]
 "tools/verify/pipeline_runner.py" = ["E402"]
 "tools/verify/verify.py" = ["E402"]
-"tools/verify/tools/capture_windows_build_baseline.py" = ["E402"]
-"tools/verify/tools/check_boundary_layering.py" = ["E402"]
-"tools/verify/tools/check_import_layering.py" = ["E402"]
+"tools/verify/checks/capture_windows_build_baseline.py" = ["E402"]
+"tools/verify/checks/check_boundary_layering.py" = ["E402"]
+"tools/verify/checks/check_import_layering.py" = ["E402"]

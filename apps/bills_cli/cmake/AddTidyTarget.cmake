@@ -30,7 +30,7 @@ if(CLANG_TIDY_EXE)
     set(BILLS_TIDY_SOURCE_TARGETS
         bills_core
         bills_io
-        bill_master_cli
+        bills_tracer_cli
     )
     set(ALL_TIDY_SOURCES)
     foreach(BILLS_TIDY_TARGET ${BILLS_TIDY_SOURCE_TARGETS})

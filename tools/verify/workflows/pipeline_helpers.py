@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import json
 import tempfile
 from datetime import datetime
@@ -8,7 +7,7 @@ from pathlib import Path
 
 from tools.toolchain.services.build_layout import sanitize_segment
 
-from .common import run
+from .common import parse_forwarded_args, run
 
 
 def to_toml_list(items: list[str]) -> str:
@@ -103,11 +102,12 @@ def run_pipeline_workflow(
     forwarded: list[str],
     default_config: str = "",
 ) -> int:
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--config", default=default_config)
-    parser.add_argument("--run-id", default="")
-    parser.add_argument("--list-steps", action="store_true")
-    args, passthrough = parser.parse_known_args(forwarded)
+    def configure_parser(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--config", default=default_config)
+        parser.add_argument("--run-id", default="")
+        parser.add_argument("--list-steps", action="store_true")
+
+    args, passthrough = parse_forwarded_args(forwarded, configure_parser)
 
     config_path = args.config.strip()
     if not config_path:

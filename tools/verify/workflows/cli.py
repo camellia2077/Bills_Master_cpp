@@ -15,7 +15,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "workflow",
         nargs="?",
-        default="bills",
+        default="bills-tracer",
         choices=[spec.name for spec in workflow_specs()],
         help=workflow_help_text(),
     )

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 from statistics import mean, median
@@ -13,11 +14,22 @@ from tools.toolchain.services.build_layout import (
     sanitize_segment,
 )
 
+ParserConfigurer = Callable[[argparse.ArgumentParser], None]
+
 
 def normalize_extra(extra_args: list[str]) -> list[str]:
     if extra_args and extra_args[0] == "--":
         return extra_args[1:]
     return extra_args
+
+
+def parse_forwarded_args(
+    forwarded: list[str],
+    configure: ParserConfigurer,
+) -> tuple[argparse.Namespace, list[str]]:
+    parser = argparse.ArgumentParser(add_help=False)
+    configure(parser)
+    return parser.parse_known_args(forwarded)
 
 
 def run(command: list[str]) -> int:
@@ -26,9 +38,10 @@ def run(command: list[str]) -> int:
 
 
 def detect_output_project(forwarded: list[str], default: str = "bills_tracer") -> str:
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--output-project", default=default)
-    args, _ = parser.parse_known_args(forwarded)
+    args, _ = parse_forwarded_args(
+        forwarded,
+        lambda parser: parser.add_argument("--output-project", default=default),
+    )
     return sanitize_segment(str(args.output_project))
 
 

@@ -3,13 +3,9 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
+from _bootstrap import bootstrap_repo_root
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parents[1]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+REPO_ROOT = bootstrap_repo_root(__file__)
 
 from tools.flows.bills_tracer_flow_support.cmake_dist import build_cli
 from tools.flows.bills_tracer_flow_support.config_writer import parse_formats

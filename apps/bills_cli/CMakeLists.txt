@@ -1,5 +1,5 @@
 # 设置 CMake 所需的最低版本 (必须在顶层)
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.28)
 
 # 可选编译器选择（在 project() 之前生效）
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/modules/compiler_select.cmake")
@@ -8,16 +8,12 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/modules/compiler_select.cmake")
 project(BillReprocessor VERSION "0.2.8" LANGUAGES C CXX)
 
 option(BILLS_CORE_BUILD_SHARED "Build bills_core as a shared library for CLI app" OFF)
-if(WIN32)
-    set(_BILLS_STATIC_MINGW_RUNTIME_DEFAULT ON)
-else()
-    set(_BILLS_STATIC_MINGW_RUNTIME_DEFAULT OFF)
+if(WIN32 AND BILLS_CORE_BUILD_SHARED)
+    message(FATAL_ERROR
+        "Windows dist no longer supports BILLS_CORE_BUILD_SHARED=ON. "
+        "bills_core must be linked statically into the CLI executable."
+    )
 endif()
-option(BILLS_STATIC_MINGW_RUNTIME
-    "Prefer static libgcc/libstdc++/winpthread on Windows MinGW builds"
-    ${_BILLS_STATIC_MINGW_RUNTIME_DEFAULT}
-)
-unset(_BILLS_STATIC_MINGW_RUNTIME_DEFAULT)
 option(BILLS_ENABLE_LTO_RELEASE
     "Enable LTO for Release builds"
     ON
@@ -25,6 +21,10 @@ option(BILLS_ENABLE_LTO_RELEASE
 option(BILLS_ENABLE_TIDY
     "Enable clang-tidy target configuration"
     OFF
+)
+option(BILLS_CLI_ENABLE_MODULES
+    "Enable C++ modules pilot for bills_cli presentation layer"
+    ON
 )
 
 # 将模块路径添加到CMake的搜索路径中

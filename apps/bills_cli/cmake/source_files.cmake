@@ -3,6 +3,7 @@
 # ==============================================================================
 set(CORE_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/bills_core/src")
 set(PRESENTATION_DIR "${SOURCE_ROOT}/presentation")
+set(CLI_MODULES_DIR "${SOURCE_ROOT}/modules")
 set(CLI_ENTRY_DIR "${PRESENTATION_DIR}/entry")
 set(CLI_PARSING_DIR "${PRESENTATION_DIR}/parsing")
 set(CLI_OUTPUT_DIR "${PRESENTATION_DIR}/output")
@@ -39,4 +40,31 @@ set(CLI_APP_SOURCES
     ${CLI_PARSING_SOURCES}
     ${CLI_OUTPUT_SOURCES}
     ${CLI_FEATURE_SOURCES}
+)
+
+set(CLI_MODULE_INTERFACE_FILES
+    "${CLI_MODULES_DIR}/common_result.cppm"
+    "${CLI_MODULES_DIR}/common_utils.cppm"
+    "${CLI_MODULES_DIR}/cli_version.cppm"
+    "${CLI_MODULES_DIR}/core_version.cppm"
+    "${CLI_MODULES_DIR}/nlohmann_json.cppm"
+    "${CLI_MODULES_DIR}/io_host_flow_support.cppm"
+    "${CLI_MODULES_DIR}/io_factory.cppm"
+    "${CLI_MODULES_DIR}/io_year_partition_output_path_builder.cppm"
+    "${CLI_MODULES_DIR}/io_report_export_service.cppm"
+    "${CLI_MODULES_DIR}/query_service.cppm"
+    "${CLI_MODULES_DIR}/report_render_service.cppm"
+    "${CLI_MODULES_DIR}/renderer_registry.cppm"
+    "${CLI_MODULES_DIR}/record_template_service.cppm"
+    "${CLI_MODULES_DIR}/ingest_bill_workflow_service.cppm"
+    "${CLI_MODULES_DIR}/cli_app.cppm"
+    "${CLI_MODULES_DIR}/runtime_context.cppm"
+    "${CLI_MODULES_DIR}/cli_request.cppm"
+    "${CLI_MODULES_DIR}/cli_parser.cppm"
+    "${CLI_MODULES_DIR}/help_text.cppm"
+    "${CLI_MODULES_DIR}/workspace_handler.cppm"
+    "${CLI_MODULES_DIR}/report_handler.cppm"
+    "${CLI_MODULES_DIR}/template_handler.cppm"
+    "${CLI_MODULES_DIR}/config_handler.cppm"
+    "${CLI_MODULES_DIR}/meta_handler.cppm"
 )

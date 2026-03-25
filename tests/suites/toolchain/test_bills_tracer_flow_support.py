@@ -56,7 +56,7 @@ class BillsTracerFlowSupportTests(unittest.TestCase):
             build_dir,
             resolve_build_directory(
                 repo_root,
-                target="bills",
+                target="bills-tracer-cli",
                 preset="debug",
                 scope="isolated",
                 instance_id=expected_instance,

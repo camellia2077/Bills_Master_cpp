@@ -4,7 +4,11 @@ import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 
-VALID_TARGETS = ("bills", "core", "log-generator")
+VALID_TARGETS = (
+    "bills-tracer-cli",
+    "bills-tracer-core",
+    "bills-tracer-log-generator",
+)
 VALID_PRESETS = ("debug", "release", "tidy")
 VALID_SCOPES = ("shared", "isolated")
 
@@ -118,10 +122,10 @@ def resolve_build_directory(
     normalized_scope = normalize_scope(scope)
     build_root = resolve_cmake_root(repo_root)
 
-    if normalized_target == "bills":
+    if normalized_target == "bills-tracer-cli":
         if normalized_preset == "tidy" and normalized_scope != "shared":
             raise ValueError("Preset 'tidy' only supports scope 'shared'.")
-        target_root = build_root / "bills" / normalized_preset
+        target_root = build_root / "bills_tracer_cli" / normalized_preset
         if normalized_scope == "shared":
             build_dir = target_root / "shared"
         else:
@@ -138,7 +142,10 @@ def resolve_build_directory(
     if normalized_scope != "shared":
         raise ValueError(f"Target '{normalized_target}' only supports scope 'shared'.")
 
-    target_folder = "log_generator" if normalized_target == "log-generator" else normalized_target
+    target_folder = {
+        "bills-tracer-core": "bills_tracer_core",
+        "bills-tracer-log-generator": "bills_tracer_log_generator",
+    }.get(normalized_target, normalized_target.replace("-", "_"))
     build_dir = build_root / target_folder / normalized_preset / "shared"
     return BuildDirectorySpec(
         target=normalized_target,
@@ -212,5 +219,5 @@ def resolve_logic_pipeline_run_dir(repo_root: Path, pipeline_name: str, run_id: 
     ).resolve()
 
 
-def resolve_bills_master_config_path(repo_root: Path) -> Path:
-    return (repo_root / "tests" / "config" / "bills_master.toml").resolve()
+def resolve_bills_tracer_config_path(repo_root: Path) -> Path:
+    return (repo_root / "tests" / "config" / "bills_tracer.toml").resolve()

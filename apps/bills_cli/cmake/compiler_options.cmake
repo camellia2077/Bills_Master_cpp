@@ -4,6 +4,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # [New] 生成编译数据库 (compile_commands.json)，供 clang-tidy/tools 使用
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+include("${CMAKE_CURRENT_LIST_DIR}/../../../cmake/modules/windows_static_runtime.cmake")
+
 if(WIN32 AND MINGW AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # Use lld for MinGW+Clang to avoid noisy GNU ld duplicate section warnings.
     foreach(_bills_flag_var
@@ -25,12 +27,12 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Os -march=native")
 set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -s -march=native")
 
 set(_BILLS_CAN_USE_LTO TRUE)
-if(WIN32 AND MINGW AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    # GCC 15 (MSYS2 UCRT64) may trigger ICE during LTO link on this project.
+if(WIN32 AND MINGW AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # Static release link currently fails under MinGW Clang+lto/lld on this project.
     set(_BILLS_CAN_USE_LTO FALSE)
     message(WARNING
-        "BILLS_ENABLE_LTO_RELEASE requested, but disabled for MinGW GCC "
-        "due to known compiler ICE risk. Consider clang for LTO builds."
+        "BILLS_ENABLE_LTO_RELEASE requested, but disabled for MinGW Clang "
+        "because static release linking is not stable with LTO on this project."
     )
 endif()
 
@@ -68,7 +70,6 @@ set(FORCE_INCLUDE_PCH "$<IF:$<CXX_COMPILER_ID:MSVC>,${PCH_FLAG_MSVC},${PCH_FLAG_
 set(COMMON_COMPILE_OPTIONS
     -Wall
     -fdiagnostics-color=always
-    ${FORCE_INCLUDE_PCH} # 应用自动包含 PCH 的选项
 )
 
 set(COMMON_LINK_OPTIONS)
@@ -80,23 +81,4 @@ if(NOT MSVC)
     list(APPEND COMMON_LINK_OPTIONS
         -Wl,--gc-sections
     )
-endif()
-
-if(WIN32 AND MINGW AND BILLS_STATIC_MINGW_RUNTIME AND
-   CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    set(_MINGW_STATIC_RUNTIME_FLAGS
-        -static-libgcc
-        -static-libstdc++
-        -Wl,-Bstatic
-        -lwinpthread
-        -Wl,-Bdynamic
-    )
-
-    string(JOIN " " _MINGW_STATIC_RUNTIME_FLAGS_STR ${_MINGW_STATIC_RUNTIME_FLAGS})
-    set(CMAKE_EXE_LINKER_FLAGS
-        "${CMAKE_EXE_LINKER_FLAGS} ${_MINGW_STATIC_RUNTIME_FLAGS_STR}")
-    set(CMAKE_SHARED_LINKER_FLAGS
-        "${CMAKE_SHARED_LINKER_FLAGS} ${_MINGW_STATIC_RUNTIME_FLAGS_STR}")
-    set(CMAKE_MODULE_LINKER_FLAGS
-        "${CMAKE_MODULE_LINKER_FLAGS} ${_MINGW_STATIC_RUNTIME_FLAGS_STR}")
 endif()

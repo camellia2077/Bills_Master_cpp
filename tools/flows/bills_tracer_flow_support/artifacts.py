@@ -6,6 +6,7 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
+from tools.toolchain.core.path_ops import replace_path
 from tools.toolchain.services.build_layout import sanitize_segment, short_hash
 
 from .locks import directory_lock
@@ -91,23 +92,6 @@ def write_json_file(path: Path, payload: dict) -> None:
         json.dumps(payload, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-
-
-def replace_path(src: Path, dst: Path) -> None:
-    if not src.exists():
-        return
-    dst.parent.mkdir(parents=True, exist_ok=True)
-    if dst.exists():
-        if dst.is_dir():
-            shutil.rmtree(dst)
-        else:
-            dst.unlink()
-    if src.is_dir():
-        shutil.copytree(src, dst)
-    else:
-        shutil.copy2(src, dst)
-
-
 def sync_runtime_workspace(
     build_bin_dir: Path,
     workspace_dir: Path,

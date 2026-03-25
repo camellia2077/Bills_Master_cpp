@@ -31,12 +31,14 @@ from tools.toolchain.services.tidy_runtime import (
 
 class TidySopTests(unittest.TestCase):
     def test_dist_parser_does_not_reforward_owned_flags(self) -> None:
-        _, args = parse_cli_args(["dist", "core", "--preset", "debug", "--scope", "shared"])
+        _, args = parse_cli_args(
+            ["dist", "bills-tracer-core", "--preset", "debug", "--scope", "shared"]
+        )
         self.assertEqual(args.forwarded, [])
 
     def test_dist_parser_preserves_explicit_forwarded_args(self) -> None:
-        _, args = parse_cli_args(["dist", "core", "--preset", "debug", "--shared"])
-        self.assertEqual(args.forwarded, ["--shared"])
+        _, args = parse_cli_args(["dist", "bills-tracer-core", "--preset", "debug", "--modules"])
+        self.assertEqual(args.forwarded, ["--modules"])
 
     def test_load_toolchain_config_reads_new_tidy_sections(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -45,7 +47,7 @@ class TidySopTests(unittest.TestCase):
             config_path.write_text(
                 """
 [dist]
-default_target = "core"
+default_target = "bills-tracer-core"
 
 [tidy.safe_fix_prepass]
 checks = ["modernize-use-trailing-return-type"]
@@ -61,7 +63,7 @@ explain_closed_ranges = false
             )
             config = load_toolchain_config(config_path)
 
-        self.assertEqual(config.dist.default_target, "core")
+        self.assertEqual(config.dist.default_target, "bills-tracer-core")
         self.assertEqual(
             config.tidy.safe_fix_prepass.checks,
             ["modernize-use-trailing-return-type"],
@@ -80,7 +82,7 @@ explain_closed_ranges = false
             config_path.write_text(
                 """
 [build]
-default_target = "bills"
+default_target = "bills-tracer-cli"
 """.strip(),
                 encoding="utf-8",
             )
@@ -415,7 +417,7 @@ default_target = "bills"
                         [
                             "python",
                             "verify.py",
-                            "bills-dist",
+                            "bills-tracer-cli-dist",
                             "--",
                             "--preset",
                             "debug",

@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from .common import run
+from .common import parse_forwarded_args, run
 
 
 def run_logic_tests(
@@ -11,43 +11,31 @@ def run_logic_tests(
     python_exe: str,
     forwarded: list[str],
 ) -> int:
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument(
-        "--skip-core-dist",
-        action="store_true",
-        help="Skip bills_core dist preparation before ABI tests.",
+    args, passthrough = parse_forwarded_args(
+        forwarded,
+        lambda parser: parser.add_argument(
+            "--skip-core-dist",
+            action="store_true",
+            help="Skip bills_core dist preparation before logic checks.",
+        ),
     )
-    parser.add_argument(
-        "--skip-core-abi",
-        action="store_true",
-        help="Skip bills_core ABI tests.",
-    )
-    args, passthrough = parser.parse_known_args(forwarded)
-
-    if args.skip_core_dist and args.skip_core_abi:
-        print("[ERROR] logic-tests: both --skip-core-dist and --skip-core-abi are set.")
-        return 2
 
     if not args.skip_core_dist:
-        core_build_entry = repo_root / "tools" / "flows" / "build_bills_core.py"
+        core_build_entry = repo_root / "tools" / "flows" / "build_bills_tracer_core.py"
         build_code = run(
             [
                 python_exe,
                 str(core_build_entry),
                 "--preset",
                 "debug",
-                "--shared",
             ]
         )
         if build_code != 0:
             return build_code
 
-    if not args.skip_core_abi:
-        core_abi_entry = (
-            repo_root / "tests" / "suites" / "logic" / "bills_core_abi" / "run_tests.py"
-        )
-        return run([python_exe, str(core_abi_entry), *passthrough])
-
+    if passthrough:
+        print("[ERROR] logic-tests no longer forwards additional commands.")
+        return 2
     return 0
 
 
@@ -56,34 +44,23 @@ def run_module_mode_check(
     python_exe: str,
     forwarded: list[str],
 ) -> int:
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument(
-        "--preset",
-        default="debug",
-        choices=["debug", "release"],
-        help="Preset for bills_core dual-mode check.",
-    )
-    parser.add_argument(
-        "--compiler",
-        default="clang",
-        choices=["clang", "gcc"],
-        help="Compiler for bills_core dual-mode check.",
-    )
-    parser.add_argument(
-        "--shared",
-        action="store_true",
-        default=True,
-        help="Emit shared library into dist (default).",
-    )
-    parser.add_argument(
-        "--static",
-        dest="shared",
-        action="store_false",
-        help="Emit static library into dist.",
-    )
-    args, passthrough = parser.parse_known_args(forwarded)
+    def configure_parser(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--preset",
+            default="debug",
+            choices=["debug", "release"],
+            help="Preset for bills_core dual-mode check.",
+        )
+        parser.add_argument(
+            "--compiler",
+            default="clang",
+            choices=["clang"],
+            help="Compiler for bills_core dual-mode check (clang only).",
+        )
 
-    core_build_entry = repo_root / "tools" / "flows" / "build_bills_core.py"
+    args, passthrough = parse_forwarded_args(forwarded, configure_parser)
+
+    core_build_entry = repo_root / "tools" / "flows" / "build_bills_tracer_core.py"
     base_cmd = [
         python_exe,
         str(core_build_entry),
@@ -91,7 +68,6 @@ def run_module_mode_check(
         args.preset,
         "--compiler",
         args.compiler,
-        "--shared" if args.shared else "--static",
     ]
     off_cmd = [*base_cmd, "--no-modules", *passthrough]
     on_cmd = [*base_cmd, "--modules", *passthrough]
@@ -117,7 +93,7 @@ def run_tools_layer_check(
     python_exe: str,
     forwarded: list[str],
 ) -> int:
-    entry = repo_root / "tools" / "verify" / "tools" / "check_tools_layering.py"
+    entry = repo_root / "tools" / "verify" / "checks" / "check_tools_layering.py"
     return run([python_exe, str(entry), *forwarded])
 
 
@@ -126,7 +102,7 @@ def run_import_layer_check(
     python_exe: str,
     forwarded: list[str],
 ) -> int:
-    entry = repo_root / "tools" / "verify" / "tools" / "check_import_layering.py"
+    entry = repo_root / "tools" / "verify" / "checks" / "check_import_layering.py"
     return run([python_exe, str(entry), *forwarded])
 
 
@@ -135,5 +111,5 @@ def run_boundary_layer_check(
     python_exe: str,
     forwarded: list[str],
 ) -> int:
-    entry = repo_root / "tools" / "verify" / "tools" / "check_boundary_layering.py"
+    entry = repo_root / "tools" / "verify" / "checks" / "check_boundary_layering.py"
     return run([python_exe, str(entry), *forwarded])

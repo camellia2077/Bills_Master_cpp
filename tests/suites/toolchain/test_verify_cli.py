@@ -18,8 +18,8 @@ class VerifyCliTests(unittest.TestCase):
         registry = workflow_registry()
 
         self.assertEqual([spec.name for spec in specs], list(registry.keys()))
-        self.assertEqual(specs[0].name, "bills")
-        self.assertIn("log-dist", registry)
+        self.assertEqual(specs[0].name, "bills-tracer")
+        self.assertIn("bills-tracer-log-generator-dist", registry)
         self.assertIn("reporting-tools", registry)
 
     def test_parser_uses_registry_choices_and_help_text(self) -> None:
@@ -44,8 +44,8 @@ class VerifyCliTests(unittest.TestCase):
                 code = run_pipeline_steps(
                     repo_root=repo_root,
                     python_exe="python",
-                    pipeline_name="verify_bills",
-                    pipeline_description="verify workflow bills",
+                    pipeline_name="verify_bills_tracer",
+                    pipeline_description="verify workflow bills_tracer",
                     output_root=str(repo_root / "dist" / "tests"),
                     steps=[
                         {
@@ -63,7 +63,7 @@ class VerifyCliTests(unittest.TestCase):
             ["python", str(repo_root / "tools" / "verify" / "pipeline_runner.py"), "--config"],
         )
         self.assertIn('--run-id', captured["command"])
-        self.assertIn('name = "verify_bills"', captured["config_text"])
+        self.assertIn('name = "verify_bills_tracer"', captured["config_text"])
         self.assertIn('id = "bills"', captured["config_text"])
 
     def test_summary_and_duration_helpers_read_latest_artifacts(self) -> None:

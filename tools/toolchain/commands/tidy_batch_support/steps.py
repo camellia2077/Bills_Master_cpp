@@ -30,7 +30,7 @@ def run_verify_phase(state: BatchExecutionState) -> StepOutcome:
     )
     command, verify_ret = run_verify_workflow(
         state.ctx,
-        "bills-dist",
+        "bills-tracer-cli-dist",
         ["--preset", "debug", "--scope", "shared"],
     )
     write_verify_result(state.paths, command=command, returncode=verify_ret)
@@ -161,7 +161,7 @@ def run_build_gate_phase(state: BatchExecutionState) -> StepOutcome:
     )
     build_command, build_ret = run_verify_workflow(
         state.ctx,
-        "bills-dist",
+        "bills-tracer-cli-dist",
         ["--preset", "debug", "--scope", "shared"],
     )
     write_verify_result(state.paths, command=build_command, returncode=build_ret)

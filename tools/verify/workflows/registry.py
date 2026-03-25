@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import platform
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
 from tools.toolchain.services.build_layout import assert_no_legacy_flags
 
-from .bills import run_artifact_tests, run_bills_parallel_smoke, run_bills_workflow
-from .common import run
+from .bills_tracer import (
+    run_artifact_tests,
+    run_bills_tracer_parallel_smoke,
+    run_bills_tracer_workflow,
+)
+from .common import parse_forwarded_args, run
 from .logic import (
     run_boundary_layer_check,
     run_import_layer_check,
@@ -26,6 +31,40 @@ class WorkflowSpec:
     name: str
     help_text: str
     handler: WorkflowHandler
+
+
+def _is_windows_native() -> bool:
+    return platform.system() == "Windows"
+
+
+def _extract_preset(forwarded: list[str], default: str) -> str:
+    args, _ = parse_forwarded_args(
+        forwarded,
+        lambda parser: parser.add_argument("--preset", default=default),
+    )
+    return str(args.preset)
+
+
+def _run_windows_import_gate(
+    repo_root: Path,
+    python_exe: str,
+    *,
+    app: str,
+    preset: str,
+) -> int:
+    if not _is_windows_native():
+        return 0
+    entry = repo_root / "tools" / "verify" / "checks" / "capture_windows_build_baseline.py"
+    return run(
+        [
+            python_exe,
+            str(entry),
+            "--app",
+            app,
+            "--preset",
+            preset,
+        ]
+    )
 
 
 def _run_all_tests(repo_root: Path, python_exe: str, forwarded: list[str]) -> int:
@@ -89,34 +128,37 @@ def _run_report_consistency_gate(repo_root: Path, python_exe: str, forwarded: li
         "--performance-stat",
         "median",
     ]
-    return run_bills_parallel_smoke(
+    return run_bills_tracer_parallel_smoke(
         repo_root=repo_root,
         python_exe=python_exe,
         forwarded=[*default_gate_args, *forwarded],
     )
 
 
-def _run_bills_dist(repo_root: Path, python_exe: str, forwarded: list[str]) -> int:
-    entry = repo_root / "tools" / "flows" / "build_bills_master.py"
+def _run_bills_tracer_cli_dist(repo_root: Path, python_exe: str, forwarded: list[str]) -> int:
+    entry = repo_root / "tools" / "flows" / "build_bills_tracer_cli.py"
     effective_forwarded = list(forwarded)
     if not effective_forwarded:
         effective_forwarded = ["--preset", "debug", "--scope", "shared"]
-    assert_no_legacy_flags(effective_forwarded, source="verify bills-dist")
-    return run([python_exe, str(entry), *effective_forwarded])
+    assert_no_legacy_flags(effective_forwarded, source="verify bills-tracer-cli-dist")
+    build_code = run([python_exe, str(entry), *effective_forwarded])
+    if build_code != 0:
+        return build_code
+    return _run_windows_import_gate(
+        repo_root,
+        python_exe,
+        app="bills_cli",
+        preset=_extract_preset(effective_forwarded, default="debug"),
+    )
 
 
-def _run_core_dist(repo_root: Path, python_exe: str, forwarded: list[str]) -> int:
-    entry = repo_root / "tools" / "flows" / "build_bills_core.py"
+def _run_bills_tracer_core_dist(repo_root: Path, python_exe: str, forwarded: list[str]) -> int:
+    entry = repo_root / "tools" / "flows" / "build_bills_tracer_core.py"
     effective_forwarded = list(forwarded)
     if not effective_forwarded:
-        effective_forwarded = ["--preset", "debug", "--shared"]
-    assert_no_legacy_flags(effective_forwarded, source="verify core-dist")
+        effective_forwarded = ["--preset", "debug"]
+    assert_no_legacy_flags(effective_forwarded, source="verify bills-tracer-core-dist")
     return run([python_exe, str(entry), *effective_forwarded])
-
-
-def _run_core_abi(repo_root: Path, python_exe: str, forwarded: list[str]) -> int:
-    entry = repo_root / "tests" / "suites" / "logic" / "bills_core_abi" / "run_tests.py"
-    return run([python_exe, str(entry), *forwarded])
 
 
 def _run_report_snapshot(repo_root: Path, python_exe: str, forwarded: list[str]) -> int:
@@ -138,7 +180,7 @@ def _run_report_pipeline_compare(repo_root: Path, python_exe: str, forwarded: li
     return run([python_exe, str(entry), *effective_forwarded])
 
 
-def _run_pipeline_bills(repo_root: Path, python_exe: str, forwarded: list[str]) -> int:
+def _run_pipeline_bills_tracer(repo_root: Path, python_exe: str, forwarded: list[str]) -> int:
     return run_pipeline_workflow(
         repo_root=repo_root,
         python_exe=python_exe,
@@ -147,7 +189,11 @@ def _run_pipeline_bills(repo_root: Path, python_exe: str, forwarded: list[str]) 
     )
 
 
-def _run_pipeline_log_generator(repo_root: Path, python_exe: str, forwarded: list[str]) -> int:
+def _run_pipeline_bills_tracer_log_generator(
+    repo_root: Path,
+    python_exe: str,
+    forwarded: list[str],
+) -> int:
     return run_pipeline_workflow(
         repo_root=repo_root,
         python_exe=python_exe,
@@ -174,7 +220,11 @@ def _run_reporting_graph(repo_root: Path, python_exe: str, forwarded: list[str])
     )
 
 
-def _run_log_cli_test(repo_root: Path, python_exe: str, forwarded: list[str]) -> int:
+def _run_bills_tracer_log_generator_cli_test(
+    repo_root: Path,
+    python_exe: str,
+    forwarded: list[str],
+) -> int:
     return run_pipeline_workflow(
         repo_root=repo_root,
         python_exe=python_exe,
@@ -183,21 +233,41 @@ def _run_log_cli_test(repo_root: Path, python_exe: str, forwarded: list[str]) ->
     )
 
 
-def _run_log_dist(repo_root: Path, python_exe: str, forwarded: list[str]) -> int:
+def _run_bills_tracer_log_generator_dist(
+    repo_root: Path,
+    python_exe: str,
+    forwarded: list[str],
+) -> int:
     if not forwarded:
-        return run_pipeline_workflow(
+        pipeline_code = run_pipeline_workflow(
             repo_root=repo_root,
             python_exe=python_exe,
             forwarded=[],
             default_config="tools/verify/pipelines/log_generator_dist.toml",
         )
-    entry = repo_root / "tools" / "flows" / "log_generator_flow.py"
-    return run([python_exe, str(entry), *forwarded])
+        if pipeline_code != 0:
+            return pipeline_code
+        return _run_windows_import_gate(
+            repo_root,
+            python_exe,
+            app="log_generator",
+            preset="debug",
+        )
+    entry = repo_root / "tools" / "flows" / "bills_tracer_log_generator_flow.py"
+    build_code = run([python_exe, str(entry), *forwarded])
+    if build_code != 0:
+        return build_code
+    return _run_windows_import_gate(
+        repo_root,
+        python_exe,
+        app="log_generator",
+        preset=_extract_preset(forwarded, default="debug"),
+    )
 
 
 def workflow_specs() -> list[WorkflowSpec]:
     return [
-        WorkflowSpec("bills", "dist+CLI test", run_bills_workflow),
+        WorkflowSpec("bills-tracer", "dist+CLI test", run_bills_tracer_workflow),
         WorkflowSpec("logic-tests", "unit/component style checks", run_logic_tests),
         WorkflowSpec(
             "artifact-tests",
@@ -226,9 +296,9 @@ def workflow_specs() -> list[WorkflowSpec]:
             run_boundary_layer_check,
         ),
         WorkflowSpec(
-            "bills-parallel-smoke",
-            "run model-first/json-first bills in parallel and compare outputs",
-            run_bills_parallel_smoke,
+            "bills-tracer-parallel-smoke",
+            "run model-first/json-first bills_tracer in parallel and compare outputs",
+            run_bills_tracer_parallel_smoke,
         ),
         WorkflowSpec(
             "report-consistency-gate",
@@ -236,21 +306,24 @@ def workflow_specs() -> list[WorkflowSpec]:
             _run_report_consistency_gate,
         ),
         WorkflowSpec(
-            "bills-dist",
-            "prepare bills_cli into dist/cmake with --preset/--scope",
-            _run_bills_dist,
+            "bills-tracer-cli-dist",
+            "prepare bills_tracer_cli into dist/cmake with --preset/--scope",
+            _run_bills_tracer_cli_dist,
         ),
         WorkflowSpec(
-            "core-dist",
+            "bills-tracer-core-dist",
             "prepare bills_core into dist/cmake with --preset",
-            _run_core_dist,
+            _run_bills_tracer_core_dist,
         ),
-        WorkflowSpec("core-abi", "run ABI smoke tests", _run_core_abi),
-        WorkflowSpec("log-dist", "prepare log_generator into dist/cmake", _run_log_dist),
         WorkflowSpec(
-            "log-cli-test",
-            "prepare log_generator and run CLI command tests",
-            _run_log_cli_test,
+            "bills-tracer-log-generator-dist",
+            "prepare bills_tracer log_generator into dist/cmake",
+            _run_bills_tracer_log_generator_dist,
+        ),
+        WorkflowSpec(
+            "bills-tracer-log-generator-cli-test",
+            "prepare bills_tracer log_generator and run CLI command tests",
+            _run_bills_tracer_log_generator_cli_test,
         ),
         WorkflowSpec(
             "report-snapshot",
@@ -268,14 +341,14 @@ def workflow_specs() -> list[WorkflowSpec]:
             run_pipeline_workflow,
         ),
         WorkflowSpec(
-            "pipeline-bills",
-            "run bills pipeline config",
-            _run_pipeline_bills,
+            "pipeline-bills-tracer",
+            "run bills_tracer pipeline config",
+            _run_pipeline_bills_tracer,
         ),
         WorkflowSpec(
-            "pipeline-log-generator",
-            "run log_generator pipeline config",
-            _run_pipeline_log_generator,
+            "pipeline-bills-tracer-log-generator",
+            "run bills_tracer log_generator pipeline config",
+            _run_pipeline_bills_tracer_log_generator,
         ),
         WorkflowSpec(
             "reporting-compile2pdf",

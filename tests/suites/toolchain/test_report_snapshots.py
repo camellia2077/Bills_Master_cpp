@@ -10,7 +10,7 @@ from tools.verify.report_snapshot_support import (
     normalize_render_json,
     normalize_standard_report_json,
 )
-from tools.verify.workflows.bills import run_bills_workflow
+from tools.verify.workflows.bills_tracer import run_bills_tracer_workflow
 
 
 class ReportSnapshotSupportTests(unittest.TestCase):
@@ -37,8 +37,8 @@ class ReportSnapshotSupportTests(unittest.TestCase):
         self.assertLess(normalized.index('"alpha"'), normalized.index('"zeta"'))
 
 
-class BillsVerifyWorkflowTests(unittest.TestCase):
-    def test_run_bills_workflow_adds_compare_steps_for_all_formats(self) -> None:
+class BillsTracerVerifyWorkflowTests(unittest.TestCase):
+    def test_run_bills_tracer_workflow_adds_compare_steps_for_all_formats(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
             captured: dict[str, object] = {}
@@ -48,10 +48,10 @@ class BillsVerifyWorkflowTests(unittest.TestCase):
                 return 0
 
             with patch(
-                "tools.verify.workflows.bills.run_pipeline_steps",
+                "tools.verify.workflows.bills_tracer.run_pipeline_steps",
                 side_effect=fake_run_pipeline_steps,
             ):
-                code = run_bills_workflow(repo_root, "python", [])
+                code = run_bills_tracer_workflow(repo_root, "python", [])
 
         self.assertEqual(code, 0)
         steps = captured["steps"]
@@ -68,7 +68,7 @@ class BillsVerifyWorkflowTests(unittest.TestCase):
             ],
         )
 
-    def test_run_bills_workflow_limits_compare_steps_to_selected_formats(self) -> None:
+    def test_run_bills_tracer_workflow_limits_compare_steps_to_selected_formats(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
             captured: dict[str, object] = {}
@@ -78,10 +78,10 @@ class BillsVerifyWorkflowTests(unittest.TestCase):
                 return 0
 
             with patch(
-                "tools.verify.workflows.bills.run_pipeline_steps",
+                "tools.verify.workflows.bills_tracer.run_pipeline_steps",
                 side_effect=fake_run_pipeline_steps,
             ):
-                code = run_bills_workflow(
+                code = run_bills_tracer_workflow(
                     repo_root,
                     "python",
                     ["--formats", "md,json", "--output-project", "demo_project"],

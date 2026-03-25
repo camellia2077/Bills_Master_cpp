@@ -1,6 +1,10 @@
 import argparse
-import sys
 from pathlib import Path
+
+try:
+    from ._bootstrap import bootstrap_repo_root
+except ImportError:
+    from _bootstrap import bootstrap_repo_root
 
 from .artifact_pipeline import (
     promote_artifact_to_testdata,
@@ -8,9 +12,7 @@ from .artifact_pipeline import (
 )
 from .pipeline import run_build, run_target_only
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+REPO_ROOT = bootstrap_repo_root(__file__)
 
 from tools.toolchain.services.build_layout import resolve_build_directory
 
@@ -61,7 +63,7 @@ def main(config: dict, project_dir, repo_root, argv=None) -> int:
     if args.command == "dist":
         spec = resolve_build_directory(
             repo_root,
-            target="log-generator",
+            target="bills-tracer-log-generator",
             preset=args.preset,
             scope="shared",
         )
@@ -78,7 +80,7 @@ def main(config: dict, project_dir, repo_root, argv=None) -> int:
     if args.command == "generate":
         spec = resolve_build_directory(
             repo_root,
-            target="log-generator",
+            target="bills-tracer-log-generator",
             preset=args.preset,
             scope="shared",
         )
@@ -109,7 +111,7 @@ def main(config: dict, project_dir, repo_root, argv=None) -> int:
     if args.command == "format":
         spec = resolve_build_directory(
             repo_root,
-            target="log-generator",
+            target="bills-tracer-log-generator",
             preset="debug",
             scope="shared",
         )
@@ -119,7 +121,7 @@ def main(config: dict, project_dir, repo_root, argv=None) -> int:
     if args.command == "tidy":
         spec = resolve_build_directory(
             repo_root,
-            target="log-generator",
+            target="bills-tracer-log-generator",
             preset="debug",
             scope="shared",
         )

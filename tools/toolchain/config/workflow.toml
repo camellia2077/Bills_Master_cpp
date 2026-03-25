@@ -1,5 +1,5 @@
 [dist]
-default_target = "bills"
+default_target = "bills-tracer-cli"
 
 [scope]
 default_roots = [
@@ -19,11 +19,6 @@ header_filter_roots = [
   "apps/bills_cli/src",
   "libs/bills_core/src",
   "libs/bills_io/src",
-]
-
-[verify.windows]
-dll_search_dirs = [
-  "C:/msys64/ucrt64/bin",
 ]
 
 [tidy]

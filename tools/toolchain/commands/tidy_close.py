@@ -34,7 +34,7 @@ def run(args, ctx: Context) -> int:
 
     if not args.tidy_only:
         command, verify_ret = run_verify_workflow(
-            ctx, "bills-dist", ["--preset", "debug", "--scope", "shared"]
+            ctx, "bills-tracer-cli-dist", ["--preset", "debug", "--scope", "shared"]
         )
         write_verify_result(paths, command=command, returncode=verify_ret)
         if verify_ret != 0:

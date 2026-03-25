@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import argparse
-import sys
 from pathlib import Path
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parents[1]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+from _bootstrap import bootstrap_repo_root
+
+REPO_ROOT = bootstrap_repo_root(__file__)
 
 from tools.flows.bills_tracer_flow_support.config_distribution import (  # noqa: E402
     CONFIG_FILENAMES,

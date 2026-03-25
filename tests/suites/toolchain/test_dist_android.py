@@ -4,8 +4,8 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-from tools.flows.build_bills_android import parse_args as parse_android_args
-from tools.flows.build_bills_android import resolve_requested_variants
+from tools.flows.build_bills_tracer_android import parse_args as parse_android_args
+from tools.flows.build_bills_tracer_android import resolve_requested_variants
 from tools.toolchain.cli.main import parse_cli_args
 from tools.toolchain.commands.build import run as run_build
 
@@ -21,14 +21,16 @@ class _FakeProcessRunner:
 
 class DistAndroidTests(unittest.TestCase):
     def test_dist_parser_accepts_android_target_and_forwards_unknown_args(self) -> None:
-        _, args = parse_cli_args(["dist", "android", "--preset", "release", "--clean"])
+        _, args = parse_cli_args(
+            ["dist", "bills-tracer-android", "--preset", "release", "--clean"]
+        )
 
-        self.assertEqual(args.target, "android")
+        self.assertEqual(args.target, "bills-tracer-android")
         self.assertEqual(args.preset, "release")
         self.assertEqual(args.scope, "shared")
         self.assertEqual(args.forwarded, ["--clean"])
 
-    def test_run_build_routes_android_to_build_bills_android_flow(self) -> None:
+    def test_run_build_routes_android_to_build_bills_tracer_android_flow(self) -> None:
         runner = _FakeProcessRunner()
         repo_root = Path("C:/repo")
         ctx = SimpleNamespace(
@@ -38,7 +40,7 @@ class DistAndroidTests(unittest.TestCase):
             process_runner=runner,
         )
         args = SimpleNamespace(
-            target="android",
+            target="bills-tracer-android",
             preset="release",
             scope="shared",
             forwarded=["--clean"],
@@ -53,7 +55,7 @@ class DistAndroidTests(unittest.TestCase):
                 (
                     [
                         "python",
-                        str(repo_root / "tools" / "flows" / "build_bills_android.py"),
+                        str(repo_root / "tools" / "flows" / "build_bills_tracer_android.py"),
                         "--preset",
                         "release",
                         "--clean",
@@ -71,7 +73,12 @@ class DistAndroidTests(unittest.TestCase):
             flow_entry=lambda relative_path: Path("C:/repo/tools/flows") / relative_path,
             process_runner=runner,
         )
-        args = SimpleNamespace(target="android", preset="tidy", scope="shared", forwarded=[])
+        args = SimpleNamespace(
+            target="bills-tracer-android",
+            preset="tidy",
+            scope="shared",
+            forwarded=[],
+        )
 
         exit_code = run_build(args, ctx)
 

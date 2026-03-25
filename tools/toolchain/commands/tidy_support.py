@@ -31,7 +31,7 @@ def run_tidy_build(
     paths = resolve_tidy_paths(ctx)
     command = [
         ctx.python_executable,
-        str(ctx.flow_entry("build_bills_master.py")),
+        str(ctx.flow_entry("build_bills_tracer_cli.py")),
         "--preset",
         "tidy",
     ]

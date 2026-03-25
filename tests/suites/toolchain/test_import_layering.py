@@ -8,12 +8,12 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
-from tools.verify.tools.check_import_layering_support.metadata import (
+from tools.verify.checks.check_import_layering_support.metadata import (
     load_allowlist,
     write_baseline,
 )
-from tools.verify.tools.check_import_layering_support.policy import check_policy, print_stats
-from tools.verify.tools.check_import_layering_support.scan import scan_scope
+from tools.verify.checks.check_import_layering_support.policy import check_policy, print_stats
+from tools.verify.checks.check_import_layering_support.scan import scan_scope
 
 
 class ImportLayeringTests(unittest.TestCase):
@@ -69,7 +69,7 @@ class ImportLayeringTests(unittest.TestCase):
             buffer = io.StringIO()
             with redirect_stdout(buffer):
                 with patch.dict(
-                    "tools.verify.tools.check_import_layering_support.policy.CALL_LAYER_ROOTS",
+                    "tools.verify.checks.check_import_layering_support.policy.CALL_LAYER_ROOTS",
                     {"core_application": "libs/bills_core/src/application"},
                     clear=True,
                 ):

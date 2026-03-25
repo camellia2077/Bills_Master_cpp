@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import argparse
 from pathlib import Path
 
+from .common import parse_forwarded_args
 from .pipeline_helpers import run_pipeline_workflow
 
 
@@ -11,10 +11,11 @@ def run_reporting_tools(
     python_exe: str,
     forwarded: list[str],
 ) -> int:
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--skip-compile2pdf", action="store_true")
-    parser.add_argument("--skip-graph", action="store_true")
-    args, passthrough = parser.parse_known_args(forwarded)
+    def configure_parser(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--skip-compile2pdf", action="store_true")
+        parser.add_argument("--skip-graph", action="store_true")
+
+    args, passthrough = parse_forwarded_args(forwarded, configure_parser)
 
     if passthrough:
         print(f"[WARN] reporting-tools ignores extra args: {' '.join(passthrough)}")

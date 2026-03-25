@@ -65,7 +65,7 @@ def default_phase_map() -> dict:
 def default_latest_state() -> dict:
     return {
         "generated_at": None,
-        "app": "bills",
+        "app": "bills-tracer-cli",
         "queue": {
             "remaining_tasks": 0,
             "remaining_batches": 0,

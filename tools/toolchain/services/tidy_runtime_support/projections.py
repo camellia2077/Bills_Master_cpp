@@ -115,7 +115,7 @@ def _build_latest_state(
     verify_payload = load_verify_result(paths)
     return {
         "generated_at": utc_now_iso(),
-        "app": "bills",
+        "app": "bills-tracer-cli",
         "queue": queue,
         "current_batch": effective_batch_id,
         "current_phase": effective_phase,
@@ -202,7 +202,7 @@ def _write_tidy_result_projection(
     last_run = latest.get("last_run", {})
     payload = {
         "generated_at": utc_now_iso(),
-        "app": "bills",
+        "app": "bills-tracer-cli",
         "stage": last_run.get("stage", ""),
         "status": last_run.get("status", ""),
         "exit_code": int(last_run.get("exit_code", 0) or 0),

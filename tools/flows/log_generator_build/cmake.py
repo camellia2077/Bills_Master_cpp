@@ -1,8 +1,55 @@
-import shutil
 import sys
 from pathlib import Path
 
-from .utils import run_command
+from tools.flows.cmake_support.models import CachePolicy, CMakeProjectSpec
+from tools.flows.cmake_support.runner import build_target as run_build_target
+from tools.flows.cmake_support.runner import ensure_configured as run_ensure_configured
+
+
+def build_spec(
+    *,
+    project_dir: Path,
+    build_dir: Path,
+    build_type: str,
+    generator: str,
+    source_dir: str,
+    compiler: str,
+    target: str | None = None,
+) -> CMakeProjectSpec:
+    src_path = Path(source_dir).resolve()
+    return CMakeProjectSpec(
+        project_dir=project_dir,
+        build_dir=build_dir,
+        source_dir=src_path,
+        generator=generator,
+        build_type=build_type,
+        compiler=compiler,
+        target=target,
+        cmake_defines=(
+            "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
+            "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
+        ),
+    )
+
+
+def build_cache_policy(build_dir: Path) -> CachePolicy:
+    return CachePolicy(
+        option_mismatch_action="recreate",
+        skip_configure_when_cache_matches=True,
+        reuse_message=f"==> Reusing existing dist directory: {build_dir.resolve()}",
+        source_mismatch_message=(
+            "==> Existing CMake cache points to another source directory. "
+            "Cleaning dist directory for reconfigure..."
+        ),
+        toolchain_mismatch_message=(
+            "==> Existing CMake cache toolchain selection changed. "
+            "Cleaning dist directory for reconfigure..."
+        ),
+        option_mismatch_message=(
+            "==> Existing CMake cache option mismatch. "
+            "Cleaning dist directory for reconfigure..."
+        ),
+    )
 
 
 def ensure_cmake_configured(
@@ -11,7 +58,7 @@ def ensure_cmake_configured(
     generator: str,
     source_dir: str,
     compiler: str,
-) -> None:
+) -> CMakeProjectSpec:
     src_path = Path(source_dir).resolve()
     if not src_path.is_dir():
         print(
@@ -20,48 +67,17 @@ def ensure_cmake_configured(
         )
         sys.exit(1)
 
-    cache_file = build_dir / "CMakeCache.txt"
-    reconfigure = not cache_file.is_file()
-
-    if cache_file.is_file():
-        cache_text = cache_file.read_text(encoding="utf-8", errors="ignore")
-        home_prefix = "CMAKE_HOME_DIRECTORY:INTERNAL="
-        home_line = ""
-        for line in cache_text.splitlines():
-            if line.startswith(home_prefix):
-                home_line = line[len(home_prefix) :].strip()
-                break
-        if home_line:
-            cached_source = Path(home_line).resolve()
-            if cached_source != src_path:
-                print(
-                    "==> Existing CMake cache points to another source directory. "
-                    "Cleaning dist directory for reconfigure..."
-                )
-                shutil.rmtree(build_dir)
-                reconfigure = True
-
-    if reconfigure:
-        print(f"==> Configuring dist directory '{build_dir.name}'...")
-        build_dir.mkdir(parents=True, exist_ok=True)
-        cmake_command = [
-            "cmake",
-            "-G",
-            generator,
-            f"-DCMAKE_BUILD_TYPE={build_type}",
-            "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
-            "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
-            str(src_path),
-        ]
-        if compiler:
-            cmake_command.insert(-1, f"-DBILL_COMPILER={compiler}")
-        run_command(cmake_command, cwd=build_dir)
-    else:
-        print(f"==> Reusing existing dist directory: {build_dir.resolve()}")
+    spec = build_spec(
+        project_dir=src_path,
+        build_dir=build_dir,
+        build_type=build_type,
+        generator=generator,
+        source_dir=str(src_path),
+        compiler=compiler,
+    )
+    run_ensure_configured(spec, build_cache_policy(build_dir))
+    return spec
 
 
-def build_target(build_dir: Path, target: str | None = None) -> None:
-    command = ["cmake", "--build", "."]
-    if target:
-        command.extend(["--target", target])
-    run_command(command, cwd=build_dir)
+def build_target(spec: CMakeProjectSpec) -> None:
+    run_build_target(spec)

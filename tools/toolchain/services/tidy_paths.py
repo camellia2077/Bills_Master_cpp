@@ -42,7 +42,7 @@ def resolve_tidy_paths(ctx: Context) -> TidyPaths:
     batch_state_dir = state_root / "batches"
     build_dir = resolve_build_directory(
         ctx.repo_root,
-        target="bills",
+        target="bills-tracer-cli",
         preset="tidy",
         scope="shared",
     ).build_dir
