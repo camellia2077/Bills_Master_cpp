@@ -1318,31 +1318,33 @@ auto ExportReports(const HostReportExportRequest& request)
 
   HostReportExportResult result;
   result.attempted_formats = request.formats;
+  result.export_dir = request.export_dir;
   for (const auto& format : request.formats) {
-    bool current_success = false;
+    ReportExportRunResult current_result;
     switch (request.scope) {
       case HostReportExportScope::kYear:
-        current_success = export_service.export_yearly_report(*normalized_year, format);
+        current_result = export_service.export_yearly_report(*normalized_year, format);
         break;
       case HostReportExportScope::kMonth:
-        current_success =
+        current_result =
             export_service.export_monthly_report(*normalized_month, format);
         break;
       case HostReportExportScope::kRange:
-        current_success =
+        current_result =
             export_service.export_monthly_range(*normalized_range, format);
         break;
       case HostReportExportScope::kAllMonths:
-        current_success = export_service.export_all_monthly_reports(format);
+        current_result = export_service.export_all_monthly_reports(format);
         break;
       case HostReportExportScope::kAllYears:
-        current_success = export_service.export_all_yearly_reports(format);
+        current_result = export_service.export_all_yearly_reports(format);
         break;
       case HostReportExportScope::kAll:
-        current_success = export_service.export_all_reports(format);
+        current_result = export_service.export_all_reports(format);
         break;
     }
-    if (!current_success) {
+    result.exported_count += current_result.exported_count;
+    if (!current_result.ok) {
       result.failed_formats.push_back(format);
     }
   }

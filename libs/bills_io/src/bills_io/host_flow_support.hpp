@@ -107,6 +107,8 @@ struct HostReportExportResult {
   bool ok = true;
   std::vector<std::string> attempted_formats;
   std::vector<std::string> failed_formats;
+  std::size_t exported_count = 0U;
+  std::filesystem::path export_dir;
 };
 
 [[nodiscard]] auto LoadValidatedConfigContext(

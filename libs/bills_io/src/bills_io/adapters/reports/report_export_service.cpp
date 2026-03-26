@@ -119,45 +119,48 @@ auto ReportExportService::write_standard_json(const std::string& group_name,
 
 auto ReportExportService::export_yearly_report(const ReportExportYear& year,
                                                const std::string& format_name)
-    -> bool {
+    -> ReportExportRunResult {
   const std::string normalized_format =
       StandardReportRendererRegistry::NormalizeFormat(format_name);
   if (normalized_format.empty()) {
-    return false;
+    return {.ok = false};
   }
 
   const auto query_result =
       QueryService::QueryYear(*report_data_gateway_, year.iso_year);
   if (!query_result.data_found) {
-    return false;
+    return {.ok = false};
   }
 
   const auto standard_report = ReportRenderService::BuildStandardReport(query_result);
   if (StandardReportRendererRegistry::IsFormatAvailable("json")) {
     if (!write_standard_json("years", year.iso_year,
                              ReportRenderService::Render(standard_report, "json"))) {
-      return false;
+      return {.ok = false};
     }
   }
   const std::string report = ReportRenderService::Render(standard_report, normalized_format);
-  return write_report(resolve_folder_name(format_folder_names_, normalized_format),
-                      "years", year.iso_year,
-                      extension_for_format(normalized_format), report);
+  if (!write_report(resolve_folder_name(format_folder_names_, normalized_format),
+                    "years", year.iso_year,
+                    extension_for_format(normalized_format), report)) {
+    return {.ok = false};
+  }
+  return {.ok = true, .exported_count = 1U};
 }
 
 auto ReportExportService::export_monthly_report(const ReportExportMonth& month,
                                                 const std::string& format_name)
-    -> bool {
+    -> ReportExportRunResult {
   const std::string normalized_format =
       StandardReportRendererRegistry::NormalizeFormat(format_name);
   if (normalized_format.empty()) {
-    return false;
+    return {.ok = false};
   }
 
   const auto query_result =
       QueryService::QueryMonth(*report_data_gateway_, month.iso_month);
   if (!query_result.data_found) {
-    return false;
+    return {.ok = false};
   }
 
   const auto standard_report = ReportRenderService::BuildStandardReport(query_result);
@@ -165,62 +168,85 @@ auto ReportExportService::export_monthly_report(const ReportExportMonth& month,
     if (!write_standard_json("months/" + std::to_string(month.year),
                              month.iso_month,
                              ReportRenderService::Render(standard_report, "json"))) {
-      return false;
+      return {.ok = false};
     }
   }
   const std::string report = ReportRenderService::Render(standard_report, normalized_format);
-  return write_report(resolve_folder_name(format_folder_names_, normalized_format),
-                      "months/" + std::to_string(month.year), month.iso_month,
-                      extension_for_format(normalized_format), report);
+  if (!write_report(resolve_folder_name(format_folder_names_, normalized_format),
+                    "months/" + std::to_string(month.year), month.iso_month,
+                    extension_for_format(normalized_format), report)) {
+    return {.ok = false};
+  }
+  return {.ok = true, .exported_count = 1U};
 }
 
 auto ReportExportService::export_monthly_range(const ReportExportRange& range,
                                                const std::string& format_name)
-    -> bool {
+    -> ReportExportRunResult {
   const auto normalized_months = list_normalized_available_months();
   const int start_key = ReportExportMonthKey(range.start);
   const int end_key = ReportExportMonthKey(range.end);
-  bool success = true;
+  ReportExportRunResult result{.ok = true, .exported_count = 0U};
+  if (normalized_months.had_invalid_entries) {
+    result.ok = false;
+  }
   for (const auto& month : normalized_months.months) {
     const int current_key = ReportExportMonthKey(month);
     if (current_key >= start_key && current_key <= end_key) {
-      success = export_monthly_report(month, format_name) && success;
+      const auto current_result = export_monthly_report(month, format_name);
+      result.ok = current_result.ok && result.ok;
+      result.exported_count += current_result.exported_count;
     }
   }
-  return success;
+  return result;
 }
 
 auto ReportExportService::export_all_monthly_reports(const std::string& format_name)
-    -> bool {
+    -> ReportExportRunResult {
   const auto normalized_months = list_normalized_available_months();
-  bool success = !normalized_months.had_invalid_entries;
+  ReportExportRunResult result{
+      .ok = !normalized_months.had_invalid_entries,
+      .exported_count = 0U,
+  };
   for (const auto& month : normalized_months.months) {
-    success = export_monthly_report(month, format_name) && success;
+    const auto current_result = export_monthly_report(month, format_name);
+    result.ok = current_result.ok && result.ok;
+    result.exported_count += current_result.exported_count;
   }
-  return success;
+  return result;
 }
 
 auto ReportExportService::export_all_yearly_reports(const std::string& format_name)
-    -> bool {
+    -> ReportExportRunResult {
   std::set<int> years;
   const auto normalized_months = list_normalized_available_months();
-  bool success = !normalized_months.had_invalid_entries;
+  ReportExportRunResult result{
+      .ok = !normalized_months.had_invalid_entries,
+      .exported_count = 0U,
+  };
   for (const auto& month : normalized_months.months) {
     years.insert(month.year);
   }
   for (const auto& year : years) {
-    success = export_yearly_report(
-                  ReportExportYear{
-                      .iso_year = std::to_string(year),
-                      .year = year,
-                  },
-                  format_name) &&
-              success;
+    const auto current_result = export_yearly_report(
+        ReportExportYear{
+            .iso_year = std::to_string(year),
+            .year = year,
+        },
+        format_name);
+    result.ok = current_result.ok && result.ok;
+    result.exported_count += current_result.exported_count;
   }
-  return success;
+  return result;
 }
 
-auto ReportExportService::export_all_reports(const std::string& format_name) -> bool {
-  return export_all_monthly_reports(format_name) &&
-         export_all_yearly_reports(format_name);
+auto ReportExportService::export_all_reports(const std::string& format_name)
+    -> ReportExportRunResult {
+  const auto monthly_result = export_all_monthly_reports(format_name);
+  const auto yearly_result = export_all_yearly_reports(format_name);
+  return {
+      .ok = monthly_result.ok && yearly_result.ok,
+      .exported_count =
+          monthly_result.exported_count + yearly_result.exported_count,
+  };
 }

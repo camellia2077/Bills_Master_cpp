@@ -26,6 +26,11 @@ struct ReportExportRange {
   ReportExportMonth end;
 };
 
+struct ReportExportRunResult {
+  bool ok = true;
+  std::size_t exported_count = 0U;
+};
+
 [[nodiscard]] auto TryBuildReportExportYear(std::string_view raw)
     -> std::optional<ReportExportYear>;
 
@@ -49,15 +54,21 @@ class ReportExportService {
       const std::string& export_base_dir = "exports",
       const std::map<std::string, std::string>& format_folder_names = {});
 
-  bool export_yearly_report(const ReportExportYear& year,
-                            const std::string& format_name);
-  bool export_monthly_report(const ReportExportMonth& month,
-                             const std::string& format_name);
-  bool export_monthly_range(const ReportExportRange& range,
-                            const std::string& format_name);
-  bool export_all_reports(const std::string& format_name);
-  bool export_all_monthly_reports(const std::string& format_name);
-  bool export_all_yearly_reports(const std::string& format_name);
+  [[nodiscard]] auto export_yearly_report(const ReportExportYear& year,
+                                          const std::string& format_name)
+      -> ReportExportRunResult;
+  [[nodiscard]] auto export_monthly_report(const ReportExportMonth& month,
+                                           const std::string& format_name)
+      -> ReportExportRunResult;
+  [[nodiscard]] auto export_monthly_range(const ReportExportRange& range,
+                                          const std::string& format_name)
+      -> ReportExportRunResult;
+  [[nodiscard]] auto export_all_reports(const std::string& format_name)
+      -> ReportExportRunResult;
+  [[nodiscard]] auto export_all_monthly_reports(const std::string& format_name)
+      -> ReportExportRunResult;
+  [[nodiscard]] auto export_all_yearly_reports(const std::string& format_name)
+      -> ReportExportRunResult;
   [[nodiscard]] static auto ListAvailableFormats() -> std::vector<std::string>;
 
  private:

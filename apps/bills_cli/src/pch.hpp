@@ -39,6 +39,6 @@
 //  这些是项目的基础设施，一旦成型，很少改动。
 //  (建议根据项目结构手动调整此部分顺序和分组)
 // ===================================================================
-#include "common/common_utils.hpp"  // 使用次数: 12
+#include "presentation/common/terminal_colors.hpp"  // CLI 终端颜色常量
 
 #endif  // PCH_H

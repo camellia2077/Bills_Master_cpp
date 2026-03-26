@@ -336,7 +336,7 @@ auto ParseCliRequest(std::string_view program_name,
   report_export->require_subcommand(1);
 
   std::string report_export_year_value;
-  std::string report_export_year_format = "md";
+  std::string report_export_year_format;
   auto* report_export_year = report_export->add_subcommand(
       "year", "Export yearly reports for the requested year.");
   ConfigureCommand(*report_export_year);
@@ -349,7 +349,7 @@ auto ParseCliRequest(std::string_view program_name,
   SetExamples(
       *report_export_year,
       {"bills_tracer_cli report export year <YYYY>",
-       "bills_tracer_cli report export year <YYYY> --format typ"});
+       "bills_tracer_cli report export year <YYYY> --format md,json,tex,typ"});
   report_export_year->callback(
       [&parsed_request, &report_export_year_value, &report_export_year_format]() {
         ReportRequest request;
@@ -360,7 +360,7 @@ auto ParseCliRequest(std::string_view program_name,
       });
 
   std::string report_export_month_value;
-  std::string report_export_month_format = "md";
+  std::string report_export_month_format;
   auto* report_export_month = report_export->add_subcommand(
       "month", "Export monthly reports for the requested period.");
   ConfigureCommand(*report_export_month);
@@ -373,7 +373,7 @@ auto ParseCliRequest(std::string_view program_name,
   SetExamples(
       *report_export_month,
       {"bills_tracer_cli report export month <YYYY-MM>",
-       "bills_tracer_cli report export month <YYYY-MM> --format tex"});
+       "bills_tracer_cli report export month <YYYY-MM> --format md,json"});
   report_export_month->callback(
       [&parsed_request, &report_export_month_value,
        &report_export_month_format]() {
@@ -386,7 +386,7 @@ auto ParseCliRequest(std::string_view program_name,
 
   std::string report_export_range_start;
   std::string report_export_range_end;
-  std::string report_export_range_format = "md";
+  std::string report_export_range_format;
   auto* report_export_range = report_export->add_subcommand(
       "range", "Export monthly reports for an inclusive period range.");
   ConfigureCommand(*report_export_range);
@@ -404,7 +404,7 @@ auto ParseCliRequest(std::string_view program_name,
       *report_export_range,
       {"bills_tracer_cli report export range <YYYY-MM> <YYYY-MM>",
        "bills_tracer_cli report export range <YYYY-MM> <YYYY-MM> --format "
-       "json"});
+       "json,typ"});
   report_export_range->callback(
       [&parsed_request, &report_export_range_start, &report_export_range_end,
        &report_export_range_format]() {
@@ -416,7 +416,7 @@ auto ParseCliRequest(std::string_view program_name,
         parsed_request = CliRequest{request};
       });
 
-  std::string report_export_all_months_format = "md";
+  std::string report_export_all_months_format;
   auto* report_export_all_months = report_export->add_subcommand(
       "all-months", "Export all monthly reports that exist in the database.");
   ConfigureCommand(*report_export_all_months);
@@ -425,7 +425,7 @@ auto ParseCliRequest(std::string_view program_name,
   SetExamples(
       *report_export_all_months,
       {"bills_tracer_cli report export all-months",
-       "bills_tracer_cli report export all-months --format all"});
+       "bills_tracer_cli report export all-months --format md,json,tex,typ"});
   report_export_all_months->callback(
       [&parsed_request, &report_export_all_months_format]() {
         ReportRequest request;
@@ -434,7 +434,7 @@ auto ParseCliRequest(std::string_view program_name,
         parsed_request = CliRequest{request};
       });
 
-  std::string report_export_all_years_format = "md";
+  std::string report_export_all_years_format;
   auto* report_export_all_years = report_export->add_subcommand(
       "all-years", "Export all yearly reports that exist in the database.");
   ConfigureCommand(*report_export_all_years);
@@ -443,7 +443,7 @@ auto ParseCliRequest(std::string_view program_name,
   SetExamples(
       *report_export_all_years,
       {"bills_tracer_cli report export all-years",
-       "bills_tracer_cli report export all-years --format rst"});
+       "bills_tracer_cli report export all-years --format rst,typ"});
   report_export_all_years->callback(
       [&parsed_request, &report_export_all_years_format]() {
         ReportRequest request;
@@ -452,7 +452,7 @@ auto ParseCliRequest(std::string_view program_name,
         parsed_request = CliRequest{request};
       });
 
-  std::string report_export_all_format = "md";
+  std::string report_export_all_format;
   auto* report_export_all = report_export->add_subcommand(
       "all", "Export every supported report scope from the database.");
   ConfigureCommand(*report_export_all);
@@ -460,7 +460,7 @@ auto ParseCliRequest(std::string_view program_name,
                                 std::string(kFormatDescription));
   SetExamples(*report_export_all,
               {"bills_tracer_cli report export all",
-               "bills_tracer_cli report export all --format json"});
+               "bills_tracer_cli report export all --format md,json,tex,typ"});
   report_export_all->callback([&parsed_request, &report_export_all_format]() {
     ReportRequest request;
     request.action = ReportAction::kExportAll;

@@ -13,7 +13,7 @@ import bill.cli.deps.common_utils;
 
 #include <iostream>
 
-namespace terminal = common::terminal;
+namespace terminal = bills::cli::terminal;
 
 namespace bills::cli {
 namespace {
@@ -124,6 +124,11 @@ auto ReportHandler::Handle(const ReportRequest& request) const -> bool {
           std::cerr << terminal::kRed << "Error: " << terminal::kReset
                     << "Report export failed for format '" << failed_format
                     << "'." << '\n';
+        }
+        if (export_result->ok) {
+          std::cout << "Exported " << export_result->exported_count
+                    << " report(s) to "
+                    << export_result->export_dir.string() << '\n';
         }
         return export_result->ok;
       }

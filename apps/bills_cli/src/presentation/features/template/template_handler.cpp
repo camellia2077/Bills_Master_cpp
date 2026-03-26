@@ -14,7 +14,7 @@ import bill.cli.deps.common_utils;
 #include <iostream>
 #include <sstream>
 
-namespace terminal = common::terminal;
+namespace terminal = bills::cli::terminal;
 
 namespace bills::cli {
 namespace {

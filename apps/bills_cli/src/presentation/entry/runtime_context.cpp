@@ -11,6 +11,7 @@ import bill.cli.deps.renderer_registry;
 #include <common/Result.hpp>
 
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -24,7 +25,7 @@ import bill.cli.deps.renderer_registry;
 #include <windows.h>
 #endif
 
-namespace terminal = common::terminal;
+namespace terminal = bills::cli::terminal;
 
 namespace bills::cli {
 namespace {
@@ -113,6 +114,35 @@ auto ReadTextFile(const std::filesystem::path& file_path) -> Result<std::string>
   std::ostringstream buffer;
   buffer << input.rdbuf();
   return buffer.str();
+}
+
+auto TrimAsciiWhitespace(std::string value) -> std::string {
+  const auto is_space = [](unsigned char ch) -> bool {
+    return std::isspace(ch) != 0;
+  };
+  while (!value.empty() && is_space(static_cast<unsigned char>(value.front()))) {
+    value.erase(value.begin());
+  }
+  while (!value.empty() && is_space(static_cast<unsigned char>(value.back()))) {
+    value.pop_back();
+  }
+  return value;
+}
+
+auto SplitRequestedFormats(std::string_view requested_formats)
+    -> std::vector<std::string> {
+  std::vector<std::string> parts;
+  std::string current;
+  for (const char ch : requested_formats) {
+    if (ch == ',') {
+      parts.push_back(TrimAsciiWhitespace(current));
+      current.clear();
+      continue;
+    }
+    current.push_back(ch);
+  }
+  parts.push_back(TrimAsciiWhitespace(current));
+  return parts;
 }
 
 }  // namespace
@@ -226,38 +256,56 @@ auto ResolveSingleReportFormat(const RuntimeContext& context,
 
 auto ResolveExportFormats(const RuntimeContext& context, std::string requested_format)
     -> Result<std::vector<std::string>> {
-  const std::string normalized =
-      StandardReportRendererRegistry::NormalizeFormat(requested_format);
-  if (normalized.empty()) {
-    return std::unexpected(
-        MakeError("Unknown report format: '" + requested_format + "'.",
-                  "RuntimeContext"));
+  const std::string trimmed_requested = TrimAsciiWhitespace(requested_format);
+  if (trimmed_requested.empty()) {
+    return LoadEnabledFormats(context);
   }
-  if (normalized != "all") {
+
+  std::vector<std::string> resolved_formats;
+  for (const auto& raw_part : SplitRequestedFormats(trimmed_requested)) {
+    if (raw_part.empty()) {
+      return std::unexpected(
+          MakeError("Report format list contains an empty item.",
+                    "RuntimeContext"));
+    }
+
+    const std::string normalized =
+        StandardReportRendererRegistry::NormalizeFormat(raw_part);
+    if (normalized.empty()) {
+      return std::unexpected(
+          MakeError("Unknown report format: '" + raw_part + "'.",
+                    "RuntimeContext"));
+    }
+    if (normalized == "all") {
+      const auto enabled_formats = LoadEnabledFormats(context);
+      if (!enabled_formats) {
+        return std::unexpected(enabled_formats.error());
+      }
+      for (const auto& enabled_format : *enabled_formats) {
+        if (std::ranges::find(resolved_formats, enabled_format) ==
+            resolved_formats.end()) {
+          resolved_formats.push_back(enabled_format);
+        }
+      }
+      continue;
+    }
+
     auto single_format = ResolveSingleReportFormat(context, normalized);
     if (!single_format) {
       return std::unexpected(single_format.error());
     }
-    return std::vector<std::string>{*single_format};
-  }
-
-  const auto enabled_formats = LoadEnabledFormats(context);
-  if (!enabled_formats) {
-    return std::unexpected(enabled_formats.error());
-  }
-
-  std::vector<std::string> formats;
-  for (const auto& format : *enabled_formats) {
-    if (StandardReportRendererRegistry::IsFormatAvailable(format)) {
-      formats.push_back(format);
+    if (std::ranges::find(resolved_formats, *single_format) ==
+        resolved_formats.end()) {
+      resolved_formats.push_back(*single_format);
     }
   }
-  if (formats.empty()) {
+
+  if (resolved_formats.empty()) {
     return std::unexpected(MakeError(
         "No enabled export formats are available in this build.",
         "RuntimeContext"));
   }
-  return formats;
+  return resolved_formats;
 }
 
 auto ReadBundledNotices(const RuntimeContext& context, bool raw_json)
