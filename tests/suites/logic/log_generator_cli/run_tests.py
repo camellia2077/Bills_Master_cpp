@@ -25,7 +25,8 @@ def run_command(
     command: list[str],
     *,
     cwd: Path,
-    expected_return_code: int,
+    expected_return_code: int | None = None,
+    expect_nonzero: bool = False,
 ) -> subprocess.CompletedProcess[str]:
     print(f"==> Running: {' '.join(command)}")
     completed = subprocess.run(
@@ -41,14 +42,28 @@ def run_command(
         print(stdout)
     if stderr:
         print(stderr)
-    require(
-        completed.returncode == expected_return_code,
-        (
-            f"Expected return code {expected_return_code}, got {completed.returncode}. "
-            f"command={' '.join(command)}"
-        ),
-    )
+    if expected_return_code is not None:
+        require(
+            completed.returncode == expected_return_code,
+            (
+                f"Expected return code {expected_return_code}, got {completed.returncode}. "
+                f"command={' '.join(command)}"
+            ),
+        )
+    if expect_nonzero:
+        require(
+            completed.returncode != 0,
+            f"Expected a non-zero return code. command={' '.join(command)}",
+        )
     return completed
+
+
+def combined_output(completed: subprocess.CompletedProcess[str]) -> str:
+    return "\n".join(part for part in [completed.stdout.strip(), completed.stderr.strip()] if part)
+
+
+def contains_help_listing(text: str) -> bool:
+    return "--single" in text and "--double" in text and "--version" in text
 
 
 def resolve_generator_path(explicit_path: str) -> Path:
@@ -62,7 +77,7 @@ def resolve_generator_path(explicit_path: str) -> Path:
     default_path = (
         resolve_build_directory(
             REPO_ROOT,
-            target="log-generator",
+            target="bills-tracer-log-generator",
             preset="debug",
             scope="shared",
         ).build_dir
@@ -84,7 +99,7 @@ def resolve_generator_config(explicit_path: str) -> Path:
     default_path = (
         resolve_build_directory(
             REPO_ROOT,
-            target="log-generator",
+            target="bills-tracer-log-generator",
             preset="debug",
             scope="shared",
         ).build_dir
@@ -127,13 +142,16 @@ def run_cli_tests(generator_path: Path, config_path: Path) -> dict:
         run_case(
             "help",
             lambda: require(
-                "Usage:"
-                in run_command(
-                    [str(generator_path), "--help"],
-                    cwd=runtime_dir,
-                    expected_return_code=0,
-                ).stderr,
-                "help output must contain Usage.",
+                contains_help_listing(
+                    combined_output(
+                    run_command(
+                        [str(generator_path), "--help"],
+                        cwd=runtime_dir,
+                        expected_return_code=0,
+                    )
+                    )
+                ),
+                "help output must list the CLI options.",
             ),
         )
 
@@ -141,38 +159,61 @@ def run_cli_tests(generator_path: Path, config_path: Path) -> dict:
             "version",
             lambda: require(
                 "generator version"
-                in run_command(
+                in combined_output(
+                    run_command(
                     [str(generator_path), "--version"],
                     cwd=runtime_dir,
                     expected_return_code=0,
-                ).stdout,
+                    )
+                ),
                 "version output must contain generator version.",
             ),
         )
 
         run_case(
-            "single_missing_year",
+            "no_args",
             lambda: require(
-                "Missing argument for --single option."
-                in run_command(
+                "Run with --help for more information."
+                in combined_output(
+                    run_command(
+                        [str(generator_path)],
+                        cwd=runtime_dir,
+                        expect_nonzero=True,
+                    )
+                ),
+                "running without arguments should point the user to --help.",
+            ),
+        )
+
+        run_case(
+            "single_missing_year",
+            lambda: (
+                lambda completed: (
+                    require("--single" in combined_output(completed), "missing --single year should mention --single."),
+                    require("missing" in combined_output(completed), "missing --single year should report a missing value."),
+                )
+            )(
+                run_command(
                     [str(generator_path), "--single"],
                     cwd=runtime_dir,
-                    expected_return_code=1,
-                ).stderr,
-                "missing --single year should report explicit error.",
+                    expect_nonzero=True,
+                )
             ),
         )
 
         run_case(
             "single_invalid_year",
-            lambda: require(
-                "Invalid year provided for --single."
-                in run_command(
+            lambda: (
+                lambda completed: (
+                    require("--single" in combined_output(completed), "invalid --single year should mention --single."),
+                    require("abc" in combined_output(completed), "invalid --single year should mention the bad value."),
+                )
+            )(
+                run_command(
                     [str(generator_path), "--single", "abc"],
                     cwd=runtime_dir,
-                    expected_return_code=1,
-                ).stderr,
-                "invalid --single year should report explicit error.",
+                    expect_nonzero=True,
+                )
             ),
         )
 
@@ -180,12 +221,31 @@ def run_cli_tests(generator_path: Path, config_path: Path) -> dict:
             "double_invalid_range",
             lambda: require(
                 "Start year cannot be after end year."
-                in run_command(
-                    [str(generator_path), "--double", "2025", "2024"],
-                    cwd=runtime_dir,
-                    expected_return_code=1,
-                ).stderr,
+                in combined_output(
+                    run_command(
+                        [str(generator_path), "--double", "2025", "2024"],
+                        cwd=runtime_dir,
+                        expect_nonzero=True,
+                    )
+                ),
                 "invalid --double range should report explicit error.",
+            ),
+        )
+
+        run_case(
+            "single_and_double_conflict",
+            lambda: (
+                lambda completed: (
+                    require("--single" in combined_output(completed), "conflict output should mention --single."),
+                    require("--double" in combined_output(completed), "conflict output should mention --double."),
+                    require("excludes" in combined_output(completed), "conflict output should report the exclusion rule."),
+                )
+            )(
+                run_command(
+                    [str(generator_path), "--single", "2024", "--double", "2024", "2025"],
+                    cwd=runtime_dir,
+                    expect_nonzero=True,
+                )
             ),
         )
 

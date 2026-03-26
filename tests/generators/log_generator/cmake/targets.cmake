@@ -4,6 +4,7 @@ add_executable(generator
 )
 
 target_include_directories(generator PRIVATE "${SOURCE_ROOT}/internal")
+target_include_directories(generator PRIVATE "${SOURCE_ROOT}")
 target_link_libraries(generator PRIVATE ${COMMON_LINK_LIBRARIES})
 
 # Copy config folder to output directory.
