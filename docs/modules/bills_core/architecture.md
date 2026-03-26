@@ -23,7 +23,7 @@
 - 导出文件落盘
 - sqlite 具体实现
 
-这些职责统一下沉到 `libs/bills_io` 或宿主层。
+这些职责统一下沉到 `libs/io` 或宿主层。
 
 ## 分层职责
 
@@ -53,7 +53,7 @@
 
 ## 宿主协作
 
-- `libs/bills_io`
+- `libs/io`
   - 负责 `ConfigDocumentParser`、`SourceDocumentIo`、`JsonBillDocumentIo`、`ReportExportService`
   - 通过 `host_flow_support.*` 为 CLI / Android 提供公共宿主拼装逻辑
 - `apps/bills_cli`

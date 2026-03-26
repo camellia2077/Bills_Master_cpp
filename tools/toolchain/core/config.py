@@ -15,7 +15,7 @@ class ScopeConfig:
         default_factory=lambda: [
             "apps/bills_cli/src",
             "libs/bills_core/src",
-            "libs/bills_io/src",
+            "libs/io/src",
         ]
     )
     optional_roots: list[str] = field(
@@ -34,7 +34,7 @@ class ScopeConfig:
         default_factory=lambda: [
             "apps/bills_cli/src",
             "libs/bills_core/src",
-            "libs/bills_io/src",
+            "libs/io/src",
         ]
     )
 

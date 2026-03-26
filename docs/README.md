@@ -16,11 +16,11 @@
 - `docs/modules/bills_core/standard_report_json_schema_v1.md`
 - `docs/modules/bills_core/legacy_pipeline_sunset_plan.md`
 - `docs/modules/bills_core/md_json_render_phase0_phase1.md`
-- `docs/modules/bills_io/README.md`
-- `docs/modules/bills_io/architecture.md`
-- `docs/modules/bills_io/module_map.md`
-- `docs/modules/bills_io/change_guide.md`
-- `docs/modules/bills_io/dist_and_test.md`
+- `docs/modules/io/README.md`
+- `docs/modules/io/architecture.md`
+- `docs/modules/io/module_map.md`
+- `docs/modules/io/change_guide.md`
+- `docs/modules/io/dist_and_test.md`
 - `docs/modules/bills_android/README.md`
 - `docs/modules/bills_android/architecture.md`
 - `docs/modules/bills_android/module_map.md`

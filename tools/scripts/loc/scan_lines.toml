@@ -6,7 +6,7 @@ display_name = "C++"
 default_paths = [
   "apps/bills_cli/src",
   "libs/bills_core/src",
-  "libs/bills_io/src",
+  "libs/io/src",
   "tests/generators/log_generator/src",
 ]
 extensions = [".cpp", ".h", ".hpp", ".cppm", ".cc", ".cxx", ".c"]

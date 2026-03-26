@@ -50,8 +50,8 @@ add_subdirectory(
 
 # 引入 IO 适配层独立库
 add_subdirectory(
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/bills_io"
-    "${CMAKE_CURRENT_BINARY_DIR}/libs/bills_io"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/io"
+    "${CMAKE_CURRENT_BINARY_DIR}/libs/io"
 )
 
 # 收集所有源文件到变量中

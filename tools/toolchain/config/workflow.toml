@@ -5,7 +5,7 @@ default_target = "bills-tracer-cli"
 default_roots = [
   "apps/bills_cli/src",
   "libs/bills_core/src",
-  "libs/bills_io/src",
+  "libs/io/src",
 ]
 optional_roots = [
   "tests/generators/log_generator/src",
@@ -18,7 +18,7 @@ exclude_segments = [
 header_filter_roots = [
   "apps/bills_cli/src",
   "libs/bills_core/src",
-  "libs/bills_io/src",
+  "libs/io/src",
 ]
 
 [tidy]

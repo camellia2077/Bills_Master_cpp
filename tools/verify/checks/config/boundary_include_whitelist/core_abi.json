@@ -5,7 +5,7 @@
   "boundary_layer_roots": {
     "core_abi": "libs/bills_core/src/abi",
     "core_modules_bridge": "libs/bills_core/src/modules",
-    "io_adapters": "libs/bills_io/src/bills_io/adapters"
+    "io_adapters": "libs/io/src/io/adapters"
   },
   "scope": "core_abi",
   "allowed_quoted_includes": {

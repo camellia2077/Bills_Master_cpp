@@ -10,7 +10,7 @@
 #include <string_view>
 #include <vector>
 
-#include "bills_io/host_flow_support.hpp"
+#include "io/host_flow_support.hpp"
 #include "jni_common.hpp"
 
 namespace {

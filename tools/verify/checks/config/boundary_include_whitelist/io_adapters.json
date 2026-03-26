@@ -5,20 +5,20 @@
   "boundary_layer_roots": {
     "core_abi": "libs/bills_core/src/abi",
     "core_modules_bridge": "libs/bills_core/src/modules",
-    "io_adapters": "libs/bills_io/src/bills_io/adapters"
+    "io_adapters": "libs/io/src/io/adapters"
   },
   "scope": "io_adapters",
   "allowed_quoted_includes": {
-    "libs/bills_io/src/bills_io/adapters/config/config_document_parser.cpp": [
+    "libs/io/src/io/adapters/config/config_document_parser.cpp": [
       {
-        "header": "bills_io/adapters/config/config_document_parser.hpp",
+        "header": "io/adapters/config/config_document_parser.hpp",
         "owner": "phase3-core-canonicalization",
         "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
         "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/config/config_document_parser.hpp": [
+    "libs/io/src/io/adapters/config/config_document_parser.hpp": [
       {
         "header": "common/Result.hpp",
         "owner": "phase3-core-canonicalization",
@@ -34,7 +34,7 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/db/bill_inserter.cpp": [
+    "libs/io/src/io/adapters/db/bill_inserter.cpp": [
       {
         "header": "bill_inserter.hpp",
         "owner": "phase3-core-canonicalization",
@@ -50,7 +50,7 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/db/bill_inserter.hpp": [
+    "libs/io/src/io/adapters/db/bill_inserter.hpp": [
       {
         "header": "domain/bill/bill_record.hpp",
         "owner": "phase3-core-canonicalization",
@@ -59,7 +59,7 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/db/database_manager.cpp": [
+    "libs/io/src/io/adapters/db/database_manager.cpp": [
       {
         "header": "database_manager.hpp",
         "owner": "phase3-core-canonicalization",
@@ -68,7 +68,7 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/db/database_manager.hpp": [
+    "libs/io/src/io/adapters/db/database_manager.hpp": [
       {
         "header": "domain/bill/bill_record.hpp",
         "owner": "phase3-core-canonicalization",
@@ -77,7 +77,7 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/db/month_query.cpp": [
+    "libs/io/src/io/adapters/db/month_query.cpp": [
       {
         "header": "month_query.hpp",
         "owner": "phase3-core-canonicalization",
@@ -86,7 +86,7 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/db/month_query.hpp": [
+    "libs/io/src/io/adapters/db/month_query.hpp": [
       {
         "header": "ports/contracts/reports/monthly/monthly_report_data.hpp",
         "owner": "phase3-core-canonicalization",
@@ -95,9 +95,9 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/db/sqlite_bill_repository.cpp": [
+    "libs/io/src/io/adapters/db/sqlite_bill_repository.cpp": [
       {
-        "header": "bills_io/adapters/db/bill_inserter.hpp",
+        "header": "io/adapters/db/bill_inserter.hpp",
         "owner": "phase3-core-canonicalization",
         "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
         "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
@@ -111,7 +111,7 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/db/sqlite_bill_repository.hpp": [
+    "libs/io/src/io/adapters/db/sqlite_bill_repository.hpp": [
       {
         "header": "ports/bills_repository.hpp",
         "owner": "phase3-core-canonicalization",
@@ -120,30 +120,30 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/db/sqlite_report_data_gateway.cpp": [
+    "libs/io/src/io/adapters/db/sqlite_report_data_gateway.cpp": [
       {
-        "header": "bills_io/adapters/db/month_query.hpp",
+        "header": "io/adapters/db/month_query.hpp",
         "owner": "phase3-core-canonicalization",
         "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
         "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
         "tier": "long-term"
       },
       {
-        "header": "bills_io/adapters/db/sqlite_report_data_gateway.hpp",
+        "header": "io/adapters/db/sqlite_report_data_gateway.hpp",
         "owner": "phase3-core-canonicalization",
         "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
         "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
         "tier": "long-term"
       },
       {
-        "header": "bills_io/adapters/db/year_query.hpp",
+        "header": "io/adapters/db/year_query.hpp",
         "owner": "phase3-core-canonicalization",
         "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
         "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/db/sqlite_report_data_gateway.hpp": [
+    "libs/io/src/io/adapters/db/sqlite_report_data_gateway.hpp": [
       {
         "header": "ports/report_data_gateway.hpp",
         "owner": "phase3-core-canonicalization",
@@ -152,16 +152,16 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/db/sqlite_report_db_session.cpp": [
+    "libs/io/src/io/adapters/db/sqlite_report_db_session.cpp": [
       {
-        "header": "bills_io/adapters/db/sqlite_report_db_session.hpp",
+        "header": "io/adapters/db/sqlite_report_db_session.hpp",
         "owner": "phase3-core-canonicalization",
         "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
         "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/db/year_query.cpp": [
+    "libs/io/src/io/adapters/db/year_query.cpp": [
       {
         "header": "year_query.hpp",
         "owner": "phase3-core-canonicalization",
@@ -170,7 +170,7 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/db/year_query.hpp": [
+    "libs/io/src/io/adapters/db/year_query.hpp": [
       {
         "header": "ports/contracts/reports/yearly/yearly_report_data.hpp",
         "owner": "phase3-core-canonicalization",
@@ -179,9 +179,9 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/io/json_bill_document_io.cpp": [
+    "libs/io/src/io/adapters/io/json_bill_document_io.cpp": [
       {
-        "header": "bills_io/adapters/io/json_bill_document_io.hpp",
+        "header": "io/adapters/io/json_bill_document_io.hpp",
         "owner": "phase3-core-canonicalization",
         "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
         "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
@@ -195,7 +195,7 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/io/json_bill_document_io.hpp": [
+    "libs/io/src/io/adapters/io/json_bill_document_io.hpp": [
       {
         "header": "common/Result.hpp",
         "owner": "phase3-core-canonicalization",
@@ -218,16 +218,16 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/io/source_document_io.cpp": [
+    "libs/io/src/io/adapters/io/source_document_io.cpp": [
       {
-        "header": "bills_io/adapters/io/source_document_io.hpp",
+        "header": "io/adapters/io/source_document_io.hpp",
         "owner": "phase3-core-canonicalization",
         "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
         "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/io/source_document_io.hpp": [
+    "libs/io/src/io/adapters/io/source_document_io.hpp": [
       {
         "header": "common/Result.hpp",
         "owner": "phase3-core-canonicalization",
@@ -243,9 +243,9 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/io/zip_archive_io.cpp": [
+    "libs/io/src/io/adapters/io/zip_archive_io.cpp": [
       {
-        "header": "bills_io/adapters/io/zip_archive_io.hpp",
+        "header": "io/adapters/io/zip_archive_io.hpp",
         "owner": "phase3-core-canonicalization",
         "reason": "ZIP 归档适配器属于 IO/第三方边界实现，允许保留 include。",
         "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
@@ -259,7 +259,7 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/io/zip_archive_io.hpp": [
+    "libs/io/src/io/adapters/io/zip_archive_io.hpp": [
       {
         "header": "common/Result.hpp",
         "owner": "phase3-core-canonicalization",
@@ -268,18 +268,18 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/io/year_partition_output_path_builder.cpp": [
+    "libs/io/src/io/adapters/io/year_partition_output_path_builder.cpp": [
       {
-        "header": "bills_io/adapters/io/year_partition_output_path_builder.hpp",
+        "header": "io/adapters/io/year_partition_output_path_builder.hpp",
         "owner": "phase3-core-canonicalization",
         "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
         "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
         "tier": "long-term"
       }
     ],
-    "libs/bills_io/src/bills_io/adapters/reports/report_export_service.cpp": [
+    "libs/io/src/io/adapters/reports/report_export_service.cpp": [
       {
-        "header": "bills_io/adapters/reports/report_export_service.hpp",
+        "header": "io/adapters/reports/report_export_service.hpp",
         "owner": "phase3-core-canonicalization",
         "reason": "IO 适配器属于平台/第三方边界实现，允许保留 include。",
         "window": "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",

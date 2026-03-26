@@ -6,7 +6,7 @@ from .scan import BOUNDARY_LAYER_ROOTS
 
 def classify_entry(file_path: str, header: str) -> tuple[str, str]:
     if (
-        file_path.startswith("libs/bills_io/src/bills_io/adapters/")
+        file_path.startswith("libs/io/src/io/adapters/")
         or header == "nlohmann/json.hpp"
         or header == "abi/bills_core_abi.h"
     ):
@@ -33,7 +33,7 @@ def reason_for_entry(file_path: str, header: str, tier: str) -> str:
             return "C ABI 对外导出头，属于稳定边界契约。"
         if header == "nlohmann/json.hpp":
             return "JSON 协议解析依赖第三方库，边界层直接保留。"
-        if file_path.startswith("libs/bills_io/src/bills_io/adapters/"):
+        if file_path.startswith("libs/io/src/io/adapters/"):
             return "IO 适配器属于平台/第三方边界实现，允许保留 include。"
         return "边界层长期依赖，短期内无替换收益。"
 

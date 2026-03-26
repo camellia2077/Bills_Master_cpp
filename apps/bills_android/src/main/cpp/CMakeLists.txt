@@ -28,8 +28,8 @@ add_subdirectory(
     "${CMAKE_CURRENT_BINARY_DIR}/libs/bills_core"
 )
 add_subdirectory(
-    "${BILLS_REPO_ROOT}/libs/bills_io"
-    "${CMAKE_CURRENT_BINARY_DIR}/libs/bills_io"
+    "${BILLS_REPO_ROOT}/libs/io"
+    "${CMAKE_CURRENT_BINARY_DIR}/libs/io"
 )
 
 add_library(bills_android_native SHARED
@@ -52,7 +52,7 @@ find_library(LOG_LIB log)
 target_include_directories(bills_android_native PRIVATE
     "${CMAKE_CURRENT_LIST_DIR}"
     "${BILLS_REPO_ROOT}/libs/bills_core/src"
-    "${BILLS_REPO_ROOT}/libs/bills_io/src"
+    "${BILLS_REPO_ROOT}/libs/io/src"
 )
 
 target_link_libraries(bills_android_native PRIVATE

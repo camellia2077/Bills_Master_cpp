@@ -9,8 +9,8 @@
    - `libs/bills_core/README.md`
    - `libs/bills_core/AGENTS.md`
 3. 如果你在改配置文档读取、源文档 IO、sqlite、导出落地：
-   - `libs/bills_io/README.md`
-   - `libs/bills_io/AGENTS.md`
+   - `libs/io/README.md`
+   - `libs/io/AGENTS.md`
 
 ## Quick Pointers
 

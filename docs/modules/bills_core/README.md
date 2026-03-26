@@ -33,5 +33,5 @@
 ## 边界提醒
 
 - 业务规则留在 `libs/bills_core`
-- IO / sqlite / TOML 适配器优先看 `libs/bills_io`
+- IO / sqlite / TOML 适配器优先看 `libs/io`
 - CLI 命令分发优先看 `apps/bills_cli`

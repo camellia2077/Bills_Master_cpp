@@ -1,5 +1,5 @@
 module;
-#include "bills_io/io_factory.hpp"
+#include "io/io_factory.hpp"
 
 export module bill.cli.deps.io_factory;
 

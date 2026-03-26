@@ -21,7 +21,7 @@ CPP_SUFFIXES = {
 BOUNDARY_LAYER_ROOTS = {
     "core_abi": "libs/bills_core/src/abi",
     "core_modules_bridge": "libs/bills_core/src/modules",
-    "io_adapters": "libs/bills_io/src/bills_io/adapters",
+    "io_adapters": "libs/io/src/io/adapters",
 }
 
 INCLUDE_PATTERN = re.compile(r'^\s*#\s*include\s*([<"])\s*([^>"]+)\s*[>"]')

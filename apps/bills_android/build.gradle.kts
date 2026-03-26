@@ -359,7 +359,7 @@ val generateBundledNotices by tasks.registering(Exec::class) {
     inputs.dir(rootProject.layout.projectDirectory.dir("third_party"))
     inputs.files(
         rootProject.layout.projectDirectory.file("libs/bills_core/notices.toml"),
-        rootProject.layout.projectDirectory.file("libs/bills_io/notices.toml"),
+        rootProject.layout.projectDirectory.file("libs/io/notices.toml"),
         rootProject.layout.projectDirectory.file("apps/bills_cli/notices.toml"),
         rootProject.layout.projectDirectory.file("apps/bills_android/notices.toml"),
         releaseRuntimeArtifactsFile,

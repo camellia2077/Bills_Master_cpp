@@ -17,7 +17,7 @@
 ## Boundaries
 
 - 不要在这里读写文件、枚举目录、操作 sqlite
-- 宿主要读写路径、配置文档或导出文件时，优先去 `libs/bills_io`
+- 宿主要读写路径、配置文档或导出文件时，优先去 `libs/io`
 - 优先从 `module_map.md` 找主线目录，再去 `rg`
 
 ## Verify

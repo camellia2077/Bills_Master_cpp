@@ -23,4 +23,4 @@
 - Android 端负责表现层、导航、私有工作区、DataStore、DocumentFile 和 JNI 参数桥接
 - 业务规则不要落在 `apps/bills_android`
 - 核心规则改动转到 `docs/modules/bills_core/`
-- 跨端 IO / sqlite / config 文档读取优先看 `docs/modules/bills_io/`
+- 跨端 IO / sqlite / config 文档读取优先看 `docs/modules/io/`

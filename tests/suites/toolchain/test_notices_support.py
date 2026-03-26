@@ -161,7 +161,7 @@ class NoticesSupportTests(unittest.TestCase):
             ),
         )
         _write_text(
-            repo_root / "libs" / "bills_io" / "notices.toml",
+            repo_root / "libs" / "io" / "notices.toml",
             "\n".join(
                 [
                     'schema_version = "1"',

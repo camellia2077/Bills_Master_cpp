@@ -4,7 +4,7 @@
 - `legacy` 导出管线已转为过渡模式，仅保留短期回退用途。
 - 从 `2026-03-05` 起，CLI 在使用 `legacy` 时会输出弃用警告。
 - 目标下线日期：`2026-06-30`。
-- 当前导出落点已不在 `bills_core`，由 `libs/bills_io/src/bills_io/adapters/reports/report_export_service.cpp` 负责宿主侧导出编排。
+- 当前导出落点已不在 `bills_core`，由 `libs/io/src/io/adapters/reports/report_export_service.cpp` 负责宿主侧导出编排。
 
 ## 当前策略
 - 标准格式统一走标准渲染链：
