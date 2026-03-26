@@ -11,6 +11,12 @@ internal object WorkspaceNativeBindings {
         dbPath: String,
     ): String
 
+    external fun importTxtDirectoryToRecordsNative(
+        sourceRecordsDir: String,
+        configDir: String,
+        recordsRoot: String,
+    ): String
+
     external fun exportParseBundleNative(
         configDir: String,
         recordsDir: String,

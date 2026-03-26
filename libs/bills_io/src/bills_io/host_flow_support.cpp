@@ -7,6 +7,7 @@
 #include <ctime>
 #include <filesystem>
 #include <iomanip>
+#include <map>
 #include <optional>
 #include <set>
 #include <sstream>
@@ -15,6 +16,7 @@
 #include <utility>
 
 #include "bills_io/adapters/reports/report_export_service.hpp"
+#include "common/iso_period.hpp"
 #include "bills_io/adapters/config/config_document_parser.hpp"
 #include "bills_io/adapters/io/source_document_io.hpp"
 #include "bills_io/adapters/io/year_partition_output_path_builder.hpp"
@@ -63,6 +65,18 @@ struct FileSnapshot {
   std::optional<std::string> previous_text;
 };
 
+struct SourceDocumentView {
+  std::string relative_path;
+  std::string text;
+};
+
+struct RecordImportCandidate {
+  std::string absolute_path;
+  std::string relative_path;
+  std::string period;
+  std::string text;
+};
+
 auto MakeConfigValidationError(const ConfigBundleValidationReport& report) -> Error {
   for (const auto& file : report.files) {
     if (file.issues.empty()) {
@@ -71,7 +85,7 @@ auto MakeConfigValidationError(const ConfigBundleValidationReport& report) -> Er
     const auto& issue = file.issues.front();
     std::string message = issue.message;
     if (!issue.path.empty()) {
-      message += " [" + issue.path.string() + "]";
+      message += " [" + issue.path + "]";
     }
     if (!issue.field_path.empty()) {
       message += " field=" + issue.field_path;
@@ -517,8 +531,149 @@ auto EnsureDbParentExists(const std::filesystem::path& db_path) -> Result<void> 
   return {};
 }
 
+auto LoadTableColumns(sqlite3* db_connection, const std::string& table_name)
+    -> std::set<std::string> {
+  sqlite3_stmt* statement = nullptr;
+  const std::string sql = "PRAGMA table_info(" + table_name + ");";
+  if (sqlite3_prepare_v2(db_connection, sql.c_str(), -1, &statement, nullptr) !=
+      SQLITE_OK) {
+    throw std::runtime_error("Failed to inspect database schema.");
+  }
+
+  std::set<std::string> columns;
+  while (sqlite3_step(statement) == SQLITE_ROW) {
+    const auto* name =
+        reinterpret_cast<const char*>(sqlite3_column_text(statement, 1));
+    if (name != nullptr) {
+      columns.emplace(name);
+    }
+  }
+  sqlite3_finalize(statement);
+  return columns;
+}
+
+auto ContainsRequiredColumns(const std::set<std::string>& columns,
+                             const std::vector<std::string>& required_columns)
+    -> bool {
+  for (const auto& column : required_columns) {
+    if (!columns.contains(column)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+auto RemoveDatabaseFamily(const std::filesystem::path& db_path) -> void {
+  std::error_code error;
+  std::filesystem::remove(db_path, error);
+  std::filesystem::remove(db_path.string() + "-wal", error);
+  std::filesystem::remove(db_path.string() + "-shm", error);
+}
+
+auto ResetLegacyDatabaseIfNeeded(const std::filesystem::path& db_path) -> bool {
+  if (!std::filesystem::exists(db_path)) {
+    return false;
+  }
+
+  sqlite3* db_connection = nullptr;
+  const int open_result = sqlite3_open_v2(db_path.string().c_str(), &db_connection,
+                                          SQLITE_OPEN_READONLY, nullptr);
+  if (open_result != SQLITE_OK) {
+    if (db_connection != nullptr) {
+      sqlite3_close(db_connection);
+    }
+    RemoveDatabaseFamily(db_path);
+    return true;
+  }
+
+  bool should_reset = false;
+  try {
+    const auto bills_columns = LoadTableColumns(db_connection, "bills");
+    const auto transactions_columns = LoadTableColumns(db_connection, "transactions");
+
+    const std::vector<std::string> required_bills_columns = {
+        "bill_date", "year", "month", "remark", "total_income",
+        "total_expense", "balance"};
+    const std::vector<std::string> required_transaction_columns = {
+        "bill_id", "parent_category", "sub_category", "description", "amount",
+        "source", "comment", "transaction_type"};
+
+    should_reset =
+        !ContainsRequiredColumns(bills_columns, required_bills_columns) ||
+        !ContainsRequiredColumns(transactions_columns, required_transaction_columns);
+  } catch (...) {
+    should_reset = true;
+  }
+
+  sqlite3_close(db_connection);
+  if (should_reset) {
+    RemoveDatabaseFamily(db_path);
+  }
+  return should_reset;
+}
+
+auto PrepareDatabaseForIngest(const std::filesystem::path& db_path,
+                              bool reset_legacy_database) -> Result<bool> {
+  const auto ensure_parent = EnsureDbParentExists(db_path);
+  if (!ensure_parent) {
+    return std::unexpected(ensure_parent.error());
+  }
+  if (!reset_legacy_database) {
+    return false;
+  }
+  return ResetLegacyDatabaseIfNeeded(db_path);
+}
+
 auto IsMissingBillsTableError(std::string_view message) -> bool {
   return message.find("no such table: bills") != std::string_view::npos;
+}
+
+auto ExtractPeriodFromDocumentText(std::string_view text)
+    -> std::optional<std::string> {
+  const std::size_t line_end = text.find('\n');
+  std::string_view first_line =
+      text.substr(0U, line_end == std::string_view::npos ? text.size() : line_end);
+  if (!first_line.empty() && first_line.back() == '\r') {
+    first_line.remove_suffix(1U);
+  }
+  return bills::core::common::iso_period::extract_year_month_from_date_header(
+      first_line);
+}
+
+auto BuildRecordWorkspaceRelativePath(std::string_view period) -> Result<std::string> {
+  const auto parsed_period = bills::core::common::iso_period::parse_year_month(period);
+  if (!parsed_period.has_value()) {
+    return std::unexpected(MakeError(
+        "Invalid record period for workspace import: " + std::string(period), kContext));
+  }
+  return std::to_string(parsed_period->year) + "/" + std::string(period) + ".txt";
+}
+
+auto LoadSourceDocumentViews(const std::filesystem::path& input_path)
+    -> Result<std::map<std::string, SourceDocumentView>> {
+  const auto absolute_documents = LoadSourceDocuments(input_path, ".txt");
+  if (!absolute_documents) {
+    return std::unexpected(absolute_documents.error());
+  }
+  const auto relative_documents =
+      SourceDocumentIo::LoadByExtensionRelative(input_path, ".txt");
+  if (!relative_documents) {
+    return std::unexpected(relative_documents.error());
+  }
+  if (absolute_documents->size() != relative_documents->size()) {
+    return std::unexpected(MakeError(
+        "Absolute and relative TXT document views are inconsistent.", kContext));
+  }
+
+  std::map<std::string, SourceDocumentView> views;
+  for (std::size_t index = 0; index < absolute_documents->size(); ++index) {
+    views.emplace((*absolute_documents)[index].display_path,
+                  SourceDocumentView{
+                      .relative_path = (*relative_documents)[index].display_path,
+                      .text = (*absolute_documents)[index].text,
+                  });
+  }
+  return views;
 }
 
 auto CountMatchingYearBills(sqlite3* db_connection, std::string_view iso_year)
@@ -769,6 +924,30 @@ auto IngestDocuments(const std::filesystem::path& input_path,
       });
 }
 
+auto IngestDocumentsToDatabase(const std::filesystem::path& input_path,
+                               const std::filesystem::path& config_dir,
+                               const std::filesystem::path& db_path,
+                               bool reset_legacy_database,
+                               bool include_serialized_json)
+    -> Result<HostDatabaseIngestResult> {
+  const auto database_reset =
+      PrepareDatabaseForIngest(db_path, reset_legacy_database);
+  if (!database_reset) {
+    return std::unexpected(database_reset.error());
+  }
+
+  const auto ingest_result =
+      IngestDocuments(input_path, config_dir, db_path, include_serialized_json);
+  if (!ingest_result) {
+    return std::unexpected(ingest_result.error());
+  }
+
+  return HostDatabaseIngestResult{
+      .database_reset = *database_reset,
+      .ingest = *ingest_result,
+  };
+}
+
 auto ImportJsonDocuments(const std::filesystem::path& input_path,
                          const std::filesystem::path& db_path)
     -> Result<BillWorkflowBatchResult> {
@@ -783,6 +962,169 @@ auto ImportJsonDocuments(const std::filesystem::path& input_path,
   auto repository = bills::io::CreateBillRepository(db_path.string());
   return BillWorkflowBatchResult(
       BillWorkflowService::ImportJson(*documents, *repository));
+}
+
+auto ImportRecordDirectoryToWorkspace(const std::filesystem::path& input_path,
+                                      const std::filesystem::path& config_dir,
+                                      const std::filesystem::path& records_root)
+    -> Result<HostRecordDirectoryImportResult> {
+  const auto preview_result = PreviewRecordDocuments(input_path, config_dir);
+  if (!preview_result) {
+    return std::unexpected(preview_result.error());
+  }
+  const auto source_views = LoadSourceDocumentViews(input_path);
+  if (!source_views) {
+    return std::unexpected(source_views.error());
+  }
+
+  HostRecordDirectoryImportResult result;
+  result.processed = source_views->size();
+  if (preview_result->files.empty() && !source_views->empty()) {
+    return std::unexpected(MakeError(
+        "No preview results were returned for the provided TXT documents.",
+        kContext));
+  }
+
+  std::map<std::string, RecordPreviewFile> preview_by_path;
+  for (const auto& file : preview_result->files) {
+    preview_by_path.emplace(file.path, file);
+  }
+
+  std::vector<RecordImportCandidate> valid_candidates;
+  valid_candidates.reserve(source_views->size());
+  for (const auto& [absolute_path, view] : *source_views) {
+    const auto preview_it = preview_by_path.find(absolute_path);
+    if (preview_it == preview_by_path.end()) {
+      ++result.failure;
+      if (result.first_failure_message.empty()) {
+        result.first_failure_message =
+            "No validation result was returned for " + view.relative_path + ".";
+      }
+      continue;
+    }
+
+    const auto& preview_file = preview_it->second;
+    if (!preview_file.ok || preview_file.period.empty()) {
+      ++result.failure;
+      ++result.invalid;
+      if (result.first_failure_message.empty()) {
+        result.first_failure_message =
+            !preview_file.error.empty()
+                ? preview_file.error
+                : "TXT validation failed for " + view.relative_path + ".";
+      }
+      continue;
+    }
+
+    valid_candidates.push_back(RecordImportCandidate{
+        .absolute_path = absolute_path,
+        .relative_path = view.relative_path,
+        .period = preview_file.period,
+        .text = view.text,
+    });
+  }
+
+  std::map<std::string, std::size_t> period_counts;
+  for (const auto& candidate : valid_candidates) {
+    ++period_counts[candidate.period];
+  }
+
+  for (const auto& candidate : valid_candidates) {
+    if (period_counts[candidate.period] > 1U) {
+      ++result.failure;
+      ++result.duplicate_period_conflicts;
+      if (result.first_failure_message.empty()) {
+        result.first_failure_message =
+            "Duplicate period '" + candidate.period +
+            "' was found in the selected directory for " +
+            candidate.relative_path + ".";
+      }
+      continue;
+    }
+
+    const auto target_relative =
+        BuildRecordWorkspaceRelativePath(candidate.period);
+    if (!target_relative) {
+      ++result.failure;
+      if (result.first_failure_message.empty()) {
+        result.first_failure_message = FormatError(target_relative.error());
+      }
+      continue;
+    }
+
+    const std::filesystem::path target_path =
+        records_root / std::filesystem::path(*target_relative);
+    const bool existed = std::filesystem::is_regular_file(target_path);
+    const auto write_result = SourceDocumentIo::WriteText(target_path, candidate.text);
+    if (!write_result) {
+      ++result.failure;
+      if (result.first_failure_message.empty()) {
+        result.first_failure_message =
+            "Failed to write " + candidate.relative_path + " to " +
+            *target_relative + ": " + FormatError(write_result.error());
+      }
+      continue;
+    }
+
+    ++result.imported;
+    if (existed) {
+      ++result.overwritten;
+    }
+  }
+
+  return result;
+}
+
+auto ExtractSingleRecordPeriod(const std::filesystem::path& input_path)
+    -> Result<std::string> {
+  const auto documents = LoadSourceDocuments(input_path, ".txt");
+  if (!documents) {
+    return std::unexpected(documents.error());
+  }
+  if (documents->size() != 1U) {
+    return std::unexpected(
+        MakeError("Expected a single TXT file for database sync.", kContext));
+  }
+
+  const auto actual_period =
+      ExtractPeriodFromDocumentText(documents->front().text);
+  if (!actual_period.has_value()) {
+    return std::unexpected(
+        MakeError("The first line must be 'date:YYYY-MM'.", kContext));
+  }
+  return *actual_period;
+}
+
+auto SyncSingleRecordToDatabase(const std::filesystem::path& input_path,
+                                const std::filesystem::path& config_dir,
+                                const std::filesystem::path& db_path,
+                                std::string_view expected_period,
+                                bool include_serialized_json)
+    -> Result<HostRecordDatabaseSyncResult> {
+  const auto actual_period = ExtractSingleRecordPeriod(input_path);
+  if (!actual_period) {
+    return std::unexpected(actual_period.error());
+  }
+
+  if (*actual_period != expected_period) {
+    return HostRecordDatabaseSyncResult{
+        .period_matches = false,
+        .actual_period = *actual_period,
+    };
+  }
+
+  const auto ingest_result =
+      IngestDocumentsToDatabase(input_path, config_dir, db_path, false,
+                                include_serialized_json);
+  if (!ingest_result) {
+    return std::unexpected(ingest_result.error());
+  }
+
+  return HostRecordDatabaseSyncResult{
+      .period_matches = true,
+      .actual_period = *actual_period,
+      .ingest = std::move(ingest_result->ingest),
+  };
 }
 
 auto PreflightImportDocuments(
@@ -890,6 +1232,46 @@ auto RenderQueryReport(const HostQueryResult& query_result, std::string_view for
   return ReportRenderService::Render(query_result.standard_report, normalized_format);
 }
 
+auto NormalizeReportExportYear(std::string_view raw) -> Result<ReportExportYear> {
+  const auto normalized = TryBuildReportExportYear(raw);
+  if (!normalized.has_value()) {
+    return std::unexpected(
+        MakeError("Report export year requires YYYY.", kContext));
+  }
+  return *normalized;
+}
+
+auto NormalizeReportExportMonth(std::string_view raw) -> Result<ReportExportMonth> {
+  const auto normalized = TryBuildReportExportMonth(raw);
+  if (!normalized.has_value()) {
+    return std::unexpected(
+        MakeError("Report export month requires YYYY-MM.", kContext));
+  }
+  return *normalized;
+}
+
+auto NormalizeReportExportRange(std::string_view start_period,
+                                std::string_view end_period)
+    -> Result<ReportExportRange> {
+  const auto start = NormalizeReportExportMonth(start_period);
+  if (!start) {
+    return std::unexpected(start.error());
+  }
+  const auto end = NormalizeReportExportMonth(end_period);
+  if (!end) {
+    return std::unexpected(end.error());
+  }
+  const ReportExportRange range{
+      .start = *start,
+      .end = *end,
+  };
+  if (!IsReportExportRangeInOrder(range)) {
+    return std::unexpected(MakeError(
+        "Report export range requires start <= end.", kContext));
+  }
+  return range;
+}
+
 auto ExportReports(const HostReportExportRequest& request)
     -> Result<HostReportExportResult> {
   auto db_session = bills::io::CreateReportDbSession(request.db_path.string());
@@ -899,22 +1281,56 @@ auto ExportReports(const HostReportExportRequest& request)
                                      request.export_dir.string(),
                                      request.format_folder_names);
 
+  std::optional<ReportExportYear> normalized_year;
+  std::optional<ReportExportMonth> normalized_month;
+  std::optional<ReportExportRange> normalized_range;
+  switch (request.scope) {
+    case HostReportExportScope::kYear: {
+      const auto year = NormalizeReportExportYear(request.primary_value);
+      if (!year) {
+        return std::unexpected(year.error());
+      }
+      normalized_year = *year;
+      break;
+    }
+    case HostReportExportScope::kMonth: {
+      const auto month = NormalizeReportExportMonth(request.primary_value);
+      if (!month) {
+        return std::unexpected(month.error());
+      }
+      normalized_month = *month;
+      break;
+    }
+    case HostReportExportScope::kRange: {
+      const auto range = NormalizeReportExportRange(request.primary_value,
+                                                    request.secondary_value);
+      if (!range) {
+        return std::unexpected(range.error());
+      }
+      normalized_range = *range;
+      break;
+    }
+    case HostReportExportScope::kAllMonths:
+    case HostReportExportScope::kAllYears:
+    case HostReportExportScope::kAll:
+      break;
+  }
+
   HostReportExportResult result;
   result.attempted_formats = request.formats;
   for (const auto& format : request.formats) {
     bool current_success = false;
     switch (request.scope) {
       case HostReportExportScope::kYear:
-        current_success =
-            export_service.export_yearly_report(request.primary_value, format, true);
+        current_success = export_service.export_yearly_report(*normalized_year, format);
         break;
       case HostReportExportScope::kMonth:
         current_success =
-            export_service.export_monthly_report(request.primary_value, format, true);
+            export_service.export_monthly_report(*normalized_month, format);
         break;
       case HostReportExportScope::kRange:
-        current_success = export_service.export_by_date_range(
-            request.primary_value, request.secondary_value, format);
+        current_success =
+            export_service.export_monthly_range(*normalized_range, format);
         break;
       case HostReportExportScope::kAllMonths:
         current_success = export_service.export_all_monthly_reports(format);

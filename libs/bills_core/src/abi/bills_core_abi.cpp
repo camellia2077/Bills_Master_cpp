@@ -64,7 +64,7 @@ auto json_for_validation_issues(const std::vector<ValidationIssue>& issues) -> J
                          {"stage", issue.stage},
                          {"code", issue.code},
                          {"message", issue.message},
-                         {"path", issue.path.string()},
+                         {"path", issue.path},
                          {"line", issue.line},
                          {"column", issue.column},
                          {"field_path", issue.field_path},

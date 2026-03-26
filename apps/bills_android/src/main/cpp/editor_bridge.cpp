@@ -1,15 +1,12 @@
 #include <jni.h>
 
-#include <algorithm>
 #include <filesystem>
-#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include "bills_io/host_flow_support.hpp"
-#include "common/iso_period.hpp"
 #include "jni_common.hpp"
 
 namespace fs = std::filesystem;
@@ -135,20 +132,6 @@ auto is_missing_bills_table_error(std::string_view message) -> bool {
   return message.find("no such table: bills") != std::string_view::npos;
 }
 
-auto extract_period_from_document_text(std::string_view text)
-    -> std::optional<std::string> {
-  const std::size_t line_end = text.find('\n');
-  std::string first_line =
-      std::string(text.substr(0U, line_end == std::string_view::npos
-                                      ? text.size()
-                                      : line_end));
-  if (!first_line.empty() && first_line.back() == '\r') {
-    first_line.pop_back();
-  }
-  return bills::core::common::iso_period::extract_year_month_from_date_header(
-      first_line);
-}
-
 auto list_database_record_periods(const std::string& db_path) -> std::string {
   if (db_path.empty()) {
     return bills::android::jni::MakeResponse(false, "param.invalid_argument",
@@ -206,72 +189,31 @@ auto sync_saved_record_to_database(const std::string& input_path,
         "Saved TXT file does not exist.", std::move(data));
   }
 
-  const auto source_documents =
-      bills::io::LoadSourceDocuments(fs::path(input_path), ".txt");
-  if (!source_documents) {
-    Json data;
-    data["input_path"] = input_path;
-    data["expected_period"] = expected_period;
-    return bills::android::jni::MakeResponse(
-        false, "param.invalid_argument", FormatError(source_documents.error()),
-        std::move(data));
-  }
-  if (source_documents->size() != 1U) {
-    Json data;
-    data["input_path"] = input_path;
-    data["expected_period"] = expected_period;
-    return bills::android::jni::MakeResponse(
-        false, "system.native_failure",
-        "Expected a single TXT file for database sync.", std::move(data));
-  }
-
-  const auto actual_period =
-      extract_period_from_document_text(source_documents->front().text);
-  if (!actual_period.has_value()) {
-    Json data;
-    data["input_path"] = input_path;
-    data["expected_period"] = expected_period;
-    data["error_message"] = "The first line must be 'date:YYYY-MM'.";
-    return bills::android::jni::MakeResponse(
-        false, "business.validation_failed",
-        "The first line must be 'date:YYYY-MM'.", std::move(data));
-  }
-  if (*actual_period != expected_period) {
-    const std::string error_message = "TXT header period '" + *actual_period +
-                                      "' does not match selected period '" +
-                                      expected_period + "'.";
-    Json data;
-    data["input_path"] = input_path;
-    data["expected_period"] = expected_period;
-    data["actual_period"] = *actual_period;
-    data["error_message"] = error_message;
-    return bills::android::jni::MakeResponse(
-        false, "business.period_mismatch", error_message, std::move(data));
-  }
-
-  std::error_code create_error;
-  fs::create_directories(fs::path(db_path).parent_path(), create_error);
-  if (create_error) {
-    Json data;
-    data["db_path"] = db_path;
-    data["error_message"] = "Failed to prepare the database directory.";
-    return bills::android::jni::MakeResponse(
-        false, "system.io_failure",
-        "Failed to prepare the database directory.", std::move(data));
-  }
-
-  const auto result = bills::io::IngestDocuments(input_path, config_dir, db_path, false);
-  if (!result) {
+  const auto sync_result = bills::io::SyncSingleRecordToDatabase(
+      input_path, config_dir, db_path, expected_period);
+  if (!sync_result) {
     Json data;
     data["input_path"] = input_path;
     data["config_dir"] = config_dir;
     data["db_path"] = db_path;
     data["expected_period"] = expected_period;
-    data["actual_period"] = *actual_period;
-    data["error_message"] = FormatError(result.error());
     return bills::android::jni::MakeResponse(
-        false, "business.editor_sync_failed", FormatError(result.error()),
+        false, "business.editor_sync_failed", FormatError(sync_result.error()),
         std::move(data));
+  }
+
+  if (!sync_result->period_matches) {
+    const std::string error_message = "TXT header period '" +
+                                      sync_result->actual_period +
+                                      "' does not match selected period '" +
+                                      expected_period + "'.";
+    Json data;
+    data["input_path"] = input_path;
+    data["expected_period"] = expected_period;
+    data["actual_period"] = sync_result->actual_period;
+    data["error_message"] = error_message;
+    return bills::android::jni::MakeResponse(
+        false, "business.period_mismatch", error_message, std::move(data));
   }
 
   Json data;
@@ -279,13 +221,13 @@ auto sync_saved_record_to_database(const std::string& input_path,
   data["config_dir"] = config_dir;
   data["db_path"] = db_path;
   data["expected_period"] = expected_period;
-  data["actual_period"] = *actual_period;
-  data["processed"] = result->processed;
-  data["success"] = result->success;
-  data["failure"] = result->failure;
+  data["actual_period"] = sync_result->actual_period;
+  data["processed"] = sync_result->ingest.processed;
+  data["success"] = sync_result->ingest.success;
+  data["failure"] = sync_result->ingest.failure;
 
   Json failures = Json::array();
-  for (const auto& file : result->files) {
+  for (const auto& file : sync_result->ingest.files) {
     if (!file.ok) {
       Json item;
       item["path"] = file.display_path;
@@ -297,21 +239,20 @@ auto sync_saved_record_to_database(const std::string& input_path,
     }
   }
 
-  if (result->failure == 0U) {
+  if (sync_result->ingest.failure == 0U) {
     return bills::android::jni::MakeResponse(
         true, "ok", "TXT saved and synced to database successfully.",
         std::move(data));
   }
 
   std::string error_message = "Failed to sync the saved TXT into the database.";
-  if (!result->files.empty()) {
-    const auto first_failure =
-        std::find_if(result->files.begin(), result->files.end(),
-                     [](const BillWorkflowFileResult& file) { return !file.ok; });
-    if (first_failure != result->files.end()) {
-      error_message = first_failure->stage.empty()
-                          ? first_failure->error
-                          : first_failure->stage + ": " + first_failure->error;
+  if (!sync_result->ingest.files.empty()) {
+    for (const auto& file : sync_result->ingest.files) {
+      if (!file.ok) {
+        error_message = file.stage.empty() ? file.error
+                                           : file.stage + ": " + file.error;
+        break;
+      }
     }
   }
   data["error_message"] = error_message;

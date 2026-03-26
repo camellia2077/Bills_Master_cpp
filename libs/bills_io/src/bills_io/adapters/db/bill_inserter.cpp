@@ -2,7 +2,6 @@
 
 #include "bill_inserter.hpp"
 
-#include <iostream>
 #include <stdexcept>
 #include <utility>
 
@@ -39,9 +38,8 @@ void BillInserter::insert_bill(const ParsedBill& bill_data) {
     // 业务流程步骤 5: 提交事务
     db_manager.commit_transaction();
 
-  } catch (const std::exception& e) {
+  } catch (...) {
     // 如果任何步骤失败，回滚事务并重新抛出异常
-    std::cerr << "数据库操作失败，正在回滚事务..." << std::endl;
     db_manager.rollback_transaction();
     throw;
   }

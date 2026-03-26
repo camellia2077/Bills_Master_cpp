@@ -71,29 +71,7 @@ if(NOT MSVC)
 endif()
 
 if(BILLS_ENABLE_LTO_RELEASE AND NOT MSVC)
-    check_ipo_supported(RESULT bills_android_ipo_supported OUTPUT bills_android_ipo_output)
-    if(NOT bills_android_ipo_supported)
-        message(WARNING
-            "BILLS_ENABLE_LTO_RELEASE requested for Android native build, "
-            "but IPO/LTO is not supported: ${bills_android_ipo_output}"
-        )
-    else()
-        foreach(bills_android_lto_target
-            sqlite3_amalgamation
-            bills_core
-            bills_io
-            bills_android_native
-        )
-            if(TARGET ${bills_android_lto_target})
-                set_property(
-                    TARGET ${bills_android_lto_target}
-                    PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
-                )
-                set_property(
-                    TARGET ${bills_android_lto_target}
-                    PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE
-                )
-            endif()
-        endforeach()
-    endif()
+    message(STATUS
+        "Skipping IPO/LTO enablement for Android native builds."
+    )
 endif()

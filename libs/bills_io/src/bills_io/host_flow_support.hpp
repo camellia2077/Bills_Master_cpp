@@ -40,6 +40,27 @@ struct ParseBundleImportResult {
   BillWorkflowBatchResult db_ingest;
 };
 
+struct HostDatabaseIngestResult {
+  bool database_reset = false;
+  BillWorkflowBatchResult ingest;
+};
+
+struct HostRecordDirectoryImportResult {
+  std::size_t processed = 0U;
+  std::size_t imported = 0U;
+  std::size_t overwritten = 0U;
+  std::size_t failure = 0U;
+  std::size_t invalid = 0U;
+  std::size_t duplicate_period_conflicts = 0U;
+  std::string first_failure_message;
+};
+
+struct HostRecordDatabaseSyncResult {
+  bool period_matches = true;
+  std::string actual_period;
+  BillWorkflowBatchResult ingest;
+};
+
 struct HostConfigInspectionResult {
   ConfigInspectResult inspect;
   std::vector<std::string> enabled_export_formats;
@@ -128,9 +149,31 @@ struct HostReportExportResult {
                                    bool include_serialized_json = false)
     -> Result<BillWorkflowBatchResult>;
 
+[[nodiscard]] auto IngestDocumentsToDatabase(
+    const std::filesystem::path& input_path,
+    const std::filesystem::path& config_dir,
+    const std::filesystem::path& db_path,
+    bool reset_legacy_database = false,
+    bool include_serialized_json = false) -> Result<HostDatabaseIngestResult>;
+
 [[nodiscard]] auto ImportJsonDocuments(const std::filesystem::path& input_path,
                                        const std::filesystem::path& db_path)
     -> Result<BillWorkflowBatchResult>;
+
+[[nodiscard]] auto ImportRecordDirectoryToWorkspace(
+    const std::filesystem::path& input_path,
+    const std::filesystem::path& config_dir,
+    const std::filesystem::path& records_root)
+    -> Result<HostRecordDirectoryImportResult>;
+
+[[nodiscard]] auto ExtractSingleRecordPeriod(
+    const std::filesystem::path& input_path) -> Result<std::string>;
+
+[[nodiscard]] auto SyncSingleRecordToDatabase(
+    const std::filesystem::path& input_path,
+    const std::filesystem::path& config_dir,
+    const std::filesystem::path& db_path, std::string_view expected_period,
+    bool include_serialized_json = false) -> Result<HostRecordDatabaseSyncResult>;
 
 [[nodiscard]] auto PreflightImportDocuments(
     const std::filesystem::path& input_path,

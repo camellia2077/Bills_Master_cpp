@@ -3,7 +3,6 @@ package com.billstracer.android.data.services
 import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
-import com.billstracer.android.data.nativebridge.EditorNativeBindings
 import com.billstracer.android.data.nativebridge.WorkspaceNativeBindings
 import com.billstracer.android.data.nativebridge.boolean
 import com.billstracer.android.data.nativebridge.int
@@ -15,7 +14,6 @@ import com.billstracer.android.model.ExportedParseBundleResult
 import com.billstracer.android.model.ImportedParseBundleResult
 import com.billstracer.android.model.ImportResult
 import com.billstracer.android.model.RecordDirectoryImportResult
-import com.billstracer.android.model.RecordPreviewFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
@@ -40,12 +38,6 @@ internal class DefaultWorkspaceService(
         val relativePath: String,
         val rawText: String,
         val tempFile: File,
-    )
-
-    private data class ValidatedTxtDocument(
-        val relativePath: String,
-        val rawText: String,
-        val period: String,
     )
 
     override suspend fun initializeEnvironment(): AppEnvironment {
@@ -90,98 +82,13 @@ internal class DefaultWorkspaceService(
 
         val tempRoot = createTempRecordImportDir()
         try {
-            val stagedDocuments = stageSourceTxtDocuments(tempRoot, sourceDocuments)
-            val preview = parseRecordPreviewResult(
-                EditorNativeBindings.previewRecordPathNative(
+            stageSourceTxtDocuments(tempRoot, sourceDocuments)
+            parseRecordDirectoryImportResult(
+                WorkspaceNativeBindings.importTxtDirectoryToRecordsNative(
                     tempRoot.absolutePath,
                     environment.configRoot.absolutePath,
+                    environment.recordsRoot.absolutePath,
                 ),
-            )
-            if (preview.files.isEmpty() && stagedDocuments.isNotEmpty()) {
-                error(preview.message.ifBlank { "Failed to validate TXT files from the selected directory." })
-            }
-
-            val previewByPath = linkedMapOf<String, RecordPreviewFile>()
-            preview.files.forEach { previewFile ->
-                previewByPath[normalizeFileKey(previewFile.path)] = previewFile
-            }
-
-            var imported = 0
-            var overwritten = 0
-            var failure = 0
-            var invalid = 0
-            var duplicatePeriodConflicts = 0
-            var firstFailureMessage: String? = null
-            val validDocuments = mutableListOf<ValidatedTxtDocument>()
-
-            for (stagedDocument in stagedDocuments) {
-                val previewFile = previewByPath[normalizeFileKey(stagedDocument.tempFile)]
-                when {
-                    previewFile == null -> {
-                        failure += 1
-                        firstFailureMessage = firstFailureMessage
-                            ?: "No validation result was returned for ${stagedDocument.relativePath}."
-                    }
-                    !previewFile.ok || previewFile.period.isNullOrBlank() -> {
-                        failure += 1
-                        invalid += 1
-                        firstFailureMessage = firstFailureMessage
-                            ?: previewFile.error?.takeIf { it.isNotBlank() }
-                            ?: "TXT validation failed for ${stagedDocument.relativePath}."
-                    }
-                    else -> {
-                        validDocuments += ValidatedTxtDocument(
-                            relativePath = stagedDocument.relativePath,
-                            rawText = stagedDocument.rawText,
-                            period = previewFile.period,
-                        )
-                    }
-                }
-            }
-
-            val duplicatePeriods = validDocuments.groupingBy { document -> document.period }
-                .eachCount()
-                .filterValues { count -> count > 1 }
-                .keys
-            val importQueue = mutableListOf<ValidatedTxtDocument>()
-            for (validDocument in validDocuments) {
-                if (validDocument.period in duplicatePeriods) {
-                    failure += 1
-                    duplicatePeriodConflicts += 1
-                    firstFailureMessage = firstFailureMessage
-                        ?: "Duplicate period '${validDocument.period}' was found in the selected directory for ${validDocument.relativePath}."
-                } else {
-                    importQueue += validDocument
-                }
-            }
-
-            for (validDocument in importQueue) {
-                val targetFile = recordFileForPeriod(environment.recordsRoot, validDocument.period)
-                val targetDisplayPath = targetFile.relativeTo(environment.recordsRoot).invariantSeparatorsPath
-                val existed = targetFile.isFile
-                try {
-                    targetFile.parentFile?.mkdirs()
-                    targetFile.writeText(validDocument.rawText, Charsets.UTF_8)
-                    imported += 1
-                    if (existed) {
-                        overwritten += 1
-                    }
-                } catch (error: Throwable) {
-                    failure += 1
-                    val detail = error.message ?: "Failed to write TXT file."
-                    firstFailureMessage = firstFailureMessage
-                        ?: "Failed to write ${validDocument.relativePath} to $targetDisplayPath: $detail"
-                }
-            }
-
-            RecordDirectoryImportResult(
-                processed = sourceDocuments.size,
-                imported = imported,
-                overwritten = overwritten,
-                failure = failure,
-                invalid = invalid,
-                duplicatePeriodConflicts = duplicatePeriodConflicts,
-                firstFailureMessage = firstFailureMessage,
             )
         } finally {
             tempRoot.deleteRecursively()
@@ -275,6 +182,23 @@ internal class DefaultWorkspaceService(
             failure = data.int("failure"),
             imported = data.int("imported"),
             rawJson = rawJson,
+        )
+    }
+
+    private fun parseRecordDirectoryImportResult(rawJson: String): RecordDirectoryImportResult {
+        val root = parseRoot(rawJson)
+        val data = root["data"]?.jsonObject ?: JsonObject(emptyMap())
+        if (!root.boolean("ok") && root.string("code") != "business.import_failed") {
+            error(root.string("message"))
+        }
+        return RecordDirectoryImportResult(
+            processed = data.int("processed"),
+            imported = data.int("imported"),
+            overwritten = data.int("overwritten"),
+            failure = data.int("failure"),
+            invalid = data.int("invalid"),
+            duplicatePeriodConflicts = data.int("duplicate_period_conflicts"),
+            firstFailureMessage = data["first_failure_message"]?.jsonPrimitive?.contentOrNull,
         )
     }
 
@@ -414,8 +338,4 @@ internal class DefaultWorkspaceService(
             tempFile = tempFile,
         )
     }
-
-    private fun normalizeFileKey(path: String): String = File(path).absoluteFile.normalize().path
-
-    private fun normalizeFileKey(file: File): String = file.absoluteFile.normalize().path
 }
