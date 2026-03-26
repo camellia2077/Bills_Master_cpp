@@ -19,7 +19,7 @@ def main() -> int:
         "[DEPRECATED] `tools/flows/build_then_cli_test.py` is a compatibility "
         f"entry (deprecated since {DEPRECATION_START_DATE}) and is planned for "
         f"removal after {SUNSET_DATE}. "
-        "Use `python tools/verify/verify.py bills-tracer -- ...` or "
+        "Use `python tools/run.py verify bills-tracer -- ...` or "
         "`python tools/flows/bills_tracer_flow.py ...`.",
         file=sys.stderr,
     )

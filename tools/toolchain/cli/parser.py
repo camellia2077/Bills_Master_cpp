@@ -5,6 +5,8 @@ import argparse
 from ..commands.build import run as run_build
 from ..commands.clean import run as run_clean
 from ..commands.format import run as run_format
+from ..commands.import_gate import run as run_import_gate
+from ..commands.log_generator import run as run_log_generator
 from ..commands.tidy import run as run_tidy
 from ..commands.tidy_batch import run as run_tidy_batch
 from ..commands.tidy_close import run as run_tidy_close
@@ -59,20 +61,100 @@ def build_parser() -> argparse.ArgumentParser:
 
     verify_parser = subparsers.add_parser(
         "verify",
-        help="Forward to tools/verify/verify.py.",
+        help="Run the unified verify workflows.",
         description=(
-            "Run the existing unified verify entry. Extra arguments are forwarded unchanged."
+            "Run the unified verify workflows. Extra arguments are forwarded unchanged."
         ),
     )
     verify_parser.add_argument(
         "forwarded",
         nargs=argparse.REMAINDER,
         help=(
-            "Arguments forwarded to tools/verify/verify.py. "
+            "Arguments forwarded to the selected verify workflow. "
             "Use `-- --help` to inspect the downstream CLI help."
         ),
     )
     verify_parser.set_defaults(handler=run_verify)
+
+    import_gate_parser = subparsers.add_parser(
+        "import-gate",
+        help="Validate Windows import tables for dist artifacts.",
+        description="Inspect dist binaries and reject forbidden Windows runtime imports.",
+    )
+    import_gate_parser.add_argument(
+        "target",
+        choices=[
+            "bills-tracer-cli",
+            "bills-tracer-log-generator",
+        ],
+        help="Target to inspect under dist/cmake.",
+    )
+    import_gate_parser.add_argument(
+        "--preset",
+        choices=["debug", "release", "tidy"],
+        default="debug",
+        help="Preset to inspect.",
+    )
+    import_gate_parser.add_argument(
+        "--scope",
+        choices=["shared", "isolated"],
+        default="shared",
+        help="Dist scope to inspect.",
+    )
+    import_gate_parser.set_defaults(handler=run_import_gate)
+
+    log_generator_parser = subparsers.add_parser(
+        "log-generator",
+        help="Run log_generator workflows.",
+        description="Unified entry for log_generator dist, generation, and testdata promotion.",
+    )
+    log_generator_subparsers = log_generator_parser.add_subparsers(dest="log_generator_command")
+
+    log_generator_dist_parser = log_generator_subparsers.add_parser(
+        "dist",
+        help="Prepare log_generator into dist/cmake.",
+    )
+    log_generator_dist_parser.add_argument(
+        "--preset",
+        choices=["debug", "release"],
+        default="debug",
+    )
+    log_generator_dist_parser.set_defaults(handler=run_log_generator)
+
+    log_generator_generate_parser = log_generator_subparsers.add_parser(
+        "generate",
+        help="Generate artifact datasets via log_generator.",
+    )
+    log_generator_generate_parser.add_argument(
+        "--preset",
+        choices=["debug", "release"],
+        default="debug",
+    )
+    log_generator_generate_parser.add_argument("--start-year", type=int, default=2024)
+    log_generator_generate_parser.add_argument("--end-year", type=int, default=2024)
+    log_generator_generate_parser.add_argument("--output-project", default="log_generator")
+    log_generator_generate_parser.add_argument("--skip-dist", action="store_true")
+    log_generator_generate_parser.set_defaults(handler=run_log_generator)
+
+    log_generator_promote_parser = log_generator_subparsers.add_parser(
+        "promote-testdata",
+        help="Promote generated artifact data into testdata/bills.",
+    )
+    log_generator_promote_parser.add_argument("--output-project", default="log_generator")
+    log_generator_promote_parser.add_argument("--run-id", default="")
+    log_generator_promote_parser.set_defaults(handler=run_log_generator)
+
+    log_generator_format_parser = log_generator_subparsers.add_parser(
+        "format",
+        help="Run log_generator format target.",
+    )
+    log_generator_format_parser.set_defaults(handler=run_log_generator)
+
+    log_generator_tidy_parser = log_generator_subparsers.add_parser(
+        "tidy",
+        help="Run log_generator tidy target.",
+    )
+    log_generator_tidy_parser.set_defaults(handler=run_log_generator)
 
     format_parser = subparsers.add_parser(
         "format",

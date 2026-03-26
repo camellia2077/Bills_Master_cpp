@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import argparse
 import json
 import tempfile
 from datetime import datetime
 from pathlib import Path
 
-from tools.toolchain.services.build_layout import sanitize_segment
+from ..services.build_layout import sanitize_segment
 
 from .common import parse_forwarded_args, run
 

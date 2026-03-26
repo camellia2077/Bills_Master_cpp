@@ -412,13 +412,13 @@ default_target = "bills-tracer-cli"
                     return_value=fix_result,
                 ),
                 patch(
-                    "tools.toolchain.commands.tidy_batch_support.steps.run_verify_workflow",
+                    "tools.toolchain.commands.tidy_batch_support.steps.run_cli_dist_command",
                     return_value=(
                         [
                             "python",
-                            "verify.py",
-                            "bills-tracer-cli-dist",
-                            "--",
+                            "tools/run.py",
+                            "dist",
+                            "bills-tracer-cli",
                             "--preset",
                             "debug",
                             "--scope",

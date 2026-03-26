@@ -24,9 +24,9 @@
 
 ## 提交前最小检查
 
-1. `python tools/flows/build_bills_tracer_cli.py --preset debug --scope shared`
-2. `python tools/flows/build_bills_tracer_android.py --preset debug`
-3. `python tools/verify/verify.py import-layer-check --stats`
-4. `python tools/verify/verify.py report-consistency-gate`
-5. `python tools/verify/verify.py bills-tracer-core-dist`
-6. `python tools/verify/verify.py module-mode-check`
+1. `python tools/run.py dist bills-tracer-cli --preset debug --scope shared`
+2. `python tools/run.py dist bills-tracer-android --preset debug`
+3. `python tools/run.py verify import-layer-check -- --stats`
+4. `python tools/run.py verify report-consistency-gate`
+5. `python tools/run.py dist bills-tracer-core --preset debug`
+6. `python tools/run.py verify module-mode-check`

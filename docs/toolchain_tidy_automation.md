@@ -17,12 +17,13 @@
 
 这是仓库内统一的 Python toolchain 入口。
 
-### 历史/外围入口
+### 内部实现
 
-- `python tools/verify/verify.py ...`
-- `tools/flows/*.py`
+- `tools/toolchain/*`
+- `tools/verify/*`
+- `tools/flows/*`
 
-这些仍然存在，但对 clang-tidy SOP 来说，推荐把 `tools/run.py` 视为主入口，`verify.py` 视为底层构建/测试入口。
+对 clang-tidy SOP 来说，公开入口固定是 `tools/run.py`。
 
 ## 2. 顶层目录怎么分工
 
@@ -32,11 +33,11 @@
 
 ### `tools/verify/`
 
-统一 dist/验证入口。`tidy-batch` 里的 baseline verify / dist gate 最终都会调用这里。
+保留 pipeline runner、checks、snapshot compare 等内部实现。
 
 ### `tools/flows/`
 
-项目已有的 dist/test flow 脚本。对 tidy SOP 来说，它们更多是被 `verify` 或其他命令间接调用。
+保留项目级底层支撑模块与 flow support，不再作为公开命令入口。
 
 ### `temp/tidy/`
 
@@ -91,7 +92,7 @@
 - `clean.py`
   - 清理已完成任务 / 批次
 - `verify.py`
-  - 转发到 `tools/verify/verify.py`
+  - 分发到 `tools/toolchain/verify/*`
 
 ### `tools/toolchain/services/`
 
@@ -220,7 +221,8 @@
 
 - `clang_tidy_runner.py`
 - `format_runner.py`
-- `verify.py -> tools/verify/verify.py`
+- `dist/*`
+- `verify/*`
 
 ### 第 5 层：运行时产物
 

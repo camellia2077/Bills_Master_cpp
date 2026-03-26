@@ -20,5 +20,5 @@
 
 ## 最小检查
 
-1. `python tools/verify/verify.py import-layer-check --stats`
-2. `python tools/verify/verify.py boundary-layer-check --stats`
+1. `python tools/run.py verify import-layer-check -- --stats`
+2. `python tools/run.py verify boundary-layer-check -- --stats`

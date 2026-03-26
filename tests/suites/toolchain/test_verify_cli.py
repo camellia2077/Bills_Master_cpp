@@ -6,10 +6,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from tools.verify.workflows.cli import build_parser
-from tools.verify.workflows.common import load_python_test_duration_seconds, load_test_summary
-from tools.verify.workflows.pipeline_helpers import run_pipeline_steps
-from tools.verify.workflows.registry import workflow_help_text, workflow_registry, workflow_specs
+from tools.toolchain.cli.main import parse_cli_args
+from tools.toolchain.verify.cli import build_parser
+from tools.toolchain.verify.common import load_python_test_duration_seconds, load_test_summary
+from tools.toolchain.verify.pipeline_helpers import run_pipeline_steps
+from tools.toolchain.verify.registry import workflow_help_text, workflow_registry, workflow_specs
 
 
 class VerifyCliTests(unittest.TestCase):
@@ -19,7 +20,8 @@ class VerifyCliTests(unittest.TestCase):
 
         self.assertEqual([spec.name for spec in specs], list(registry.keys()))
         self.assertEqual(specs[0].name, "bills-tracer")
-        self.assertIn("bills-tracer-log-generator-dist", registry)
+        self.assertNotIn("bills-tracer-log-generator-dist", registry)
+        self.assertNotIn("bills-tracer-cli-dist", registry)
         self.assertIn("reporting-tools", registry)
 
     def test_parser_uses_registry_choices_and_help_text(self) -> None:
@@ -28,6 +30,39 @@ class VerifyCliTests(unittest.TestCase):
 
         self.assertEqual(list(workflow_action.choices), [spec.name for spec in workflow_specs()])
         self.assertEqual(workflow_action.help, workflow_help_text())
+
+    def test_run_parser_accepts_import_gate_command(self) -> None:
+        _, args = parse_cli_args(
+            ["import-gate", "bills-tracer-cli", "--preset", "release", "--scope", "shared"]
+        )
+
+        self.assertEqual(args.target, "bills-tracer-cli")
+        self.assertEqual(args.preset, "release")
+        self.assertEqual(args.scope, "shared")
+
+    def test_run_parser_accepts_log_generator_generate_command(self) -> None:
+        _, args = parse_cli_args(
+            [
+                "log-generator",
+                "generate",
+                "--preset",
+                "release",
+                "--start-year",
+                "2025",
+                "--end-year",
+                "2026",
+                "--output-project",
+                "demo",
+                "--skip-dist",
+            ]
+        )
+
+        self.assertEqual(args.log_generator_command, "generate")
+        self.assertEqual(args.preset, "release")
+        self.assertEqual(args.start_year, 2025)
+        self.assertEqual(args.end_year, 2026)
+        self.assertEqual(args.output_project, "demo")
+        self.assertTrue(args.skip_dist)
 
     def test_run_pipeline_steps_builds_temp_config_and_runner_command(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -40,7 +75,7 @@ class VerifyCliTests(unittest.TestCase):
                 captured["config_text"] = config_path.read_text(encoding="utf-8")
                 return 0
 
-            with patch("tools.verify.workflows.pipeline_helpers.run", side_effect=fake_run):
+            with patch("tools.toolchain.verify.pipeline_helpers.run", side_effect=fake_run):
                 code = run_pipeline_steps(
                     repo_root=repo_root,
                     python_exe="python",

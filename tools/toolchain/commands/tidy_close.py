@@ -9,7 +9,7 @@ from ..services.tidy_runtime import (
     write_verify_result,
 )
 from ..services.tidy_state import update_batch_state
-from .common import run_verify_workflow
+from .common import run_cli_dist_command
 from .tidy_refresh import execute_refresh
 
 
@@ -33,9 +33,7 @@ def run(args, ctx: Context) -> int:
         return refresh_ret
 
     if not args.tidy_only:
-        command, verify_ret = run_verify_workflow(
-            ctx, "bills-tracer-cli-dist", ["--preset", "debug", "--scope", "shared"]
-        )
+        command, verify_ret = run_cli_dist_command(ctx, preset="debug", scope="shared")
         write_verify_result(paths, command=command, returncode=verify_ret)
         if verify_ret != 0:
             write_latest_tidy_summary(

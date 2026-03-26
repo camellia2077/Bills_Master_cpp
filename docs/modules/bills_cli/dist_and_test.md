@@ -2,14 +2,14 @@
 
 ## 统一验证入口
 
-- `python tools/verify/verify.py`
+- `python tools/run.py`
 
 ## 定向建议
 
 - 改 CLI parser/feature handler 后，至少执行：
-  - `python tools/verify/verify.py bills-tracer`
+  - `python tools/run.py verify bills-tracer`
 - 改 dist/目录结构后，追加执行：
-  - `python tools/verify/verify.py bills-tracer-cli-dist`
+  - `python tools/run.py dist bills-tracer-cli --preset debug --scope shared`
 
 ## 失败排查
 

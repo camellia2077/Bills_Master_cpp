@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from statistics import mean, median
 
-from tools.toolchain.services.build_layout import (
+from ..services.build_layout import (
     resolve_artifact_project_root,
     resolve_tests_root,
     sanitize_segment,

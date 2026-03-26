@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from ..core.context import Context
-from .common import forward_python_entry
+from ..verify.cli import main as verify_main
+from .common import normalize_forwarded_args
 
 
 def run(args, ctx: Context) -> int:
-    return forward_python_entry(
-        ctx,
-        ctx.verify_entry(),
-        forwarded=args.forwarded,
-        default_args=[],
+    forwarded = normalize_forwarded_args(list(args.forwarded))
+    return verify_main(
+        forwarded,
+        repo_root=ctx.repo_root,
+        python_exe=ctx.python_executable,
     )

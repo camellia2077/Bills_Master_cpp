@@ -49,11 +49,11 @@
 ## 4. 验证要求
 
 - 每次涉及模块化改动，至少执行：
-  - `python tools/verify/verify.py module-mode-check`
+  - `python tools/run.py verify module-mode-check`
 - 每次涉及工具链脚本改动，至少执行：
-  - `python tools/verify/verify.py tools-layer-check`
+  - `python tools/run.py verify tools-layer-check`
 - 全量验证建议执行：
-  - `python tools/verify/verify.py all-tests`
+  - `python tools/run.py verify all-tests`
 
 ## 5. tools/* 分层规则
 
@@ -64,4 +64,4 @@
   - `tools/verify/*` 不得 import `tools.flows.*`（应调用脚本入口）。
   - `tools/*` 不得直接 import `apps.*`、`libs.*`、`tests.*`。
 - 门禁：
-  - `python tools/verify/verify.py tools-layer-check`
+  - `python tools/run.py verify tools-layer-check`

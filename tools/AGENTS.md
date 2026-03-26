@@ -1,6 +1,6 @@
 # tools Agent Guide
 
-`tools/` 是仓库里可复用工程脚手架的总入口。这个文件只负责告诉 agent 先去哪个一级目录，再进入已有 docs 看细节。
+`tools/` 是仓库里可复用工程脚手架的总入口。这个文件只做分流；真实说明统一看 `docs/tools/README.md`。
 
 ## Read First
 
@@ -11,9 +11,8 @@
    - reporting 辅助工具：`tools/reporting`
    - notices 聚合：`tools/notices`
    - 一次性辅助脚本：`tools/scripts`
-2. 再按需要阅读：
-   - `docs/toolchain_sop.md`
-   - `docs/toolchain_tidy_automation.md`
+2. 再阅读：
+   - `docs/tools/README.md`
    - `docs/README.md`
 
 ## Use This Area When
@@ -23,20 +22,7 @@
 - 你在改项目构建、测试编排 flow
 - 你在改 reporting、notices 或人工辅助脚本
 
-## Boundaries
-
-- `tools/` 放可复用脚手架，不承载业务规则
-- `tools/` 不依赖 `tests/`
-- `flows` 负责编排；具体规则、检查和实现细节留在对应子模块
-
-## Common Entry Points
-
-- `python tools/verify/verify.py`
-- `python tools/run.py`
-
 ## Read More
 
-- `docs/toolchain_sop.md`
-- `docs/toolchain_tidy_automation.md`
+- `docs/tools/README.md`
 - `docs/README.md`
-

@@ -4,14 +4,6 @@
 
 - `python tools/run.py dist bills-tracer-android --preset debug`
 
-## 底层 flow
-
-- `python tools/run.py dist bills-tracer-android --preset debug`
-- `python tools/flows/build_bills_tracer_android.py --preset debug`
-- `python tools/flows/build_bills_tracer_android.py --variants debug,release`
-
-`tools/run.py dist bills-tracer-android` 会转发到 `tools/flows/build_bills_tracer_android.py`，日常优先走统一入口。
-
 ## 定向建议
 
 - 改 Compose / ViewModel / service 后，至少执行：

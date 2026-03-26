@@ -38,6 +38,3 @@ class Context:
 
     def flow_entry(self, relative_path: str) -> Path:
         return self.tools_root / "flows" / relative_path
-
-    def verify_entry(self) -> Path:
-        return self.tools_root / "verify" / "verify.py"

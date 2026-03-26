@@ -10,7 +10,7 @@ from tools.verify.report_snapshot_support import (
     normalize_render_json,
     normalize_standard_report_json,
 )
-from tools.verify.workflows.bills_tracer import run_bills_tracer_workflow
+from tools.toolchain.verify.bills_tracer import run_bills_tracer_workflow
 
 
 class ReportSnapshotSupportTests(unittest.TestCase):
@@ -48,7 +48,7 @@ class BillsTracerVerifyWorkflowTests(unittest.TestCase):
                 return 0
 
             with patch(
-                "tools.verify.workflows.bills_tracer.run_pipeline_steps",
+                "tools.toolchain.verify.bills_tracer.run_pipeline_steps",
                 side_effect=fake_run_pipeline_steps,
             ):
                 code = run_bills_tracer_workflow(repo_root, "python", [])
@@ -78,7 +78,7 @@ class BillsTracerVerifyWorkflowTests(unittest.TestCase):
                 return 0
 
             with patch(
-                "tools.verify.workflows.bills_tracer.run_pipeline_steps",
+                "tools.toolchain.verify.bills_tracer.run_pipeline_steps",
                 side_effect=fake_run_pipeline_steps,
             ):
                 code = run_bills_tracer_workflow(

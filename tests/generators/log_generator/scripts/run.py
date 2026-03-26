@@ -7,8 +7,8 @@ from pathlib import Path
 
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[4]
-    entry = repo_root / "tools" / "flows" / "bills_tracer_log_generator_flow.py"
-    command = [sys.executable, str(entry), *sys.argv[1:]]
+    entry = repo_root / "tools" / "run.py"
+    command = [sys.executable, str(entry), "log-generator", *sys.argv[1:]]
     return subprocess.call(command)
 
 

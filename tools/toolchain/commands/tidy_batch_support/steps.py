@@ -11,7 +11,7 @@ from ...services.tidy_runtime import (
     write_verify_result,
 )
 from ..clean import execute_clean
-from ..common import run_verify_workflow
+from ..common import run_cli_dist_command
 from ..tidy_fix import run_tidy_fix_pass
 from ..tidy_recheck import run_tidy_recheck_pass
 from ..tidy_refresh import execute_refresh
@@ -28,11 +28,7 @@ def run_verify_phase(state: BatchExecutionState) -> StepOutcome:
         phase="verify",
         status="running",
     )
-    command, verify_ret = run_verify_workflow(
-        state.ctx,
-        "bills-tracer-cli-dist",
-        ["--preset", "debug", "--scope", "shared"],
-    )
+    command, verify_ret = run_cli_dist_command(state.ctx, preset="debug", scope="shared")
     write_verify_result(state.paths, command=command, returncode=verify_ret)
     if verify_ret != 0:
         update_batch_phase(
@@ -159,10 +155,10 @@ def run_build_gate_phase(state: BatchExecutionState) -> StepOutcome:
         phase="build_gate",
         status="running",
     )
-    build_command, build_ret = run_verify_workflow(
+    build_command, build_ret = run_cli_dist_command(
         state.ctx,
-        "bills-tracer-cli-dist",
-        ["--preset", "debug", "--scope", "shared"],
+        preset="debug",
+        scope="shared",
     )
     write_verify_result(state.paths, command=build_command, returncode=build_ret)
     if build_ret != 0:

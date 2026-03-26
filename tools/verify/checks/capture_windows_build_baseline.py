@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -45,7 +46,7 @@ def parse_args() -> argparse.Namespace:
         "--preset",
         default="debug",
         choices=["debug", "release", "tidy"],
-        help=("Preset passed to tools/verify/verify.py bills-tracer-cli-dist (default: debug)."),
+        help="Preset passed to tools/run.py dist/import-gate (default: debug).",
     )
     parser.add_argument(
         "--output",
@@ -55,7 +56,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--run-dist",
         action="store_true",
-        help="Run dist via python tools/verify/verify.py bills-tracer-cli-dist before collecting baseline.",
+        help="Run dist and import-gate via python tools/run.py before collecting baseline.",
     )
     parser.add_argument(
         "--clean-first",
@@ -67,7 +68,7 @@ def parse_args() -> argparse.Namespace:
         action="append",
         default=[],
         metavar="ARG",
-        help=("Extra dist argument forwarded to bills-tracer-cli-dist after '--'. Can be repeated."),
+        help="Extra dist argument forwarded to tools/run.py dist after '--'. Can be repeated.",
     )
     return parser.parse_args()
 
@@ -192,24 +193,21 @@ def main() -> int:
     if args.run_dist:
         if args.clean_first and build_dir.exists():
             print(f"--- clean dist dir: {build_dir}")
-            # Keep cleanup logic in Python while build itself is delegated to verify.py.
+            # Keep cleanup logic in Python while build itself is delegated to tools/run.py.
             import shutil
 
             shutil.rmtree(build_dir)
 
         build_cmd = [
             sys.executable,
-            "tools/verify/verify.py",
-            (
-                "bills-tracer-cli-dist"
-                if target == "bills-tracer-cli"
-                else "bills-tracer-log-generator-dist"
-            ),
+            "tools/run.py",
+            "dist",
+            target,
         ]
         if target == "bills-tracer-cli":
-            build_cmd.extend(["--", "--preset", args.preset, "--scope", "shared"])
+            build_cmd.extend(["--preset", args.preset, "--scope", "shared"])
         else:
-            build_cmd.extend(["dist", "--preset", args.preset])
+            build_cmd.extend(["--preset", args.preset])
         for cmake_arg in args.cmake_arg:
             build_cmd.append(cmake_arg)
 
@@ -219,6 +217,23 @@ def main() -> int:
         if build_exit_code != 0:
             print(f"Error: dist preparation failed with exit code {build_exit_code}.")
             return build_exit_code
+
+        gate_cmd = [
+            sys.executable,
+            "tools/run.py",
+            "import-gate",
+            target,
+            "--preset",
+            args.preset,
+            "--scope",
+            "shared",
+        ]
+        print("--- run import-gate command:")
+        print(" ".join(gate_cmd))
+        gate_exit_code, _ = run_command(gate_cmd, repo_root)
+        if gate_exit_code != 0:
+            print(f"Error: import-gate failed with exit code {gate_exit_code}.")
+            return gate_exit_code
 
     artifacts = collect_artifacts(bin_dir)
     binary_imports = collect_binary_imports(bin_dir, artifacts)

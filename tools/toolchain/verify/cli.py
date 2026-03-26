@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import sys
 from pathlib import Path
 
 from .common import normalize_extra
@@ -10,7 +9,7 @@ from .registry import workflow_help_text, workflow_registry, workflow_specs
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Unified verify entry for dist and test workflows."
+        description="Unified verify entry for test workflows."
     )
     parser.add_argument(
         "workflow",
@@ -41,12 +40,14 @@ def dispatch_workflow(
     return spec.handler(repo_root, python_exe, forwarded)
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(
+    argv: list[str] | None = None,
+    *,
+    repo_root: Path,
+    python_exe: str,
+) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-
-    repo_root = Path(__file__).resolve().parents[3]
-    python_exe = sys.executable
     forwarded = normalize_extra(args.extra)
     return dispatch_workflow(
         args.workflow,

@@ -25,11 +25,11 @@
 
 ## Phase 0 Baseline Verify Commands
 - Prepare Windows CLI dist:
-  - `python tools/verify/verify.py bills-tracer-cli-dist`
+  - `python tools/run.py dist bills-tracer-cli --preset debug --scope shared`
 - Prepare dist + run CLI test suite:
-  - `python tools/verify/verify.py bills-tracer`
+  - `python tools/run.py verify bills-tracer`
 - Prepare `bills_core` static dist:
-  - `python tools/verify/verify.py bills-tracer-core-dist`
+  - `python tools/run.py dist bills-tracer-core --preset debug`
 
 ## Notes
 - Windows no longer keeps a shared-library verification path for `bills_core`.

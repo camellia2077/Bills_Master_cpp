@@ -5,7 +5,8 @@
 ## Start Here
 
 1. `tests/AGENTS.md`
-2. `docs/modules/bills_core/dist_and_test.md`
+2. `docs/tests/README.md`
+3. `docs/README.md`
 
 ## Quick Pointers
 
@@ -14,8 +15,3 @@
 - `tests/baseline/`：快照与 golden
 - `tests/generators/`：测试输入生成器
 - `tests/config/`：测试配置样例
-
-## Common Entry Patterns
-
-- bills_tracer artifact 入口：`python tests/suites/artifact/bills_tracer/run_tests.py`
-- toolchain / reporting unittest：`python -m unittest ...`

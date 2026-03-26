@@ -10,16 +10,21 @@
 
 ## Build And Test Entry
 
-- 本项目的 Python 构建、编译、测试入口统一在根目录 `tests/` 相关链路与 `tools/verify/verify.py`
+- 本项目的 Python 构建、编译、测试入口统一在 `python tools/run.py ...`
 - agent 不需要手工拼接零散编译命令，优先通过 Python 入口触发构建与测试
 - Windows 原生静态构建必须使用 MSYS2 `mingw64` 工具链环境
-- Windows 下的 `bills-tracer-cli-dist` / `bills-tracer-log-generator-dist` 会默认附带导入表门禁，拒绝第三方 DLL、MinGW runtime DLL 和 `api-ms-win-crt-*`
+- Windows 导入表门禁通过 `python tools/run.py import-gate ...` 显式执行，拒绝第三方 DLL、MinGW runtime DLL 和 `api-ms-win-crt-*`
 - 常用入口：
-- `python tools/verify/verify.py bills-tracer-cli-dist`
-  - `python tools/verify/verify.py bills-tracer`
-  - `python tools/verify/verify.py bills-tracer-log-generator-cli-test`
-  - `python tools/verify/verify.py bills-tracer-core-dist`
-  - `python tools/flows/build_bills_tracer_cli.py --preset debug --scope shared`
+- `python tools/run.py dist bills-tracer-cli --preset debug --scope shared`
+  - `python tools/run.py dist bills-tracer-core --preset debug`
+  - `python tools/run.py dist bills-tracer-android --preset debug`
+  - `python tools/run.py log-generator dist --preset debug`
+  - `python tools/run.py log-generator generate --preset debug --start-year 2024 --end-year 2024`
+  - `python tools/run.py verify bills-tracer`
+  - `python tools/run.py verify bills-tracer-log-generator-cli-test`
+  - `python tools/run.py verify logic-tests`
+  - `python tools/run.py verify report-consistency-gate`
+  - `python tools/run.py import-gate bills-tracer-cli --preset debug --scope shared`
   - `python tests/suites/artifact/bills_tracer/run_tests.py`
   - 针对 `tests/suites/toolchain/`、`tests/suites/reporting/` 这类 Python unittest，优先从仓库根目录运行 `python -m unittest ...`
   - 示例：
@@ -27,7 +32,7 @@
     - `python -m unittest tests.suites.toolchain.test_import_layering`
     - `python -m unittest tests.suites.toolchain.test_boundary_layering`
     - `python -m unittest tests.suites.toolchain.test_pipeline_runner`
-  - 其他测试若已接入 `tools/verify/verify.py`，优先走该入口
+  - 其他测试若已接入 `tools/run.py verify`，优先走该入口
 
 ## Execution Rules
 

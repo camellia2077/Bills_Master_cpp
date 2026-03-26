@@ -48,32 +48,12 @@
 - `docs/notes/android_apk_build.md`（Android APK 编译命令与产物说明）
 - `docs/notes/windows_exe_build.md`（Windows bills_tracer_cli 编译命令与产物说明）
 
+## tests
+
+- `docs/tests/README.md`（`tests/` 目录说明、边界、入口与结果读取）
+
 ## tools
 
+- `docs/tools/README.md`（`tools/` 目录说明、边界、统一入口与产物模型）
 - `docs/toolchain_sop.md`（clang-tidy / toolchain SOP 主文档）
 - `docs/toolchain_tidy_automation.md`（toolchain Python 代码地图，面向 agent / 维护者）
-- 统一入口（推荐）：
-  - `python tools/verify/verify.py`
-  - `python tools/run.py`
-  - `python tools/run.py dist <target>`
-  - dist 目录模型：
-- `dist/cmake/<target>/<preset>/<scope>/...`（CMake 产物）
-- `dist/runtime/<project>/workspace/...`（手工 CLI 默认运行时：db/cache/exports/config/notices）
-- `dist/tests/runtime/<project>/workspace`（最新 exe/dll/config）
-- `dist/tests/runtime/<project>/runs/<run_id>/...`（单次运行沙箱与运行期产物）
-- `dist/tests/artifact/<project>/latest/...`（最新 summary/logs/exports 快照）
-- `dist/tests/artifact/<project>/runs/<run_id>/...`（单次测试归档）
-- `dist/tests/logic/pipeline_runner/<pipeline>/...`（流程 runner 元数据）
-- Android / Gradle 默认产物位于各模块自己的 `build/` 目录；Android native CMake staging 默认位于模块下 `.cxx/`
-- `tools/toolchain/`（统一 Python toolchain 实现，含 tidy SOP 编排）
-- `tests/generators/log_generator/`（测试输入数据生成器）
-- `testdata/bills/`（跨端共享 canonical 输入数据）
-- 默认产物：`dist/tests/artifact/log_generator/`
-  - 默认配置：`tests/generators/log_generator/scripts/config.toml`
-  - 显式同步数据：`python tools/flows/bills_tracer_log_generator_flow.py promote-testdata`
-- `tools/reporting/compile2pdf/`（报表产物转 PDF）
-- `tools/reporting/graph_generator/`（报表图表生成）
-  - 统一入口（独立 workflow）：
-    - `python tools/verify/verify.py reporting-compile2pdf`
-    - `python tools/verify/verify.py reporting-graph`
-    - `python tools/verify/verify.py reporting-tools`

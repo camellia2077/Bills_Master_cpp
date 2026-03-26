@@ -9,7 +9,6 @@
 ## 1. 统一入口
 
 - CLI 总入口：`python tools/run.py`
-- 统一验证入口：`python tools/verify/verify.py`
 - toolchain 配置：`tools/toolchain/config/workflow.toml`
 - tidy 运行目录：`temp/tidy/`
 - canonical state：
@@ -82,7 +81,7 @@
 ### 3.2 `verify`
 
 - 默认执行 baseline verify：
-- `python tools/verify/verify.py bills-tracer-cli-dist`
+- `python tools/run.py dist bills-tracer-cli --preset debug --scope shared`
 - 结果写入：
   - `temp/tidy/verify_result.json`
   - batch phase state
@@ -115,7 +114,7 @@
 ### 3.4 `build_gate`
 
 - 在 prepass 之后立即再次执行：
-- `python tools/verify/verify.py bills-tracer-cli-dist`
+- `python tools/run.py dist bills-tracer-cli --preset debug --scope shared`
 - 如果失败：
   - batch 状态写成 `needs_manual_after_fix`
   - `suspect_files` 指向本轮 prepass 改动过的文件

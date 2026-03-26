@@ -3,12 +3,13 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from tools.toolchain.services.build_layout import (
+from tools.verify.report_snapshot_support import COMPARE_SCOPE_STANDARD_REPORT
+
+from ..services.build_layout import (
     assert_no_legacy_flags,
     resolve_artifact_latest_dir,
     resolve_logic_pipeline_root,
 )
-from tools.verify.report_snapshot_support import COMPARE_SCOPE_STANDARD_REPORT
 
 from .common import (
     detect_output_project,

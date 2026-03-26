@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from .common import parse_forwarded_args
 from .pipeline_helpers import run_pipeline_workflow
 
 
 def run_reporting_tools(
-    repo_root: Path,
-    python_exe: str,
+    repo_root,
+    python_exe,
     forwarded: list[str],
 ) -> int:
-    def configure_parser(parser: argparse.ArgumentParser) -> None:
+    def configure_parser(parser) -> None:
         parser.add_argument("--skip-compile2pdf", action="store_true")
         parser.add_argument("--skip-graph", action="store_true")
 

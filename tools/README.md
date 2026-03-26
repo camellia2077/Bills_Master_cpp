@@ -5,9 +5,8 @@
 ## Start Here
 
 1. `tools/AGENTS.md`
-2. `docs/README.md`
-3. `docs/toolchain_sop.md`
-4. `docs/toolchain_tidy_automation.md`
+2. `docs/tools/README.md`
+3. `docs/README.md`
 
 ## Quick Pointers
 
@@ -17,9 +16,3 @@
 - `tools/reporting/`：compile2pdf 与 graph_generator 等报表辅助工具
 - `tools/notices/`：notices 聚合与生成
 - `tools/scripts/`：一次性或人工辅助脚本
-
-## Common Entry Points
-
-- `python tools/verify/verify.py`
-- `python tools/run.py`
-

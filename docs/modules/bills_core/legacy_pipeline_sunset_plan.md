@@ -13,7 +13,7 @@
 - 不再为新格式新增 legacy 专属分叉逻辑。
 
 ## 下线前置条件
-- 连续通过一致性门禁：`python tools/verify/verify.py report-consistency-gate`
+- 连续通过一致性门禁：`python tools/run.py verify report-consistency-gate`
 - 回归窗口内无阻塞级问题依赖 `legacy` 回退。
 - `model-first`（默认）与 `json-first` 在业务数据样本上稳定一致。
 

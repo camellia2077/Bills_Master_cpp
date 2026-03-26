@@ -3,20 +3,11 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
-from tools.flows.build_bills_tracer_android import parse_args as parse_android_args
-from tools.flows.build_bills_tracer_android import resolve_requested_variants
 from tools.toolchain.cli.main import parse_cli_args
 from tools.toolchain.commands.build import run as run_build
-
-
-class _FakeProcessRunner:
-    def __init__(self) -> None:
-        self.calls: list[tuple[list[str], Path]] = []
-
-    def run(self, command: list[str], *, cwd: Path, check: bool = False) -> SimpleNamespace:
-        self.calls.append((list(command), cwd))
-        return SimpleNamespace(returncode=0, command=list(command), cwd=cwd, check=check)
+from tools.toolchain.services.dist.android import parse_android_args, resolve_requested_variants
 
 
 class DistAndroidTests(unittest.TestCase):
@@ -30,14 +21,9 @@ class DistAndroidTests(unittest.TestCase):
         self.assertEqual(args.scope, "shared")
         self.assertEqual(args.forwarded, ["--clean"])
 
-    def test_run_build_routes_android_to_build_bills_tracer_android_flow(self) -> None:
-        runner = _FakeProcessRunner()
-        repo_root = Path("C:/repo")
+    def test_run_build_routes_android_to_android_dist_service(self) -> None:
         ctx = SimpleNamespace(
-            python_executable="python",
-            repo_root=repo_root,
-            flow_entry=lambda relative_path: repo_root / "tools" / "flows" / relative_path,
-            process_runner=runner,
+            repo_root=Path("C:/repo"),
         )
         args = SimpleNamespace(
             target="bills-tracer-android",
@@ -46,32 +32,15 @@ class DistAndroidTests(unittest.TestCase):
             forwarded=["--clean"],
         )
 
-        exit_code = run_build(args, ctx)
+        with patch("tools.toolchain.commands.build.run_android_dist", return_value=0) as mock_run:
+            exit_code = run_build(args, ctx)
 
         self.assertEqual(exit_code, 0)
-        self.assertEqual(
-            runner.calls,
-            [
-                (
-                    [
-                        "python",
-                        str(repo_root / "tools" / "flows" / "build_bills_tracer_android.py"),
-                        "--preset",
-                        "release",
-                        "--clean",
-                    ],
-                    repo_root,
-                )
-            ],
-        )
+        mock_run.assert_called_once_with(Path("C:/repo"), ["--preset", "release", "--clean"])
 
     def test_run_build_rejects_tidy_for_android(self) -> None:
-        runner = _FakeProcessRunner()
         ctx = SimpleNamespace(
-            python_executable="python",
             repo_root=Path("C:/repo"),
-            flow_entry=lambda relative_path: Path("C:/repo/tools/flows") / relative_path,
-            process_runner=runner,
         )
         args = SimpleNamespace(
             target="bills-tracer-android",
@@ -83,7 +52,6 @@ class DistAndroidTests(unittest.TestCase):
         exit_code = run_build(args, ctx)
 
         self.assertEqual(exit_code, 2)
-        self.assertEqual(runner.calls, [])
 
     def test_android_build_flow_defaults_to_debug_variant(self) -> None:
         args = parse_android_args([])

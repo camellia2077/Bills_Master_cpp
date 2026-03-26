@@ -4,6 +4,7 @@ from pathlib import Path
 
 from ..core.context import Context
 from ..core.path_display import display_path
+from ..services.dist.cli import run_cli_dist
 from ..services.tidy_paths import TidyPaths, resolve_tidy_paths
 from ..services.tidy_queue import max_indices, rewrite_pending_tasks, split_log_to_tasks
 from ..services.tidy_runtime import (
@@ -29,12 +30,6 @@ def run_tidy_build(
     stage: str = "tidy",
 ) -> tuple[int, TidyPaths]:
     paths = resolve_tidy_paths(ctx)
-    command = [
-        ctx.python_executable,
-        str(ctx.flow_entry("build_bills_tracer_cli.py")),
-        "--preset",
-        "tidy",
-    ]
     normalized = normalize_forwarded_args(forwarded or [])
     build_args: list[str] = []
     effective_jobs = jobs if jobs is not None else ctx.config.tidy.jobs
@@ -42,12 +37,20 @@ def run_tidy_build(
         build_args.extend(["-j", str(effective_jobs)])
     if resolve_keep_going(ctx, keep_going):
         build_args.extend(["-k", "0"])
+    combined_extra: list[str] = []
     if build_args:
-        command.extend(["--", *build_args])
+        combined_extra.extend(["--", *build_args])
     if normalized:
-        command.extend(normalized)
+        combined_extra.extend(normalized)
 
-    result = ctx.process_runner.run(command, cwd=ctx.repo_root)
+    result = run_cli_dist(
+        ctx.repo_root,
+        preset="tidy",
+        scope="shared",
+        extra_args=combined_extra,
+        capture_output=True,
+        log_path=paths.build_dir / "build.log",
+    )
     run_dir = new_tidy_run_dir(paths)
     copied = copy_build_log_to_raw(paths)
     run_log_path = copy_build_log_to_run(paths, run_dir)
