@@ -50,7 +50,7 @@
 
 - 总索引：`docs/README.md`
 - module 级 dist/test 说明：
-  - `docs/modules/bills_core/dist_and_test.md`
+  - `docs/modules/core/dist_and_test.md`
   - `docs/modules/bills_cli/dist_and_test.md`
   - `docs/modules/io/dist_and_test.md`
   - `docs/modules/bills_android/dist_and_test.md`

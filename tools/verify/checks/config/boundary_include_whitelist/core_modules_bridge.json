@@ -3,13 +3,13 @@
   "generated_at": "2026-03-21T19:06:21",
   "policy": "Boundary layer allows quoted includes, but each entry must define owner/reason/window/tier (replaceable vs long-term).",
   "boundary_layer_roots": {
-    "core_abi": "libs/bills_core/src/abi",
-    "core_modules_bridge": "libs/bills_core/src/modules",
+    "core_abi": "libs/core/src/abi",
+    "core_modules_bridge": "libs/core/src/modules",
     "io_adapters": "libs/io/src/io/adapters"
   },
   "scope": "core_modules_bridge",
   "allowed_quoted_includes": {
-    "libs/bills_core/src/modules/abi_entry.cppm": [
+    "libs/core/src/modules/abi_entry.cppm": [
       {
         "header": "abi/bills_core_abi.h",
         "owner": "phase3-core-canonicalization",
@@ -18,7 +18,7 @@
         "tier": "long-term"
       }
     ],
-    "libs/bills_core/src/modules/common_process_stats.cppm": [
+    "libs/core/src/modules/common_process_stats.cppm": [
       {
         "header": "common/process_stats.hpp",
         "owner": "phase3-core-canonicalization",
@@ -27,7 +27,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/common_result.cppm": [
+    "libs/core/src/modules/common_result.cppm": [
       {
         "header": "common/Result.hpp",
         "owner": "phase3-core-canonicalization",
@@ -36,7 +36,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/common_text_normalizer.cppm": [
+    "libs/core/src/modules/common_text_normalizer.cppm": [
       {
         "header": "common/text_normalizer.hpp",
         "owner": "phase3-core-canonicalization",
@@ -45,7 +45,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/common_version.cppm": [
+    "libs/core/src/modules/common_version.cppm": [
       {
         "header": "common/version.hpp",
         "owner": "phase3-core-canonicalization",
@@ -54,7 +54,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/config_bundle_service.cppm": [
+    "libs/core/src/modules/config_bundle_service.cppm": [
       {
         "header": "config/config_bundle_service.hpp",
         "owner": "phase3-core-canonicalization",
@@ -63,7 +63,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/config_document_types.cppm": [
+    "libs/core/src/modules/config_document_types.cppm": [
       {
         "header": "config/config_document_types.hpp",
         "owner": "phase3-core-canonicalization",
@@ -86,7 +86,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/domain_bill_record.cppm": [
+    "libs/core/src/modules/domain_bill_record.cppm": [
       {
         "header": "domain/bill/bill_record.hpp",
         "owner": "phase3-core-canonicalization",
@@ -95,7 +95,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/ingest_bill_json_serializer.cppm": [
+    "libs/core/src/modules/ingest_bill_json_serializer.cppm": [
       {
         "header": "ingest/json/bills_json_serializer.hpp",
         "owner": "phase3-core-canonicalization",
@@ -104,7 +104,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/ingest_bill_processing_pipeline.cppm": [
+    "libs/core/src/modules/ingest_bill_processing_pipeline.cppm": [
       {
         "header": "ingest/pipeline/bills_processing_pipeline.hpp",
         "owner": "phase3-core-canonicalization",
@@ -113,7 +113,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/ingest_bill_workflow_service.cppm": [
+    "libs/core/src/modules/ingest_bill_workflow_service.cppm": [
       {
         "header": "ingest/bill_workflow_service.hpp",
         "owner": "phase3-core-canonicalization",
@@ -122,7 +122,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/ports_bills_repository.cppm": [
+    "libs/core/src/modules/ports_bills_repository.cppm": [
       {
         "header": "ports/bills_repository.hpp",
         "owner": "phase3-core-canonicalization",
@@ -131,7 +131,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/ports_report_data_gateway.cppm": [
+    "libs/core/src/modules/ports_report_data_gateway.cppm": [
       {
         "header": "ports/report_data_gateway.hpp",
         "owner": "phase3-core-canonicalization",
@@ -140,7 +140,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/query_query_service.cppm": [
+    "libs/core/src/modules/query_query_service.cppm": [
       {
         "header": "query/query_service.hpp",
         "owner": "phase3-core-canonicalization",
@@ -149,7 +149,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/record_template_service.cppm": [
+    "libs/core/src/modules/record_template_service.cppm": [
       {
         "header": "record_template/record_template_service.hpp",
         "owner": "phase3-core-canonicalization",
@@ -158,7 +158,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/record_template_types.cppm": [
+    "libs/core/src/modules/record_template_types.cppm": [
       {
         "header": "record_template/import_preflight_service.hpp",
         "owner": "phase3-core-canonicalization",
@@ -174,7 +174,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/reporting_render_service.cppm": [
+    "libs/core/src/modules/reporting_render_service.cppm": [
       {
         "header": "reporting/report_render_service.hpp",
         "owner": "phase3-core-canonicalization",
@@ -183,7 +183,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/reporting_renderer_registry.cppm": [
+    "libs/core/src/modules/reporting_renderer_registry.cppm": [
       {
         "header": "reporting/renderers/standard_report_renderer_registry.hpp",
         "owner": "phase3-core-canonicalization",
@@ -192,7 +192,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/reporting_standard_report_assembler.cppm": [
+    "libs/core/src/modules/reporting_standard_report_assembler.cppm": [
       {
         "header": "reporting/standard_report/standard_report_assembler.hpp",
         "owner": "phase3-core-canonicalization",
@@ -201,7 +201,7 @@
         "tier": "replaceable"
       }
     ],
-    "libs/bills_core/src/modules/reporting_standard_report_json_serializer.cppm": [
+    "libs/core/src/modules/reporting_standard_report_json_serializer.cppm": [
       {
         "header": "reporting/standard_report/standard_report_json_serializer.hpp",
         "owner": "phase3-core-canonicalization",

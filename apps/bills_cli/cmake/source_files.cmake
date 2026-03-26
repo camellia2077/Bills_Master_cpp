@@ -1,7 +1,7 @@
 # ==============================================================================
 #  源文件收集
 # ==============================================================================
-set(CORE_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/bills_core/src")
+set(CORE_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/core/src")
 set(PRESENTATION_DIR "${SOURCE_ROOT}/presentation")
 set(CLI_MODULES_DIR "${SOURCE_ROOT}/modules")
 set(CLI_ENTRY_DIR "${PRESENTATION_DIR}/entry")

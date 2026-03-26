@@ -24,8 +24,8 @@ set(BILLS_REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../../")
 include("${BILLS_REPO_ROOT}/cmake/modules/native_dependencies.cmake")
 
 add_subdirectory(
-    "${BILLS_REPO_ROOT}/libs/bills_core"
-    "${CMAKE_CURRENT_BINARY_DIR}/libs/bills_core"
+    "${BILLS_REPO_ROOT}/libs/core"
+    "${CMAKE_CURRENT_BINARY_DIR}/libs/core"
 )
 add_subdirectory(
     "${BILLS_REPO_ROOT}/libs/io"
@@ -51,7 +51,7 @@ find_library(LOG_LIB log)
 
 target_include_directories(bills_android_native PRIVATE
     "${CMAKE_CURRENT_LIST_DIR}"
-    "${BILLS_REPO_ROOT}/libs/bills_core/src"
+    "${BILLS_REPO_ROOT}/libs/core/src"
     "${BILLS_REPO_ROOT}/libs/io/src"
 )
 

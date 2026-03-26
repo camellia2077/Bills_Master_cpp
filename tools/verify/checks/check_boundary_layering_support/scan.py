@@ -19,8 +19,8 @@ CPP_SUFFIXES = {
 }
 
 BOUNDARY_LAYER_ROOTS = {
-    "core_abi": "libs/bills_core/src/abi",
-    "core_modules_bridge": "libs/bills_core/src/modules",
+    "core_abi": "libs/core/src/abi",
+    "core_modules_bridge": "libs/core/src/modules",
     "io_adapters": "libs/io/src/io/adapters",
 }
 

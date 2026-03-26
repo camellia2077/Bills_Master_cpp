@@ -3,8 +3,8 @@
   "generated_at": "2026-03-21T19:06:21",
   "policy": "Boundary layer allows quoted includes, but each entry must define owner/reason/window/tier (replaceable vs long-term).",
   "boundary_layer_roots": {
-    "core_abi": "libs/bills_core/src/abi",
-    "core_modules_bridge": "libs/bills_core/src/modules",
+    "core_abi": "libs/core/src/abi",
+    "core_modules_bridge": "libs/core/src/modules",
     "io_adapters": "libs/io/src/io/adapters"
   },
   "scope": "io_adapters",

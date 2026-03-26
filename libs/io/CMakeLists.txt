@@ -5,7 +5,7 @@ project(BillsIo LANGUAGES C CXX)
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/modules/native_dependencies.cmake")
 
 set(BILLS_IO_SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}/src")
-set(BILLS_CORE_SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}/../bills_core/src")
+set(BILLS_CORE_SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}/../core/src")
 
 set(BILLS_IO_SOURCES
     "${BILLS_IO_SOURCE_ROOT}/io/io_factory.cpp"

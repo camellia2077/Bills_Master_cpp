@@ -14,5 +14,5 @@
 
 - 找当前 active 目录：`module_map.md`
 - 判断需求应该落哪条 IO 主线：`change_guide.md`
-- 确认 `io` 与 `bills_core` 的边界：`architecture.md`
+- 确认 `io` 与 `core` 的边界：`architecture.md`
 - 找验证入口：`dist_and_test.md`

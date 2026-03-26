@@ -21,7 +21,7 @@
 - Compose 页面只做状态渲染和用户交互，不复制核心业务规则。
 - feature ViewModel 只承接一个任务域，不跨域混合。
 - service 层负责 Android 平台适配；不要再回到“大而全 repository”。
-- JNI 只做参数转换、response envelope 和 task 域调用；规则改动仍应回到 `libs/bills_core` 或 `libs/io`。
+- JNI 只做参数转换、response envelope 和 task 域调用；规则改动仍应回到 `libs/core` 或 `libs/io`。
 
 ## 提交前最小检查
 

@@ -1,13 +1,13 @@
-# bills_core Agent Guide
+# core Agent Guide
 
-`libs/bills_core` 是纯业务主线。这个文件只告诉 agent 先看哪里、边界在哪、最少要跑什么验证。
+`libs/core` 是纯业务主线。这个文件只告诉 agent 先看哪里、边界在哪、最少要跑什么验证。
 
 ## Read First
 
-1. `libs/bills_core/README.md`
-2. `docs/modules/bills_core/module_map.md`
-3. `docs/modules/bills_core/change_guide.md`
-4. 改 ABI 时再看 `docs/modules/bills_core/abi_contract.md`
+1. `libs/core/README.md`
+2. `docs/modules/core/module_map.md`
+3. `docs/modules/core/change_guide.md`
+4. 改 ABI 时再看 `docs/modules/core/abi_contract.md`
 
 ## Use This Module When
 

@@ -46,7 +46,7 @@ def analyze_large_cpp_files(target_dir, min_lines=350):
 
 if __name__ == "__main__":
     repo_root = Path(__file__).resolve().parents[3]
-    target_path = str(repo_root / "libs" / "bills_core" / "src")
+    target_path = str(repo_root / "libs" / "core" / "src")
     threshold = 350
 
     print(f"正在扫描 C++ 项目: {target_path} ...\n")

@@ -12,13 +12,13 @@
 ## Use This Module When
 
 - 你在改 CLI 命令协议、命令分组或帮助输出
-- 你在改 CLI 到 `bills_core` / `io` 的宿主装配
+- 你在改 CLI 到 `core` / `io` 的宿主装配
 - 你在改 CLI 测试脚本或手工运行入口
 
 ## Boundaries
 
 - 这里不定义核心业务规则
-- 业务规则和纯数据服务优先去 `libs/bills_core`
+- 业务规则和纯数据服务优先去 `libs/core`
 - 文件、配置、数据库和导出落地优先去 `libs/io`
 - 改 CLI 时优先从 `docs/modules/bills_cli/module_map.md` 找目录，再去 `rg`
 

@@ -43,4 +43,4 @@
 - 原来 `Home` 承担的环境摘要、版本和最近状态消息收进 `Workspace` 顶部
 - UI 只依赖 feature ViewModel，不直接粘住底层 native 或 runtime 对象
 - JNI 只负责参数转换、response envelope 和 task 域调用
-- 业务规则仍然只在 `libs/bills_core` / `libs/io`
+- 业务规则仍然只在 `libs/core` / `libs/io`

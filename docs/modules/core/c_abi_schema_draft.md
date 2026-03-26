@@ -2,7 +2,7 @@
 
 Status: Draft  
 Last updated: 2026-02-27  
-Primary implementation reference: `libs/bills_core/src/abi/bills_core_abi.cpp`
+Primary implementation reference: `libs/core/src/abi/bills_core_abi.cpp`
 
 ## 1. ABI Surface
 

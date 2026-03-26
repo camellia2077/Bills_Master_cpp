@@ -1,33 +1,33 @@
-# bills_core Module Map
+# core Module Map
 
-本页用于快速定位 `bills_core` 当前真实主线。
+本页用于快速定位 `core` 当前真实主线。
 
 ## 代码目录
 
-- `libs/bills_core/src/config/`
+- `libs/core/src/config/`
   - `ConfigDocumentBundle`、`ConfigBundleService`、运行时配置与校验报告
-- `libs/bills_core/src/ingest/`
+- `libs/core/src/ingest/`
   - TXT 校验、转换、JSON 编解码、导入批处理
   - 重点看：
     - `ingest/bill_workflow_service.*`
     - `ingest/pipeline/`
     - `ingest/validation/`
     - `ingest/json/`
-- `libs/bills_core/src/query/`
+- `libs/core/src/query/`
   - year/month 查询结果组装
-- `libs/bills_core/src/record_template/`
+- `libs/core/src/record_template/`
   - 模板生成、记录预览、period 列举、preflight import
-- `libs/bills_core/src/reporting/`
+- `libs/core/src/reporting/`
   - `StandardReport` DTO、assembler、renderer registry、格式渲染、排序
   - 重点看：
     - `reporting/standard_report/`
     - `reporting/renderers/`
     - `reporting/sorters/`
-- `libs/bills_core/src/abi/`
+- `libs/core/src/abi/`
   - 纯数据 ABI 入口：`bills_core_abi.cpp`
-- `libs/bills_core/src/ports/`
+- `libs/core/src/ports/`
   - 保留的宿主抽象：`bills_repository.hpp`、`report_data_gateway.hpp`
-- `libs/bills_core/src/modules/`
+- `libs/core/src/modules/`
   - 与 canonical 目录对齐的模块导出面与 smoke
 
 ## 改动定位建议

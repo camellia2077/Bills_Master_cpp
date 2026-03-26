@@ -2,11 +2,11 @@
 
 ## Scope
 - This document freezes the current refactor boundary for Android reuse.
-- Source of truth for Phase 0/1 decisions in `docs/modules/bills_core/c_abi_schema_draft.md`.
+- Source of truth for Phase 0/1 decisions in `docs/modules/core/c_abi_schema_draft.md`.
 - Working draft copy for discussion: `temp/c-abi.md`.
 
 ## Module Boundaries
-- `libs/bills_core`
+- `libs/core`
   - Holds business rules, validation/conversion pipeline, and application use-cases.
   - Must not contain platform-specific code (`_WIN32`, `LoadLibrary`, direct SQLite handles).
 - `apps/bills_cli`

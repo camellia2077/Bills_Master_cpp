@@ -1,8 +1,8 @@
-# bills_core Architecture
+# core Architecture
 
 ## 目标
 
-`libs/bills_core` 现在只承载平台无关业务能力，目录事实源固定为：
+`libs/core` 现在只承载平台无关业务能力，目录事实源固定为：
 
 - `common/`
 - `config/`
@@ -15,7 +15,7 @@
 - `ports/`
 - `modules/`
 
-`bills_core` 不再负责：
+`core` 不再负责：
 
 - TOML 文件读取或 TOML 解析入口
 - 文本 / JSON 文件读写
@@ -46,7 +46,7 @@
 
 ## 约束
 
-- `bills_core` 源码中禁止出现 `toml::`、`sqlite3`、`<fstream>`、`recursive_directory_iterator`、`create_directories`
+- `core` 源码中禁止出现 `toml::`、`sqlite3`、`<fstream>`、`recursive_directory_iterator`、`create_directories`
 - `abi/` 不再接收 `input_path`、`config_dir`、`output_dir`
 - `ingest/`、`record_template/`、`abi/` 统一基于 `SourceDocumentBatch` 处理输入
 - `reporting/` 只产出字符串或 `StandardReport`，不直接 `std::cout/std::cerr`
@@ -63,7 +63,7 @@
 
 ## 相关阅读
 
-- `docs/modules/bills_core/module_map.md`
-- `docs/modules/bills_core/change_guide.md`
-- `docs/modules/bills_core/abi_contract.md`
-- `docs/modules/bills_core/dist_and_test.md`
+- `docs/modules/core/module_map.md`
+- `docs/modules/core/change_guide.md`
+- `docs/modules/core/abi_contract.md`
+- `docs/modules/core/dist_and_test.md`

@@ -2,7 +2,7 @@
 
 ## 定位
 
-`libs/bills_core/src/abi/bills_core_abi.cpp` 现在是纯数据 ABI 入口。
+`libs/core/src/abi/bills_core_abi.cpp` 现在是纯数据 ABI 入口。
 
 ABI 不再负责：
 

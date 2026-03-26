@@ -18,7 +18,7 @@
 ## Boundaries
 
 - 这里不定义核心业务规则
-- 业务规则和报表规则优先去 `libs/bills_core`
+- 业务规则和报表规则优先去 `libs/core`
 - 跨端 IO、sqlite、配置文档读取优先去 `libs/io`
 - 改 JNI 时，先看：
   - `apps/bills_android/src/main/java/com/billstracer/android/data/native/`

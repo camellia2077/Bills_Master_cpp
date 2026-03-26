@@ -17,7 +17,7 @@
 ## Boundaries
 
 - 这里不承载业务规则
-- 业务规则优先去 `libs/bills_core`
+- 业务规则优先去 `libs/core`
 - 不要让 `io` 反向依赖表现层
 - 优先从 `module_map.md` 找目录，再去 `rg`
 

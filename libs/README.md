@@ -6,8 +6,8 @@
 
 1. `libs/AGENTS.md`
 2. 如果你在改业务规则、导入、查询、报表、ABI：
-   - `libs/bills_core/README.md`
-   - `libs/bills_core/AGENTS.md`
+   - `libs/core/README.md`
+   - `libs/core/AGENTS.md`
 3. 如果你在改配置文档读取、源文档 IO、sqlite、导出落地：
    - `libs/io/README.md`
    - `libs/io/AGENTS.md`

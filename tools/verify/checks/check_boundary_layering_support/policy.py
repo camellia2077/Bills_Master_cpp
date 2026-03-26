@@ -15,7 +15,7 @@ def classify_entry(file_path: str, header: str) -> tuple[str, str]:
             "长期保留（第三方/平台适配或 ABI 对外契约，不计划在迁移窗口内移除）",
         )
 
-    if file_path.startswith("libs/bills_core/src/modules/"):
+    if file_path.startswith("libs/core/src/modules/"):
         return (
             "replaceable",
             "Phase 5.2（编译器兼容矩阵稳定后，评估 header-unit/纯 import 替代桥接 include）",
@@ -37,9 +37,9 @@ def reason_for_entry(file_path: str, header: str, tier: str) -> str:
             return "IO 适配器属于平台/第三方边界实现，允许保留 include。"
         return "边界层长期依赖，短期内无替换收益。"
 
-    if file_path.startswith("libs/bills_core/src/modules/"):
+    if file_path.startswith("libs/core/src/modules/"):
         return "模块桥接段用于连接遗留头与 export 接口，后续可继续收敛。"
-    if file_path.startswith("libs/bills_core/src/abi/"):
+    if file_path.startswith("libs/core/src/abi/"):
         return "ABI 命令处理与共享边界实现当前需要该 include，后续继续迁移为更小边界。"
     return "边界层临时依赖，后续在迁移窗口内持续压缩。"
 

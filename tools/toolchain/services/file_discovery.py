@@ -7,13 +7,13 @@ from ..core.config import ScopeConfig
 
 DEFAULT_SOURCE_ROOTS = [
     "apps/bills_cli/src",
-    "libs/bills_core/src",
+    "libs/core/src",
     "libs/io/src",
 ]
 OPTIONAL_SOURCE_ROOTS = ["tests/generators/log_generator/src"]
 DEFAULT_HEADER_FILTER_ROOTS = [
     "apps/bills_cli/src",
-    "libs/bills_core/src",
+    "libs/core/src",
     "libs/io/src",
 ]
 

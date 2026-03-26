@@ -20,14 +20,14 @@ class BoundaryLayeringTests(unittest.TestCase):
     def test_scan_scope_collects_include_records(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
-            source = repo_root / "libs" / "bills_core" / "src" / "abi" / "demo.cpp"
+            source = repo_root / "libs" / "core" / "src" / "abi" / "demo.cpp"
             source.parent.mkdir(parents=True, exist_ok=True)
             source.write_text('#include "demo.h"\n#include <vector>\n', encoding="utf-8")
 
             includes, scanned_files = scan_scope(
                 repo_root,
                 "core_abi",
-                "libs/bills_core/src/abi",
+                "libs/core/src/abi",
             )
 
         self.assertEqual(scanned_files, 1)
@@ -37,10 +37,10 @@ class BoundaryLayeringTests(unittest.TestCase):
     def test_write_baseline_and_load_allowlist_preserve_schema(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
-            source = repo_root / "libs" / "bills_core" / "src" / "abi" / "demo.cpp"
+            source = repo_root / "libs" / "core" / "src" / "abi" / "demo.cpp"
             source.parent.mkdir(parents=True, exist_ok=True)
             source.write_text('#include "demo.h"\n', encoding="utf-8")
-            includes, _ = scan_scope(repo_root, "core_abi", "libs/bills_core/src/abi")
+            includes, _ = scan_scope(repo_root, "core_abi", "libs/core/src/abi")
             config_path = repo_root / "boundary.json"
 
             write_baseline(config_path, includes, "owner_demo")
@@ -48,17 +48,17 @@ class BoundaryLayeringTests(unittest.TestCase):
             payload = json.loads(config_path.read_text(encoding="utf-8"))
 
         self.assertEqual(errors, [])
-        self.assertIn(("libs/bills_core/src/abi/demo.cpp", "demo.h"), allowlist)
+        self.assertIn(("libs/core/src/abi/demo.cpp", "demo.h"), allowlist)
         self.assertEqual(payload["schema_version"], 1)
-        self.assertEqual(tier_map[("libs/bills_core/src/abi/demo.cpp", "demo.h")], "replaceable")
+        self.assertEqual(tier_map[("libs/core/src/abi/demo.cpp", "demo.h")], "replaceable")
 
     def test_write_baseline_and_load_allowlist_support_directory_shards(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
-            source = repo_root / "libs" / "bills_core" / "src" / "abi" / "demo.cpp"
+            source = repo_root / "libs" / "core" / "src" / "abi" / "demo.cpp"
             source.parent.mkdir(parents=True, exist_ok=True)
             source.write_text('#include "demo.h"\n', encoding="utf-8")
-            includes, _ = scan_scope(repo_root, "core_abi", "libs/bills_core/src/abi")
+            includes, _ = scan_scope(repo_root, "core_abi", "libs/core/src/abi")
             config_path = repo_root / "boundary_allowlist"
 
             write_baseline(config_path, includes, "owner_demo")
@@ -69,8 +69,8 @@ class BoundaryLayeringTests(unittest.TestCase):
         self.assertEqual(errors, [])
         self.assertEqual(shard_files, ["core_abi.json"])
         self.assertEqual(payload["scope"], "core_abi")
-        self.assertIn(("libs/bills_core/src/abi/demo.cpp", "demo.h"), allowlist)
-        self.assertEqual(tier_map[("libs/bills_core/src/abi/demo.cpp", "demo.h")], "replaceable")
+        self.assertIn(("libs/core/src/abi/demo.cpp", "demo.h"), allowlist)
+        self.assertEqual(tier_map[("libs/core/src/abi/demo.cpp", "demo.h")], "replaceable")
 
     def test_load_allowlist_directory_rejects_duplicate_entries(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -79,7 +79,7 @@ class BoundaryLayeringTests(unittest.TestCase):
             duplicate_payload = {
                 "schema_version": 1,
                 "allowed_quoted_includes": {
-                    "libs/bills_core/src/abi/demo.cpp": [
+                    "libs/core/src/abi/demo.cpp": [
                         {
                             "header": "demo.h",
                             "owner": "owner_demo",
@@ -101,27 +101,27 @@ class BoundaryLayeringTests(unittest.TestCase):
 
             allowlist, errors, tier_map = load_allowlist(config_dir)
 
-        self.assertEqual(allowlist, {("libs/bills_core/src/abi/demo.cpp", "demo.h")})
-        self.assertEqual(tier_map, {("libs/bills_core/src/abi/demo.cpp", "demo.h"): "replaceable"})
+        self.assertEqual(allowlist, {("libs/core/src/abi/demo.cpp", "demo.h")})
+        self.assertEqual(tier_map, {("libs/core/src/abi/demo.cpp", "demo.h"): "replaceable"})
         self.assertEqual(
             errors,
-            ["allowlist schema error: duplicate entry for 'libs/bills_core/src/abi/demo.cpp' -> 'demo.h'"],
+            ["allowlist schema error: duplicate entry for 'libs/core/src/abi/demo.cpp' -> 'demo.h'"],
         )
 
     def test_check_policy_and_stats_report_violations(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
-            source = repo_root / "libs" / "bills_core" / "src" / "abi" / "demo.cpp"
+            source = repo_root / "libs" / "core" / "src" / "abi" / "demo.cpp"
             source.parent.mkdir(parents=True, exist_ok=True)
             source.write_text('#include "demo.h"\n', encoding="utf-8")
-            includes, scanned_files = scan_scope(repo_root, "core_abi", "libs/bills_core/src/abi")
+            includes, scanned_files = scan_scope(repo_root, "core_abi", "libs/core/src/abi")
 
             violations, observed = check_policy(includes, allowlist=set())
             buffer = io.StringIO()
             with redirect_stdout(buffer):
                 with patch.dict(
                     "tools.verify.checks.check_boundary_layering_support.policy.BOUNDARY_LAYER_ROOTS",
-                    {"core_abi": "libs/bills_core/src/abi"},
+                    {"core_abi": "libs/core/src/abi"},
                     clear=True,
                 ):
                     print_stats(includes, {"core_abi": scanned_files}, observed, {})

@@ -50,8 +50,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--root",
-        default="libs/bills_core/src",
-        help="Directory to scan (default: libs/bills_core/src).",
+        default="libs/core/src",
+        help="Directory to scan (default: libs/core/src).",
     )
     parser.add_argument(
         "--limit",

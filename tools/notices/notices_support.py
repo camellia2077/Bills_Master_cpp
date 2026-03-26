@@ -19,7 +19,7 @@ LAYER_TARGETS = {
     ANDROID_TARGET: ("bills_core", "bills_io", "bills_android"),
 }
 LAYER_MANIFEST_PATHS = {
-    "bills_core": Path("libs") / "bills_core" / "notices.toml",
+    "bills_core": Path("libs") / "core" / "notices.toml",
     "bills_io": Path("libs") / "io" / "notices.toml",
     "bills_cli": Path("apps") / "bills_cli" / "notices.toml",
     "bills_android": Path("apps") / "bills_android" / "notices.toml",

@@ -17,7 +17,7 @@
 
 - parser 只做路由和参数转换，不写核心业务规则。
 - feature handler 只做一个任务域的表现层编排。
-- 核心流程变更请转到 `docs/modules/bills_core/change_guide.md`。
+- 核心流程变更请转到 `docs/modules/core/change_guide.md`。
 - IO 行为变更请转到 `docs/modules/io/change_guide.md`。
 
 ## 提交前最小检查

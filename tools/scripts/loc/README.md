@@ -54,7 +54,7 @@ python scripts/loc/run.py --lang <cpp|kt|py|rs> [paths ...] [--over N | --under 
 
 `bills_tracer` 当前已配置的默认扫描路径：
 
-- `cpp` -> `apps/bills_cli/src`, `libs/bills_core/src`, `libs/io/src`, `tests/generators/log_generator/src`
+- `cpp` -> `apps/bills_cli/src`, `libs/core/src`, `libs/io/src`, `tests/generators/log_generator/src`
 - `py` -> `tools`, `tests`, `scripts`
 - `kt` -> `apps/bills_android/src/main/java`, `apps/bills_android/src/test/java`, `apps/bills_android/src/androidTest/java`
 

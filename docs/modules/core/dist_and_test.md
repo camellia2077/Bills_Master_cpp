@@ -1,6 +1,6 @@
-# bills_core Dist And Test
+# core Dist And Test
 
-改动定位建议先看：`docs/modules/bills_core/change_guide.md`
+改动定位建议先看：`docs/modules/core/change_guide.md`
 
 ## 统一入口
 
@@ -15,8 +15,8 @@
   - core 不得依赖 platform/windows。
   - cli 不得新增业务规则实现。
 - 快速检查命令（仓库根目录）：
-  - `rg -n "windows/" "libs/bills_core/src"`
-  - `rg -n "LoadLibrary|GetProcAddress|sqlite3_" "libs/bills_core/src"`
+  - `rg -n "windows/" "libs/core/src"`
+  - `rg -n "LoadLibrary|GetProcAddress|sqlite3_" "libs/core/src"`
 - 结果判定：
   - 命中需人工复核；若属于真实平台依赖，必须迁回 `apps/bills_cli` 适配层。
 
