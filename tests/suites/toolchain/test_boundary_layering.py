@@ -52,6 +52,62 @@ class BoundaryLayeringTests(unittest.TestCase):
         self.assertEqual(payload["schema_version"], 1)
         self.assertEqual(tier_map[("libs/bills_core/src/abi/demo.cpp", "demo.h")], "replaceable")
 
+    def test_write_baseline_and_load_allowlist_support_directory_shards(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo_root = Path(temp_dir)
+            source = repo_root / "libs" / "bills_core" / "src" / "abi" / "demo.cpp"
+            source.parent.mkdir(parents=True, exist_ok=True)
+            source.write_text('#include "demo.h"\n', encoding="utf-8")
+            includes, _ = scan_scope(repo_root, "core_abi", "libs/bills_core/src/abi")
+            config_path = repo_root / "boundary_allowlist"
+
+            write_baseline(config_path, includes, "owner_demo")
+            allowlist, errors, tier_map = load_allowlist(config_path)
+            shard_files = sorted(path.name for path in config_path.iterdir())
+            payload = json.loads((config_path / "core_abi.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(errors, [])
+        self.assertEqual(shard_files, ["core_abi.json"])
+        self.assertEqual(payload["scope"], "core_abi")
+        self.assertIn(("libs/bills_core/src/abi/demo.cpp", "demo.h"), allowlist)
+        self.assertEqual(tier_map[("libs/bills_core/src/abi/demo.cpp", "demo.h")], "replaceable")
+
+    def test_load_allowlist_directory_rejects_duplicate_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_dir = Path(temp_dir) / "boundary_allowlist"
+            config_dir.mkdir(parents=True, exist_ok=True)
+            duplicate_payload = {
+                "schema_version": 1,
+                "allowed_quoted_includes": {
+                    "libs/bills_core/src/abi/demo.cpp": [
+                        {
+                            "header": "demo.h",
+                            "owner": "owner_demo",
+                            "reason": "reason_demo",
+                            "window": "window_demo",
+                            "tier": "replaceable",
+                        }
+                    ]
+                },
+            }
+            (config_dir / "a.json").write_text(
+                json.dumps(duplicate_payload, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            (config_dir / "b.json").write_text(
+                json.dumps(duplicate_payload, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            allowlist, errors, tier_map = load_allowlist(config_dir)
+
+        self.assertEqual(allowlist, {("libs/bills_core/src/abi/demo.cpp", "demo.h")})
+        self.assertEqual(tier_map, {("libs/bills_core/src/abi/demo.cpp", "demo.h"): "replaceable"})
+        self.assertEqual(
+            errors,
+            ["allowlist schema error: duplicate entry for 'libs/bills_core/src/abi/demo.cpp' -> 'demo.h'"],
+        )
+
     def test_check_policy_and_stats_report_violations(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)

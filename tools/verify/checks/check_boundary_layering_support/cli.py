@@ -17,8 +17,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--config",
-        default="tools/verify/checks/config/boundary_include_whitelist.json",
-        help="Boundary allowlist config path (relative to repo root by default).",
+        default="tools/verify/checks/config/boundary_include_whitelist",
+        help="Boundary allowlist config path or directory (relative to repo root by default).",
     )
     parser.add_argument(
         "--stats",
