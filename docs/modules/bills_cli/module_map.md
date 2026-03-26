@@ -11,7 +11,7 @@
 - `apps/bills_cli/src/presentation/entry/runtime_context.cpp`
   - 运行时目录、默认 DB、导出目录、notices/format helper
 - `apps/bills_cli/src/presentation/parsing/cli_parser.cpp`
-  - 新命令组语法解析
+  - CLI11 命令树、分层 help 与 typed request 解析
 - `apps/bills_cli/src/presentation/features/workspace/workspace_handler.cpp`
   - 工作区导入链路
 - `apps/bills_cli/src/presentation/features/report/report_handler.cpp`
@@ -22,8 +22,6 @@
   - 配置检查与格式列表
 - `apps/bills_cli/src/presentation/features/meta/meta_handler.cpp`
   - 版本与 notices
-- `apps/bills_cli/src/presentation/output/help_text.cpp`
-  - 帮助文本
 - `apps/bills_cli/src/common/cli_version.hpp`
   - CLI 表现层版本号
 

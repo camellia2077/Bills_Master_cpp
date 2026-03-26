@@ -1,6 +1,7 @@
 #ifndef PRESENTATION_PARSING_CLI_PARSER_HPP_
 #define PRESENTATION_PARSING_CLI_PARSER_HPP_
 
+#include <string_view>
 #include <string>
 #include <vector>
 
@@ -13,7 +14,8 @@ import bill.cli.presentation.parsing.cli_request;
 
 namespace bills::cli {
 
-[[nodiscard]] auto ParseCliRequest(const std::vector<std::string>& args)
+[[nodiscard]] auto ParseCliRequest(std::string_view program_name,
+                                   const std::vector<std::string>& args)
     -> Result<CliRequest>;
 
 }  // namespace bills::cli

@@ -16,6 +16,7 @@ constants: Any = None
 resolve_artifact_project_root: Any = None
 CommandExecutor: Any = None
 TestPreparer: Any = None
+HelpTasks: Any = None
 DateExportTasks: Any = None
 ExportTasks: Any = None
 ImportTasks: Any = None
@@ -31,6 +32,7 @@ def _bootstrap_imports() -> None:
     global resolve_artifact_project_root
     global CommandExecutor
     global TestPreparer
+    global HelpTasks
     global DateExportTasks
     global ExportTasks
     global ImportTasks
@@ -51,6 +53,7 @@ def _bootstrap_imports() -> None:
     constants = framework_constants
     CommandExecutor = executor_module.CommandExecutor
     TestPreparer = preparer_module.TestPreparer
+    HelpTasks = tasks_module.HelpTasks
     DateExportTasks = tasks_module.DateExportTasks
     ExportTasks = tasks_module.ExportTasks
     ImportTasks = tasks_module.ImportTasks
@@ -313,6 +316,7 @@ def run_test_sequence(runtime_base_dir: Path, preparer, run_output_root: Path):
 
     # --- 初始化任务 ---
     executor = CommandExecutor(str(exe_path), str(output_dir))
+    help_tasks = HelpTasks(executor)
     importer = ImportTasks(executor, config.BILLS_DIR, config.IMPORT_DIR)
     querier = QueryTasks(executor)
     exporter = ExportTasks(executor)
@@ -329,7 +333,7 @@ def run_test_sequence(runtime_base_dir: Path, preparer, run_output_root: Path):
     # --- 执行测试序列 ---
     print(f"\n{constants.CYAN}========== Starting Test Sequence =========={constants.RESET}")
 
-    base_tasks_ok = importer.run() and querier.run()
+    base_tasks_ok = help_tasks.run() and importer.run() and querier.run()
     final_result = False
 
     if base_tasks_ok:

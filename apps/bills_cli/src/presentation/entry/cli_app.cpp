@@ -6,7 +6,6 @@ import bill.cli.presentation.features.meta_handler;
 import bill.cli.presentation.features.report_handler;
 import bill.cli.presentation.features.template_handler;
 import bill.cli.presentation.features.workspace_handler;
-import bill.cli.presentation.output.help_text;
 import bill.cli.presentation.parsing.cli_request;
 import bill.cli.presentation.parsing.cli_parser;
 #else
@@ -17,7 +16,6 @@ import bill.cli.presentation.parsing.cli_parser;
 #include <presentation/features/report/report_handler.hpp>
 #include <presentation/features/template/template_handler.hpp>
 #include <presentation/features/workspace/workspace_handler.hpp>
-#include <presentation/output/help_text.hpp>
 #include <presentation/parsing/cli_parser.hpp>
 #endif
 
@@ -37,6 +35,10 @@ auto ExecuteRequest(const CliRequest& request, const RuntimeContext& context) ->
       [&](const auto& typed_request) -> bool {
         using T = std::decay_t<decltype(typed_request)>;
         if constexpr (std::is_same_v<T, HelpRequest>) {
+          std::cout << typed_request.text;
+          if (!typed_request.text.empty() && typed_request.text.back() != '\n') {
+            std::cout << '\n';
+          }
           return true;
         } else if constexpr (std::is_same_v<T, WorkspaceRequest>) {
           WorkspaceHandler handler(context);
@@ -69,15 +71,23 @@ auto CliApp::Run(int argc, char* argv[]) -> int {
       args.emplace_back(argv[index]);
     }
 
-    const auto request = ParseCliRequest(args);
+    const auto request =
+        ParseCliRequest(argc > 0 ? argv[0] : "bills_tracer_cli", args);
     if (!request) {
-      std::cerr << "Error: " << FormatError(request.error()) << '\n' << '\n';
-      PrintHelp(std::cerr, argc > 0 ? argv[0] : "bill_master_cli");
+      std::cerr << request.error().message_;
+      if (!request.error().message_.empty() &&
+          request.error().message_.back() != '\n') {
+        std::cerr << '\n';
+      }
       return 1;
     }
 
     if (std::holds_alternative<HelpRequest>(*request)) {
-      PrintHelp(std::cout, argc > 0 ? argv[0] : "bill_master_cli");
+      const auto& help = std::get<HelpRequest>(*request);
+      std::cout << help.text;
+      if (!help.text.empty() && help.text.back() != '\n') {
+        std::cout << '\n';
+      }
       return 0;
     }
 

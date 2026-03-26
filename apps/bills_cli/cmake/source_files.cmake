@@ -6,7 +6,6 @@ set(PRESENTATION_DIR "${SOURCE_ROOT}/presentation")
 set(CLI_MODULES_DIR "${SOURCE_ROOT}/modules")
 set(CLI_ENTRY_DIR "${PRESENTATION_DIR}/entry")
 set(CLI_PARSING_DIR "${PRESENTATION_DIR}/parsing")
-set(CLI_OUTPUT_DIR "${PRESENTATION_DIR}/output")
 set(CLI_FEATURES_DIR "${PRESENTATION_DIR}/features")
 set(CLI_WORKSPACE_FEATURE_DIR "${CLI_FEATURES_DIR}/workspace")
 set(CLI_REPORT_FEATURE_DIR "${CLI_FEATURES_DIR}/report")
@@ -23,10 +22,6 @@ set(CLI_PARSING_SOURCES
     "${CLI_PARSING_DIR}/cli_parser.cpp"
 )
 
-set(CLI_OUTPUT_SOURCES
-    "${CLI_OUTPUT_DIR}/help_text.cpp"
-)
-
 set(CLI_FEATURE_SOURCES
     "${CLI_WORKSPACE_FEATURE_DIR}/workspace_handler.cpp"
     "${CLI_REPORT_FEATURE_DIR}/report_handler.cpp"
@@ -38,7 +33,6 @@ set(CLI_FEATURE_SOURCES
 set(CLI_APP_SOURCES
     ${CLI_ENTRY_SOURCES}
     ${CLI_PARSING_SOURCES}
-    ${CLI_OUTPUT_SOURCES}
     ${CLI_FEATURE_SOURCES}
 )
 
@@ -61,7 +55,6 @@ set(CLI_MODULE_INTERFACE_FILES
     "${CLI_MODULES_DIR}/runtime_context.cppm"
     "${CLI_MODULES_DIR}/cli_request.cppm"
     "${CLI_MODULES_DIR}/cli_parser.cppm"
-    "${CLI_MODULES_DIR}/help_text.cppm"
     "${CLI_MODULES_DIR}/workspace_handler.cppm"
     "${CLI_MODULES_DIR}/report_handler.cppm"
     "${CLI_MODULES_DIR}/template_handler.cppm"

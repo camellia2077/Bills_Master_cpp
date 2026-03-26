@@ -7,7 +7,7 @@
 - `apps/bills_cli/src/presentation/entry/`
   - CLI 启动入口、runtime context、路由总装配
 - `apps/bills_cli/src/presentation/parsing/`
-  - argv -> typed request 的解析
+  - CLI11 命令树、分层 help 与 argv -> typed request 的解析
 - `apps/bills_cli/src/presentation/features/workspace/`
   - `workspace validate/convert/ingest/import-json`
 - `apps/bills_cli/src/presentation/features/report/`
@@ -18,12 +18,10 @@
   - `config inspect/formats`
 - `apps/bills_cli/src/presentation/features/meta/`
   - `meta version/notices`
-- `apps/bills_cli/src/presentation/output/`
-  - help 与控制台输出文案
 
 ## 职责边界
 
-- parser 只负责语法与 typed request，不承担业务编排。
+- parser 只负责命令树、help 与 typed request，不承担业务编排。
 - feature handler 只负责一类任务域，不跨域拼装其他命令。
 - runtime context 只负责宿主路径、默认目录与格式启用信息。
 - 业务规则继续留在 `libs/bills_core`。

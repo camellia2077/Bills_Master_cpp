@@ -38,6 +38,19 @@ class CommandExecutor:
             }
         )
 
+    def _write_log(self, log_path, full_command, return_code, stdout_text, stderr_text):
+        with open(log_path, "w", encoding="utf-8") as f:
+            f.write(f"--- Command ---\n{' '.join(full_command)}\n\n")
+            f.write(f"--- Return Code ---\n{return_code}\n\n")
+            f.write(f"--- STDOUT ---\n{stdout_text}\n")
+            if stderr_text:
+                f.write(f"\n--- STDERR ---\n{stderr_text}\n")
+
+    def read_log_text(self, log_filename):
+        log_path = os.path.join(self.output_dir, log_filename)
+        with open(log_path, "r", encoding="utf-8") as f:
+            return f.read()
+
     def run(self, step_name, command_args, log_filename):
         """执行一个命令，并将其 stdout 和 stderr 保存到日志文件。"""
         full_command = [self.exe_path] + command_args
@@ -56,12 +69,9 @@ class CommandExecutor:
             clean_stdout = remove_ansi_codes(result.stdout)
             clean_stderr = remove_ansi_codes(result.stderr)
 
-            with open(log_path, "w", encoding="utf-8") as f:
-                f.write(f"--- Command ---\n{' '.join(full_command)}\n\n")
-                f.write(f"--- Return Code ---\n{result.returncode}\n\n")
-                f.write(f"--- STDOUT ---\n{clean_stdout}\n")
-                if result.stderr:
-                    f.write(f"\n--- STDERR ---\n{clean_stderr}\n")
+            self._write_log(
+                log_path, full_command, result.returncode, clean_stdout, clean_stderr
+            )
 
             if result.returncode == 0:
                 print(f" ... {constants.GREEN}OK{constants.RESET} ({duration:.2f}s)")
@@ -85,6 +95,69 @@ class CommandExecutor:
                     status="failed",
                 )
                 return False
+
+        except Exception as e:
+            print(f" ... {constants.RED}CRASHED{constants.RESET}\n      Error: {e}")
+            with open(log_path, "w", encoding="utf-8") as f:
+                f.write(f"--- Command ---\n{' '.join(full_command)}\n\n")
+                f.write(f"--- CRITICAL ERROR ---\nFailed to execute command.\nError: {e}\n")
+            self._append_record(
+                step_name=step_name,
+                command_args=command_args,
+                log_filename=log_filename,
+                return_code=-1,
+                duration_seconds=0.0,
+                status="crashed",
+            )
+            return False
+
+    def run_expected_failure(self, step_name, command_args, log_filename):
+        """执行一个预期失败的命令，并将其输出保存到日志文件。"""
+        full_command = [self.exe_path] + command_args
+        log_path = os.path.join(self.output_dir, log_filename)
+
+        print(f"  -> {step_name:<25} | Log: {log_filename}", end="", flush=True)
+
+        try:
+            start_time = time.time()
+            result = subprocess.run(
+                full_command, capture_output=True, text=True, encoding="utf-8", errors="ignore"
+            )
+            end_time = time.time()
+            duration = end_time - start_time
+
+            clean_stdout = remove_ansi_codes(result.stdout)
+            clean_stderr = remove_ansi_codes(result.stderr)
+
+            self._write_log(
+                log_path, full_command, result.returncode, clean_stdout, clean_stderr
+            )
+
+            if result.returncode != 0:
+                print(f" ... {constants.GREEN}OK{constants.RESET} (expected failure)")
+                self._append_record(
+                    step_name=step_name,
+                    command_args=command_args,
+                    log_filename=log_filename,
+                    return_code=result.returncode,
+                    duration_seconds=duration,
+                    status="expected_fail",
+                )
+                return True
+
+            print(
+                f" ... {constants.RED}FAILED{constants.RESET} "
+                "(command unexpectedly succeeded)"
+            )
+            self._append_record(
+                step_name=step_name,
+                command_args=command_args,
+                log_filename=log_filename,
+                return_code=result.returncode,
+                duration_seconds=duration,
+                status="failed",
+            )
+            return False
 
         except Exception as e:
             print(f" ... {constants.RED}CRASHED{constants.RESET}\n      Error: {e}")

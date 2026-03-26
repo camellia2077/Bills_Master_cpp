@@ -80,7 +80,9 @@ struct MetaRequest {
   bool raw_json = false;
 };
 
-struct HelpRequest {};
+struct HelpRequest {
+  std::string text;
+};
 
 using CliRequest = std::variant<HelpRequest, WorkspaceRequest, ReportRequest,
                                 TemplateRequest, ConfigRequest, MetaRequest>;

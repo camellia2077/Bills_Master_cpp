@@ -10,6 +10,184 @@ from . import app_config as config
 from . import constants
 
 
+class HelpTasks:
+    """帮助输出与兼容性类：负责执行 help 分层与已移除入口校验。"""
+
+    def __init__(self, executor):
+        self.executor = executor
+
+    def run(self):
+        print(
+            f"{constants.CYAN}--- Running Help And Compatibility Tasks ---"
+            f"{constants.RESET}"
+        )
+        tasks = [
+            ("Top Help (No Args)", [], "00_help_no_args.log"),
+            ("Top Help (--help)", ["--help"], "01_help_top_flag.log"),
+            ("Workspace Help", ["workspace", "--help"], "02_help_workspace.log"),
+            ("Report Help", ["report", "--help"], "03_help_report.log"),
+            (
+                "Report Export Help",
+                ["report", "export", "--help"],
+                "04_help_report_export.log",
+            ),
+            (
+                "Report Export Year Help",
+                ["report", "export", "year", "--help"],
+                "05_help_report_export_year.log",
+            ),
+            (
+                "Template Generate Help",
+                ["template", "generate", "--help"],
+                "06_help_template_generate.log",
+            ),
+            ("Config Help", ["config", "--help"], "07_help_config.log"),
+            ("Meta Help", ["meta", "--help"], "08_help_meta.log"),
+        ]
+        for step_name, args, log_filename in tasks:
+            if not self.executor.run(step_name, args, log_filename):
+                return False
+
+        legacy_tasks = [
+            (
+                "Removed Help Subcommand",
+                ["help"],
+                "09_removed_help.log",
+                "The 'help' subcommand was removed. Use '--help' or '<command> --help'.",
+            ),
+            (
+                "Removed Version Flag",
+                ["--version"],
+                "10_removed_version.log",
+                "The '--version' flag was removed. Use 'meta version'.",
+            ),
+            (
+                "Removed Notices Flag",
+                ["--notices"],
+                "11_removed_notices.log",
+                "Legacy notices flags were removed. Use 'meta notices [--json]'.",
+            ),
+            (
+                "Removed Notices JSON Flag",
+                ["--notices-json"],
+                "12_removed_notices_json.log",
+                "Legacy notices flags were removed. Use 'meta notices [--json]'.",
+            ),
+        ]
+        for step_name, args, log_filename, expected_text in legacy_tasks:
+            if not self.executor.run_expected_failure(step_name, args, log_filename):
+                return False
+            if not self._assert_log_contains(log_filename, expected_text):
+                return False
+
+        return self._assert_help_structure()
+
+    def _assert_help_structure(self):
+        top_help_log = "00_help_no_args.log"
+        if not self._assert_log_contains(top_help_log, "Bills CLI"):
+            return False
+        if not self._assert_log_contains(top_help_log, "workspace"):
+            return False
+        if not self._assert_log_contains(
+            top_help_log, "Validate, convert, ingest, and bundle workspace data."
+        ):
+            return False
+        if not self._assert_log_contains(top_help_log, "report"):
+            return False
+        if not self._assert_log_contains(top_help_log, "template"):
+            return False
+        if not self._assert_log_not_contains(top_help_log, "workspace validate <path>"):
+            return False
+        if not self._assert_log_not_contains(
+            top_help_log, "report export all-months|all-years|all"
+        ):
+            return False
+        if not self._assert_log_not_contains(top_help_log, "Formats:"):
+            return False
+
+        if not self._assert_log_contains("02_help_workspace.log", "validate"):
+            return False
+        if not self._assert_log_contains("02_help_workspace.log", "import-bundle"):
+            return False
+        if not self._assert_log_contains("03_help_report.log", "show"):
+            return False
+        if not self._assert_log_contains("03_help_report.log", "export"):
+            return False
+
+        report_export_log = "04_help_report_export.log"
+        for token in ("year", "month", "range", "all-months", "all-years", "all"):
+            if not self._assert_log_contains(report_export_log, token):
+                return False
+        if not self._assert_log_not_contains(
+            report_export_log, "all-months|all-years|all"
+        ):
+            return False
+
+        report_export_year_log = "05_help_report_export_year.log"
+        if not self._assert_log_contains(report_export_year_log, "--format"):
+            return False
+        if not self._assert_log_contains(report_export_year_log, "Use 'config"):
+            return False
+        if not self._assert_log_contains(
+            report_export_year_log, "inspect currently enabled formats."
+        ):
+            return False
+
+        template_generate_log = "06_help_template_generate.log"
+        if not self._assert_log_contains(
+            template_generate_log, "template generate --period <YYYY-MM>"
+        ):
+            return False
+        if not self._assert_log_contains(
+            template_generate_log,
+            "template generate --start-period <YYYY-MM> --end-period",
+        ):
+            return False
+        if not self._assert_log_contains(
+            template_generate_log,
+            "--end-period",
+        ):
+            return False
+        if not self._assert_log_contains(
+            template_generate_log,
+            "template generate --start-year <YYYY> --end-year <YYYY>",
+        ):
+            return False
+
+        if not self._assert_log_contains("07_help_config.log", "inspect"):
+            return False
+        if not self._assert_log_contains("07_help_config.log", "formats"):
+            return False
+        if not self._assert_log_contains("08_help_meta.log", "version"):
+            return False
+        if not self._assert_log_contains("08_help_meta.log", "notices"):
+            return False
+
+        return True
+
+    def _assert_log_contains(self, log_filename, expected_text):
+        log_text = self.executor.read_log_text(log_filename)
+        if expected_text in log_text:
+            return True
+        print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+        print(
+            f"      {constants.RED}错误: 日志 '{log_filename}' 未包含期望内容: "
+            f"'{expected_text}'{constants.RESET}"
+        )
+        return False
+
+    def _assert_log_not_contains(self, log_filename, unexpected_text):
+        log_text = self.executor.read_log_text(log_filename)
+        if unexpected_text not in log_text:
+            return True
+        print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+        print(
+            f"      {constants.RED}错误: 日志 '{log_filename}' 包含了不应出现的内容: "
+            f"'{unexpected_text}'{constants.RESET}"
+        )
+        return False
+
+
 class ImportTasks:
     """Import类负责执行数据校验、修改和导入任务。"""
 

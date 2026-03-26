@@ -11,7 +11,7 @@
 | 调整 `report show/export` 行为 | `apps/bills_cli/src/presentation/features/report/report_handler.cpp` | `presentation/entry/runtime_context.cpp` |
 | 调整模板相关行为 | `apps/bills_cli/src/presentation/features/template/template_handler.cpp` | `libs/bills_io/src/bills_io/host_flow_support.*` |
 | 调整 config/meta 命令 | `apps/bills_cli/src/presentation/features/config/config_handler.cpp` / `apps/bills_cli/src/presentation/features/meta/meta_handler.cpp` | `apps/bills_cli/src/common/cli_version.hpp` |
-| 调整帮助文本 | `apps/bills_cli/src/presentation/output/help_text.cpp` | `apps/bills_cli/src/presentation/parsing/cli_parser.cpp` |
+| 调整帮助文本 / help 分层 | `apps/bills_cli/src/presentation/parsing/cli_parser.cpp` | `cli_request.hpp` |
 
 ## 变更边界提醒
 
