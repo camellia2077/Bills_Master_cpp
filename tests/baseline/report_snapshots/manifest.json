@@ -4,167 +4,167 @@
     "baseline": "monthly/2025-01.md",
     "scope": "md",
     "compare_mode": "text",
-    "sha256": "3436a88068fc2473a40156780423b8bed542d1a1fef0da52550e3e6387361c66"
+    "sha256": "6d3754cd7472b2e8cf7d0c8713cc26595f23142552838dac98772cea2b48fb92"
   },
   "monthly_json_2025_01": {
     "source": "standard_json/months/2025/2025-01.json",
     "baseline": "monthly/2025-01.json",
     "scope": "json",
     "compare_mode": "json-render",
-    "sha256": "a43dfdea03174fc4af700dae1fdd40204ae490570e6e27c2cf8ed210d9c06b2a"
+    "sha256": "c4636c801574fa972de2b4da430605119fcab1688416d98abbd5cdf2ae6a520f"
   },
   "monthly_tex_2025_01": {
     "source": "LaTeX_bills/months/2025/2025-01.tex",
     "baseline": "monthly/2025-01.tex",
     "scope": "tex",
     "compare_mode": "text",
-    "sha256": "0f10941aa629d22799c1c2a226e8a2e8c413d2e308b79400e0fbb725f4720898"
+    "sha256": "2950fa65092c1d8134b2c0d8a2d580abc2a21b28ea6d56e68376348f6304e774"
   },
   "monthly_rst_2025_01": {
     "source": "reST_bills/months/2025/2025-01.rst",
     "baseline": "monthly/2025-01.rst",
     "scope": "rst",
     "compare_mode": "text",
-    "sha256": "7669c4c4db9660dcc4a137efeec0c26f6bc35053bc55f9f1201fed21cb5cdc89"
+    "sha256": "e9392aa4a5b021a0738eb09bb6c6cc2b653374f98f3996209b01b57d93679b68"
   },
   "monthly_typ_2025_01": {
     "source": "Typst_bills/months/2025/2025-01.typ",
     "baseline": "monthly/2025-01.typ",
     "scope": "typ",
     "compare_mode": "text",
-    "sha256": "0f6007ee5e7f7506a874d2ed86438e8efb9aefa851a1057740484064cd4a8399"
+    "sha256": "cf5c94644c1dd3c33dd57ff124d5b2b3a8f824d7acd1b9663aa66d9e9480db91"
   },
   "monthly_standard_report_2025_01": {
     "source": "standard_json/months/2025/2025-01.json",
     "baseline": "standard_report/monthly/2025-01.json",
     "scope": "standard-report",
     "compare_mode": "standard-report-json",
-    "sha256": "66e65d0f483adfe8765434605936f84e4a7b41a23a14164010ccb23fe2b36002"
+    "sha256": "0fd1f28778d85794b4f74e501d1172e5c73a26258da9648f1a10150caed6d2be"
   },
   "yearly_md_2025": {
     "source": "Markdown_bills/years/2025.md",
     "baseline": "yearly/2025.md",
     "scope": "md",
     "compare_mode": "text",
-    "sha256": "788a5c7e4d23441fd4b920e00e090ba5571f9bd8264df29ad76209d9b9a598b6"
+    "sha256": "6ad735f2fb17994d656a74c873521cabf07d25cb2cdb01abf3eb4c1bab05745b"
   },
   "yearly_json_2025": {
     "source": "standard_json/years/2025.json",
     "baseline": "yearly/2025.json",
     "scope": "json",
     "compare_mode": "json-render",
-    "sha256": "0a858e965be4ebbd1506880bd988de0fec1025166e87efe1139ede61c8e7f3cd"
+    "sha256": "d7037b43afe8a2522b75029ad98699867b133aa07efa0ae543f4f6abed54aaa7"
   },
   "yearly_tex_2025": {
     "source": "LaTeX_bills/years/2025.tex",
     "baseline": "yearly/2025.tex",
     "scope": "tex",
     "compare_mode": "text",
-    "sha256": "a4e70b5871fa998e3e8e6711f04e7b535ab5446b1de3c834642855ab24d15f25"
+    "sha256": "20b28f864ecadcf667fb3ab8fba8fd23efbcd3d3fdb70b41697343157432c841"
   },
   "yearly_rst_2025": {
     "source": "reST_bills/years/2025.rst",
     "baseline": "yearly/2025.rst",
     "scope": "rst",
     "compare_mode": "text",
-    "sha256": "90dbd17af733ca6b39ef9d783b13b8716e666ae15ea26799404124521d1d01a5"
+    "sha256": "fca52941c3e6b1bc02e7d00f5689289ad5516266a9f0beef3bd9be14ba74bb37"
   },
   "yearly_typ_2025": {
     "source": "Typst_bills/years/2025.typ",
     "baseline": "yearly/2025.typ",
     "scope": "typ",
     "compare_mode": "text",
-    "sha256": "784670394c870099aea43b0ee61705511ad311720691e6ebc721d3a681625fab"
+    "sha256": "cf76d73a54c8e627a32ddb570a3b4fa93601b2bd225eff7185fe496e09929446"
   },
   "yearly_standard_report_2025": {
     "source": "standard_json/years/2025.json",
     "baseline": "standard_report/yearly/2025.json",
     "scope": "standard-report",
     "compare_mode": "standard-report-json",
-    "sha256": "8ad8c5e411b49538cc16e9cf61ed9fe38d7c89252d4e5bcd6b42190d8458b359"
+    "sha256": "0f4b3a2d6934a1287f6a150e75e15ca20bd5a330b6e887945ce08b8cfecf1f19"
   },
   "range_md_2025_03": {
     "source": "Markdown_bills/months/2025/2025-03.md",
     "baseline": "range/2025-03.md",
     "scope": "md",
     "compare_mode": "text",
-    "sha256": "f25b080a8b660cee826d1dc28cdcf78b964eb6c6796d557ccf2966edabb60fe9"
+    "sha256": "226e8ff77ae531f787b4f18b32630edf393f4c2b9db7eab181b954161af838dd"
   },
   "range_md_2025_04": {
     "source": "Markdown_bills/months/2025/2025-04.md",
     "baseline": "range/2025-04.md",
     "scope": "md",
     "compare_mode": "text",
-    "sha256": "a70e9182cfb0361292b8a3f6468475b87c1638bb8ee02b0ff1e13d5e282ebb11"
+    "sha256": "342a4da1c2dde07dbf2e183c03a46b8cecd5dce49f2da678e09a309bbb87fba2"
   },
   "range_json_2025_03": {
     "source": "standard_json/months/2025/2025-03.json",
     "baseline": "range/2025-03.json",
     "scope": "json",
     "compare_mode": "json-render",
-    "sha256": "6bf841a0617fe49b4a680a4203c98ba4c0ffd756ca1112a7c7a0101b1fcd4ae1"
+    "sha256": "94c4ab9be42dcd1332c77368887b5f8381dc08eebe322836a71d8cfee0ac1721"
   },
   "range_json_2025_04": {
     "source": "standard_json/months/2025/2025-04.json",
     "baseline": "range/2025-04.json",
     "scope": "json",
     "compare_mode": "json-render",
-    "sha256": "a0a7c400cdaad5cec2212710ff811cffe1abbc1c2584cee27bc8c69ad2fe596a"
+    "sha256": "75e8085427943ee4c72f524c583dd269dc833fd3030f16d9cf489e6cb1ebe81a"
   },
   "range_tex_2025_03": {
     "source": "LaTeX_bills/months/2025/2025-03.tex",
     "baseline": "range/2025-03.tex",
     "scope": "tex",
     "compare_mode": "text",
-    "sha256": "4cf62d1c730850a18c56133412f2a4029e1305451938be65edc613a35796b449"
+    "sha256": "20b956b2491ae8bb9e9e3abd9aab158dc36b7386ad8f0c997c10ae4badfece96"
   },
   "range_tex_2025_04": {
     "source": "LaTeX_bills/months/2025/2025-04.tex",
     "baseline": "range/2025-04.tex",
     "scope": "tex",
     "compare_mode": "text",
-    "sha256": "c85b5ad19cc57219198cc64136237da547d8d8e37ae3baba363961f035eb9e44"
+    "sha256": "e6cacb8eb3c5487773e5e3dd22e0235b4b455cbfea78f880c4661216670ff2ab"
   },
   "range_rst_2025_03": {
     "source": "reST_bills/months/2025/2025-03.rst",
     "baseline": "range/2025-03.rst",
     "scope": "rst",
     "compare_mode": "text",
-    "sha256": "2d9eaceca125005d3a05b3286ba58da24d1c740168ccd39ec0cfc03150071c59"
+    "sha256": "a0ead6ffb6a7fbaa6021bb8b6b68bb6fd670420dacfda5410114ffdf8ce2c268"
   },
   "range_rst_2025_04": {
     "source": "reST_bills/months/2025/2025-04.rst",
     "baseline": "range/2025-04.rst",
     "scope": "rst",
     "compare_mode": "text",
-    "sha256": "924c7feabd34767181e0997df03bdb362e65bf94ec931c52858e2e2f3013d08f"
+    "sha256": "bd8b805070166abfe7897918d0095bd571153e186fd711319ad12abbfe71ba8e"
   },
   "range_typ_2025_03": {
     "source": "Typst_bills/months/2025/2025-03.typ",
     "baseline": "range/2025-03.typ",
     "scope": "typ",
     "compare_mode": "text",
-    "sha256": "b042ffda9aacd0fc7a2803f17e7fd73834b13a6db81a1553ea9cb40175750566"
+    "sha256": "6b54eadf69175f2042ada4fa711260bdf0be376f2034507ed598bdbe785cbc83"
   },
   "range_typ_2025_04": {
     "source": "Typst_bills/months/2025/2025-04.typ",
     "baseline": "range/2025-04.typ",
     "scope": "typ",
     "compare_mode": "text",
-    "sha256": "ccf0a5159c5c9300d7c4f2b029ee4dea0e653ddf3d662d0ef418316445193b16"
+    "sha256": "ed9c6c939c17d1559bc4b7b057dc718d96b73f814ef6a18332bb766692c373a8"
   },
   "range_standard_report_2025_03": {
     "source": "standard_json/months/2025/2025-03.json",
     "baseline": "standard_report/range/2025-03.json",
     "scope": "standard-report",
     "compare_mode": "standard-report-json",
-    "sha256": "6be36bc78cdf4a6e820c47e142c1a83be24357c0cc4d0c9ec70d61f21fec9fa6"
+    "sha256": "3dfdb19abeb31aaaa8a72176674b91ed943aeacad17f481cef42363f1aba2685"
   },
   "range_standard_report_2025_04": {
     "source": "standard_json/months/2025/2025-04.json",
     "baseline": "standard_report/range/2025-04.json",
     "scope": "standard-report",
     "compare_mode": "standard-report-json",
-    "sha256": "dc93e1cc4e905b240d7b64c9e93c5ce61e3a0f28e08c074220b52f5d96d566f5"
+    "sha256": "80c7e3e9fd85b3132496b53a5ddb10b866c1e15967279f3aa2a4b0541d4223a4"
   }
 }

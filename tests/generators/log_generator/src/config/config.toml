@@ -8,6 +8,22 @@ comments = [
   "家庭必需品",
 ]
 
+[remark_options]
+summary_lines = [
+  "新年开销开始记录",
+  "本月以日常消费为主",
+  "工资已经到账",
+  "有几笔零碎消费",
+  "家庭日常支出增加",
+]
+followup_lines = [
+  "继续关注家庭日常和健身补剂",
+  "订阅服务正常续费",
+  "本月餐饮和网费偏高",
+  "继续控制饮料和零食支出",
+  "健身补剂本月已补货",
+]
+
 [[categories]]
 parent_category = "meal"
 sub_category = "meal_low"

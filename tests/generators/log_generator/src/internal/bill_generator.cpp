@@ -8,10 +8,14 @@
 
 BillGenerator::BillGenerator(std::vector<GeneratorCategoryConfig> categories,
                              double comment_probability,
-                             std::vector<std::string> comments)
+                             std::vector<std::string> comments,
+                             std::vector<std::string> remark_summary_lines,
+                             std::vector<std::string> remark_followup_lines)
     : categories_(std::move(categories)),
       comment_probability_(comment_probability),
       comments_(std::move(comments)),
+      remark_summary_lines_(std::move(remark_summary_lines)),
+      remark_followup_lines_(std::move(remark_followup_lines)),
       random_engine_(std::random_device{}()) {}
 
 auto BillGenerator::generate_bill_content(int year, int month) const
@@ -19,7 +23,10 @@ auto BillGenerator::generate_bill_content(int year, int month) const
   std::ostringstream output;
   output << "date:" << year << "-" << std::setw(2) << std::setfill('0')
          << month << "\n";
-  output << "remark:\n\n";
+  for (const auto& remark_line : build_remark_lines(year, month)) {
+    output << "remark:" << remark_line << "\n";
+  }
+  output << "\n";
 
   std::map<std::string, std::vector<const GeneratorCategoryConfig*>>
       grouped_by_parent;
@@ -85,6 +92,35 @@ auto BillGenerator::generate_bill_content(int year, int month) const
   }
 
   return output.str();
+}
+
+auto BillGenerator::build_remark_lines(int year, int month) const
+    -> std::vector<std::string> {
+  if (remark_summary_lines_.empty()) {
+    return {""};
+  }
+
+  const std::size_t summary_index =
+      static_cast<std::size_t>((year * 12 + month - 1) %
+                               static_cast<int>(remark_summary_lines_.size()));
+  const std::string& summary_line = remark_summary_lines_[summary_index];
+
+  switch (month % 3) {
+    case 1:
+      if (remark_followup_lines_.empty()) {
+        return {summary_line};
+      }
+      return {
+          summary_line,
+          remark_followup_lines_[static_cast<std::size_t>(
+              (year * 7 + month - 1) %
+              static_cast<int>(remark_followup_lines_.size()))],
+      };
+    case 2:
+      return {""};
+    default:
+      return {summary_line};
+  }
 }
 
 auto BillGenerator::random_double(double min, double max) const -> double {

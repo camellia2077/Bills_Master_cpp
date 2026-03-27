@@ -124,6 +124,31 @@ def read_first_line(file_path: Path) -> str:
         return handle.readline().strip()
 
 
+def read_text(file_path: Path) -> str:
+    require(file_path.is_file(), f"generated file not found: {file_path}")
+    return file_path.read_text(encoding="utf-8")
+
+
+def extract_header_remark_lines(file_path: Path) -> list[str]:
+    lines = read_text(file_path).splitlines()
+    require(lines, f"generated file is empty: {file_path}")
+    require(lines[0].startswith("date:"), f"first line must be date metadata: {file_path}")
+    require(len(lines) > 1, f"remark metadata is missing: {file_path}")
+
+    remark_lines: list[str] = []
+    index = 1
+    while index < len(lines) and lines[index].startswith("remark:"):
+        remark_lines.append(lines[index][len("remark:"):])
+        index += 1
+
+    require(remark_lines, f"expected at least one remark metadata line in {file_path}")
+    require(
+        index < len(lines) and lines[index] == "",
+        f"remark metadata block must be followed by a blank line in {file_path}",
+    )
+    return remark_lines
+
+
 def run_cli_tests(generator_path: Path, config_path: Path) -> dict:
     total = 0
     passed = 0
@@ -264,6 +289,27 @@ def run_cli_tests(generator_path: Path, config_path: Path) -> dict:
                 == "date:2024-01",
                 "single year output must use ISO date:YYYY-MM format.",
             )
+            january_remarks = extract_header_remark_lines(
+                runtime_dir / "bills_output_from_config" / "2024" / "2024-01.txt"
+            )
+            february_remarks = extract_header_remark_lines(
+                runtime_dir / "bills_output_from_config" / "2024" / "2024-02.txt"
+            )
+            march_remarks = extract_header_remark_lines(
+                runtime_dir / "bills_output_from_config" / "2024" / "2024-03.txt"
+            )
+            require(
+                len(january_remarks) == 2 and all(january_remarks),
+                "2024-01 should contain a two-line non-empty remark block.",
+            )
+            require(
+                february_remarks == [""],
+                "2024-02 should contain an empty remark metadata line.",
+            )
+            require(
+                len(march_remarks) == 1 and march_remarks[0] != "",
+                "2024-03 should contain a single non-empty remark line.",
+            )
 
         run_case("single_generation", case_single_generation)
 
@@ -321,12 +367,12 @@ def main() -> int:
     parser.add_argument(
         "--generator",
         default="",
-        help="Path to generator executable. Defaults to dist/cmake/log_generator/debug/shared/bin/generator.exe.",
+        help="Path to generator executable. Defaults to dist/cmake/bills_tracer_log_generator/debug/shared/bin/generator.exe.",
     )
     parser.add_argument(
         "--config",
         default="",
-        help="Path to config.toml. Defaults to dist/cmake/log_generator/debug/shared/bin/config/config.toml.",
+        help="Path to config.toml. Defaults to dist/cmake/bills_tracer_log_generator/debug/shared/bin/config/config.toml.",
     )
     parser.add_argument(
         "--summary",

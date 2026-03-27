@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": "1.0.0",
     "report_type": "yearly",
-    "generated_at_utc": "2026-03-10T16:22:06Z",
+    "generated_at_utc": "2026-03-27T10:18:48Z",
     "source": "bills_core"
   },
   "scope": {
@@ -12,84 +12,84 @@
     "data_found": true
   },
   "summary": {
-    "total_income": 134453.55000000002,
-    "total_expense": -16603.429999999997,
-    "balance": 117850.12000000002
+    "total_income": 158555.7,
+    "total_expense": -16223.56,
+    "balance": 142332.14
   },
   "items": {
     "categories": [],
     "monthly_summary": [
       {
         "month": 1,
-        "income": 9586.68,
-        "expense": -1511.57,
-        "balance": 11098.25
+        "income": 9586.81,
+        "expense": -1151.39,
+        "balance": 10738.199999999999
       },
       {
         "month": 2,
-        "income": 13962.87,
-        "expense": -1097.59,
-        "balance": 15060.460000000001
+        "income": 11202.98,
+        "expense": -1231.17,
+        "balance": 12434.15
       },
       {
         "month": 3,
-        "income": 10577.77,
-        "expense": -1310.69,
-        "balance": 11888.460000000001
+        "income": 14467.97,
+        "expense": -1497.21,
+        "balance": 15965.18
       },
       {
         "month": 4,
-        "income": 12205.52,
-        "expense": -1063.35,
-        "balance": 13268.87
+        "income": 13260.45,
+        "expense": -1414.61,
+        "balance": 14675.060000000001
       },
       {
         "month": 5,
-        "income": 11117.2,
-        "expense": -1077.41,
-        "balance": 12194.61
+        "income": 14441.97,
+        "expense": -1307.38,
+        "balance": 15749.349999999999
       },
       {
         "month": 6,
-        "income": 12937.66,
-        "expense": -1400.72,
-        "balance": 14338.38
+        "income": 14383.26,
+        "expense": -1263.68,
+        "balance": 15646.94
       },
       {
         "month": 7,
-        "income": 11237.27,
-        "expense": -1625.79,
-        "balance": 12863.060000000001
+        "income": 13252.53,
+        "expense": -1458.01,
+        "balance": 14710.54
       },
       {
         "month": 8,
-        "income": 12532.91,
-        "expense": -1412.12,
-        "balance": 13945.029999999999
+        "income": 14473.53,
+        "expense": -1346.47,
+        "balance": 15820.0
       },
       {
         "month": 9,
-        "income": 9812.19,
-        "expense": -1407.08,
-        "balance": 11219.27
+        "income": 14756.9,
+        "expense": -1471.4,
+        "balance": 16228.3
       },
       {
         "month": 10,
-        "income": 9744.44,
-        "expense": -1664.71,
-        "balance": 11409.150000000001
+        "income": 12946.87,
+        "expense": -1358.44,
+        "balance": 14305.310000000001
       },
       {
         "month": 11,
-        "income": 12615.74,
-        "expense": -1602.97,
-        "balance": 14218.71
+        "income": 13467.45,
+        "expense": -1341.47,
+        "balance": 14808.92
       },
       {
         "month": 12,
-        "income": 8123.3,
-        "expense": -1429.43,
-        "balance": 9552.73
+        "income": 12314.98,
+        "expense": -1382.33,
+        "balance": 13697.31
       }
     ]
   },

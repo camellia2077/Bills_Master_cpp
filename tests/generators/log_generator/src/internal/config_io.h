@@ -20,6 +20,8 @@ struct GeneratorConfigData {
   std::vector<GeneratorCategoryConfig> categories;
   double comment_probability = 0.0;
   std::vector<std::string> comments;
+  std::vector<std::string> remark_summary_lines;
+  std::vector<std::string> remark_followup_lines;
 };
 
 auto load_generator_config(const std::string& config_path,

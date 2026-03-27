@@ -20,7 +20,7 @@ namespace {
 
 constexpr char kGeneratorConfigName[] = "config.toml";
 constexpr char kGeneratorVersion[] = "1.3.0";
-constexpr char kGeneratorLastUpdate[] = "2025-07-28";
+constexpr char kGeneratorLastUpdate[] = "2026-03-27";
 constexpr char kOutputDirectoryName[] = "bills_output_from_config";
 
 struct GeneratorRequest {
@@ -61,7 +61,9 @@ auto RunGenerator(const GeneratorRequest& request) -> int {
 
   BillGenerator generator(std::move(config_data.categories),
                           config_data.comment_probability,
-                          std::move(config_data.comments));
+                          std::move(config_data.comments),
+                          std::move(config_data.remark_summary_lines),
+                          std::move(config_data.remark_followup_lines));
 
   const std::filesystem::path base_output_dir(kOutputDirectoryName);
   if (!ensure_directory(base_output_dir, error_message)) {

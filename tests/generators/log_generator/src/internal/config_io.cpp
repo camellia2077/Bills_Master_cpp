@@ -8,6 +8,33 @@
 
 namespace {
 
+auto load_optional_string_array(const toml::table& table, std::string_view key,
+                                std::string_view context,
+                                std::vector<std::string>& target,
+                                std::string& error_message) -> bool {
+  target.clear();
+  if (const toml::node* raw_node = table.get(key)) {
+    const toml::array* raw_array = raw_node->as_array();
+    if (raw_array == nullptr) {
+      error_message = std::string(context) + "." + std::string(key) +
+                      " must be an array of strings.";
+      return false;
+    }
+
+    for (const auto& item_node : *raw_array) {
+      if (const auto item = item_node.value<std::string>()) {
+        target.push_back(*item);
+      } else {
+        error_message = std::string(context) + "." + std::string(key) +
+                        " must contain only strings.";
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 auto read_required_string(const toml::table& table, std::string_view key,
                           std::string_view context, std::string& target,
                           std::string& error_message) -> bool {
@@ -105,25 +132,25 @@ auto load_comments(const toml::table& comment_options,
     config_data.comment_probability = 0.3;
   }
 
-  config_data.comments.clear();
-  if (const toml::node* comments_node = comment_options.get("comments")) {
-    const toml::array* comments_array = comments_node->as_array();
-    if (comments_array == nullptr) {
-      error_message = "comment_options.comments must be an array of strings.";
-      return false;
-    }
-
-    for (const auto& comment_node : *comments_array) {
-      if (const auto comment = comment_node.value<std::string>()) {
-        config_data.comments.push_back(*comment);
-      } else {
-        error_message = "comment_options.comments must contain only strings.";
-        return false;
-      }
-    }
+  if (!load_optional_string_array(comment_options, "comments", "comment_options",
+                                  config_data.comments, error_message)) {
+    return false;
   }
 
   return true;
+}
+
+auto load_remark_options(const toml::table& remark_options,
+                         GeneratorConfigData& config_data,
+                         std::string& error_message) -> bool {
+  return load_optional_string_array(remark_options, "summary_lines",
+                                    "remark_options",
+                                    config_data.remark_summary_lines,
+                                    error_message) &&
+         load_optional_string_array(remark_options, "followup_lines",
+                                    "remark_options",
+                                    config_data.remark_followup_lines,
+                                    error_message);
 }
 
 }  // namespace
@@ -158,6 +185,12 @@ auto load_generator_config(const std::string& config_path,
     if (const toml::table* comment_options =
             raw_config["comment_options"].as_table()) {
       if (!load_comments(*comment_options, config_data, error_message)) {
+        return false;
+      }
+    }
+    if (const toml::table* remark_options =
+            raw_config["remark_options"].as_table()) {
+      if (!load_remark_options(*remark_options, config_data, error_message)) {
         return false;
       }
     }
