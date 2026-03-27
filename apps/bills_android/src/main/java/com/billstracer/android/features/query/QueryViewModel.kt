@@ -22,8 +22,8 @@ import kotlinx.coroutines.launch
 
 enum class QueryViewMode {
     STRUCTURED,
-    MARKDOWN,
-    RAW_JSON,
+    TEXT,
+    CHART,
 }
 
 data class QueryUiState(
@@ -36,7 +36,7 @@ data class QueryUiState(
     val queryPeriodYearInput: String = "",
     val queryPeriodMonthInput: String = "",
     val queryResult: QueryResult? = null,
-    val selectedQueryViewMode: QueryViewMode = QueryViewMode.MARKDOWN,
+    val selectedQueryViewMode: QueryViewMode = QueryViewMode.TEXT,
 )
 
 class QueryViewModel(
@@ -151,7 +151,14 @@ class QueryViewModel(
 
     fun selectQueryViewMode(viewMode: QueryViewMode) {
         mutableState.update { current ->
-            current.copy(selectedQueryViewMode = viewMode)
+            val queryResult = current.queryResult
+            current.copy(
+                selectedQueryViewMode = if (queryResult != null) {
+                    resolvePreferredQueryViewMode(queryResult, viewMode)
+                } else {
+                    viewMode
+                },
+            )
         }
     }
 
@@ -192,11 +199,7 @@ class QueryViewModel(
                         current.copy(
                             isWorking = false,
                             queryResult = query,
-                            selectedQueryViewMode = if (query.type == QueryType.YEAR) {
-                                QueryViewMode.STRUCTURED
-                            } else {
-                                QueryViewMode.MARKDOWN
-                            },
+                            selectedQueryViewMode = resolvePreferredQueryViewMode(query),
                             statusMessage = message,
                             errorMessage = if (query.ok) null else query.message,
                         )
@@ -256,11 +259,7 @@ class QueryViewModel(
                         current.copy(
                             isWorking = false,
                             queryResult = query,
-                            selectedQueryViewMode = if (query.type == QueryType.MONTH) {
-                                QueryViewMode.STRUCTURED
-                            } else {
-                                QueryViewMode.MARKDOWN
-                            },
+                            selectedQueryViewMode = resolvePreferredQueryViewMode(query),
                             statusMessage = message,
                             errorMessage = if (query.ok) null else query.message,
                         )

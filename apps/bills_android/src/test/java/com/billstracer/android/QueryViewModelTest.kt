@@ -4,6 +4,8 @@ import com.billstracer.android.app.navigation.AppSessionBus
 import com.billstracer.android.app.navigation.WorkspaceDataChangeBus
 import com.billstracer.android.features.query.QueryViewMode
 import com.billstracer.android.features.query.QueryViewModel
+import com.billstracer.android.model.QueryResult
+import com.billstracer.android.model.QueryType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -105,6 +107,89 @@ class QueryViewModelTest {
         advanceUntilIdle()
 
         viewModel.runMonthQuery()
+        advanceUntilIdle()
+
+        assertEquals(QueryViewMode.STRUCTURED, viewModel.state.value.selectedQueryViewMode)
+    }
+
+    @Test
+    fun queryDefaultsToChartWhenStructuredViewIsUnavailable() = runTest {
+        val queryService = FakeQueryService().apply {
+            yearQueryResultOverride = QueryResult(
+                ok = true,
+                message = "2026",
+                type = QueryType.YEAR,
+                year = 2026,
+                month = null,
+                matchedBills = 1,
+                totalIncome = 10.0,
+                totalExpense = -5.0,
+                balance = 5.0,
+                monthlySummary = emptyList(),
+                standardReportMarkdown = "# 2026",
+                standardReportJson = """
+                    {
+                      "extensions": {
+                        "chart_data": {
+                          "schema_version": "1.0.0",
+                          "views": [
+                            {
+                              "id": "yearly_monthly_overview",
+                              "title": "Monthly Income, Expense, and Balance",
+                              "chart_type": "grouped_bar",
+                              "x_labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+                              "series": [
+                                { "id": "income", "label": "Income", "unit": "CNY", "values": [10.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    }
+                """.trimIndent(),
+                rawJson = """{"ok":true}""",
+            )
+        }
+        val viewModel = createViewModel(queryService = queryService)
+        advanceUntilIdle()
+
+        viewModel.runYearQuery()
+        advanceUntilIdle()
+
+        assertEquals(QueryViewMode.CHART, viewModel.state.value.selectedQueryViewMode)
+    }
+
+    @Test
+    fun chartSelectionFallsBackToStructuredWhenNextResultHasNoChart() = runTest {
+        val queryService = FakeQueryService()
+        val viewModel = createViewModel(queryService = queryService)
+        advanceUntilIdle()
+
+        viewModel.runYearQuery()
+        advanceUntilIdle()
+        viewModel.selectQueryViewMode(QueryViewMode.CHART)
+        assertEquals(QueryViewMode.CHART, viewModel.state.value.selectedQueryViewMode)
+
+        queryService.yearQueryResultOverride = QueryResult(
+            ok = true,
+            message = "2026",
+            type = QueryType.YEAR,
+            year = 2026,
+            month = null,
+            matchedBills = 1,
+            totalIncome = 10.0,
+            totalExpense = -5.0,
+            balance = 5.0,
+            monthlySummary = listOf(),
+            standardReportMarkdown = "# 2026",
+            standardReportJson = fakeYearStandardReportJson(
+                year = 2026,
+                includeChartData = false,
+            ),
+            rawJson = """{"ok":true}""",
+        )
+
+        viewModel.runYearQuery()
         advanceUntilIdle()
 
         assertEquals(QueryViewMode.STRUCTURED, viewModel.state.value.selectedQueryViewMode)

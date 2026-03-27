@@ -15,7 +15,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,8 +26,6 @@ import androidx.compose.ui.unit.dp
 @Composable
 internal fun MonthlyStandardReportCard(
     report: MonthlyStandardReportUiModel,
-    toggleLabel: String,
-    onToggle: () -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -45,16 +42,10 @@ internal fun MonthlyStandardReportCard(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(text = "Monthly Report", style = MaterialTheme.typography.titleMedium)
-                TextButton(
-                    onClick = onToggle,
-                    modifier = Modifier.testTag("query_toggle_button"),
-                ) {
-                    Text(toggleLabel)
-                }
             }
             Text(
                 text = formatPeriodLabel(report.periodStart, report.periodEnd),
@@ -86,9 +77,10 @@ internal fun MonthlyStandardReportCard(
             }
             if (!report.dataFound || report.categories.isEmpty()) {
                 Text(
-                    text = "No category details available in standardReportJson.",
+                    text = monthlyStructuredEmptyMessage(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.testTag("query_monthly_empty_message"),
                 )
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {

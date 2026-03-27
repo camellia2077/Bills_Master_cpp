@@ -12,17 +12,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -55,184 +54,164 @@ internal fun QueryResultDisplayContent(
             null
         }
     }
+    val chartData = remember(result.standardReportJson) {
+        parseQueryChartData(result.standardReportJson)
+    }
     val hasStructuredView = monthlyStandardReport != null || yearlyStandardReport != null
-    val effectiveViewMode = if (selectedViewMode == QueryViewMode.STRUCTURED && !hasStructuredView) {
-        QueryViewMode.MARKDOWN
-    } else {
-        selectedViewMode
+    val hasChartView = chartData?.views?.isNotEmpty() == true
+    val availableModes = remember(hasStructuredView, hasChartView) {
+        QueryModeAvailability(
+            hasStructuredView = hasStructuredView,
+            hasChartView = hasChartView,
+        ).availableModes()
+    }
+    val effectiveViewMode = remember(selectedViewMode, hasStructuredView, hasChartView) {
+        resolveQueryViewMode(
+            hasStructuredView = hasStructuredView,
+            hasChartView = hasChartView,
+            preferredMode = selectedViewMode,
+        )
     }
 
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        if (result.type == QueryType.MONTH && monthlyStandardReport != null) {
-            when (selectedViewMode) {
-                QueryViewMode.STRUCTURED -> MonthlyStandardReportCard(
-                    report = monthlyStandardReport,
-                    toggleLabel = "Show Markdown",
-                    onToggle = { onSelectViewMode(QueryViewMode.MARKDOWN) },
-                )
-                QueryViewMode.RAW_JSON -> QuerySourceCard(
-                    title = "Raw JSON",
-                    content = result.rawJson,
-                    toggleLabel = "Show Native View",
-                    onToggle = { onSelectViewMode(QueryViewMode.STRUCTURED) },
-                    isRawJson = true,
-                    renderMarkdown = false,
-                )
-                QueryViewMode.MARKDOWN -> QuerySourceCard(
-                    title = "Markdown Report",
-                    content = markdown,
-                    toggleLabel = "Show Native View",
-                    onToggle = { onSelectViewMode(QueryViewMode.STRUCTURED) },
-                    isRawJson = false,
-                    renderMarkdown = true,
-                )
+        QueryResultModeSwitch(
+            availableModes = availableModes,
+            selectedViewMode = effectiveViewMode,
+            onSelectViewMode = onSelectViewMode,
+        )
+
+        when (effectiveViewMode) {
+            QueryViewMode.STRUCTURED -> {
+                when {
+                    result.type == QueryType.MONTH && monthlyStandardReport != null -> {
+                        MonthlyStandardReportCard(report = monthlyStandardReport)
+                    }
+                    result.type == QueryType.YEAR && yearlyStandardReport != null -> {
+                        YearlyStandardReportCard(report = yearlyStandardReport)
+                    }
+                    else -> QueryTextReportCard(content = markdown)
+                }
             }
-        } else if (result.type == QueryType.YEAR && yearlyStandardReport != null) {
-            when (effectiveViewMode) {
-                QueryViewMode.STRUCTURED -> YearlyStandardReportCard(
-                    report = yearlyStandardReport,
-                    toggleLabel = "Show Markdown",
-                    onToggle = { onSelectViewMode(QueryViewMode.MARKDOWN) },
-                )
-                QueryViewMode.RAW_JSON -> QuerySourceCard(
-                    title = "Raw JSON",
-                    content = result.rawJson,
-                    toggleLabel = "Show Native View",
-                    onToggle = { onSelectViewMode(QueryViewMode.STRUCTURED) },
-                    isRawJson = true,
-                    renderMarkdown = false,
-                )
-                QueryViewMode.MARKDOWN -> QuerySourceCard(
-                    title = "Markdown Report",
-                    content = markdown,
-                    toggleLabel = "Show Native View",
-                    onToggle = { onSelectViewMode(QueryViewMode.STRUCTURED) },
-                    isRawJson = false,
-                    renderMarkdown = true,
-                )
+
+            QueryViewMode.CHART -> {
+                if (chartData != null && chartData.views.isNotEmpty()) {
+                    QueryChartContent(chartData = chartData)
+                } else {
+                    QueryTextReportCard(content = markdown)
+                }
             }
-        } else {
-            QuerySourceCard(
-                title = if (effectiveViewMode == QueryViewMode.RAW_JSON) "Raw JSON" else "Markdown Report",
-                content = if (effectiveViewMode == QueryViewMode.RAW_JSON) result.rawJson else markdown,
-                toggleLabel = if (effectiveViewMode == QueryViewMode.RAW_JSON) "Show Markdown" else "Show Raw JSON",
-                onToggle = {
-                    onSelectViewMode(
-                        if (effectiveViewMode == QueryViewMode.RAW_JSON) {
-                            QueryViewMode.MARKDOWN
-                        } else {
-                            QueryViewMode.RAW_JSON
-                        },
-                    )
-                },
-                isRawJson = effectiveViewMode == QueryViewMode.RAW_JSON,
-                renderMarkdown = effectiveViewMode != QueryViewMode.RAW_JSON,
-            )
+
+            QueryViewMode.TEXT -> QueryTextReportCard(content = markdown)
         }
     }
 }
 
 internal fun buildFallbackMarkdown(result: QueryResult): String = buildString {
-    appendLine("# Markdown Report")
+    appendLine("# Text Report")
     appendLine()
     append(
         result.message.ifBlank {
-            "No markdown content returned by the native bridge."
+            queryTextEmptyMessage()
         },
     )
 }
 
 @Composable
-private fun QuerySourceCard(
-    title: String,
+private fun QueryResultModeSwitch(
+    availableModes: List<QueryViewMode>,
+    selectedViewMode: QueryViewMode,
+    onSelectViewMode: (QueryViewMode) -> Unit,
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("query_result_mode_switch"),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            availableModes.forEach { viewMode ->
+                val selected = viewMode == selectedViewMode
+                val buttonModifier = Modifier.testTag(
+                    when (viewMode) {
+                        QueryViewMode.STRUCTURED -> "query_mode_structured_button"
+                        QueryViewMode.TEXT -> "query_mode_text_button"
+                        QueryViewMode.CHART -> "query_mode_chart_button"
+                    },
+                )
+                if (selected) {
+                    Button(
+                        onClick = { onSelectViewMode(viewMode) },
+                        modifier = buttonModifier,
+                    ) {
+                        Text(text = queryViewModeLabel(viewMode))
+                    }
+                } else {
+                    OutlinedButton(
+                        onClick = { onSelectViewMode(viewMode) },
+                        modifier = buttonModifier,
+                    ) {
+                        Text(text = queryViewModeLabel(viewMode))
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun queryViewModeLabel(viewMode: QueryViewMode): String = when (viewMode) {
+    QueryViewMode.STRUCTURED -> "Structured"
+    QueryViewMode.TEXT -> "Text"
+    QueryViewMode.CHART -> "Chart"
+}
+
+@Composable
+private fun QueryTextReportCard(
     content: String,
-    toggleLabel: String?,
-    onToggle: (() -> Unit)?,
-    isRawJson: Boolean,
-    renderMarkdown: Boolean,
 ) {
     val scrollState = rememberScrollState()
-    val cardTag = if (isRawJson) "query_json_card" else "query_markdown_card"
-    val textTag = if (isRawJson) "query_json_text" else "query_markdown_text"
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag(cardTag),
+            .testTag("query_text_card"),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isRawJson) {
-                MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
-            } else {
-                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.50f)
-            },
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.50f),
         ),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(text = title, style = MaterialTheme.typography.titleMedium)
-                if (toggleLabel != null && onToggle != null) {
-                    TextButton(
-                        onClick = onToggle,
-                        modifier = Modifier.testTag("query_toggle_button"),
-                    ) {
-                        Text(toggleLabel)
-                    }
-                }
-            }
+            Text(
+                text = "Text Report",
+                style = MaterialTheme.typography.titleMedium,
+            )
             Spacer(modifier = Modifier.height(12.dp))
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 320.dp),
                 shape = RoundedCornerShape(18.dp),
-                color = if (isRawJson) {
-                    MaterialTheme.colorScheme.scrim.copy(alpha = 0.88f)
-                } else {
-                    MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
-                },
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
             ) {
-                if (renderMarkdown && !isRawJson) {
-                    MarkdownText(
-                        markdown = content,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .verticalScroll(scrollState)
-                            .padding(14.dp)
-                            .testTag(textTag),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                } else {
-                    SelectionContainer {
-                        Text(
-                            text = content,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .verticalScroll(scrollState)
-                                .padding(14.dp)
-                                .testTag(textTag),
-                            color = if (isRawJson) {
-                                MaterialTheme.colorScheme.surface
-                            } else {
-                                MaterialTheme.colorScheme.onSurface
-                            },
-                            style = if (isRawJson) {
-                                MaterialTheme.typography.bodySmall
-                            } else {
-                                MaterialTheme.typography.bodyMedium
-                            },
-                            fontFamily = FontFamily.Monospace,
-                        )
-                    }
-                }
+                MarkdownText(
+                    markdown = content,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(scrollState)
+                        .padding(14.dp)
+                        .testTag("query_text_content"),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
         }
     }

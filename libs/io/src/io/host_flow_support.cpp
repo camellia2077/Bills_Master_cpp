@@ -4,6 +4,8 @@
 #include <array>
 #include <chrono>
 #include <cctype>
+#include <cstdint>
+#include <cmath>
 #include <ctime>
 #include <filesystem>
 #include <iomanip>
@@ -870,6 +872,217 @@ auto CountTransactions(const MonthlyReportData& report) -> std::size_t {
   return count;
 }
 
+auto BuildEmptyChartData() -> nlohmann::json {
+  return {
+      {"schema_version", "1.0.0"},
+      {"views", nlohmann::json::array()},
+  };
+}
+
+auto StableColorIndex(std::string_view key, std::size_t palette_size) -> std::size_t {
+  constexpr std::uint64_t kFnvOffsetBasis = 14695981039346656037ULL;
+  constexpr std::uint64_t kFnvPrime = 1099511628211ULL;
+  std::uint64_t hash = kFnvOffsetBasis;
+  for (const unsigned char character : key) {
+    hash ^= character;
+    hash *= kFnvPrime;
+  }
+  return static_cast<std::size_t>(hash % palette_size);
+}
+
+auto FixedPieChartPalette() -> const std::array<std::string_view, 8U>& {
+  static const std::array<std::string_view, 8U> palette = {
+      "#2563EB", "#DC2626", "#059669", "#D97706",
+      "#7C3AED", "#DB2777", "#0891B2", "#65A30D",
+  };
+  return palette;
+}
+
+auto ResolvePieChartColorHex(std::string_view category_key) -> std::string {
+  const auto& palette = FixedPieChartPalette();
+  return std::string(
+      palette[StableColorIndex(category_key, palette.size())]);
+}
+
+auto ResolveGroupedBarSeriesColorHex(std::string_view series_id) -> std::string {
+  if (series_id == "income") {
+    return "#2563EB";
+  }
+  if (series_id == "expense") {
+    return "#DC2626";
+  }
+  if (series_id == "balance") {
+    return "#7C3AED";
+  }
+  return "#7C3AED";
+}
+
+auto BuildYearlyMonthlyOverviewChart(const YearlyReportData& report)
+    -> std::optional<nlohmann::json> {
+  if (!report.data_found || report.monthly_summary.empty()) {
+    return std::nullopt;
+  }
+
+  std::array<double, 12U> income_values{};
+  std::array<double, 12U> expense_values{};
+  std::array<double, 12U> balance_values{};
+  for (const auto& [month, summary] : report.monthly_summary) {
+    if (month < 1 || month > 12) {
+      continue;
+    }
+    const std::size_t index = static_cast<std::size_t>(month - 1);
+    income_values[index] = summary.income;
+    expense_values[index] = std::abs(summary.expense);
+    balance_values[index] = summary.income + summary.expense;
+  }
+
+  nlohmann::json x_labels = nlohmann::json::array();
+  for (int month = 1; month <= 12; ++month) {
+    std::ostringstream stream;
+    stream << std::setw(2) << std::setfill('0') << month;
+    x_labels.push_back(stream.str());
+  }
+
+  const auto to_json_array = [](const auto& values) -> nlohmann::json {
+    nlohmann::json result = nlohmann::json::array();
+    for (const double value : values) {
+      result.push_back(value);
+    }
+    return result;
+  };
+
+  return nlohmann::json{
+      {"id", "yearly_monthly_overview"},
+      {"title", "Monthly Income, Expense, and Balance"},
+      {"chart_type", "grouped_bar"},
+      {"x_labels", std::move(x_labels)},
+      {"series",
+       nlohmann::json::array(
+           {nlohmann::json{{"id", "income"},
+                           {"label", "Income"},
+                           {"unit", "CNY"},
+                           {"color", ResolveGroupedBarSeriesColorHex("income")},
+                           {"values", to_json_array(income_values)}},
+            nlohmann::json{{"id", "expense"},
+                           {"label", "Expense"},
+                           {"unit", "CNY"},
+                           {"color", ResolveGroupedBarSeriesColorHex("expense")},
+                           {"values", to_json_array(expense_values)}},
+            nlohmann::json{{"id", "balance"},
+                           {"label", "Balance"},
+                           {"unit", "CNY"},
+                           {"color", ResolveGroupedBarSeriesColorHex("balance")},
+                           {"values", to_json_array(balance_values)}}})},
+  };
+}
+
+auto BuildMonthlyExpenseByCategoryChart(const MonthlyReportData& report)
+    -> std::optional<nlohmann::json> {
+  if (!report.data_found) {
+    return std::nullopt;
+  }
+
+  struct Segment {
+    std::string id;
+    std::string label;
+    double value = 0.0;
+  };
+
+  std::vector<Segment> segments;
+  segments.reserve(report.aggregated_data.size());
+  for (const auto& [category_name, category] : report.aggregated_data) {
+    if (category.parent_total >= 0.0) {
+      continue;
+    }
+    const double absolute_value = std::abs(category.parent_total);
+    if (absolute_value <= 0.0) {
+      continue;
+    }
+    const std::string normalized_name =
+        category_name.empty() ? "uncategorized" : category_name;
+    segments.push_back(Segment{
+        .id = normalized_name,
+        .label = normalized_name,
+        .value = absolute_value,
+    });
+  }
+
+  if (segments.empty()) {
+    return std::nullopt;
+  }
+
+  std::sort(segments.begin(), segments.end(),
+            [](const Segment& left, const Segment& right) -> bool {
+              if (left.value == right.value) {
+                return left.label < right.label;
+              }
+              return left.value > right.value;
+            });
+
+  nlohmann::json json_segments = nlohmann::json::array();
+  for (const auto& segment : segments) {
+    json_segments.push_back(nlohmann::json{
+        {"id", segment.id},
+        {"label", segment.label},
+        {"value", segment.value},
+        {"color", ResolvePieChartColorHex(segment.id)},
+    });
+  }
+
+  return nlohmann::json{
+      {"id", "monthly_expense_by_category"},
+      {"title", "Expense by Category"},
+      {"chart_type", "pie"},
+      {"unit", "CNY"},
+      {"segments", std::move(json_segments)},
+  };
+}
+
+auto BuildChartData(const QueryExecutionResult& query_result) -> nlohmann::json {
+  nlohmann::json chart_data = BuildEmptyChartData();
+  auto& views = chart_data["views"];
+  if (query_result.query_type == "year") {
+    const auto yearly_chart =
+        BuildYearlyMonthlyOverviewChart(query_result.yearly_data);
+    if (yearly_chart.has_value()) {
+      views.push_back(*yearly_chart);
+    }
+    return chart_data;
+  }
+
+  if (query_result.query_type == "month") {
+    const auto monthly_chart =
+        BuildMonthlyExpenseByCategoryChart(query_result.monthly_data);
+    if (monthly_chart.has_value()) {
+      views.push_back(*monthly_chart);
+    }
+  }
+  return chart_data;
+}
+
+auto InjectChartDataIntoStandardReportJson(
+    std::string_view standard_report_json,
+    const QueryExecutionResult& query_result) -> std::string {
+  if (standard_report_json.empty()) {
+    return std::string(standard_report_json);
+  }
+
+  try {
+    nlohmann::json root = nlohmann::json::parse(standard_report_json);
+    if (!root.is_object()) {
+      return std::string(standard_report_json);
+    }
+    auto& extensions = root["extensions"];
+    if (!extensions.is_object()) {
+      extensions = nlohmann::json::object();
+    }
+    extensions["chart_data"] = BuildChartData(query_result);
+    return root.dump(2) + "\n";
+  } catch (const nlohmann::json::exception&) {
+    return std::string(standard_report_json);
+  }
+}
+
 auto BuildHostQueryResult(const QueryExecutionResult& query_result,
                           std::string_view query_value,
                           sqlite3* db_connection) -> HostQueryResult {
@@ -879,6 +1092,8 @@ auto BuildHostQueryResult(const QueryExecutionResult& query_result,
   if (StandardReportRendererRegistry::IsFormatAvailable("json")) {
     result.standard_report_json =
         ReportRenderService::Render(result.standard_report, "json");
+    result.standard_report_json = InjectChartDataIntoStandardReportJson(
+        result.standard_report_json, query_result);
   }
   if (StandardReportRendererRegistry::IsFormatAvailable("md")) {
     result.report_markdown =

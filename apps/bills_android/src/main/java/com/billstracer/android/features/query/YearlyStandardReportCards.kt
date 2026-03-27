@@ -16,7 +16,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,8 +27,6 @@ import androidx.compose.ui.unit.dp
 @Composable
 internal fun YearlyStandardReportCard(
     report: YearlyStandardReportUiModel,
-    toggleLabel: String,
-    onToggle: () -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -46,16 +43,10 @@ internal fun YearlyStandardReportCard(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(text = "Yearly Report", style = MaterialTheme.typography.titleMedium)
-                TextButton(
-                    onClick = onToggle,
-                    modifier = Modifier.testTag("query_toggle_button"),
-                ) {
-                    Text(toggleLabel)
-                }
             }
             Text(
                 text = formatPeriodLabel(report.periodStart, report.periodEnd),
@@ -87,9 +78,10 @@ internal fun YearlyStandardReportCard(
             }
             if (!report.dataFound || report.monthlySummary.isEmpty()) {
                 Text(
-                    text = "No monthly summary available in standardReportJson.",
+                    text = yearlyStructuredEmptyMessage(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.testTag("query_yearly_empty_message"),
                 )
             } else {
                 YearlyMonthlySummaryTable(monthlySummary = report.monthlySummary)
