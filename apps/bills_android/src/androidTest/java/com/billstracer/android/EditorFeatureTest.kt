@@ -22,16 +22,18 @@ class EditorFeatureTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun editorPageOpensPersistedRecordAndEnablesSaveFlow() = runBlocking {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val services = createAndroidServiceBundle(context)
-        services.workspaceService.clearRecordFiles()
-        services.workspaceService.clearDatabase()
-        services.editorService.saveRecordDocument(
-            period = "2026-03",
-            rawText = "date:2026-03\nremark:test\n\nmeal\nmeal_low 12 lunch\n",
-        )
-        services.editorService.syncSavedRecordToDatabase("2026-03")
+    fun editorPageOpensPersistedRecordAndEnablesSaveFlow() {
+        runBlocking {
+            val context = ApplicationProvider.getApplicationContext<Context>()
+            val services = createAndroidServiceBundle(context)
+            services.workspaceService.clearRecordFiles()
+            services.workspaceService.clearDatabase()
+            val saved = services.editorService.commitRecordDocument(
+                period = "2026-03",
+                rawText = "date:2026-03\nremark:test\n\nmeal\nmeal_low 12 lunch\n",
+            )
+            check(saved.ok) { saved.errorMessage ?: saved.message }
+        }
 
         composeRule.onNodeWithTag("tab_editor").performClick()
 

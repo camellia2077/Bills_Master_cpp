@@ -1,6 +1,7 @@
 package com.billstracer.android
 
 import com.billstracer.android.app.navigation.AppSessionBus
+import com.billstracer.android.app.navigation.WorkspaceDataChangeBus
 import com.billstracer.android.features.query.QueryViewMode
 import com.billstracer.android.features.query.QueryViewModel
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,15 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class QueryViewModelTest {
     private val dispatcher = StandardTestDispatcher()
+    private fun createViewModel(
+        workspaceService: FakeWorkspaceService = FakeWorkspaceService(),
+        queryService: FakeQueryService = FakeQueryService(),
+    ): QueryViewModel = QueryViewModel(
+        workspaceService = workspaceService,
+        queryService = queryService,
+        sessionBus = AppSessionBus(),
+        workspaceDataChangeBus = WorkspaceDataChangeBus(),
+    )
 
     @Before
     fun setUp() {
@@ -31,11 +41,7 @@ class QueryViewModelTest {
 
     @Test
     fun loadAvailablePeriodsDefaultsToMostRecentDatabasePeriod() = runTest {
-        val viewModel = QueryViewModel(
-            workspaceService = FakeWorkspaceService(),
-            queryService = FakeQueryService(),
-            sessionBus = AppSessionBus(),
-        )
+        val viewModel = createViewModel()
         advanceUntilIdle()
 
         assertEquals("2026", viewModel.state.value.queryYearInput)
@@ -46,11 +52,7 @@ class QueryViewModelTest {
     @Test
     fun runYearQueryUsesSelectedDatabaseYear() = runTest {
         val queryService = FakeQueryService()
-        val viewModel = QueryViewModel(
-            workspaceService = FakeWorkspaceService(),
-            queryService = queryService,
-            sessionBus = AppSessionBus(),
-        )
+        val viewModel = createViewModel(queryService = queryService)
         advanceUntilIdle()
 
         viewModel.selectQueryYear("2025")
@@ -66,11 +68,7 @@ class QueryViewModelTest {
         val queryService = FakeQueryService().apply {
             availablePeriods = emptyList()
         }
-        val viewModel = QueryViewModel(
-            workspaceService = FakeWorkspaceService(),
-            queryService = queryService,
-            sessionBus = AppSessionBus(),
-        )
+        val viewModel = createViewModel(queryService = queryService)
         advanceUntilIdle()
 
         assertEquals("", viewModel.state.value.queryYearInput)
@@ -89,11 +87,7 @@ class QueryViewModelTest {
 
     @Test
     fun selectingMonthQueryYearChoosesFirstAvailableMonthForThatYear() = runTest {
-        val viewModel = QueryViewModel(
-            workspaceService = FakeWorkspaceService(),
-            queryService = FakeQueryService(),
-            sessionBus = AppSessionBus(),
-        )
+        val viewModel = createViewModel()
         advanceUntilIdle()
 
         viewModel.selectQueryPeriodYear("2025")
@@ -107,16 +101,31 @@ class QueryViewModelTest {
         val queryService = FakeQueryService().apply {
             availablePeriods = listOf("2025-03")
         }
-        val viewModel = QueryViewModel(
-            workspaceService = FakeWorkspaceService(),
-            queryService = queryService,
-            sessionBus = AppSessionBus(),
-        )
+        val viewModel = createViewModel(queryService = queryService)
         advanceUntilIdle()
 
         viewModel.runMonthQuery()
         advanceUntilIdle()
 
         assertEquals(QueryViewMode.STRUCTURED, viewModel.state.value.selectedQueryViewMode)
+    }
+
+    @Test
+    fun workspaceDataChangeRefreshesAvailablePeriods() = runTest {
+        val queryService = FakeQueryService()
+        val workspaceDataChangeBus = WorkspaceDataChangeBus()
+        val viewModel = QueryViewModel(
+            workspaceService = FakeWorkspaceService(),
+            queryService = queryService,
+            sessionBus = AppSessionBus(),
+            workspaceDataChangeBus = workspaceDataChangeBus,
+        )
+        advanceUntilIdle()
+
+        queryService.availablePeriods = listOf("2027-01", "2026-03", "2026-02", "2025-12")
+        workspaceDataChangeBus.notifyChanged()
+        advanceUntilIdle()
+
+        assertEquals(listOf("2027-01", "2026-03", "2026-02", "2025-12"), viewModel.state.value.availablePeriods)
     }
 }

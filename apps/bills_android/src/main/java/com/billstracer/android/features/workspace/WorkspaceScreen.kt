@@ -22,7 +22,6 @@ internal fun WorkspaceScreen(
     sessionState: AppSessionState,
     state: WorkspaceUiState,
     onRequestImportTxtDirectory: () -> Unit,
-    onImportRecordFilesToDatabase: () -> Unit,
     onImportBundledSample: () -> Unit,
     onRequestExportDocument: () -> Unit,
     onRequestImportBundle: () -> Unit,
@@ -85,7 +84,7 @@ internal fun WorkspaceScreen(
         }
         SectionGroupCard(title = "Data") {
             Text(
-                text = "Select a directory and copy valid TXT files into records/ only. This does not write to SQLite.",
+                text = "Select a directory and import valid TXT files into the private workspace. Successful periods are copied into records/ and synced to SQLite immediately.",
                 style = MaterialTheme.typography.bodySmall,
                 fontFamily = FontFamily.Monospace,
             )
@@ -112,34 +111,6 @@ internal fun WorkspaceScreen(
                         } else {
                             MaterialTheme.colorScheme.onSurface
                         },
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            }
-            Text(
-                text = "Import the current TXT files under records/ into SQLite. This action is available in release builds.",
-                style = MaterialTheme.typography.bodySmall,
-                fontFamily = FontFamily.Monospace,
-            )
-            Button(
-                onClick = onImportRecordFilesToDatabase,
-                enabled = !state.isInitializing && !state.isWorking,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("workspace_import_records_button"),
-            ) {
-                Text("Import TXT into database")
-            }
-            state.dataImportResult?.let { result ->
-                Text(
-                    text = "processed ${result.processed}  imported ${result.imported}  failure ${result.failure}",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontFamily = FontFamily.Monospace,
-                )
-                if (!result.ok && result.message.isNotBlank()) {
-                    Text(
-                        text = result.message,
-                        color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }

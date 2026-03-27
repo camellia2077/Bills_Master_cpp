@@ -1,5 +1,14 @@
 # Select compiler before project().
-# The repository supports clang/clang++ only.
+# The repository supports clang/clang++ only for standalone host builds.
+
+if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  return()
+endif()
+
+if ((DEFINED ANDROID AND ANDROID)
+    OR (DEFINED CMAKE_SYSTEM_NAME AND CMAKE_SYSTEM_NAME STREQUAL "Android"))
+  return()
+endif()
 
 set(_bill_compiler "clang")
 if (DEFINED BILL_COMPILER)

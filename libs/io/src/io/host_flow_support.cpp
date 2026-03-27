@@ -649,6 +649,152 @@ auto BuildRecordWorkspaceRelativePath(std::string_view period) -> Result<std::st
   return std::to_string(parsed_period->year) + "/" + std::string(period) + ".txt";
 }
 
+auto BuildBatchFailureMessage(const BillWorkflowBatchResult& result,
+                              std::string_view fallback) -> std::string {
+  for (const auto& file : result.files) {
+    if (file.ok) {
+      continue;
+    }
+    if (!file.stage.empty() && !file.error.empty()) {
+      return file.stage + ": " + file.error;
+    }
+    if (!file.error.empty()) {
+      return file.error;
+    }
+  }
+  return std::string(fallback);
+}
+
+auto AppendRollbackFailure(std::string message, const Result<void>& rollback_result)
+    -> std::string {
+  if (!rollback_result) {
+    message += " | rollback_failed: " + FormatError(rollback_result.error());
+  }
+  return message;
+}
+
+auto MakeRecordCommitFailure(std::string_view period, std::string relative_path,
+                             std::string message) -> HostRecordCommitResult {
+  return HostRecordCommitResult{
+      .ok = false,
+      .message = message,
+      .relative_path = std::move(relative_path),
+      .period = std::string(period),
+      .overwritten = false,
+      .error_message = message,
+  };
+}
+
+auto PreviewInlineRecordDocument(std::string_view expected_period,
+                                 std::string_view raw_text,
+                                 const std::filesystem::path& config_dir)
+    -> Result<RecordPreviewFile> {
+  const auto target_relative = BuildRecordWorkspaceRelativePath(expected_period);
+  if (!target_relative) {
+    return std::unexpected(target_relative.error());
+  }
+
+  const auto runtime_config = LoadRuntimeConfig(config_dir);
+  if (!runtime_config) {
+    return std::unexpected(runtime_config.error());
+  }
+
+  SourceDocumentBatch documents;
+  documents.push_back(SourceDocument{
+      .display_path = *target_relative,
+      .text = std::string(raw_text),
+  });
+  const auto preview_result = RecordTemplateService::PreviewRecords(
+      documents, *runtime_config, *target_relative);
+  if (!preview_result) {
+    return std::unexpected(
+        MakeError(FormatRecordTemplateError(preview_result.error()), kContext));
+  }
+  if (preview_result->files.size() != 1U) {
+    return std::unexpected(MakeError(
+        "Expected a single preview result for the provided record text.",
+        kContext));
+  }
+  return preview_result->files.front();
+}
+
+auto CommitValidatedRecordTextToWorkspaceAndDatabase(
+    std::string_view period, std::string_view raw_text,
+    const std::filesystem::path& config_dir,
+    const std::filesystem::path& records_root,
+    const std::filesystem::path& db_path) -> HostRecordCommitResult {
+  const auto target_relative = BuildRecordWorkspaceRelativePath(period);
+  if (!target_relative) {
+    return MakeRecordCommitFailure(period, {}, FormatError(target_relative.error()));
+  }
+
+  const SourceDocumentBatch target_documents = {
+      SourceDocument{
+          .display_path = *target_relative,
+          .text = std::string(raw_text),
+      },
+  };
+  const auto snapshots = CaptureSnapshots(records_root, target_documents);
+  if (!snapshots) {
+    return MakeRecordCommitFailure(
+        period, *target_relative,
+        "Failed to prepare " + *target_relative + " for save: " +
+            FormatError(snapshots.error()));
+  }
+
+  const bool existed =
+      !snapshots->empty() && snapshots->front().previous_text.has_value();
+  const std::filesystem::path target_path =
+      records_root / std::filesystem::path(*target_relative);
+  const auto write_result = SourceDocumentIo::WriteText(target_path, raw_text);
+  if (!write_result) {
+    return MakeRecordCommitFailure(
+        period, *target_relative,
+        "Failed to write " + *target_relative + ": " +
+            FormatError(write_result.error()));
+  }
+
+  const auto sync_result =
+      SyncSingleRecordToDatabase(target_path, config_dir, db_path, period);
+  if (!sync_result) {
+    const auto rollback_result = RestoreSnapshots(records_root, *snapshots);
+    return MakeRecordCommitFailure(
+        period, *target_relative,
+        AppendRollbackFailure(
+            "Failed to sync " + *target_relative + " into SQLite: " +
+                FormatError(sync_result.error()),
+            rollback_result));
+  }
+  if (!sync_result->period_matches) {
+    const auto rollback_result = RestoreSnapshots(records_root, *snapshots);
+    return MakeRecordCommitFailure(
+        period, *target_relative,
+        AppendRollbackFailure(
+            "TXT header period '" + sync_result->actual_period +
+                "' does not match selected period '" + std::string(period) + "'.",
+            rollback_result));
+  }
+  if (sync_result->ingest.failure > 0U) {
+    const auto rollback_result = RestoreSnapshots(records_root, *snapshots);
+    return MakeRecordCommitFailure(
+        period, *target_relative,
+        AppendRollbackFailure(
+            BuildBatchFailureMessage(
+                sync_result->ingest,
+                "Failed to sync " + *target_relative + " into SQLite."),
+            rollback_result));
+  }
+
+  return HostRecordCommitResult{
+      .ok = true,
+      .message = "Saved " + *target_relative + " and synced it to the database.",
+      .relative_path = *target_relative,
+      .period = std::string(period),
+      .overwritten = existed,
+      .error_message = {},
+  };
+}
+
 auto LoadSourceDocumentViews(const std::filesystem::path& input_path)
     -> Result<std::map<std::string, SourceDocumentView>> {
   const auto absolute_documents = LoadSourceDocuments(input_path, ".txt");
@@ -1068,6 +1214,148 @@ auto ImportRecordDirectoryToWorkspace(const std::filesystem::path& input_path,
 
     ++result.imported;
     if (existed) {
+      ++result.overwritten;
+    }
+  }
+
+  return result;
+}
+
+auto CommitRecordTextToWorkspaceAndDatabase(
+    std::string_view expected_period, std::string_view raw_text,
+    const std::filesystem::path& config_dir,
+    const std::filesystem::path& records_root,
+    const std::filesystem::path& db_path) -> HostRecordCommitResult {
+  const auto target_relative = BuildRecordWorkspaceRelativePath(expected_period);
+  if (!target_relative) {
+    return MakeRecordCommitFailure(
+        expected_period, {}, FormatError(target_relative.error()));
+  }
+
+  const auto preview_file =
+      PreviewInlineRecordDocument(expected_period, raw_text, config_dir);
+  if (!preview_file) {
+    return MakeRecordCommitFailure(
+        expected_period, *target_relative, FormatError(preview_file.error()));
+  }
+  if (!preview_file->ok || preview_file->period.empty()) {
+    return MakeRecordCommitFailure(
+        expected_period, *target_relative,
+        !preview_file->error.empty()
+            ? preview_file->error
+            : "TXT validation failed for " + *target_relative + ".");
+  }
+  if (preview_file->period != expected_period) {
+    return MakeRecordCommitFailure(
+        expected_period, *target_relative,
+        "TXT header period '" + preview_file->period +
+            "' does not match selected period '" +
+            std::string(expected_period) + "'.");
+  }
+
+  return CommitValidatedRecordTextToWorkspaceAndDatabase(
+      preview_file->period, raw_text, config_dir, records_root, db_path);
+}
+
+auto ImportRecordDirectoryAndSyncDatabase(
+    const std::filesystem::path& input_path,
+    const std::filesystem::path& config_dir,
+    const std::filesystem::path& records_root,
+    const std::filesystem::path& db_path) -> HostRecordDirectoryImportResult {
+  HostRecordDirectoryImportResult result;
+
+  const auto preview_result = PreviewRecordDocuments(input_path, config_dir);
+  if (!preview_result) {
+    result.failure = 1U;
+    result.first_failure_message = FormatError(preview_result.error());
+    return result;
+  }
+  const auto source_views = LoadSourceDocumentViews(input_path);
+  if (!source_views) {
+    result.failure = 1U;
+    result.first_failure_message = FormatError(source_views.error());
+    return result;
+  }
+
+  result.processed = source_views->size();
+  if (preview_result->files.empty() && !source_views->empty()) {
+    result.failure = source_views->size();
+    result.first_failure_message =
+        "No preview results were returned for the provided TXT documents.";
+    return result;
+  }
+
+  std::map<std::string, RecordPreviewFile> preview_by_path;
+  for (const auto& file : preview_result->files) {
+    preview_by_path.emplace(file.path, file);
+  }
+
+  std::vector<RecordImportCandidate> valid_candidates;
+  valid_candidates.reserve(source_views->size());
+  for (const auto& [absolute_path, view] : *source_views) {
+    const auto preview_it = preview_by_path.find(absolute_path);
+    if (preview_it == preview_by_path.end()) {
+      ++result.failure;
+      if (result.first_failure_message.empty()) {
+        result.first_failure_message =
+            "No validation result was returned for " + view.relative_path + ".";
+      }
+      continue;
+    }
+
+    const auto& preview_file = preview_it->second;
+    if (!preview_file.ok || preview_file.period.empty()) {
+      ++result.failure;
+      ++result.invalid;
+      if (result.first_failure_message.empty()) {
+        result.first_failure_message =
+            !preview_file.error.empty()
+                ? preview_file.error
+                : "TXT validation failed for " + view.relative_path + ".";
+      }
+      continue;
+    }
+
+    valid_candidates.push_back(RecordImportCandidate{
+        .absolute_path = absolute_path,
+        .relative_path = view.relative_path,
+        .period = preview_file.period,
+        .text = view.text,
+    });
+  }
+
+  std::map<std::string, std::size_t> period_counts;
+  for (const auto& candidate : valid_candidates) {
+    ++period_counts[candidate.period];
+  }
+
+  for (const auto& candidate : valid_candidates) {
+    if (period_counts[candidate.period] > 1U) {
+      ++result.failure;
+      ++result.duplicate_period_conflicts;
+      if (result.first_failure_message.empty()) {
+        result.first_failure_message =
+            "Duplicate period '" + candidate.period +
+            "' was found in the selected directory for " +
+            candidate.relative_path + ".";
+      }
+      continue;
+    }
+
+    const auto commit_result = CommitValidatedRecordTextToWorkspaceAndDatabase(
+        candidate.period, candidate.text, config_dir, records_root, db_path);
+    if (!commit_result.ok) {
+      ++result.failure;
+      if (result.first_failure_message.empty()) {
+        result.first_failure_message =
+            !commit_result.error_message.empty() ? commit_result.error_message
+                                                 : commit_result.message;
+      }
+      continue;
+    }
+
+    ++result.imported;
+    if (commit_result.overwritten) {
       ++result.overwritten;
     }
   }

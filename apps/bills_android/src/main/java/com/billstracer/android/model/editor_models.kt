@@ -7,9 +7,10 @@ data class RecordEditorDocument(
     val persisted: Boolean,
 )
 
-data class RecordDatabaseSyncResult(
+data class RecordSaveResult(
     val ok: Boolean,
     val message: String,
+    val document: RecordEditorDocument? = null,
     val errorMessage: String? = null,
     val rawJson: String,
 )

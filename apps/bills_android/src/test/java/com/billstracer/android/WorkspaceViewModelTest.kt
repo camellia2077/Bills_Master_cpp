@@ -2,6 +2,7 @@ package com.billstracer.android
 
 import android.net.Uri
 import com.billstracer.android.app.navigation.AppSessionBus
+import com.billstracer.android.app.navigation.WorkspaceDataChangeBus
 import com.billstracer.android.features.workspace.WorkspaceViewModel
 import com.billstracer.android.model.RecordDirectoryImportResult
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +22,8 @@ import org.mockito.Mockito.mock
 class WorkspaceViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private fun testUri(): Uri = mock(Uri::class.java)
+    private fun createViewModel(workspaceService: FakeWorkspaceService = FakeWorkspaceService()): WorkspaceViewModel =
+        WorkspaceViewModel(workspaceService, AppSessionBus(), WorkspaceDataChangeBus())
 
     @Before
     fun setUp() {
@@ -34,7 +37,7 @@ class WorkspaceViewModelTest {
 
     @Test
     fun importBundledSampleStoresResult() = runTest {
-        val viewModel = WorkspaceViewModel(FakeWorkspaceService(), AppSessionBus())
+        val viewModel = createViewModel()
         advanceUntilIdle()
 
         viewModel.importBundledSample()
@@ -45,31 +48,35 @@ class WorkspaceViewModelTest {
     }
 
     @Test
-    fun importRecordFilesToDatabaseStoresResult() = runTest {
-        val viewModel = WorkspaceViewModel(FakeWorkspaceService(), AppSessionBus())
+    fun importTxtDirectoryAndSyncDatabaseStoresResult() = runTest {
+        val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.importRecordFilesToDatabase()
-        advanceUntilIdle()
-
-        assertEquals(2, viewModel.state.value.dataImportResult?.imported)
-        assertEquals("Imported 2 TXT record file(s) into SQLite.", viewModel.state.value.statusMessage)
-    }
-
-    @Test
-    fun importTxtDirectoryToRecordsStoresResult() = runTest {
-        val viewModel = WorkspaceViewModel(FakeWorkspaceService(), AppSessionBus())
-        advanceUntilIdle()
-
-        viewModel.importTxtDirectoryToRecords(testUri())
+        viewModel.importTxtDirectoryAndSyncDatabase(testUri())
         advanceUntilIdle()
 
         assertEquals(2, viewModel.state.value.recordDirectoryImportResult?.imported)
-        assertEquals("Imported 2 TXT record file(s) into records/ only.", viewModel.state.value.statusMessage)
+        assertEquals("Imported and synced 2 TXT record file(s).", viewModel.state.value.statusMessage)
     }
 
     @Test
-    fun importTxtDirectoryToRecordsStoresPartialFailure() = runTest {
+    fun importTxtDirectoryAndSyncDatabasePublishesWorkspaceDataChange() = runTest {
+        val workspaceDataChangeBus = WorkspaceDataChangeBus()
+        val viewModel = WorkspaceViewModel(
+            FakeWorkspaceService(),
+            AppSessionBus(),
+            workspaceDataChangeBus,
+        )
+        advanceUntilIdle()
+
+        viewModel.importTxtDirectoryAndSyncDatabase(testUri())
+        advanceUntilIdle()
+
+        assertEquals(1, workspaceDataChangeBus.version.value)
+    }
+
+    @Test
+    fun importTxtDirectoryAndSyncDatabaseStoresPartialFailure() = runTest {
         val workspaceService = FakeWorkspaceService().apply {
             recordDirectoryImportResult = RecordDirectoryImportResult(
                 processed = 3,
@@ -81,22 +88,22 @@ class WorkspaceViewModelTest {
                 firstFailureMessage = "TXT validation failed for broken.txt.",
             )
         }
-        val viewModel = WorkspaceViewModel(workspaceService, AppSessionBus())
+        val viewModel = createViewModel(workspaceService)
         advanceUntilIdle()
 
-        viewModel.importTxtDirectoryToRecords(testUri())
+        viewModel.importTxtDirectoryAndSyncDatabase(testUri())
         advanceUntilIdle()
 
         assertEquals("TXT validation failed for broken.txt.", viewModel.state.value.errorMessage)
         assertEquals(
-            "Imported 1 TXT record file(s) into records/ only with 2 failure(s). Overwrote 1 existing file(s).",
+            "Imported and synced 1 TXT record file(s) with 2 failure(s). Overwrote 1 existing file(s).",
             viewModel.state.value.statusMessage,
         )
     }
 
     @Test
     fun clearRecordFilesUpdatesStatus() = runTest {
-        val viewModel = WorkspaceViewModel(FakeWorkspaceService(), AppSessionBus())
+        val viewModel = createViewModel()
         advanceUntilIdle()
 
         viewModel.clearRecordFiles()
@@ -107,9 +114,8 @@ class WorkspaceViewModelTest {
 
     @Test
     fun clearDatabaseResetsStatus() = runTest {
-        val viewModel = WorkspaceViewModel(FakeWorkspaceService(), AppSessionBus())
+        val viewModel = createViewModel()
         advanceUntilIdle()
-        viewModel.importRecordFilesToDatabase()
         viewModel.importBundledSample()
         advanceUntilIdle()
 
@@ -117,13 +123,12 @@ class WorkspaceViewModelTest {
         advanceUntilIdle()
 
         assertEquals("Database file cleared.", viewModel.state.value.statusMessage)
-        assertEquals(null, viewModel.state.value.dataImportResult)
         assertEquals(null, viewModel.state.value.bundledSampleImportResult)
     }
 
     @Test
     fun exportParseBundleUpdatesStatus() = runTest {
-        val viewModel = WorkspaceViewModel(FakeWorkspaceService(), AppSessionBus())
+        val viewModel = createViewModel()
         advanceUntilIdle()
 
         viewModel.exportParseBundle(testUri())
@@ -137,7 +142,7 @@ class WorkspaceViewModelTest {
 
     @Test
     fun importParseBundleUpdatesStatus() = runTest {
-        val viewModel = WorkspaceViewModel(FakeWorkspaceService(), AppSessionBus())
+        val viewModel = createViewModel()
         advanceUntilIdle()
 
         viewModel.importParseBundle(testUri())
@@ -159,7 +164,7 @@ class WorkspaceViewModelTest {
                 failedPhase = "validate_records",
             )
         }
-        val viewModel = WorkspaceViewModel(workspaceService, AppSessionBus())
+        val viewModel = createViewModel(workspaceService)
         advanceUntilIdle()
 
         viewModel.importParseBundle(testUri())

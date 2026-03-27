@@ -15,10 +15,10 @@ import com.billstracer.android.model.MonthlySummaryItem
 import com.billstracer.android.model.QueryResult
 import com.billstracer.android.model.QueryType
 import com.billstracer.android.model.RecordDirectoryImportResult
-import com.billstracer.android.model.RecordDatabaseSyncResult
 import com.billstracer.android.model.RecordEditorDocument
 import com.billstracer.android.model.RecordPreviewFile
 import com.billstracer.android.model.RecordPreviewResult
+import com.billstracer.android.model.RecordSaveResult
 import com.billstracer.android.model.ThemeColor
 import com.billstracer.android.model.ThemeMode
 import com.billstracer.android.model.ThemePreferences
@@ -86,9 +86,7 @@ internal class FakeWorkspaceService : WorkspaceService {
 
     override suspend fun initializeEnvironment(): AppEnvironment = environment
 
-    override suspend fun importRecordFilesToDatabase(): ImportResult = recordsImportResult
-
-    override suspend fun importTxtDirectoryToRecords(sourceDirectoryUri: Uri): RecordDirectoryImportResult =
+    override suspend fun importTxtDirectoryAndSyncDatabase(sourceDirectoryUri: Uri): RecordDirectoryImportResult =
         recordDirectoryImportResult
 
     override suspend fun importBundledSample(): ImportResult = importResult
@@ -152,29 +150,35 @@ internal class FakeQueryService : QueryService {
 
 internal class FakeEditorService : EditorService {
     val savedRecords = linkedMapOf<String, String>()
-    val databasePeriods = linkedSetOf("2026-03", "2026-02")
+    val persistedPeriods = linkedSetOf("2026-03", "2026-02")
     val missingPersistedPeriods = linkedSetOf<String>()
-    val syncFailures = linkedMapOf<String, String>()
-    val syncedPeriods = mutableListOf<String>()
+    val commitFailures = linkedMapOf<String, String>()
+    val committedPeriods = mutableListOf<String>()
 
     init {
-        databasePeriods.forEach { period ->
+        persistedPeriods.forEach { period ->
             savedRecords[period] = "date:$period\nremark:\n\nmeal\nmeal_low\n"
         }
     }
 
-    override suspend fun listDatabaseRecordPeriods(): List<String> =
-        databasePeriods.toList().sortedDescending()
+    override suspend fun listPersistedRecordPeriods(): List<String> =
+        persistedPeriods.toList().sortedDescending()
 
     override suspend fun openPersistedRecordPeriod(period: String): RecordEditorDocument {
-        if (!databasePeriods.contains(period)) {
+        if (!persistedPeriods.contains(period)) {
             error("No imported month exists for $period.")
         }
         if (missingPersistedPeriods.contains(period)) {
-            error("No persisted TXT file exists for $period at ${period.substringBefore('-')}/$period.txt.")
+            error(
+                "Database and TXT source are out of sync for $period. Missing " +
+                    "${period.substringBefore('-')}/$period.txt. Re-import or resync records/.",
+            )
         }
         val persistedText = savedRecords[period]
-            ?: error("No persisted TXT file exists for $period at ${period.substringBefore('-')}/$period.txt.")
+            ?: error(
+                "Database and TXT source are out of sync for $period. Missing " +
+                    "${period.substringBefore('-')}/$period.txt. Re-import or resync records/.",
+            )
         val year = period.substringBefore('-')
         return RecordEditorDocument(
             period = period,
@@ -184,42 +188,39 @@ internal class FakeEditorService : EditorService {
         )
     }
 
-    override suspend fun saveRecordDocument(period: String, rawText: String): RecordEditorDocument {
-        savedRecords[period] = rawText
-        val year = period.substringBefore('-')
-        return RecordEditorDocument(
-            period = period,
-            relativePath = "$year/$period.txt",
-            rawText = rawText,
-            persisted = true,
-        )
-    }
-
-    override suspend fun syncSavedRecordToDatabase(period: String): RecordDatabaseSyncResult {
-        syncedPeriods += period
-        val explicitFailure = syncFailures[period]
+    override suspend fun commitRecordDocument(period: String, rawText: String): RecordSaveResult {
+        committedPeriods += period
+        val explicitFailure = commitFailures[period]
         if (explicitFailure != null) {
-            return RecordDatabaseSyncResult(
+            return RecordSaveResult(
                 ok = false,
                 message = explicitFailure,
                 errorMessage = explicitFailure,
                 rawJson = """{"ok":false}""",
             )
         }
-        val rawText = savedRecords.getValue(period)
         if (!rawText.startsWith("date:$period")) {
             val message = "TXT header period does not match selected period '$period'."
-            return RecordDatabaseSyncResult(
+            return RecordSaveResult(
                 ok = false,
                 message = message,
                 errorMessage = message,
                 rawJson = """{"ok":false}""",
             )
         }
-        databasePeriods += period
-        return RecordDatabaseSyncResult(
+
+        savedRecords[period] = rawText
+        persistedPeriods += period
+        val year = period.substringBefore('-')
+        return RecordSaveResult(
             ok = true,
-            message = "TXT saved and synced to database successfully.",
+            message = "Saved $year/$period.txt and synced it to the database.",
+            document = RecordEditorDocument(
+                period = period,
+                relativePath = "$year/$period.txt",
+                rawText = rawText,
+                persisted = true,
+            ),
             rawJson = """{"ok":true}""",
         )
     }
@@ -287,8 +288,8 @@ internal class FakeSettingsService : SettingsService {
             versionName = "0.4.2",
             lastUpdated = "2026-03-10",
         ) to VersionInfo(
-            versionName = "0.1.2",
-            versionCode = 2,
+            versionName = "0.1.3",
+            versionCode = 3,
         )
 }
 

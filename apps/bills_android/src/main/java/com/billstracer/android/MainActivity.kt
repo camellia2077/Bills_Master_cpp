@@ -10,6 +10,7 @@ import com.billstracer.android.app.navigation.AppSessionBus
 import com.billstracer.android.app.navigation.AppSessionViewModel
 import com.billstracer.android.app.navigation.AppSessionViewModelFactory
 import com.billstracer.android.app.navigation.BillsAndroidApp
+import com.billstracer.android.app.navigation.WorkspaceDataChangeBus
 import com.billstracer.android.app.theme.BillsAndroidTheme
 import com.billstracer.android.data.prefs.ThemePreferenceStore
 import com.billstracer.android.data.runtime.AndroidWorkspaceRuntime
@@ -29,6 +30,7 @@ import com.billstracer.android.features.workspace.WorkspaceViewModelFactory
 
 class MainActivity : ComponentActivity() {
     private val sessionBus by lazy { AppSessionBus() }
+    private val workspaceDataChangeBus by lazy { WorkspaceDataChangeBus() }
     private val workspaceRuntime by lazy { AndroidWorkspaceRuntime(applicationContext) }
     private val themePreferenceStore by lazy { ThemePreferenceStore(applicationContext) }
     private val settingsDataSource by lazy {
@@ -58,6 +60,7 @@ class MainActivity : ComponentActivity() {
         WorkspaceViewModelFactory(
             workspaceService = workspaceService,
             sessionBus = sessionBus,
+            workspaceDataChangeBus = workspaceDataChangeBus,
         )
     }
     private val queryViewModel: QueryViewModel by viewModels {
@@ -65,12 +68,14 @@ class MainActivity : ComponentActivity() {
             workspaceService = workspaceService,
             queryService = queryService,
             sessionBus = sessionBus,
+            workspaceDataChangeBus = workspaceDataChangeBus,
         )
     }
     private val editorViewModel: EditorViewModel by viewModels {
         EditorViewModelFactory(
             editorService = editorService,
             sessionBus = sessionBus,
+            workspaceDataChangeBus = workspaceDataChangeBus,
         )
     }
     private val settingsViewModel: SettingsViewModel by viewModels {

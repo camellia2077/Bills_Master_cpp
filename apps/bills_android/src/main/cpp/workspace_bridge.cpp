@@ -159,47 +159,42 @@ auto import_records_to_database(const std::string& config_dir,
       false, "business.import_failed", std::move(message), std::move(data));
 }
 
-auto import_txt_directory_to_records(const std::string& source_records_dir,
-                                     const std::string& config_dir,
-                                     const std::string& records_root) -> std::string {
-  if (source_records_dir.empty() || config_dir.empty() || records_root.empty()) {
+auto import_txt_directory_and_sync_database(const std::string& source_records_dir,
+                                            const std::string& config_dir,
+                                            const std::string& records_root,
+                                            const std::string& db_path)
+    -> std::string {
+  if (source_records_dir.empty() || config_dir.empty() || records_root.empty() ||
+      db_path.empty()) {
     return bills::android::jni::MakeResponse(
         false, "param.invalid_argument",
-        "sourceRecordsDir, configDir, and recordsRoot must be non-empty.");
+        "sourceRecordsDir, configDir, recordsRoot, and dbPath must be non-empty.");
   }
 
-  const auto result = bills::io::ImportRecordDirectoryToWorkspace(
-      source_records_dir, config_dir, records_root);
-  if (!result) {
-    Json data;
-    data["source_records_dir"] = source_records_dir;
-    data["config_dir"] = config_dir;
-    data["records_root"] = records_root;
-    return bills::android::jni::MakeResponse(
-        false, "system.native_failure", FormatError(result.error()),
-        std::move(data));
-  }
+  const auto result = bills::io::ImportRecordDirectoryAndSyncDatabase(
+      source_records_dir, config_dir, records_root, db_path);
 
   Json data;
   data["source_records_dir"] = source_records_dir;
   data["config_dir"] = config_dir;
   data["records_root"] = records_root;
-  data["processed"] = result->processed;
-  data["imported"] = result->imported;
-  data["overwritten"] = result->overwritten;
-  data["failure"] = result->failure;
-  data["invalid"] = result->invalid;
-  data["duplicate_period_conflicts"] = result->duplicate_period_conflicts;
-  if (!result->first_failure_message.empty()) {
-    data["first_failure_message"] = result->first_failure_message;
+  data["db_path"] = db_path;
+  data["processed"] = result.processed;
+  data["imported"] = result.imported;
+  data["overwritten"] = result.overwritten;
+  data["failure"] = result.failure;
+  data["invalid"] = result.invalid;
+  data["duplicate_period_conflicts"] = result.duplicate_period_conflicts;
+  if (!result.first_failure_message.empty()) {
+    data["first_failure_message"] = result.first_failure_message;
   }
 
-  const bool ok = result->failure == 0U;
+  const bool ok = result.failure == 0U;
   const std::string message =
-      ok ? "TXT directory import finished."
-         : (result->first_failure_message.empty()
-                ? "TXT directory import finished with failures."
-                : result->first_failure_message);
+      ok ? "TXT directory import and SQLite sync finished."
+         : (result.first_failure_message.empty()
+                ? "TXT directory import and SQLite sync finished with failures."
+                : result.first_failure_message);
   return bills::android::jni::MakeResponse(
       ok, ok ? "ok" : "business.import_failed", message, std::move(data));
 }
@@ -302,14 +297,15 @@ Java_com_billstracer_android_data_nativebridge_WorkspaceNativeBindings_importRec
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_billstracer_android_data_nativebridge_WorkspaceNativeBindings_importTxtDirectoryToRecordsNative(
+Java_com_billstracer_android_data_nativebridge_WorkspaceNativeBindings_importTxtDirectoryAndSyncDatabaseNative(
     JNIEnv* env, jclass, jstring source_records_dir, jstring config_dir,
-    jstring records_root) {
+    jstring records_root, jstring db_path) {
   return bills::android::jni::SafeCall(env, [&]() -> std::string {
-    return import_txt_directory_to_records(
+    return import_txt_directory_and_sync_database(
         bills::android::jni::FromJString(env, source_records_dir),
         bills::android::jni::FromJString(env, config_dir),
-        bills::android::jni::FromJString(env, records_root));
+        bills::android::jni::FromJString(env, records_root),
+        bills::android::jni::FromJString(env, db_path));
   });
 }
 

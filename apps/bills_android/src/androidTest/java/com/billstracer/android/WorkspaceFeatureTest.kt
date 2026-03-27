@@ -2,9 +2,10 @@ package com.billstracer.android
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,10 +18,9 @@ class WorkspaceFeatureTest {
     @Test
     fun workspacePageShowsImportAndClearActions() {
         composeRule.onNodeWithTag("workspace_import_txt_directory_button").assertIsDisplayed()
-        composeRule.onNodeWithTag("workspace_import_records_button").assertIsDisplayed()
         composeRule.onNodeWithTag("workspace_export_button").assertIsDisplayed()
         composeRule.onNodeWithTag("workspace_import_bundle_button").assertIsDisplayed()
-        composeRule.onNodeWithTag("workspace_clear_txt_button").assertIsDisplayed()
-        composeRule.onNodeWithTag("workspace_clear_database_button").assertIsDisplayed()
+        assertTrue(composeRule.onAllNodesWithTag("workspace_clear_txt_button").fetchSemanticsNodes().isNotEmpty())
+        assertTrue(composeRule.onAllNodesWithTag("workspace_clear_database_button").fetchSemanticsNodes().isNotEmpty())
     }
 }

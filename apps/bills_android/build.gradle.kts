@@ -24,8 +24,8 @@ val bundledSampleRelativePath = "2025"
 val bundledSampleLabel = "2025 full-year sample"
 val bundledSampleYear = "2025"
 val bundledSampleMonth = "2025-01"
-val androidPresentationVersionCode = 2
-val androidPresentationVersionName = "0.1.2"
+val androidPresentationVersionCode = 3
+val androidPresentationVersionName = "0.1.3"
 
 private object AndroidUiDependencyVersions {
     const val composeBom = "2025.08.01"

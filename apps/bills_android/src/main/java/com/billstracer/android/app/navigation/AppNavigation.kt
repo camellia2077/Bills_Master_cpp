@@ -13,9 +13,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
@@ -97,9 +97,10 @@ internal fun BillsAndroidApp(
         contract = ActivityResultContracts.OpenDocumentTree(),
     ) { sourceDirectoryUri ->
         if (sourceDirectoryUri != null) {
-            workspaceViewModel.importTxtDirectoryToRecords(sourceDirectoryUri)
+            workspaceViewModel.importTxtDirectoryAndSyncDatabase(sourceDirectoryUri)
         }
     }
+    val tabStateHolder = rememberSaveableStateHolder()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -113,86 +114,79 @@ internal fun BillsAndroidApp(
             )
         },
     ) { innerPadding ->
-        LaunchedEffect(selectedTab) {
-            if (selectedTab == AppTab.EDITOR) {
-                editorViewModel.refreshDatabaseRecordPeriods()
-            }
-            if (selectedTab == AppTab.QUERY) {
-                queryViewModel.refreshAvailablePeriods()
-            }
-        }
         val contentModifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)
             .padding(horizontal = 20.dp, vertical = 16.dp)
 
-        when (selectedTab) {
-            AppTab.WORKSPACE -> {
-                val state = workspaceViewModel.state.collectAsStateWithLifecycle()
-                WorkspaceScreen(
-                    sessionState = sessionState.value,
-                    state = state.value,
-                    onRequestImportTxtDirectory = {
-                        importTxtDirectoryLauncher.launch(null)
-                    },
-                    onImportRecordFilesToDatabase = workspaceViewModel::importRecordFilesToDatabase,
-                    onImportBundledSample = workspaceViewModel::importBundledSample,
-                    onRequestExportDocument = {
-                        exportParseBundleLauncher.launch(
-                            "parse_bundle_${DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").format(LocalDateTime.now())}.zip",
-                        )
-                    },
-                    onRequestImportBundle = {
-                        importParseBundleLauncher.launch(
-                            arrayOf("application/zip", "application/octet-stream"),
-                        )
-                    },
-                    onClearRecordFiles = workspaceViewModel::clearRecordFiles,
-                    onClearDatabase = workspaceViewModel::clearDatabase,
-                    modifier = contentModifier,
-                )
-            }
-            AppTab.QUERY -> {
-                val state = queryViewModel.state.collectAsStateWithLifecycle()
-                QueryScreen(
-                    state = state.value,
-                    onSelectQueryYear = queryViewModel::selectQueryYear,
-                    onSelectQueryPeriodYear = queryViewModel::selectQueryPeriodYear,
-                    onSelectQueryPeriodMonth = queryViewModel::selectQueryPeriodMonth,
-                    onRunYearQuery = queryViewModel::runYearQuery,
-                    onRunMonthQuery = queryViewModel::runMonthQuery,
-                    onSelectQueryViewMode = queryViewModel::selectQueryViewMode,
-                    modifier = contentModifier,
-                )
-            }
-            AppTab.EDITOR -> {
-                val state = editorViewModel.state.collectAsStateWithLifecycle()
-                EditorScreen(
-                    state = state.value,
-                    onSelectExistingRecordYear = editorViewModel::selectExistingRecordYear,
-                    onSelectExistingRecordMonth = editorViewModel::selectExistingRecordMonth,
-                    onOpenSelectedExistingRecord = editorViewModel::openSelectedExistingRecord,
-                    onPreviewRecord = editorViewModel::previewRecordDraft,
-                    onSaveRecord = editorViewModel::saveRecordDraft,
-                    onRecordDraftChange = editorViewModel::updateRecordDraft,
-                    onResetRecordDraft = editorViewModel::resetRecordDraft,
-                    modifier = contentModifier,
-                )
-            }
-            AppTab.SETTINGS -> {
-                val state = settingsViewModel.state.collectAsStateWithLifecycle()
-                SettingsScreen(
-                    state = state.value,
-                    onSelectConfig = settingsViewModel::selectBundledConfig,
-                    onConfigDraftChange = settingsViewModel::updateConfigDraft,
-                    onModifyConfig = settingsViewModel::saveSelectedConfig,
-                    onResetConfigDraft = settingsViewModel::resetSelectedConfigDraft,
-                    onSelectThemeMode = settingsViewModel::updateThemeModeDraft,
-                    onSelectThemeColor = settingsViewModel::updateThemeColorDraft,
-                    onApplyTheme = settingsViewModel::applyThemeDraft,
-                    onResetThemeDraft = settingsViewModel::resetThemeDraft,
-                    modifier = contentModifier,
-                )
+        tabStateHolder.SaveableStateProvider(selectedTab) {
+            when (selectedTab) {
+                AppTab.WORKSPACE -> {
+                    val state = workspaceViewModel.state.collectAsStateWithLifecycle()
+                    WorkspaceScreen(
+                        sessionState = sessionState.value,
+                        state = state.value,
+                        onRequestImportTxtDirectory = {
+                            importTxtDirectoryLauncher.launch(null)
+                        },
+                        onImportBundledSample = workspaceViewModel::importBundledSample,
+                        onRequestExportDocument = {
+                            exportParseBundleLauncher.launch(
+                                "parse_bundle_${DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").format(LocalDateTime.now())}.zip",
+                            )
+                        },
+                        onRequestImportBundle = {
+                            importParseBundleLauncher.launch(
+                                arrayOf("application/zip", "application/octet-stream"),
+                            )
+                        },
+                        onClearRecordFiles = workspaceViewModel::clearRecordFiles,
+                        onClearDatabase = workspaceViewModel::clearDatabase,
+                        modifier = contentModifier,
+                    )
+                }
+                AppTab.QUERY -> {
+                    val state = queryViewModel.state.collectAsStateWithLifecycle()
+                    QueryScreen(
+                        state = state.value,
+                        onSelectQueryYear = queryViewModel::selectQueryYear,
+                        onSelectQueryPeriodYear = queryViewModel::selectQueryPeriodYear,
+                        onSelectQueryPeriodMonth = queryViewModel::selectQueryPeriodMonth,
+                        onRunYearQuery = queryViewModel::runYearQuery,
+                        onRunMonthQuery = queryViewModel::runMonthQuery,
+                        onSelectQueryViewMode = queryViewModel::selectQueryViewMode,
+                        modifier = contentModifier,
+                    )
+                }
+                AppTab.EDITOR -> {
+                    val state = editorViewModel.state.collectAsStateWithLifecycle()
+                    EditorScreen(
+                        state = state.value,
+                        onSelectExistingRecordYear = editorViewModel::selectExistingRecordYear,
+                        onSelectExistingRecordMonth = editorViewModel::selectExistingRecordMonth,
+                        onOpenSelectedExistingRecord = editorViewModel::openSelectedExistingRecord,
+                        onPreviewRecord = editorViewModel::previewRecordDraft,
+                        onSaveRecord = editorViewModel::saveRecordDraft,
+                        onRecordDraftChange = editorViewModel::updateRecordDraft,
+                        onResetRecordDraft = editorViewModel::resetRecordDraft,
+                        modifier = contentModifier,
+                    )
+                }
+                AppTab.SETTINGS -> {
+                    val state = settingsViewModel.state.collectAsStateWithLifecycle()
+                    SettingsScreen(
+                        state = state.value,
+                        onSelectConfig = settingsViewModel::selectBundledConfig,
+                        onConfigDraftChange = settingsViewModel::updateConfigDraft,
+                        onModifyConfig = settingsViewModel::saveSelectedConfig,
+                        onResetConfigDraft = settingsViewModel::resetSelectedConfigDraft,
+                        onSelectThemeMode = settingsViewModel::updateThemeModeDraft,
+                        onSelectThemeColor = settingsViewModel::updateThemeColorDraft,
+                        onApplyTheme = settingsViewModel::applyThemeDraft,
+                        onResetThemeDraft = settingsViewModel::resetThemeDraft,
+                        modifier = contentModifier,
+                    )
+                }
             }
         }
     }

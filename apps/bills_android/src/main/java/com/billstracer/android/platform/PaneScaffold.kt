@@ -21,10 +21,14 @@ import androidx.compose.ui.unit.dp
 @Composable
 internal fun PaneContent(
     modifier: Modifier = Modifier,
+    scrollEnabled: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
-        modifier = modifier.verticalScroll(rememberScrollState()),
+        modifier = modifier.verticalScroll(
+            state = rememberScrollState(),
+            enabled = scrollEnabled,
+        ),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         content = content,
     )

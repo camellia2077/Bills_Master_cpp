@@ -1,17 +1,15 @@
 package com.billstracer.android.data.services
 
-import com.billstracer.android.model.RecordDatabaseSyncResult
 import com.billstracer.android.model.RecordEditorDocument
 import com.billstracer.android.model.RecordPreviewResult
+import com.billstracer.android.model.RecordSaveResult
 
 interface EditorService {
-    suspend fun listDatabaseRecordPeriods(): List<String>
+    suspend fun listPersistedRecordPeriods(): List<String>
 
     suspend fun openPersistedRecordPeriod(period: String): RecordEditorDocument
 
-    suspend fun saveRecordDocument(period: String, rawText: String): RecordEditorDocument
-
-    suspend fun syncSavedRecordToDatabase(period: String): RecordDatabaseSyncResult
+    suspend fun commitRecordDocument(period: String, rawText: String): RecordSaveResult
 
     suspend fun previewRecordDocument(period: String, rawText: String): RecordPreviewResult
 }

@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.billstracer.android.BuildConfig
 import com.billstracer.android.app.navigation.AppSessionBus
+import com.billstracer.android.app.navigation.WorkspaceDataChangeBus
 import com.billstracer.android.data.services.WorkspaceService
 import com.billstracer.android.model.AppEnvironment
 import com.billstracer.android.model.ExportedParseBundleResult
@@ -25,7 +26,6 @@ data class WorkspaceUiState(
     val errorMessage: String? = null,
     val environment: AppEnvironment? = null,
     val bundledSampleImportResult: ImportResult? = null,
-    val dataImportResult: ImportResult? = null,
     val recordDirectoryImportResult: RecordDirectoryImportResult? = null,
     val lastExportResult: ExportedParseBundleResult? = null,
     val lastImportedBundleResult: ImportedParseBundleResult? = null,
@@ -34,6 +34,7 @@ data class WorkspaceUiState(
 class WorkspaceViewModel(
     private val workspaceService: WorkspaceService,
     private val sessionBus: AppSessionBus,
+    private val workspaceDataChangeBus: WorkspaceDataChangeBus,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(WorkspaceUiState())
     val state: StateFlow<WorkspaceUiState> = mutableState.asStateFlow()
@@ -76,54 +77,10 @@ class WorkspaceViewModel(
         }
     }
 
-    fun importRecordFilesToDatabase() {
+    fun importTxtDirectoryAndSyncDatabase(sourceDirectoryUri: Uri) {
         viewModelScope.launch {
-            mutableState.update { current ->
-                current.copy(
-                    isWorking = true,
-                    errorMessage = null,
-                    statusMessage = "Importing current TXT record files into SQLite...",
-                )
-            }
-            sessionBus.publishStatus("Importing current TXT record files into SQLite...")
-            runCatching { workspaceService.importRecordFilesToDatabase() }
-                .onSuccess { result ->
-                    val message = if (result.ok) {
-                        "Imported ${result.imported} TXT record file(s) into SQLite."
-                    } else {
-                        result.message
-                    }
-                    if (result.ok) {
-                        sessionBus.publishStatus(message)
-                    } else {
-                        sessionBus.publishError(result.message, message)
-                    }
-                    mutableState.update { current ->
-                        current.copy(
-                            isWorking = false,
-                            dataImportResult = result,
-                            errorMessage = if (result.ok) null else result.message,
-                            statusMessage = message,
-                        )
-                    }
-                }
-                .onFailure { error ->
-                    val message = error.message ?: "Record import failed."
-                    sessionBus.publishError(message, "Record import failed.")
-                    mutableState.update { current ->
-                        current.copy(
-                            isWorking = false,
-                            errorMessage = message,
-                            statusMessage = "Record import failed.",
-                        )
-                    }
-                }
-        }
-    }
-
-    fun importTxtDirectoryToRecords(sourceDirectoryUri: Uri) {
-        viewModelScope.launch {
-            val pendingMessage = "Importing TXT files from the selected directory into records/ only..."
+            val pendingMessage =
+                "Importing TXT files from the selected directory into records/ and SQLite..."
             mutableState.update { current ->
                 current.copy(
                     isWorking = true,
@@ -132,7 +89,7 @@ class WorkspaceViewModel(
                 )
             }
             sessionBus.publishStatus(pendingMessage)
-            runCatching { workspaceService.importTxtDirectoryToRecords(sourceDirectoryUri) }
+            runCatching { workspaceService.importTxtDirectoryAndSyncDatabase(sourceDirectoryUri) }
                 .onSuccess { result ->
                     val message = buildRecordDirectoryImportMessage(result)
                     val failureMessage = result.firstFailureMessage?.takeIf { result.failure > 0 }
@@ -149,15 +106,16 @@ class WorkspaceViewModel(
                             statusMessage = message,
                         )
                     }
+                    notifyWorkspaceDataChangedIf(result.imported > 0)
                 }
                 .onFailure { error ->
-                    val message = error.message ?: "TXT directory import failed."
-                    sessionBus.publishError(message, "TXT directory import failed.")
+                    val message = error.message ?: "TXT directory import and SQLite sync failed."
+                    sessionBus.publishError(message, "TXT directory import and SQLite sync failed.")
                     mutableState.update { current ->
                         current.copy(
                             isWorking = false,
                             errorMessage = message,
-                            statusMessage = "TXT directory import failed.",
+                            statusMessage = "TXT directory import and SQLite sync failed.",
                         )
                     }
                 }
@@ -198,6 +156,7 @@ class WorkspaceViewModel(
                             statusMessage = message,
                         )
                     }
+                    notifyWorkspaceDataChangedIf(result.imported > 0)
                 }
                 .onFailure { error ->
                     val message = error.message ?: "Import failed."
@@ -314,6 +273,7 @@ class WorkspaceViewModel(
                             statusMessage = message,
                         )
                     }
+                    notifyWorkspaceDataChangedIf(result.importedBills > 0)
                 }
                 .onFailure { error ->
                     val message = error.message ?: "Failed to import the parse bundle ZIP."
@@ -337,7 +297,6 @@ class WorkspaceViewModel(
                     errorMessage = null,
                     statusMessage = "Clearing the private SQLite database...",
                     bundledSampleImportResult = null,
-                    dataImportResult = null,
                 )
             }
             sessionBus.publishStatus("Clearing the private SQLite database...")
@@ -355,6 +314,7 @@ class WorkspaceViewModel(
                             statusMessage = message,
                         )
                     }
+                    notifyWorkspaceDataChangedIf(removed)
                 }
                 .onFailure { error ->
                     val message = error.message ?: "Failed to clear the database."
@@ -411,7 +371,11 @@ class WorkspaceViewModel(
 
     private fun buildRecordDirectoryImportMessage(result: RecordDirectoryImportResult): String {
         if (result.processed == 0) {
-            return "No TXT files were found in the selected directory."
+            return if (result.failure == 0) {
+                "No TXT files were found in the selected directory."
+            } else {
+                result.firstFailureMessage ?: "TXT directory import and SQLite sync failed."
+            }
         }
         val overwriteSuffix = if (result.overwritten > 0) {
             " Overwrote ${result.overwritten} existing file(s)."
@@ -420,11 +384,17 @@ class WorkspaceViewModel(
         }
         return when {
             result.failure == 0 ->
-                "Imported ${result.imported} TXT record file(s) into records/ only.$overwriteSuffix"
+                "Imported and synced ${result.imported} TXT record file(s).$overwriteSuffix"
             result.imported > 0 ->
-                "Imported ${result.imported} TXT record file(s) into records/ only with ${result.failure} failure(s).$overwriteSuffix"
+                "Imported and synced ${result.imported} TXT record file(s) with ${result.failure} failure(s).$overwriteSuffix"
             else ->
-                "No TXT record files were imported into records/. ${result.failure} file(s) failed."
+                "No TXT record files were imported and synced. ${result.failure} file(s) failed."
+        }
+    }
+
+    private fun notifyWorkspaceDataChangedIf(changed: Boolean) {
+        if (changed) {
+            workspaceDataChangeBus.notifyChanged()
         }
     }
 }
@@ -432,9 +402,10 @@ class WorkspaceViewModel(
 class WorkspaceViewModelFactory(
     private val workspaceService: WorkspaceService,
     private val sessionBus: AppSessionBus,
+    private val workspaceDataChangeBus: WorkspaceDataChangeBus,
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return WorkspaceViewModel(workspaceService, sessionBus) as T
+        return WorkspaceViewModel(workspaceService, sessionBus, workspaceDataChangeBus) as T
     }
 }

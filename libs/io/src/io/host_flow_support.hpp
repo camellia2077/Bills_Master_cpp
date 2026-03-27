@@ -55,6 +55,15 @@ struct HostRecordDirectoryImportResult {
   std::string first_failure_message;
 };
 
+struct HostRecordCommitResult {
+  bool ok = false;
+  std::string message;
+  std::string relative_path;
+  std::string period;
+  bool overwritten = false;
+  std::string error_message;
+};
+
 struct HostRecordDatabaseSyncResult {
   bool period_matches = true;
   std::string actual_period;
@@ -167,6 +176,18 @@ struct HostReportExportResult {
     const std::filesystem::path& config_dir,
     const std::filesystem::path& records_root)
     -> Result<HostRecordDirectoryImportResult>;
+
+[[nodiscard]] auto CommitRecordTextToWorkspaceAndDatabase(
+    std::string_view expected_period, std::string_view raw_text,
+    const std::filesystem::path& config_dir,
+    const std::filesystem::path& records_root,
+    const std::filesystem::path& db_path) -> HostRecordCommitResult;
+
+[[nodiscard]] auto ImportRecordDirectoryAndSyncDatabase(
+    const std::filesystem::path& input_path,
+    const std::filesystem::path& config_dir,
+    const std::filesystem::path& records_root,
+    const std::filesystem::path& db_path) -> HostRecordDirectoryImportResult;
 
 [[nodiscard]] auto ExtractSingleRecordPeriod(
     const std::filesystem::path& input_path) -> Result<std::string>;

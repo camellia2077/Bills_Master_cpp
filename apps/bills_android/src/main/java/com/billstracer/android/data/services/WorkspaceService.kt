@@ -10,9 +10,7 @@ import com.billstracer.android.model.RecordDirectoryImportResult
 interface WorkspaceService {
     suspend fun initializeEnvironment(): AppEnvironment
 
-    suspend fun importRecordFilesToDatabase(): ImportResult
-
-    suspend fun importTxtDirectoryToRecords(sourceDirectoryUri: Uri): RecordDirectoryImportResult
+    suspend fun importTxtDirectoryAndSyncDatabase(sourceDirectoryUri: Uri): RecordDirectoryImportResult
 
     suspend fun importBundledSample(): ImportResult
 

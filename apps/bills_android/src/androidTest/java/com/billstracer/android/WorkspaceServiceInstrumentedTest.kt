@@ -35,23 +35,7 @@ class WorkspaceServiceInstrumentedTest {
     }
 
     @Test
-    fun importCurrentRecordFilesToDatabaseSucceed() = runBlocking {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        File(context.noBackupFilesDir, "bills_android").deleteRecursively()
-        val services = createAndroidServiceBundle(context)
-
-        val environment = services.workspaceService.initializeEnvironment()
-        val imported = services.workspaceService.importRecordFilesToDatabase()
-        val periods = services.queryService.listAvailablePeriods()
-
-        assertTrue(File(environment.recordsRoot, "2025/2025-01.txt").isFile)
-        assertEquals(12, imported.processed)
-        assertEquals(12, imported.imported)
-        assertTrue(periods.contains("2025-01"))
-    }
-
-    @Test
-    fun importTxtDirectoryToRecordsUsesHeaderPeriodWithoutDatabaseIngest() = runBlocking {
+    fun importTxtDirectoryAndSyncDatabaseUsesHeaderPeriodAndUpdatesQueryAndEditor() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         File(context.noBackupFilesDir, "bills_android").deleteRecursively()
         val services = createAndroidServiceBundle(context)
@@ -63,8 +47,9 @@ class WorkspaceServiceInstrumentedTest {
             Charsets.UTF_8,
         )
 
-        val imported = services.workspaceService.importTxtDirectoryToRecords(Uri.fromFile(sourceDir))
+        val imported = services.workspaceService.importTxtDirectoryAndSyncDatabase(Uri.fromFile(sourceDir))
         val periods = services.queryService.listAvailablePeriods()
+        val editorPeriods = services.editorService.listPersistedRecordPeriods()
         val importedFile = File(environment.recordsRoot, "2026/2026-04.txt")
 
         assertEquals(1, imported.processed)
@@ -73,11 +58,12 @@ class WorkspaceServiceInstrumentedTest {
         assertEquals(0, imported.failure)
         assertTrue(importedFile.isFile)
         assertTrue(importedFile.readText(Charsets.UTF_8).startsWith("date:2026-04"))
-        assertFalse(periods.contains("2026-04"))
+        assertTrue(periods.contains("2026-04"))
+        assertTrue(editorPeriods.contains("2026-04"))
     }
 
     @Test
-    fun importTxtDirectoryToRecordsOverwritesExistingPeriodFile() = runBlocking {
+    fun importTxtDirectoryAndSyncDatabaseOverwritesExistingPeriodFile() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         File(context.noBackupFilesDir, "bills_android").deleteRecursively()
         val services = createAndroidServiceBundle(context)
@@ -96,18 +82,19 @@ class WorkspaceServiceInstrumentedTest {
             Charsets.UTF_8,
         )
 
-        services.workspaceService.importTxtDirectoryToRecords(Uri.fromFile(firstDir))
-        val overwritten = services.workspaceService.importTxtDirectoryToRecords(Uri.fromFile(secondDir))
+        services.workspaceService.importTxtDirectoryAndSyncDatabase(Uri.fromFile(firstDir))
+        val overwritten = services.workspaceService.importTxtDirectoryAndSyncDatabase(Uri.fromFile(secondDir))
         val importedFile = File(environment.recordsRoot, "2026/2026-05.txt")
 
         assertEquals(1, overwritten.imported)
         assertEquals(1, overwritten.overwritten)
         assertEquals(0, overwritten.failure)
         assertTrue(importedFile.readText(Charsets.UTF_8).contains("草莓"))
+        assertTrue(services.queryService.listAvailablePeriods().contains("2026-05"))
     }
 
     @Test
-    fun importTxtDirectoryToRecordsSkipsInvalidFilesAndKeepsValidOnes() = runBlocking {
+    fun importTxtDirectoryAndSyncDatabaseSkipsInvalidFilesAndKeepsValidOnes() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         File(context.noBackupFilesDir, "bills_android").deleteRecursively()
         val services = createAndroidServiceBundle(context)
@@ -120,7 +107,7 @@ class WorkspaceServiceInstrumentedTest {
         )
         File(sourceDir, "invalid.txt").writeText("oops", Charsets.UTF_8)
 
-        val imported = services.workspaceService.importTxtDirectoryToRecords(Uri.fromFile(sourceDir))
+        val imported = services.workspaceService.importTxtDirectoryAndSyncDatabase(Uri.fromFile(sourceDir))
 
         assertEquals(2, imported.processed)
         assertEquals(1, imported.imported)
@@ -129,10 +116,11 @@ class WorkspaceServiceInstrumentedTest {
         assertEquals(0, imported.duplicatePeriodConflicts)
         assertTrue(File(environment.recordsRoot, "2026/2026-06.txt").isFile)
         assertFalse(File(environment.recordsRoot, "2026/2026-07.txt").exists())
+        assertTrue(services.queryService.listAvailablePeriods().contains("2026-06"))
     }
 
     @Test
-    fun importTxtDirectoryToRecordsRejectsDuplicatePeriodsWithinSelection() = runBlocking {
+    fun importTxtDirectoryAndSyncDatabaseRejectsDuplicatePeriodsWithinSelection() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         File(context.noBackupFilesDir, "bills_android").deleteRecursively()
         val services = createAndroidServiceBundle(context)
@@ -146,7 +134,7 @@ class WorkspaceServiceInstrumentedTest {
             Charsets.UTF_8,
         )
 
-        val imported = services.workspaceService.importTxtDirectoryToRecords(Uri.fromFile(sourceDir))
+        val imported = services.workspaceService.importTxtDirectoryAndSyncDatabase(Uri.fromFile(sourceDir))
 
         assertEquals(2, imported.processed)
         assertEquals(0, imported.imported)
@@ -154,6 +142,7 @@ class WorkspaceServiceInstrumentedTest {
         assertEquals(0, imported.invalid)
         assertEquals(2, imported.duplicatePeriodConflicts)
         assertFalse(File(environment.recordsRoot, "2026/2026-08.txt").exists())
+        assertFalse(services.queryService.listAvailablePeriods().contains("2026-08"))
     }
 }
 

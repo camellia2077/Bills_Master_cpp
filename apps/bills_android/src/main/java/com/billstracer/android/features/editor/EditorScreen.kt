@@ -19,13 +19,18 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.billstracer.android.model.RecordPreviewResult
 import com.billstracer.android.platform.PaneContent
@@ -46,10 +51,10 @@ internal fun EditorScreen(
 ) {
     val activeRecord = state.activeRecordDocument
     val hasUnsavedChanges = activeRecord != null && state.recordDraftText != activeRecord.rawText
-    val existingYears = state.databaseRecordPeriods
+    val existingYears = state.persistedRecordPeriods
         .mapNotNull { period -> period.substringBefore('-').takeIf { it.length == 4 } }
         .distinct()
-    val existingMonths = state.databaseRecordPeriods
+    val existingMonths = state.persistedRecordPeriods
         .filter { period ->
             state.selectedExistingRecordYear.isNotBlank() &&
                 period.startsWith("${state.selectedExistingRecordYear}-") &&
@@ -57,11 +62,35 @@ internal fun EditorScreen(
         }
         .map { period -> period.substringAfter('-') }
         .distinct()
-    val hasAvailablePeriods = state.databaseRecordPeriods.isNotEmpty()
+    val hasAvailablePeriods = state.persistedRecordPeriods.isNotEmpty()
     var yearSelectorExpanded by rememberSaveable { mutableStateOf(false) }
     var monthSelectorExpanded by rememberSaveable { mutableStateOf(false) }
+    var isEditorFieldFocused by remember { mutableStateOf(false) }
+    var draftFieldValue by rememberSaveable(
+        activeRecord?.relativePath,
+        stateSaver = TextFieldValue.Saver,
+    ) {
+        mutableStateOf(TextFieldValue(state.recordDraftText))
+    }
 
-    PaneContent(modifier = modifier) {
+    LaunchedEffect(activeRecord?.relativePath, state.recordDraftText) {
+        if (draftFieldValue.text != state.recordDraftText) {
+            val selectionEnd = minOf(draftFieldValue.selection.end, state.recordDraftText.length)
+            val selectionStart = minOf(draftFieldValue.selection.start, selectionEnd)
+            draftFieldValue = TextFieldValue(
+                text = state.recordDraftText,
+                selection = TextRange(selectionStart, selectionEnd),
+            )
+        }
+    }
+    LaunchedEffect(activeRecord?.relativePath) {
+        isEditorFieldFocused = false
+    }
+
+    PaneContent(
+        modifier = modifier,
+        scrollEnabled = !isEditorFieldFocused,
+    ) {
         if (state.statusMessage.isNotBlank()) {
             Text(
                 text = state.statusMessage,
@@ -89,7 +118,7 @@ internal fun EditorScreen(
         }
         SectionGroupCard(title = "Open Existing Period") {
             Text(
-                text = "Editor months come from the SQLite bills table.",
+                text = "Editor periods come from imported SQLite months. Opening a period still reads the canonical TXT source under records/.",
                 style = MaterialTheme.typography.bodySmall,
                 fontFamily = FontFamily.Monospace,
             )
@@ -170,20 +199,20 @@ internal fun EditorScreen(
             }
             if (state.isInitializing) {
                 Text(
-                    text = "Loading imported months from database...",
+                    text = "Loading imported periods from SQLite...",
                     style = MaterialTheme.typography.bodySmall,
                     fontFamily = FontFamily.Monospace,
                 )
             } else if (!hasAvailablePeriods) {
                 Text(
-                    text = "No imported months found in SQLite yet. Editor can only open months that already exist in the database.",
+                    text = "No imported months found in SQLite yet. Import TXT files first.",
                     style = MaterialTheme.typography.bodySmall,
                     fontFamily = FontFamily.Monospace,
                     modifier = Modifier.testTag("editor_empty_state_message"),
                 )
             } else {
                 Text(
-                    text = "Select a saved year/month and open the persisted TXT file under records/YYYY/YYYY-MM.txt.",
+                    text = "Select an imported year/month and open its canonical TXT source at records/YYYY/YYYY-MM.txt.",
                     style = MaterialTheme.typography.bodySmall,
                     fontFamily = FontFamily.Monospace,
                 )
@@ -191,7 +220,7 @@ internal fun EditorScreen(
         }
         if (activeRecord == null) {
             Text(
-                text = "Choose a database-backed year/month above, then open its persisted TXT to start editing.",
+                text = "Choose an imported year/month above, then open its canonical TXT source to start editing.",
                 style = MaterialTheme.typography.bodyMedium,
                 fontFamily = FontFamily.Monospace,
             )
@@ -211,12 +240,20 @@ internal fun EditorScreen(
                 fontFamily = FontFamily.Monospace,
             )
             OutlinedTextField(
-                value = state.recordDraftText,
-                onValueChange = onRecordDraftChange,
+                value = draftFieldValue,
+                onValueChange = { nextValue ->
+                    draftFieldValue = nextValue
+                    if (nextValue.text != state.recordDraftText) {
+                        onRecordDraftChange(nextValue.text)
+                    }
+                },
                 enabled = !state.isWorking,
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 280.dp, max = 460.dp)
+                    .onFocusChanged { focusState ->
+                        isEditorFieldFocused = focusState.isFocused
+                    }
                     .testTag("editor_record_field"),
                 textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
                 label = { Text(text = activeRecord.relativePath, fontFamily = FontFamily.Monospace) },

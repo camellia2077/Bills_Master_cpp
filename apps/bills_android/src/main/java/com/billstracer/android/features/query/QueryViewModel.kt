@@ -4,8 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.billstracer.android.app.navigation.AppSessionBus
+import com.billstracer.android.app.navigation.WorkspaceDataChangeBus
 import com.billstracer.android.data.services.QueryService
 import com.billstracer.android.data.services.WorkspaceService
+import com.billstracer.android.features.common.monthsForYear
+import com.billstracer.android.features.common.resolveYearMonthSelection
+import com.billstracer.android.features.common.resolveYearSelection
 import com.billstracer.android.model.QueryResult
 import com.billstracer.android.model.QueryType
 import com.billstracer.android.platform.yearInputOrNull
@@ -39,11 +43,14 @@ class QueryViewModel(
     private val workspaceService: WorkspaceService,
     private val queryService: QueryService,
     private val sessionBus: AppSessionBus,
+    private val workspaceDataChangeBus: WorkspaceDataChangeBus,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(QueryUiState())
     val state: StateFlow<QueryUiState> = mutableState.asStateFlow()
+    private var observedWorkspaceDataVersion = workspaceDataChangeBus.version.value
 
     init {
+        observeWorkspaceDataChanges()
         refreshAvailablePeriods(initialLoad = true)
     }
 
@@ -67,12 +74,12 @@ class QueryViewModel(
                 queryService.listAvailablePeriods()
             }.onSuccess { periods ->
                 val currentState = state.value
-                val selectedYear = resolveSelectedYear(
+                val selectedYear = resolveYearSelection(
                     currentYear = currentState.queryYearInput,
                     periods = periods,
                     preferredYear = currentState.queryResult?.year?.toString(),
                 )
-                val selectedMonth = resolveSelectedYearMonth(
+                val selectedMonth = resolveYearMonthSelection(
                     currentYear = currentState.queryPeriodYearInput,
                     currentMonth = currentState.queryPeriodMonthInput,
                     periods = periods,
@@ -272,81 +279,28 @@ class QueryViewModel(
                 }
         }
     }
+
+    private fun observeWorkspaceDataChanges() {
+        viewModelScope.launch {
+            workspaceDataChangeBus.version.collect { version ->
+                if (version == observedWorkspaceDataVersion) {
+                    return@collect
+                }
+                observedWorkspaceDataVersion = version
+                refreshAvailablePeriods(initialLoad = false)
+            }
+        }
+    }
 }
 
 class QueryViewModelFactory(
     private val workspaceService: WorkspaceService,
     private val queryService: QueryService,
     private val sessionBus: AppSessionBus,
+    private val workspaceDataChangeBus: WorkspaceDataChangeBus,
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return QueryViewModel(workspaceService, queryService, sessionBus) as T
+        return QueryViewModel(workspaceService, queryService, sessionBus, workspaceDataChangeBus) as T
     }
 }
-
-private data class SelectedYearMonth(
-    val year: String = "",
-    val month: String = "",
-)
-
-private fun resolveSelectedYear(
-    currentYear: String,
-    periods: List<String>,
-    preferredYear: String? = null,
-): String {
-    val years = yearsFromPeriods(periods)
-    if (years.isEmpty()) {
-        return ""
-    }
-    return when {
-        !preferredYear.isNullOrBlank() && years.contains(preferredYear) -> preferredYear
-        currentYear.isNotBlank() && years.contains(currentYear) -> currentYear
-        else -> years.first()
-    }
-}
-
-private fun resolveSelectedYearMonth(
-    currentYear: String,
-    currentMonth: String,
-    periods: List<String>,
-    preferredPeriod: String? = null,
-): SelectedYearMonth {
-    val years = yearsFromPeriods(periods)
-    if (years.isEmpty()) {
-        return SelectedYearMonth()
-    }
-
-    val preferredYear = preferredPeriod?.substringBefore('-', "")
-    val preferredMonth = preferredPeriod?.substringAfter('-', "")
-    val selectedYear = when {
-        !preferredYear.isNullOrBlank() && years.contains(preferredYear) -> preferredYear
-        currentYear.isNotBlank() && years.contains(currentYear) -> currentYear
-        else -> years.first()
-    }
-    val months = monthsForYear(periods, selectedYear)
-    val selectedMonth = when {
-        !preferredMonth.isNullOrBlank() &&
-            preferredYear == selectedYear &&
-            months.contains(preferredMonth) -> preferredMonth
-        currentMonth.isNotBlank() && months.contains(currentMonth) -> currentMonth
-        else -> months.firstOrNull().orEmpty()
-    }
-
-    return SelectedYearMonth(
-        year = selectedYear,
-        month = selectedMonth,
-    )
-}
-
-private fun yearsFromPeriods(periods: List<String>): List<String> =
-    periods.mapNotNull { period -> period.substringBefore('-').takeIf { it.length == 4 } }
-        .distinct()
-
-private fun monthsForYear(
-    periods: List<String>,
-    year: String,
-): List<String> = periods
-    .filter { period -> period.startsWith("$year-") && period.length == 7 }
-    .map { period -> period.substringAfter('-') }
-    .distinct()

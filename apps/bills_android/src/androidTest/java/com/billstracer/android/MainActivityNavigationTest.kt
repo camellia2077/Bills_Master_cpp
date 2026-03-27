@@ -20,6 +20,6 @@ class MainActivityNavigationTest {
         composeRule.onNodeWithTag("tab_editor").assertIsDisplayed()
         composeRule.onNodeWithTag("tab_query").assertIsDisplayed()
         composeRule.onNodeWithTag("tab_settings").assertIsDisplayed()
-        composeRule.onNodeWithTag("workspace_clear_txt_button").assertIsDisplayed()
+        composeRule.onNodeWithTag("workspace_import_txt_directory_button").assertIsDisplayed()
     }
 }

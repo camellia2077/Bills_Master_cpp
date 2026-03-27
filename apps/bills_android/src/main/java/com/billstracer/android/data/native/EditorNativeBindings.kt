@@ -19,10 +19,11 @@ internal object EditorNativeBindings {
         configDir: String,
     ): String
 
-    external fun syncSavedRecordToDatabaseNative(
-        inputPath: String,
-        configDir: String,
-        dbPath: String,
+    external fun commitRecordDocumentNative(
         expectedPeriod: String,
+        rawText: String,
+        configDir: String,
+        recordsRoot: String,
+        dbPath: String,
     ): String
 }
