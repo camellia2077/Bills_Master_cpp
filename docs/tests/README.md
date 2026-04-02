@@ -9,7 +9,7 @@
   - 包括 artifact、logic、toolchain、reporting 等测试套件
 - `tests/framework/`
   - 测试运行支撑与共享 helper
-- `tests/baseline/`
+- `tests/golden/`
   - 快照、golden、对比基线
 - `tests/generators/`
   - 测试输入生成器

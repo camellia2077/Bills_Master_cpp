@@ -4,11 +4,19 @@ import hashlib
 import json
 from pathlib import Path
 
+from markdown_it import MarkdownIt
+from markdown_it.token import Token
+
 COMPARE_SCOPE_ALL = "all"
 COMPARE_SCOPE_STANDARD_REPORT = "standard-report"
-TEXT_COMPARE_MODE = "text"
-JSON_RENDER_COMPARE_MODE = "json-render"
-STANDARD_REPORT_JSON_COMPARE_MODE = "standard-report-json"
+
+# Keep compare modes explicit because different formats intentionally use
+# different semantics:
+# - Markdown / JSON: compare parsed content to ignore formatting-only drift.
+# - TeX / Typst / reStructuredText: compare raw bytes to catch exact output drift.
+MARKDOWN_CONTENT_COMPARE_MODE = "markdown-content"
+JSON_CONTENT_COMPARE_MODE = "json-content"
+BYTE_COMPARE_MODE = "bytes"
 
 VALID_COMPARE_SCOPES = [
     COMPARE_SCOPE_ALL,
@@ -20,150 +28,152 @@ VALID_COMPARE_SCOPES = [
     COMPARE_SCOPE_STANDARD_REPORT,
 ]
 
+MARKDOWN_PARSER = MarkdownIt("commonmark").enable("table")
+
 SNAPSHOT_MATRIX: dict[str, dict[str, str]] = {
     "monthly_md_2025_01": {
         "source": "Markdown_bills/months/2025/2025-01.md",
         "baseline": "monthly/2025-01.md",
         "scope": "md",
-        "compare_mode": TEXT_COMPARE_MODE,
+        "compare_mode": MARKDOWN_CONTENT_COMPARE_MODE,
     },
     "monthly_json_2025_01": {
         "source": "standard_json/months/2025/2025-01.json",
         "baseline": "monthly/2025-01.json",
         "scope": "json",
-        "compare_mode": JSON_RENDER_COMPARE_MODE,
+        "compare_mode": JSON_CONTENT_COMPARE_MODE,
     },
     "monthly_tex_2025_01": {
         "source": "LaTeX_bills/months/2025/2025-01.tex",
         "baseline": "monthly/2025-01.tex",
         "scope": "tex",
-        "compare_mode": TEXT_COMPARE_MODE,
+        "compare_mode": BYTE_COMPARE_MODE,
     },
     "monthly_rst_2025_01": {
         "source": "reST_bills/months/2025/2025-01.rst",
         "baseline": "monthly/2025-01.rst",
         "scope": "rst",
-        "compare_mode": TEXT_COMPARE_MODE,
+        "compare_mode": BYTE_COMPARE_MODE,
     },
     "monthly_typ_2025_01": {
         "source": "Typst_bills/months/2025/2025-01.typ",
         "baseline": "monthly/2025-01.typ",
         "scope": "typ",
-        "compare_mode": TEXT_COMPARE_MODE,
+        "compare_mode": BYTE_COMPARE_MODE,
     },
     "monthly_standard_report_2025_01": {
         "source": "standard_json/months/2025/2025-01.json",
         "baseline": "standard_report/monthly/2025-01.json",
         "scope": COMPARE_SCOPE_STANDARD_REPORT,
-        "compare_mode": STANDARD_REPORT_JSON_COMPARE_MODE,
+        "compare_mode": JSON_CONTENT_COMPARE_MODE,
     },
     "yearly_md_2025": {
         "source": "Markdown_bills/years/2025.md",
         "baseline": "yearly/2025.md",
         "scope": "md",
-        "compare_mode": TEXT_COMPARE_MODE,
+        "compare_mode": MARKDOWN_CONTENT_COMPARE_MODE,
     },
     "yearly_json_2025": {
         "source": "standard_json/years/2025.json",
         "baseline": "yearly/2025.json",
         "scope": "json",
-        "compare_mode": JSON_RENDER_COMPARE_MODE,
+        "compare_mode": JSON_CONTENT_COMPARE_MODE,
     },
     "yearly_tex_2025": {
         "source": "LaTeX_bills/years/2025.tex",
         "baseline": "yearly/2025.tex",
         "scope": "tex",
-        "compare_mode": TEXT_COMPARE_MODE,
+        "compare_mode": BYTE_COMPARE_MODE,
     },
     "yearly_rst_2025": {
         "source": "reST_bills/years/2025.rst",
         "baseline": "yearly/2025.rst",
         "scope": "rst",
-        "compare_mode": TEXT_COMPARE_MODE,
+        "compare_mode": BYTE_COMPARE_MODE,
     },
     "yearly_typ_2025": {
         "source": "Typst_bills/years/2025.typ",
         "baseline": "yearly/2025.typ",
         "scope": "typ",
-        "compare_mode": TEXT_COMPARE_MODE,
+        "compare_mode": BYTE_COMPARE_MODE,
     },
     "yearly_standard_report_2025": {
         "source": "standard_json/years/2025.json",
         "baseline": "standard_report/yearly/2025.json",
         "scope": COMPARE_SCOPE_STANDARD_REPORT,
-        "compare_mode": STANDARD_REPORT_JSON_COMPARE_MODE,
+        "compare_mode": JSON_CONTENT_COMPARE_MODE,
     },
     "range_md_2025_03": {
         "source": "Markdown_bills/months/2025/2025-03.md",
         "baseline": "range/2025-03.md",
         "scope": "md",
-        "compare_mode": TEXT_COMPARE_MODE,
+        "compare_mode": MARKDOWN_CONTENT_COMPARE_MODE,
     },
     "range_md_2025_04": {
         "source": "Markdown_bills/months/2025/2025-04.md",
         "baseline": "range/2025-04.md",
         "scope": "md",
-        "compare_mode": TEXT_COMPARE_MODE,
+        "compare_mode": MARKDOWN_CONTENT_COMPARE_MODE,
     },
     "range_json_2025_03": {
         "source": "standard_json/months/2025/2025-03.json",
         "baseline": "range/2025-03.json",
         "scope": "json",
-        "compare_mode": JSON_RENDER_COMPARE_MODE,
+        "compare_mode": JSON_CONTENT_COMPARE_MODE,
     },
     "range_json_2025_04": {
         "source": "standard_json/months/2025/2025-04.json",
         "baseline": "range/2025-04.json",
         "scope": "json",
-        "compare_mode": JSON_RENDER_COMPARE_MODE,
+        "compare_mode": JSON_CONTENT_COMPARE_MODE,
     },
     "range_tex_2025_03": {
         "source": "LaTeX_bills/months/2025/2025-03.tex",
         "baseline": "range/2025-03.tex",
         "scope": "tex",
-        "compare_mode": TEXT_COMPARE_MODE,
+        "compare_mode": BYTE_COMPARE_MODE,
     },
     "range_tex_2025_04": {
         "source": "LaTeX_bills/months/2025/2025-04.tex",
         "baseline": "range/2025-04.tex",
         "scope": "tex",
-        "compare_mode": TEXT_COMPARE_MODE,
+        "compare_mode": BYTE_COMPARE_MODE,
     },
     "range_rst_2025_03": {
         "source": "reST_bills/months/2025/2025-03.rst",
         "baseline": "range/2025-03.rst",
         "scope": "rst",
-        "compare_mode": TEXT_COMPARE_MODE,
+        "compare_mode": BYTE_COMPARE_MODE,
     },
     "range_rst_2025_04": {
         "source": "reST_bills/months/2025/2025-04.rst",
         "baseline": "range/2025-04.rst",
         "scope": "rst",
-        "compare_mode": TEXT_COMPARE_MODE,
+        "compare_mode": BYTE_COMPARE_MODE,
     },
     "range_typ_2025_03": {
         "source": "Typst_bills/months/2025/2025-03.typ",
         "baseline": "range/2025-03.typ",
         "scope": "typ",
-        "compare_mode": TEXT_COMPARE_MODE,
+        "compare_mode": BYTE_COMPARE_MODE,
     },
     "range_typ_2025_04": {
         "source": "Typst_bills/months/2025/2025-04.typ",
         "baseline": "range/2025-04.typ",
         "scope": "typ",
-        "compare_mode": TEXT_COMPARE_MODE,
+        "compare_mode": BYTE_COMPARE_MODE,
     },
     "range_standard_report_2025_03": {
         "source": "standard_json/months/2025/2025-03.json",
         "baseline": "standard_report/range/2025-03.json",
         "scope": COMPARE_SCOPE_STANDARD_REPORT,
-        "compare_mode": STANDARD_REPORT_JSON_COMPARE_MODE,
+        "compare_mode": JSON_CONTENT_COMPARE_MODE,
     },
     "range_standard_report_2025_04": {
         "source": "standard_json/months/2025/2025-04.json",
         "baseline": "standard_report/range/2025-04.json",
         "scope": COMPARE_SCOPE_STANDARD_REPORT,
-        "compare_mode": STANDARD_REPORT_JSON_COMPARE_MODE,
+        "compare_mode": JSON_CONTENT_COMPARE_MODE,
     },
 }
 
@@ -186,33 +196,46 @@ def _remove_generated_at_utc(payload: object) -> object:
     return payload
 
 
-def normalize_render_json(content: str) -> str:
-    payload = _remove_generated_at_utc(json.loads(content))
-    return normalize_text_content(json.dumps(payload, ensure_ascii=False, indent=2))
+def _normalize_markdown_token(token: Token) -> dict[str, object]:
+    normalized: dict[str, object] = {
+        "type": token.type,
+        "tag": token.tag,
+        "nesting": token.nesting,
+    }
+    if token.content:
+        normalized["content"] = normalize_text_content(token.content)
+    if token.info:
+        normalized["info"] = token.info.strip()
+    if token.attrs:
+        normalized["attrs"] = dict(sorted(dict(token.attrs).items()))
+    if token.children:
+        normalized["children"] = [_normalize_markdown_token(child) for child in token.children]
+    return normalized
 
 
-def normalize_standard_report_json(content: str) -> str:
-    payload = _remove_generated_at_utc(json.loads(content))
-    return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+def normalize_markdown_content(content: str) -> list[dict[str, object]]:
+    return [
+        _normalize_markdown_token(token)
+        for token in MARKDOWN_PARSER.parse(normalize_text_content(content))
+    ]
 
 
-def normalize_content(content: str, compare_mode: str) -> str:
-    if compare_mode == TEXT_COMPARE_MODE:
-        return normalize_text_content(content)
-    if compare_mode == JSON_RENDER_COMPARE_MODE:
-        return normalize_render_json(content)
-    if compare_mode == STANDARD_REPORT_JSON_COMPARE_MODE:
-        return normalize_standard_report_json(content)
+def normalize_json_content(content: str) -> object:
+    return _remove_generated_at_utc(json.loads(content))
+
+
+def normalize_content(content: str, compare_mode: str) -> object:
+    if compare_mode == MARKDOWN_CONTENT_COMPARE_MODE:
+        return normalize_markdown_content(content)
+    if compare_mode == JSON_CONTENT_COMPARE_MODE:
+        return normalize_json_content(content)
     raise ValueError(f"Unsupported compare mode: {compare_mode}")
 
 
-def freeze_baseline_content(source_content: str, compare_mode: str) -> str:
-    if compare_mode == STANDARD_REPORT_JSON_COMPARE_MODE:
-        payload = _remove_generated_at_utc(json.loads(source_content))
-        return (
-            json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
-        )
-    return source_content
+def freeze_baseline_bytes(source_path: Path, compare_mode: str) -> bytes:
+    if compare_mode == BYTE_COMPARE_MODE:
+        return source_path.read_bytes()
+    return source_path.read_text(encoding="utf-8").encode("utf-8")
 
 
 def compare_mode_for_manifest_item(item: dict) -> str:
@@ -220,9 +243,11 @@ def compare_mode_for_manifest_item(item: dict) -> str:
     if mode:
         return mode
     suffix = Path(str(item.get("source", ""))).suffix.lower()
+    if suffix == ".md":
+        return MARKDOWN_CONTENT_COMPARE_MODE
     if suffix == ".json":
-        return JSON_RENDER_COMPARE_MODE
-    return TEXT_COMPARE_MODE
+        return JSON_CONTENT_COMPARE_MODE
+    return BYTE_COMPARE_MODE
 
 
 def scope_for_manifest_item(item: dict) -> str:
@@ -270,8 +295,10 @@ def should_collect_extra_source(source_rel: str, compare_scope: str) -> bool:
 
 def compare_mode_for_extra_source(source_rel: str) -> str:
     normalized = source_rel.replace("\\", "/")
+    if normalized.endswith(".md") and normalized.startswith("Markdown_bills/"):
+        return MARKDOWN_CONTENT_COMPARE_MODE
     if normalized.endswith(".json") and (
         normalized.startswith("JSON_bills/") or normalized.startswith("standard_json/")
     ):
-        return JSON_RENDER_COMPARE_MODE
-    return TEXT_COMPARE_MODE
+        return JSON_CONTENT_COMPARE_MODE
+    return BYTE_COMPARE_MODE

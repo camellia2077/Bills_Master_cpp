@@ -15,6 +15,7 @@ from tools.toolchain.services.build_layout import (
     resolve_artifact_project_root,
 )
 from tools.verify.report_snapshot_support import (
+    BYTE_COMPARE_MODE,
     VALID_COMPARE_SCOPES,
     compare_mode_for_manifest_item,
     compare_mode_for_extra_source,
@@ -25,6 +26,9 @@ from tools.verify.report_snapshot_support import (
 
 
 def compare_file(current_path: Path, baseline_path: Path, *, compare_mode: str) -> bool:
+    if compare_mode == BYTE_COMPARE_MODE:
+        return current_path.read_bytes() == baseline_path.read_bytes()
+
     current_text = normalize_content(
         current_path.read_text(encoding="utf-8"),
         compare_mode,
@@ -205,8 +209,8 @@ def main() -> int:
     args = parser.parse_args()
 
     repo_root = REPO_ROOT
-    baseline_root = repo_root / "tests" / "baseline" / "report_snapshots"
-    manifest_path = baseline_root / "manifest.json"
+    golden_root = repo_root / "tests" / "golden" / "report_snapshots"
+    manifest_path = golden_root / "manifest.json"
 
     if not manifest_path.exists():
         print(f"[ERROR] Snapshot manifest missing: {manifest_path}")
@@ -235,7 +239,7 @@ def main() -> int:
     return compare_against_baseline(
         manifest=manifest,
         current_root=current_root,
-        baseline_root=baseline_root,
+        baseline_root=golden_root,
         compare_scope=args.compare_scope,
     )
 

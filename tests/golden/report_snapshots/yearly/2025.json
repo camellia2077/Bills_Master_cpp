@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": "1.0.0",
     "report_type": "yearly",
-    "generated_at_utc": "2026-03-27T10:18:48Z",
+    "generated_at_utc": "2026-04-02T10:31:49Z",
     "source": "bills_core"
   },
   "scope": {
@@ -12,9 +12,9 @@
     "data_found": true
   },
   "summary": {
-    "total_income": 158555.7,
-    "total_expense": -16223.56,
-    "balance": 142332.14
+    "total_income": 158544.69,
+    "total_expense": -16234.57,
+    "balance": 142310.12
   },
   "items": {
     "categories": [],
@@ -27,8 +27,8 @@
       },
       {
         "month": 2,
-        "income": 11202.98,
-        "expense": -1231.17,
+        "income": 11201.1,
+        "expense": -1233.05,
         "balance": 12434.15
       },
       {
@@ -39,8 +39,8 @@
       },
       {
         "month": 4,
-        "income": 13260.45,
-        "expense": -1414.61,
+        "income": 13256.03,
+        "expense": -1419.03,
         "balance": 14675.060000000001
       },
       {
@@ -51,9 +51,9 @@
       },
       {
         "month": 6,
-        "income": 14383.26,
-        "expense": -1263.68,
-        "balance": 15646.94
+        "income": 14379.31,
+        "expense": -1267.63,
+        "balance": 15646.939999999999
       },
       {
         "month": 7,
@@ -81,8 +81,8 @@
       },
       {
         "month": 11,
-        "income": 13467.45,
-        "expense": -1341.47,
+        "income": 13466.69,
+        "expense": -1342.23,
         "balance": 14808.92
       },
       {

@@ -1,6 +1,6 @@
-# Report Snapshot Baseline
+# Report Snapshot Golden
 
-This directory stores frozen baseline files for report regression checks.
+This directory stores frozen golden files for report regression checks.
 
 Covered scenarios:
 - Monthly report: `2025-01`
@@ -22,7 +22,9 @@ Scripts:
   - `python tools/verify/check_report_snapshots.py`
 
 Notes:
-- Render JSON snapshot comparison ignores `meta.generated_at_utc` but keeps renderer field order.
-- StandardReport golden comparison ignores `meta.generated_at_utc` and compares canonicalized JSON.
+- Markdown snapshots are compared by parsed content using `markdown-it-py`, not by raw bytes.
+- JSON snapshots are compared by parsed JSON content using Python's built-in `json` library, not by raw bytes.
+- `tex` / `typ` / `rst` snapshots are compared byte-for-byte on purpose.
+- These rules are intentional. Do not "simplify" them back to one compare mode without updating both tooling and this note.
 - Unified verify entry can run the full fixture export + golden checks:
   - `python tools/run.py verify bills-tracer`

@@ -2,29 +2,29 @@
   "meta": {
     "schema_version": "1.0.0",
     "report_type": "monthly",
-    "generated_at_utc": "2026-03-27T10:18:48Z",
+    "generated_at_utc": "2026-04-02T10:31:49Z",
     "source": "bills_core"
   },
   "scope": {
-    "period_start": "2025-04",
-    "period_end": "2025-04",
-    "remark": "有几笔零碎消费\n继续控制饮料和零食支出",
+    "period_start": "2025-01",
+    "period_end": "2025-01",
+    "remark": "新年开销开始记录\n继续关注家庭日常和健身补剂",
     "data_found": true
   },
   "summary": {
-    "total_income": 13260.45,
-    "total_expense": -1414.61,
-    "balance": 11845.84
+    "total_income": 9586.81,
+    "total_expense": -1151.39,
+    "balance": 8435.42
   },
   "items": {
     "categories": [
       {
         "name": "daily",
-        "total": -46.480000000000004,
+        "total": -47.83,
         "sub_categories": [
           {
             "name": "daily_consumables",
-            "subtotal": -8.17,
+            "subtotal": -12.45,
             "transactions": [
               {
                 "parent_category": "daily",
@@ -33,13 +33,13 @@
                 "description": "牙膏",
                 "source": "",
                 "comment": "",
-                "amount": -8.17
+                "amount": -12.45
               }
             ]
           },
           {
             "name": "daily_fees",
-            "subtotal": -38.31,
+            "subtotal": -35.38,
             "transactions": [
               {
                 "parent_category": "daily",
@@ -48,7 +48,7 @@
                 "description": "哈喽",
                 "source": "",
                 "comment": "",
-                "amount": -38.31
+                "amount": -35.38
               }
             ]
           }
@@ -56,30 +56,12 @@
       },
       {
         "name": "fitness",
-        "total": -258.90999999999997,
+        "total": -192.92,
         "sub_categories": [
           {
             "name": "fitness_diet",
-            "subtotal": -258.90999999999997,
+            "subtotal": -192.92,
             "transactions": [
-              {
-                "parent_category": "fitness",
-                "sub_category": "fitness_diet",
-                "transaction_type": "",
-                "description": "牛奶",
-                "source": "",
-                "comment": "",
-                "amount": -37.97
-              },
-              {
-                "parent_category": "fitness",
-                "sub_category": "fitness_diet",
-                "transaction_type": "",
-                "description": "复合维生素",
-                "source": "",
-                "comment": "",
-                "amount": -38.56
-              },
               {
                 "parent_category": "fitness",
                 "sub_category": "fitness_diet",
@@ -87,7 +69,7 @@
                 "description": "蛋白粉",
                 "source": "",
                 "comment": "",
-                "amount": -182.38
+                "amount": -192.92
               }
             ]
           }
@@ -95,11 +77,11 @@
       },
       {
         "name": "income",
-        "total": 13256.03,
+        "total": 9586.81,
         "sub_categories": [
           {
             "name": "income_salary",
-            "subtotal": 13256.03,
+            "subtotal": 9586.81,
             "transactions": [
               {
                 "parent_category": "income",
@@ -108,7 +90,7 @@
                 "description": "工资",
                 "source": "",
                 "comment": "",
-                "amount": 13256.03
+                "amount": 9586.81
               }
             ]
           }
@@ -116,11 +98,11 @@
       },
       {
         "name": "meal",
-        "total": -856.19,
+        "total": -693.59,
         "sub_categories": [
           {
             "name": "meal_drinks",
-            "subtotal": -170.66,
+            "subtotal": -75.92,
             "transactions": [
               {
                 "parent_category": "meal",
@@ -129,22 +111,13 @@
                 "description": "蜜雪冰城",
                 "source": "",
                 "comment": "",
-                "amount": -65.32
-              },
-              {
-                "parent_category": "meal",
-                "sub_category": "meal_drinks",
-                "transaction_type": "",
-                "description": "无糖饮料",
-                "source": "",
-                "comment": "",
-                "amount": -105.34
+                "amount": -75.92
               }
             ]
           },
           {
             "name": "meal_fruits",
-            "subtotal": -40.45,
+            "subtotal": -67.85,
             "transactions": [
               {
                 "parent_category": "meal",
@@ -153,28 +126,37 @@
                 "description": "西瓜",
                 "source": "",
                 "comment": "",
-                "amount": -40.45
+                "amount": -28.99
+              },
+              {
+                "parent_category": "meal",
+                "sub_category": "meal_fruits",
+                "transaction_type": "",
+                "description": "菠萝",
+                "source": "",
+                "comment": "",
+                "amount": -38.86
               }
             ]
           },
           {
             "name": "meal_high",
-            "subtotal": -77.01,
+            "subtotal": -111.83,
             "transactions": [
               {
                 "parent_category": "meal",
                 "sub_category": "meal_high",
                 "transaction_type": "",
-                "description": "火锅自助",
+                "description": "德克士",
                 "source": "",
                 "comment": "",
-                "amount": -77.01
+                "amount": -111.83
               }
             ]
           },
           {
             "name": "meal_low",
-            "subtotal": -488.43,
+            "subtotal": -361.11,
             "transactions": [
               {
                 "parent_category": "meal",
@@ -183,23 +165,14 @@
                 "description": "饭",
                 "source": "",
                 "comment": "",
-                "amount": -488.43
+                "amount": -361.11
               }
             ]
           },
           {
             "name": "meal_snacks",
-            "subtotal": -79.64,
+            "subtotal": -76.88,
             "transactions": [
-              {
-                "parent_category": "meal",
-                "sub_category": "meal_snacks",
-                "transaction_type": "",
-                "description": "蛋挞",
-                "source": "",
-                "comment": "",
-                "amount": -36.02
-              },
               {
                 "parent_category": "meal",
                 "sub_category": "meal_snacks",
@@ -207,7 +180,7 @@
                 "description": "冰激凌",
                 "source": "",
                 "comment": "",
-                "amount": -43.62
+                "amount": -76.88
               }
             ]
           }
@@ -215,11 +188,11 @@
       },
       {
         "name": "pet",
-        "total": -8.74,
+        "total": -73.61,
         "sub_categories": [
           {
             "name": "pet_tortoises",
-            "subtotal": -8.74,
+            "subtotal": -73.61,
             "transactions": [
               {
                 "parent_category": "pet",
@@ -228,7 +201,7 @@
                 "description": "红耳龟",
                 "source": "",
                 "comment": "",
-                "amount": 3.91
+                "amount": -13.63
               },
               {
                 "parent_category": "pet",
@@ -237,7 +210,16 @@
                 "description": "南石",
                 "source": "",
                 "comment": "",
-                "amount": -12.65
+                "amount": -18.22
+              },
+              {
+                "parent_category": "pet",
+                "sub_category": "pet_tortoises",
+                "transaction_type": "",
+                "description": "小青",
+                "source": "",
+                "comment": "",
+                "amount": -41.76
               }
             ]
           }
@@ -245,11 +227,11 @@
       },
       {
         "name": "purchase",
-        "total": -69.29,
+        "total": -59.78,
         "sub_categories": [
           {
             "name": "purchase_clothes",
-            "subtotal": -34.7,
+            "subtotal": -45.48,
             "transactions": [
               {
                 "parent_category": "purchase",
@@ -258,13 +240,13 @@
                 "description": "衣服",
                 "source": "",
                 "comment": "",
-                "amount": -34.7
+                "amount": -45.48
               }
             ]
           },
           {
             "name": "purchase_toys",
-            "subtotal": -34.59,
+            "subtotal": -14.3,
             "transactions": [
               {
                 "parent_category": "purchase",
@@ -273,16 +255,7 @@
                 "description": "勋章",
                 "source": "",
                 "comment": "",
-                "amount": 0.51
-              },
-              {
-                "parent_category": "purchase",
-                "sub_category": "purchase_toys",
-                "transaction_type": "",
-                "description": "手办",
-                "source": "",
-                "comment": "",
-                "amount": -35.1
+                "amount": -14.3
               }
             ]
           }
@@ -290,11 +263,11 @@
       },
       {
         "name": "web",
-        "total": -170.57999999999998,
+        "total": -83.66,
         "sub_categories": [
           {
             "name": "web_games",
-            "subtotal": -103.17,
+            "subtotal": -33.78,
             "transactions": [
               {
                 "parent_category": "web",
@@ -303,32 +276,14 @@
                 "description": "原神月卡",
                 "source": "",
                 "comment": "",
-                "amount": -42.63
-              },
-              {
-                "parent_category": "web",
-                "sub_category": "web_games",
-                "transaction_type": "",
-                "description": "皇室战争通行证",
-                "source": "",
-                "comment": "",
-                "amount": -60.54
+                "amount": -33.78
               }
             ]
           },
           {
             "name": "web_services",
-            "subtotal": -67.41,
+            "subtotal": -49.88,
             "transactions": [
-              {
-                "parent_category": "web",
-                "sub_category": "web_services",
-                "transaction_type": "",
-                "description": "迅雷",
-                "source": "",
-                "comment": "",
-                "amount": -31.6
-              },
               {
                 "parent_category": "web",
                 "sub_category": "web_services",
@@ -336,7 +291,7 @@
                 "description": "迷雾",
                 "source": "",
                 "comment": "",
-                "amount": -35.81
+                "amount": -49.88
               }
             ]
           }

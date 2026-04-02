@@ -1,0 +1,97 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "report_type": "yearly",
+    "generated_at_utc": "2026-04-02T10:31:49Z",
+    "source": "bills_core"
+  },
+  "scope": {
+    "period_start": "2025-01",
+    "period_end": "2025-12",
+    "remark": "",
+    "data_found": true
+  },
+  "summary": {
+    "total_income": 158544.69,
+    "total_expense": -16234.57,
+    "balance": 142310.12
+  },
+  "items": {
+    "categories": [],
+    "monthly_summary": [
+      {
+        "month": 1,
+        "income": 9586.81,
+        "expense": -1151.39,
+        "balance": 10738.199999999999
+      },
+      {
+        "month": 2,
+        "income": 11201.1,
+        "expense": -1233.05,
+        "balance": 12434.15
+      },
+      {
+        "month": 3,
+        "income": 14467.97,
+        "expense": -1497.21,
+        "balance": 15965.18
+      },
+      {
+        "month": 4,
+        "income": 13256.03,
+        "expense": -1419.03,
+        "balance": 14675.060000000001
+      },
+      {
+        "month": 5,
+        "income": 14441.97,
+        "expense": -1307.38,
+        "balance": 15749.349999999999
+      },
+      {
+        "month": 6,
+        "income": 14379.31,
+        "expense": -1267.63,
+        "balance": 15646.939999999999
+      },
+      {
+        "month": 7,
+        "income": 13252.53,
+        "expense": -1458.01,
+        "balance": 14710.54
+      },
+      {
+        "month": 8,
+        "income": 14473.53,
+        "expense": -1346.47,
+        "balance": 15820.0
+      },
+      {
+        "month": 9,
+        "income": 14756.9,
+        "expense": -1471.4,
+        "balance": 16228.3
+      },
+      {
+        "month": 10,
+        "income": 12946.87,
+        "expense": -1358.44,
+        "balance": 14305.310000000001
+      },
+      {
+        "month": 11,
+        "income": 13466.69,
+        "expense": -1342.23,
+        "balance": 14808.92
+      },
+      {
+        "month": 12,
+        "income": 12314.98,
+        "expense": -1382.33,
+        "balance": 13697.31
+      }
+    ]
+  },
+  "extensions": {}
+}

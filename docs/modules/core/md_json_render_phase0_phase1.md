@@ -7,8 +7,8 @@
 ## 2. Phase 0：基线冻结与差异盘点
 
 ### 2.1 基线快照（冻结结果）
-- 当前冻结基线目录：`tests/baseline/report_snapshots/`
-- 当前 manifest：`tests/baseline/report_snapshots/manifest.json`
+- 当前冻结基线目录：`tests/golden/report_snapshots/`
+- 当前 manifest：`tests/golden/report_snapshots/manifest.json`
 - 当前已冻结格式：`md`、`json`
 - 当前冻结场景：
   - monthly：`2024-01`
@@ -43,8 +43,8 @@ legacy/model-first/json-first
 3. **管线能力不完全对称**
    - `md` 已统一进入标准渲染链。
    - `tex` 在 `legacy` 仍可绕开标准渲染链。
-4. **基线覆盖存在缺口**
-   - 快照基线目前仅冻结 `md/json`；`tex` 依赖一致性门禁项目对比，尚未纳入 `report_snapshots/manifest.json`。
+4. **基线覆盖现状**
+   - 快照基线已统一冻结到 `tests/golden/report_snapshots/manifest.json`，覆盖 `md/json/tex/rst/typ` 与 `standard_report` golden。
 
 ### 2.4 结论
 - 现有代码已具备“单次组装 StandardReport + 标准 JSON 落盘”的主干能力。

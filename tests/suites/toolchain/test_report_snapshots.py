@@ -6,35 +6,55 @@ from pathlib import Path
 from unittest.mock import patch
 
 from tools.verify.report_snapshot_support import (
+    BYTE_COMPARE_MODE,
     COMPARE_SCOPE_STANDARD_REPORT,
-    normalize_render_json,
-    normalize_standard_report_json,
+    JSON_CONTENT_COMPARE_MODE,
+    MARKDOWN_CONTENT_COMPARE_MODE,
+    compare_mode_for_extra_source,
+    normalize_json_content,
+    normalize_markdown_content,
 )
 from tools.toolchain.verify.bills_tracer import run_bills_tracer_workflow
 
 
 class ReportSnapshotSupportTests(unittest.TestCase):
-    def test_render_json_normalization_preserves_input_key_order(self) -> None:
+    def test_markdown_normalization_ignores_marker_formatting(self) -> None:
+        left = "# Title\n- item\n"
+        right = "# Title\n* item\n"
+
+        self.assertEqual(
+            normalize_markdown_content(left),
+            normalize_markdown_content(right),
+        )
+
+    def test_json_normalization_ignores_key_order(self) -> None:
         raw_json = (
             '{"meta":{"generated_at_utc":"2026-03-11T00:00:00Z"},'
             '"zeta":1,"alpha":2}'
         )
-
-        normalized = normalize_render_json(raw_json)
-
-        self.assertNotIn("generated_at_utc", normalized)
-        self.assertLess(normalized.index('"zeta"'), normalized.index('"alpha"'))
-
-    def test_standard_report_normalization_sorts_keys(self) -> None:
-        raw_json = (
-            '{"meta":{"generated_at_utc":"2026-03-11T00:00:00Z"},'
-            '"zeta":1,"alpha":2}'
+        same_content_different_order = (
+            '{"alpha":2,"meta":{"generated_at_utc":"2026-03-11T00:00:00Z"},"zeta":1}'
         )
 
-        normalized = normalize_standard_report_json(raw_json)
+        self.assertEqual(
+            normalize_json_content(raw_json),
+            normalize_json_content(same_content_different_order),
+        )
 
-        self.assertNotIn("generated_at_utc", normalized)
-        self.assertLess(normalized.index('"alpha"'), normalized.index('"zeta"'))
+    def test_extra_source_modes_keep_bytes_for_tex_rst_typ(self) -> None:
+        self.assertEqual(compare_mode_for_extra_source("LaTeX_bills/years/2025.tex"), BYTE_COMPARE_MODE)
+        self.assertEqual(compare_mode_for_extra_source("reST_bills/years/2025.rst"), BYTE_COMPARE_MODE)
+        self.assertEqual(compare_mode_for_extra_source("Typst_bills/years/2025.typ"), BYTE_COMPARE_MODE)
+
+    def test_extra_source_modes_use_content_compare_for_markdown_and_json(self) -> None:
+        self.assertEqual(
+            compare_mode_for_extra_source("Markdown_bills/years/2025.md"),
+            MARKDOWN_CONTENT_COMPARE_MODE,
+        )
+        self.assertEqual(
+            compare_mode_for_extra_source("standard_json/years/2025.json"),
+            JSON_CONTENT_COMPARE_MODE,
+        )
 
 
 class BillsTracerVerifyWorkflowTests(unittest.TestCase):

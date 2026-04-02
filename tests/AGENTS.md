@@ -7,7 +7,7 @@
 1. 先区分改动属于哪一类：
    - 测试入口与断言：`tests/suites`
    - 测试运行支撑：`tests/framework`
-   - 快照与 golden：`tests/baseline`
+   - 快照与 golden：`tests/golden`
    - 测试输入生成：`tests/generators`
    - 测试配置样例：`tests/config`
 2. 再阅读：

@@ -12,7 +12,7 @@ REPO_ROOT = bootstrap_repo_root(__file__)
 from tools.verify.report_snapshot_support import (  # noqa: E402
     SNAPSHOT_MATRIX,
     compare_mode_for_manifest_item,
-    freeze_baseline_content,
+    freeze_baseline_bytes,
     sha256,
     scope_for_manifest_item,
 )
@@ -23,7 +23,7 @@ def main() -> int:
     source_root = (
         repo_root / "dist" / "tests" / "artifact" / "bills_tracer" / "latest" / "exports"
     )
-    baseline_root = repo_root / "tests" / "baseline" / "report_snapshots"
+    baseline_root = repo_root / "tests" / "golden" / "report_snapshots"
 
     manifest: dict[str, dict[str, str]] = {}
     copied = 0
@@ -38,12 +38,11 @@ def main() -> int:
             return 2
 
         baseline_path.parent.mkdir(parents=True, exist_ok=True)
-        baseline_path.write_text(
-            freeze_baseline_content(
-                source_path.read_text(encoding="utf-8"),
+        baseline_path.write_bytes(
+            freeze_baseline_bytes(
+                source_path,
                 compare_mode_for_manifest_item(item),
             ),
-            encoding="utf-8",
         )
         manifest[key] = {
             "source": source_rel,
