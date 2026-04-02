@@ -7,6 +7,7 @@ import com.billstracer.android.data.nativebridge.parseRoot
 import com.billstracer.android.data.nativebridge.string
 import com.billstracer.android.model.BundledConfigFile
 import com.billstracer.android.model.BundledNotices
+import com.billstracer.android.model.ConfigTextsValidationResult
 import com.billstracer.android.model.ThemePreferences
 import com.billstracer.android.model.VersionInfo
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +22,20 @@ internal class DefaultSettingsService(
 ) : SettingsService {
     override suspend fun loadBundledConfigs(): List<BundledConfigFile> =
         settingsDataSource.loadBundledConfigs()
+
+    override suspend fun validateBundledConfigs(
+        validatorText: String,
+        modifierText: String,
+        exportFormatsText: String,
+    ): ConfigTextsValidationResult = withContext(Dispatchers.IO) {
+        SettingsNativeResultParser.parseConfigTextsValidationResult(
+            SettingsNativeBindings.validateConfigTextsNative(
+                validatorText = validatorText,
+                modifierText = modifierText,
+                exportFormatsText = exportFormatsText,
+            ),
+        )
+    }
 
     override suspend fun updateBundledConfig(
         fileName: String,

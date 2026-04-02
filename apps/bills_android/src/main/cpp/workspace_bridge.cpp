@@ -229,6 +229,36 @@ auto export_parse_bundle(const std::string& config_dir,
       true, "ok", "Parse bundle export finished.", std::move(data));
 }
 
+auto export_backup_bundle(const std::string& config_dir,
+                          const std::string& records_dir,
+                          const std::string& output_zip_path) -> std::string {
+  if (config_dir.empty() || records_dir.empty() || output_zip_path.empty()) {
+    return bills::android::jni::MakeResponse(
+        false, "param.invalid_argument",
+        "configDir, recordsDir, and outputZipPath must be non-empty.");
+  }
+
+  const auto result = bills::io::ExportBackupBundle(records_dir, config_dir, output_zip_path);
+  if (!result) {
+    Json data;
+    data["config_dir"] = config_dir;
+    data["records_dir"] = records_dir;
+    data["output_zip_path"] = output_zip_path;
+    return bills::android::jni::MakeResponse(
+        false, "business.export_backup_failed", FormatError(result.error()),
+        std::move(data));
+  }
+
+  Json data;
+  data["config_dir"] = config_dir;
+  data["records_dir"] = records_dir;
+  data["output_zip_path"] = output_zip_path;
+  data["exported_record_files"] = result->exported_record_files;
+  data["exported_config_files"] = result->exported_config_files;
+  return bills::android::jni::MakeResponse(
+      true, "ok", "Backup bundle export finished.", std::move(data));
+}
+
 auto import_parse_bundle(const std::string& bundle_zip_path,
                          const std::string& config_dir,
                          const std::string& records_dir,
@@ -282,6 +312,59 @@ auto import_parse_bundle(const std::string& bundle_zip_path,
       std::move(data));
 }
 
+auto import_backup_bundle(const std::string& bundle_zip_path,
+                          const std::string& config_dir,
+                          const std::string& records_dir,
+                          const std::string& db_path) -> std::string {
+  if (bundle_zip_path.empty() || config_dir.empty() || records_dir.empty() ||
+      db_path.empty()) {
+    return bills::android::jni::MakeResponse(
+        false, "param.invalid_argument",
+        "bundleZipPath, configDir, recordsDir, and dbPath must be non-empty.");
+  }
+
+  const auto result =
+      bills::io::ImportBackupBundle(bundle_zip_path, config_dir, records_dir, db_path);
+  if (!result) {
+    Json data;
+    data["bundle_zip_path"] = bundle_zip_path;
+    data["config_dir"] = config_dir;
+    data["records_dir"] = records_dir;
+    data["db_path"] = db_path;
+    return bills::android::jni::MakeResponse(
+        false, "business.import_backup_failed", FormatError(result.error()),
+        std::move(data));
+  }
+
+  Json data;
+  data["bundle_zip_path"] = bundle_zip_path;
+  data["config_dir"] = config_dir;
+  data["records_dir"] = records_dir;
+  data["db_path"] = db_path;
+  data["restored_bills"] = result->restored_bills;
+  data["restored_record_files"] = result->restored_record_files;
+  data["restored_config_files"] = result->restored_config_files;
+  if (!result->failed_phase.empty()) {
+    data["failed_phase"] = result->failed_phase;
+  }
+  if (result->config_validation.processed > 0U || !result->config_validation.files.empty()) {
+    data["config_validation"] = json_for_config_report(result->config_validation);
+  }
+  if (result->record_validation.processed > 0U || !result->record_validation.files.empty()) {
+    data["record_validation"] = json_for_batch_result(result->record_validation);
+  }
+  if (result->db_ingest.processed > 0U || !result->db_ingest.files.empty()) {
+    data["db_ingest"] = json_for_batch_result(result->db_ingest);
+  }
+  return bills::android::jni::MakeResponse(
+      result->ok, result->ok ? "ok" : "business.import_backup_failed",
+      result->message.empty()
+          ? (result->ok ? "Backup bundle restore finished."
+                        : "Backup bundle restore failed.")
+          : result->message,
+      std::move(data));
+}
+
 }  // namespace
 
 extern "C" JNIEXPORT jstring JNICALL
@@ -321,11 +404,36 @@ Java_com_billstracer_android_data_nativebridge_WorkspaceNativeBindings_exportPar
 }
 
 extern "C" JNIEXPORT jstring JNICALL
+Java_com_billstracer_android_data_nativebridge_WorkspaceNativeBindings_exportBackupBundleNative(
+    JNIEnv* env, jclass, jstring config_dir, jstring records_dir,
+    jstring output_zip_path) {
+  return bills::android::jni::SafeCall(env, [&]() -> std::string {
+    return export_backup_bundle(
+        bills::android::jni::FromJString(env, config_dir),
+        bills::android::jni::FromJString(env, records_dir),
+        bills::android::jni::FromJString(env, output_zip_path));
+  });
+}
+
+extern "C" JNIEXPORT jstring JNICALL
 Java_com_billstracer_android_data_nativebridge_WorkspaceNativeBindings_importParseBundleNative(
     JNIEnv* env, jclass, jstring bundle_zip_path, jstring config_dir,
     jstring records_dir, jstring db_path) {
   return bills::android::jni::SafeCall(env, [&]() -> std::string {
     return import_parse_bundle(
+        bills::android::jni::FromJString(env, bundle_zip_path),
+        bills::android::jni::FromJString(env, config_dir),
+        bills::android::jni::FromJString(env, records_dir),
+        bills::android::jni::FromJString(env, db_path));
+  });
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_billstracer_android_data_nativebridge_WorkspaceNativeBindings_importBackupBundleNative(
+    JNIEnv* env, jclass, jstring bundle_zip_path, jstring config_dir,
+    jstring records_dir, jstring db_path) {
+  return bills::android::jni::SafeCall(env, [&]() -> std::string {
+    return import_backup_bundle(
         bills::android::jni::FromJString(env, bundle_zip_path),
         bills::android::jni::FromJString(env, config_dir),
         bills::android::jni::FromJString(env, records_dir),

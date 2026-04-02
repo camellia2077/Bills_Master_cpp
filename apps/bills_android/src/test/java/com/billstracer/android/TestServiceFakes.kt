@@ -1,6 +1,7 @@
 package com.billstracer.android
 
 import android.net.Uri
+import com.billstracer.android.data.services.BackupService
 import com.billstracer.android.data.services.EditorService
 import com.billstracer.android.data.services.QueryService
 import com.billstracer.android.data.services.SettingsService
@@ -8,16 +9,18 @@ import com.billstracer.android.data.services.WorkspaceService
 import com.billstracer.android.model.AppEnvironment
 import com.billstracer.android.model.BundledConfigFile
 import com.billstracer.android.model.BundledNotices
+import com.billstracer.android.model.ConfigFileValidationResult
+import com.billstracer.android.model.ConfigTextsValidationResult
+import com.billstracer.android.model.ConfigValidationReport
+import com.billstracer.android.model.ExportedBackupBundleResult
 import com.billstracer.android.model.ExportedParseBundleResult
+import com.billstracer.android.model.ImportedBackupBundleResult
 import com.billstracer.android.model.ImportedParseBundleResult
-import com.billstracer.android.model.ImportResult
 import com.billstracer.android.model.MonthlySummaryItem
 import com.billstracer.android.model.QueryResult
 import com.billstracer.android.model.QueryType
 import com.billstracer.android.model.RecordDirectoryImportResult
 import com.billstracer.android.model.RecordEditorDocument
-import com.billstracer.android.model.RecordPreviewFile
-import com.billstracer.android.model.RecordPreviewResult
 import com.billstracer.android.model.RecordSaveResult
 import com.billstracer.android.model.ThemeColor
 import com.billstracer.android.model.ThemeMode
@@ -26,10 +29,6 @@ import com.billstracer.android.model.VersionInfo
 import java.io.File
 
 internal fun fakeAppEnvironment(): AppEnvironment = AppEnvironment(
-    bundledSampleInputPath = File("samples/2025"),
-    bundledSampleLabel = "2025 full-year sample",
-    bundledSampleYear = "2025",
-    bundledSampleMonth = "2025-01",
     configRoot = File("config"),
     recordsRoot = File("records"),
     dbFile = File("db.sqlite3"),
@@ -37,16 +36,6 @@ internal fun fakeAppEnvironment(): AppEnvironment = AppEnvironment(
 
 internal class FakeWorkspaceService : WorkspaceService {
     var environment: AppEnvironment = fakeAppEnvironment()
-    var importResult = ImportResult(
-        ok = true,
-        code = "ok",
-        message = "2025 full-year sample",
-        processed = 12,
-        success = 12,
-        failure = 0,
-        imported = 12,
-        rawJson = """{"ok":true}""",
-    )
     var exportedResult = ExportedParseBundleResult(
         exportedRecordFiles = 1,
         exportedConfigFiles = 3,
@@ -61,16 +50,6 @@ internal class FakeWorkspaceService : WorkspaceService {
         importedConfigFiles = 3,
         importedBills = 1,
         sourceDisplayPath = "parse_bundle.zip",
-        rawJson = """{"ok":true}""",
-    )
-    var recordsImportResult = ImportResult(
-        ok = true,
-        code = "ok",
-        message = "Record import finished.",
-        processed = 2,
-        success = 2,
-        failure = 0,
-        imported = 2,
         rawJson = """{"ok":true}""",
     )
     var recordDirectoryImportResult = RecordDirectoryImportResult(
@@ -89,8 +68,6 @@ internal class FakeWorkspaceService : WorkspaceService {
     override suspend fun importTxtDirectoryAndSyncDatabase(sourceDirectoryUri: Uri): RecordDirectoryImportResult =
         recordDirectoryImportResult
 
-    override suspend fun importBundledSample(): ImportResult = importResult
-
     override suspend fun exportParseBundle(targetDocumentUri: Uri): ExportedParseBundleResult =
         exportedResult
 
@@ -100,6 +77,31 @@ internal class FakeWorkspaceService : WorkspaceService {
     override suspend fun clearRecordFiles(): Int = clearedRecordFiles
 
     override suspend fun clearDatabase(): Boolean = clearedDatabase
+}
+
+internal class FakeBackupService : BackupService {
+    var exportedResult = ExportedBackupBundleResult(
+        exportedRecordFiles = 1,
+        exportedConfigFiles = 2,
+        destinationDisplayPath = "bills_backup.zip",
+        rawJson = """{"ok":true}""",
+    )
+    var importedResult = ImportedBackupBundleResult(
+        ok = true,
+        code = "ok",
+        message = "Backup bundle restore finished.",
+        restoredRecordFiles = 1,
+        restoredConfigFiles = 2,
+        restoredBills = 1,
+        sourceDisplayPath = "bills_backup.zip",
+        rawJson = """{"ok":true}""",
+    )
+
+    override suspend fun exportBackupBundle(targetDocumentUri: Uri): ExportedBackupBundleResult =
+        exportedResult
+
+    override suspend fun importBackupBundle(sourceDocumentUri: Uri): ImportedBackupBundleResult =
+        importedResult
 }
 
 internal class FakeQueryService : QueryService {
@@ -307,13 +309,19 @@ internal class FakeEditorService : EditorService {
         persistedPeriods.toList().sortedDescending()
 
     override suspend fun openPersistedRecordPeriod(period: String): RecordEditorDocument {
-        if (!persistedPeriods.contains(period)) {
-            error("No imported month exists for $period.")
-        }
         if (missingPersistedPeriods.contains(period)) {
             error(
                 "Database and TXT source are out of sync for $period. Missing " +
                     "${period.substringBefore('-')}/$period.txt. Re-import or resync records/.",
+            )
+        }
+        if (!persistedPeriods.contains(period)) {
+            val year = period.substringBefore('-')
+            return RecordEditorDocument(
+                period = period,
+                relativePath = "$year/$period.txt",
+                rawText = "date:$period\nremark:\n\nmeal\nmeal_low\n",
+                persisted = false,
             )
         }
         val persistedText = savedRecords[period]
@@ -367,30 +375,6 @@ internal class FakeEditorService : EditorService {
         )
     }
 
-    override suspend fun previewRecordDocument(period: String, rawText: String): RecordPreviewResult =
-        RecordPreviewResult(
-            ok = true,
-            code = "ok",
-            message = "Record preview completed successfully.",
-            processed = 1,
-            success = 1,
-            failure = 0,
-            periods = listOf(period),
-            files = listOf(
-                RecordPreviewFile(
-                    path = "records/${period.substringBefore('-')}/$period.txt",
-                    ok = true,
-                    period = period,
-                    year = period.substringBefore('-').toInt(),
-                    month = period.substringAfter('-').toInt(),
-                    transactionCount = if (rawText.isBlank()) 0 else 1,
-                    totalIncome = 0.0,
-                    totalExpense = -12.0,
-                    balance = -12.0,
-                ),
-            ),
-            rawJson = """{"ok":true}""",
-        )
 }
 
 internal class FakeSettingsService : SettingsService {
@@ -400,9 +384,58 @@ internal class FakeSettingsService : SettingsService {
         "export_formats.toml" to "enabled_formats = [\"json\", \"md\"]\n",
     )
     var savedTheme = ThemePreferences()
+    var nextConfigValidationResult = ConfigTextsValidationResult(
+        ok = true,
+        code = "ok",
+        message = "Config texts are valid.",
+        configValidation = ConfigValidationReport(
+            processed = 3,
+            success = 3,
+            failure = 0,
+            allValid = true,
+            files = listOf(
+                ConfigFileValidationResult(
+                    sourceKind = "config_text",
+                    fileName = "validator_config.toml",
+                    path = "config/validator_config.toml",
+                    ok = true,
+                    issues = emptyList(),
+                ),
+                ConfigFileValidationResult(
+                    sourceKind = "config_text",
+                    fileName = "modifier_config.toml",
+                    path = "config/modifier_config.toml",
+                    ok = true,
+                    issues = emptyList(),
+                ),
+                ConfigFileValidationResult(
+                    sourceKind = "config_text",
+                    fileName = "export_formats.toml",
+                    path = "config/export_formats.toml",
+                    ok = true,
+                    issues = emptyList(),
+                ),
+            ),
+            enabledExportFormats = listOf("json", "md"),
+            availableExportFormats = listOf("json", "md"),
+        ),
+        enabledExportFormats = listOf("json", "md"),
+        availableExportFormats = listOf("json", "md"),
+        rawJson = """{"ok":true}""",
+    )
+    var lastValidatedConfigTexts: Triple<String, String, String>? = null
 
     override suspend fun loadBundledConfigs(): List<BundledConfigFile> =
         savedConfigs.map { (fileName, rawText) -> BundledConfigFile(fileName, rawText) }
+
+    override suspend fun validateBundledConfigs(
+        validatorText: String,
+        modifierText: String,
+        exportFormatsText: String,
+    ): ConfigTextsValidationResult {
+        lastValidatedConfigTexts = Triple(validatorText, modifierText, exportFormatsText)
+        return nextConfigValidationResult
+    }
 
     override suspend fun updateBundledConfig(
         fileName: String,

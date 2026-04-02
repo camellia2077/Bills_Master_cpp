@@ -6,7 +6,6 @@ import com.billstracer.android.data.nativebridge.parseRoot
 import com.billstracer.android.data.nativebridge.string
 import com.billstracer.android.data.runtime.AndroidWorkspaceRuntime
 import com.billstracer.android.model.RecordEditorDocument
-import com.billstracer.android.model.RecordPreviewResult
 import com.billstracer.android.model.RecordSaveResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -15,29 +14,47 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import java.io.File
 
 internal class DefaultEditorService(
     private val runtime: AndroidWorkspaceRuntime,
 ) : EditorService {
     override suspend fun listPersistedRecordPeriods(): List<String> = withContext(Dispatchers.IO) {
         val workspace = runtime.initializeWorkspace()
-        parseDatabaseRecordPeriods(
-            EditorNativeBindings.listDatabaseRecordPeriodsNative(
-                workspace.dbFile.absolutePath,
-            ),
-        )
+        val periods = mutableSetOf<String>()
+        workspace.recordsRoot.walkTopDown().forEach { file ->
+            if (file.isFile && file.extension.equals("txt", ignoreCase = true)) {
+                file.useLines { lines ->
+                    val firstLine = lines.firstOrNull()?.trim()
+                    if (firstLine != null && firstLine.startsWith("date:")) {
+                        val period = firstLine.substringAfter("date:").trim()
+                        if (period.length == 7) {
+                            periods.add(period)
+                        }
+                    }
+                }
+            }
+        }
+        val currentPeriod = java.time.YearMonth.now().toString()
+        periods.add(currentPeriod)
+        periods.toList().sortedDescending()
     }
 
     override suspend fun openPersistedRecordPeriod(period: String): RecordEditorDocument =
         withContext(Dispatchers.IO) {
             val workspace = runtime.initializeWorkspace()
-            val persistedRecordFile = recordFileForPeriod(workspace.recordsRoot, period)
-            if (!persistedRecordFile.isFile) {
-                error(
-                    "Database and TXT source are out of sync for $period. Missing " +
-                        persistedRecordFile.relativeTo(workspace.recordsRoot).invariantSeparatorsPath +
-                        ". Re-import or resync records/.",
+            val persistedRecordFile = findRecordFileForPeriod(workspace.recordsRoot, period)
+            if (persistedRecordFile == null) {
+                val rawJson = EditorNativeBindings.generateRecordTemplateJsonNative(
+                    workspace.configRoot.absolutePath,
+                    period,
+                )
+                val generatedText = parseRecordTemplateResult(rawJson)
+                return@withContext RecordEditorDocument(
+                    period = period,
+                    relativePath = defaultRecordFileForPeriod(workspace.recordsRoot, period)
+                        .relativeTo(workspace.recordsRoot).invariantSeparatorsPath,
+                    rawText = generatedText,
+                    persisted = false,
                 )
             }
             RecordEditorDocument(
@@ -55,7 +72,7 @@ internal class DefaultEditorService(
     ): RecordSaveResult = withContext(Dispatchers.IO) {
         val workspace = runtime.initializeWorkspace()
         parseRecordSaveResult(
-            EditorNativeBindings.commitRecordDocumentNative(
+            EditorNativeBindings.commitRecordDocumentJsonNative(
                 period,
                 rawText,
                 workspace.configRoot.absolutePath,
@@ -65,40 +82,13 @@ internal class DefaultEditorService(
         )
     }
 
-    override suspend fun previewRecordDocument(
-        period: String,
-        rawText: String,
-    ): RecordPreviewResult = withContext(Dispatchers.IO) {
-        val workspace = runtime.initializeWorkspace()
-        val previewDir = File(workspace.recordsRoot, ".preview")
-        previewDir.mkdirs()
-        val previewFile = File.createTempFile(
-            "record-preview-${period.replace("-", "_")}-",
-            ".txt",
-            previewDir,
-        )
-        try {
-            previewFile.writeText(rawText, Charsets.UTF_8)
-            parseRecordPreviewResult(
-                EditorNativeBindings.previewRecordPathNative(
-                    previewFile.absolutePath,
-                    workspace.configRoot.absolutePath,
-                ),
-            )
-        } finally {
-            previewFile.delete()
-        }
-    }
-
-    private fun parseDatabaseRecordPeriods(rawJson: String): List<String> {
+    private fun parseRecordTemplateResult(rawJson: String): String {
         val root = parseRoot(rawJson)
-        val data = root["data"]?.jsonObject ?: JsonObject(emptyMap())
         if (!root.boolean("ok")) {
             error(root.string("message"))
         }
-        return data["periods"]?.jsonArray?.mapNotNull { item ->
-            item.jsonPrimitive.contentOrNull
-        }.orEmpty().distinct().sortedDescending()
+        val data = root["data"]?.jsonObject ?: JsonObject(emptyMap())
+        return data.string("text")
     }
 
     private fun parseRecordSaveResult(rawJson: String): RecordSaveResult {

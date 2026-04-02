@@ -12,19 +12,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import com.billstracer.android.app.navigation.AppSessionState
-import com.billstracer.android.BuildConfig
 import com.billstracer.android.platform.PaneContent
 import com.billstracer.android.platform.SectionGroupCard
+import com.billstracer.android.app.navigation.AppSessionState
 
 @Composable
 internal fun WorkspaceScreen(
     sessionState: AppSessionState,
     state: WorkspaceUiState,
     onRequestImportTxtDirectory: () -> Unit,
-    onImportBundledSample: () -> Unit,
-    onRequestExportDocument: () -> Unit,
-    onRequestImportBundle: () -> Unit,
+    onRequestExportTextAndConfigZip: () -> Unit,
     onClearRecordFiles: () -> Unit,
     onClearDatabase: () -> Unit,
     modifier: Modifier = Modifier,
@@ -58,11 +55,6 @@ internal fun WorkspaceScreen(
                     } else {
                         "Workspace is unavailable."
                     }
-                } else if (
-                    !environment.bundledSampleLabel.isNullOrBlank() &&
-                    !environment.bundledSampleMonth.isNullOrBlank()
-                ) {
-                    "db=${environment.dbFile.name}  sample=${environment.bundledSampleLabel}  period=${environment.bundledSampleMonth}"
                 } else {
                     "db=${environment.dbFile.name}"
                 },
@@ -97,6 +89,15 @@ internal fun WorkspaceScreen(
             ) {
                 Text("Import TXT from directory")
             }
+            Button(
+                onClick = onRequestExportTextAndConfigZip,
+                enabled = !state.isInitializing && !state.isWorking,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("workspace_export_text_and_config_zip_button"),
+            ) {
+                Text("Export TXT + Config ZIP")
+            }
             state.recordDirectoryImportResult?.let { result ->
                 Text(
                     text = "processed ${result.processed}  imported ${result.imported}  overwritten ${result.overwritten}  failure ${result.failure}  invalid ${result.invalid}  duplicate ${result.duplicatePeriodConflicts}",
@@ -115,74 +116,12 @@ internal fun WorkspaceScreen(
                     )
                 }
             }
-        }
-        if (BuildConfig.DEBUG) {
-            SectionGroupCard(title = "Bundled Sample") {
+            state.lastExportResult?.destinationDisplayPath?.let { destination ->
                 Text(
-                    text = "Debug build only. Bundled sample import is excluded from release builds.",
+                    text = "Last ZIP export: $destination",
                     style = MaterialTheme.typography.bodySmall,
                     fontFamily = FontFamily.Monospace,
                 )
-                Button(
-                    onClick = onImportBundledSample,
-                    enabled = !state.isInitializing && !state.isWorking,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Import bundled sample")
-                }
-                state.bundledSampleImportResult?.let { result ->
-                    Text(
-                        text = "processed ${result.processed}  imported ${result.imported}  failure ${result.failure}",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontFamily = FontFamily.Monospace,
-                    )
-                    if (!result.ok && result.message.isNotBlank()) {
-                        Text(
-                            text = result.message,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                }
-            }
-            SectionGroupCard(title = "Parse Bundle") {
-                Text(
-                    text = "Debug build only. Parse bundle export/import tools are excluded from release builds.",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontFamily = FontFamily.Monospace,
-                )
-                Button(
-                    onClick = onRequestExportDocument,
-                    enabled = !state.isInitializing && !state.isWorking,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("workspace_export_button"),
-                ) {
-                    Text("Export parse bundle")
-                }
-                Button(
-                    onClick = onRequestImportBundle,
-                    enabled = !state.isInitializing && !state.isWorking,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("workspace_import_bundle_button"),
-                ) {
-                    Text("Import parse bundle")
-                }
-                state.lastExportResult?.destinationDisplayPath?.let { destination ->
-                    Text(
-                        text = "Last bundle export: $destination",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontFamily = FontFamily.Monospace,
-                    )
-                }
-                state.lastImportedBundleResult?.sourceDisplayPath?.let { source ->
-                    Text(
-                        text = "Last bundle import: $source",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontFamily = FontFamily.Monospace,
-                    )
-                }
             }
         }
         SectionGroupCard(title = "Workspace") {

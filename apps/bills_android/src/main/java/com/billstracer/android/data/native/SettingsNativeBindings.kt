@@ -6,4 +6,10 @@ internal object SettingsNativeBindings {
     }
 
     external fun coreVersionNative(): String
+
+    external fun validateConfigTextsNative(
+        validatorText: String,
+        modifierText: String,
+        exportFormatsText: String,
+    ): String
 }

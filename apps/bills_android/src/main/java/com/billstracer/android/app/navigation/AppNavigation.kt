@@ -79,6 +79,13 @@ internal fun BillsAndroidApp(
 ) {
     val sessionState = sessionViewModel.state.collectAsStateWithLifecycle()
     var selectedTab by rememberSaveable { mutableStateOf(AppTab.WORKSPACE) }
+    val importTxtDirectoryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree(),
+    ) { sourceDirectoryUri ->
+        if (sourceDirectoryUri != null) {
+            workspaceViewModel.importTxtDirectoryAndSyncDatabase(sourceDirectoryUri)
+        }
+    }
     val exportParseBundleLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/zip"),
     ) { targetDocumentUri ->
@@ -86,18 +93,18 @@ internal fun BillsAndroidApp(
             workspaceViewModel.exportParseBundle(targetDocumentUri)
         }
     }
-    val importParseBundleLauncher = rememberLauncherForActivityResult(
+    val exportBackupBundleLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/zip"),
+    ) { targetDocumentUri ->
+        if (targetDocumentUri != null) {
+            settingsViewModel.exportBackupBundle(targetDocumentUri)
+        }
+    }
+    val importBackupBundleLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
     ) { sourceDocumentUri ->
         if (sourceDocumentUri != null) {
-            workspaceViewModel.importParseBundle(sourceDocumentUri)
-        }
-    }
-    val importTxtDirectoryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocumentTree(),
-    ) { sourceDirectoryUri ->
-        if (sourceDirectoryUri != null) {
-            workspaceViewModel.importTxtDirectoryAndSyncDatabase(sourceDirectoryUri)
+            settingsViewModel.importBackupBundle(sourceDocumentUri)
         }
     }
     val tabStateHolder = rememberSaveableStateHolder()
@@ -129,15 +136,9 @@ internal fun BillsAndroidApp(
                         onRequestImportTxtDirectory = {
                             importTxtDirectoryLauncher.launch(null)
                         },
-                        onImportBundledSample = workspaceViewModel::importBundledSample,
-                        onRequestExportDocument = {
+                        onRequestExportTextAndConfigZip = {
                             exportParseBundleLauncher.launch(
-                                "parse_bundle_${DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").format(LocalDateTime.now())}.zip",
-                            )
-                        },
-                        onRequestImportBundle = {
-                            importParseBundleLauncher.launch(
-                                arrayOf("application/zip", "application/octet-stream"),
+                                "records_and_config_${DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").format(LocalDateTime.now())}.zip",
                             )
                         },
                         onClearRecordFiles = workspaceViewModel::clearRecordFiles,
@@ -162,13 +163,12 @@ internal fun BillsAndroidApp(
                     val state = editorViewModel.state.collectAsStateWithLifecycle()
                     EditorScreen(
                         state = state.value,
+                        onScreenShown = editorViewModel::onEditorScreenShown,
                         onSelectExistingRecordYear = editorViewModel::selectExistingRecordYear,
                         onSelectExistingRecordMonth = editorViewModel::selectExistingRecordMonth,
-                        onOpenSelectedExistingRecord = editorViewModel::openSelectedExistingRecord,
-                        onPreviewRecord = editorViewModel::previewRecordDraft,
                         onSaveRecord = editorViewModel::saveRecordDraft,
+                        onSaveRawRecordText = editorViewModel::saveRawRecordText,
                         onRecordDraftChange = editorViewModel::updateRecordDraft,
-                        onResetRecordDraft = editorViewModel::resetRecordDraft,
                         modifier = contentModifier,
                     )
                 }
@@ -180,6 +180,16 @@ internal fun BillsAndroidApp(
                         onConfigDraftChange = settingsViewModel::updateConfigDraft,
                         onModifyConfig = settingsViewModel::saveSelectedConfig,
                         onResetConfigDraft = settingsViewModel::resetSelectedConfigDraft,
+                        onRequestExportBackup = {
+                            exportBackupBundleLauncher.launch(
+                                "bills_backup_${DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").format(LocalDateTime.now())}.zip",
+                            )
+                        },
+                        onRequestImportBackup = {
+                            importBackupBundleLauncher.launch(
+                                arrayOf("application/zip", "application/octet-stream"),
+                            )
+                        },
                         onSelectThemeMode = settingsViewModel::updateThemeModeDraft,
                         onSelectThemeColor = settingsViewModel::updateThemeColorDraft,
                         onApplyTheme = settingsViewModel::applyThemeDraft,

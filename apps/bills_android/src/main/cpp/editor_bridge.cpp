@@ -128,46 +128,6 @@ auto preview_record_path(const std::string& input_path,
       "One or more files failed preview.", std::move(data));
 }
 
-auto is_missing_bills_table_error(std::string_view message) -> bool {
-  return message.find("no such table: bills") != std::string_view::npos;
-}
-
-auto list_database_record_periods(const std::string& db_path) -> std::string {
-  if (db_path.empty()) {
-    return bills::android::jni::MakeResponse(false, "param.invalid_argument",
-                                             "dbPath must be non-empty.");
-  }
-
-  Json data;
-  data["db_path"] = db_path;
-  data["periods"] = Json::array();
-  data["count"] = 0;
-
-  if (!fs::exists(fs::path(db_path))) {
-    return bills::android::jni::MakeResponse(
-        true, "ok", "No imported months found in database.", std::move(data));
-  }
-
-  try {
-    const auto periods = bills::io::ListAvailableMonths(db_path);
-    if (!periods) {
-      throw std::runtime_error(FormatError(periods.error()));
-    }
-    data["periods"] = *periods;
-    data["count"] = periods->size();
-    return bills::android::jni::MakeResponse(
-        true, "ok",
-        periods->empty() ? "No imported months found in database."
-                        : "Database record periods loaded successfully.",
-        std::move(data));
-  } catch (const std::exception& error) {
-    if (is_missing_bills_table_error(error.what())) {
-      return bills::android::jni::MakeResponse(
-          true, "ok", "No imported months found in database.", std::move(data));
-    }
-    throw;
-  }
-}
 
 auto commit_record_document(const std::string& expected_period,
                             const std::string& raw_text,
@@ -208,7 +168,7 @@ auto commit_record_document(const std::string& expected_period,
 }  // namespace
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_billstracer_android_data_nativebridge_EditorNativeBindings_generateRecordTemplateNative(
+Java_com_billstracer_android_data_nativebridge_EditorNativeBindings_generateRecordTemplateJsonNative(
     JNIEnv* env, jclass, jstring config_dir, jstring iso_month) {
   return bills::android::jni::SafeCall(env, [&]() -> std::string {
     return generate_record_template(
@@ -226,17 +186,9 @@ Java_com_billstracer_android_data_nativebridge_EditorNativeBindings_previewRecor
   });
 }
 
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_billstracer_android_data_nativebridge_EditorNativeBindings_listDatabaseRecordPeriodsNative(
-    JNIEnv* env, jclass, jstring db_path) {
-  return bills::android::jni::SafeCall(env, [&]() -> std::string {
-    return list_database_record_periods(
-        bills::android::jni::FromJString(env, db_path));
-  });
-}
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_billstracer_android_data_nativebridge_EditorNativeBindings_commitRecordDocumentNative(
+Java_com_billstracer_android_data_nativebridge_EditorNativeBindings_commitRecordDocumentJsonNative(
     JNIEnv* env, jclass, jstring expected_period, jstring raw_text,
     jstring config_dir, jstring records_root, jstring db_path) {
   return bills::android::jni::SafeCall(env, [&]() -> std::string {

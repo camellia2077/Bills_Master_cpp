@@ -14,6 +14,7 @@ import com.billstracer.android.app.navigation.WorkspaceDataChangeBus
 import com.billstracer.android.app.theme.BillsAndroidTheme
 import com.billstracer.android.data.prefs.ThemePreferenceStore
 import com.billstracer.android.data.runtime.AndroidWorkspaceRuntime
+import com.billstracer.android.data.services.DefaultBackupService
 import com.billstracer.android.data.services.DefaultEditorService
 import com.billstracer.android.data.services.DefaultQueryService
 import com.billstracer.android.data.services.DefaultSettingsService
@@ -48,6 +49,12 @@ class MainActivity : ComponentActivity() {
     private val queryService by lazy { DefaultQueryService(runtime = workspaceRuntime) }
     private val editorService by lazy { DefaultEditorService(runtime = workspaceRuntime) }
     private val settingsService by lazy { DefaultSettingsService(settingsDataSource) }
+    private val backupService by lazy {
+        DefaultBackupService(
+            context = applicationContext,
+            runtime = workspaceRuntime,
+        )
+    }
 
     private val sessionViewModel: AppSessionViewModel by viewModels {
         AppSessionViewModelFactory(
@@ -81,7 +88,9 @@ class MainActivity : ComponentActivity() {
     private val settingsViewModel: SettingsViewModel by viewModels {
         SettingsViewModelFactory(
             settingsService = settingsService,
+            backupService = backupService,
             sessionBus = sessionBus,
+            workspaceDataChangeBus = workspaceDataChangeBus,
         )
     }
 

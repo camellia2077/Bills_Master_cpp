@@ -5,21 +5,13 @@ internal object EditorNativeBindings {
         NativeLibrary.ensureLoaded()
     }
 
-    external fun generateRecordTemplateNative(
+    external fun generateRecordTemplateJsonNative(
         configDir: String,
         isoMonth: String,
     ): String
 
-    external fun listDatabaseRecordPeriodsNative(
-        dbPath: String,
-    ): String
 
-    external fun previewRecordPathNative(
-        inputPath: String,
-        configDir: String,
-    ): String
-
-    external fun commitRecordDocumentNative(
+    external fun commitRecordDocumentJsonNative(
         expectedPeriod: String,
         rawText: String,
         configDir: String,

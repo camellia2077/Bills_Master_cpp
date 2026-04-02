@@ -6,7 +6,6 @@ import com.billstracer.android.data.nativebridge.parseRoot
 import com.billstracer.android.data.nativebridge.string
 import com.billstracer.android.model.ExportedParseBundleResult
 import com.billstracer.android.model.ImportedParseBundleResult
-import com.billstracer.android.model.ImportResult
 import com.billstracer.android.model.RecordDirectoryImportResult
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -14,21 +13,6 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 internal object WorkspaceNativeResultParser {
-    fun parseImportResult(rawJson: String): ImportResult {
-        val root = parseRoot(rawJson)
-        val data = root["data"]?.jsonObject ?: JsonObject(emptyMap())
-        return ImportResult(
-            ok = root.boolean("ok"),
-            code = root.string("code"),
-            message = root.string("message"),
-            processed = data.int("processed"),
-            success = data.int("success"),
-            failure = data.int("failure"),
-            imported = data.int("imported"),
-            rawJson = rawJson,
-        )
-    }
-
     fun parseRecordDirectoryImportResult(rawJson: String): RecordDirectoryImportResult {
         val root = parseRoot(rawJson)
         val data = root["data"]?.jsonObject ?: JsonObject(emptyMap())

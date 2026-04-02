@@ -36,18 +36,6 @@ class WorkspaceViewModelTest {
     }
 
     @Test
-    fun importBundledSampleStoresResult() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.importBundledSample()
-        advanceUntilIdle()
-
-        assertEquals(12, viewModel.state.value.bundledSampleImportResult?.imported)
-        assertEquals("Imported 12 bundled bill file(s).", viewModel.state.value.statusMessage)
-    }
-
-    @Test
     fun importTxtDirectoryAndSyncDatabaseStoresResult() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -116,14 +104,11 @@ class WorkspaceViewModelTest {
     fun clearDatabaseResetsStatus() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
-        viewModel.importBundledSample()
-        advanceUntilIdle()
 
         viewModel.clearDatabase()
         advanceUntilIdle()
 
         assertEquals("Database file cleared.", viewModel.state.value.statusMessage)
-        assertEquals(null, viewModel.state.value.bundledSampleImportResult)
     }
 
     @Test

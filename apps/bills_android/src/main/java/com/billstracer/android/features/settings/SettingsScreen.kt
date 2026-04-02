@@ -19,6 +19,7 @@ private enum class SettingsSubview(
     val label: String,
 ) {
     TOML("TOML"),
+    BACKUP("Backup"),
     THEME("Theme"),
     ABOUT("About"),
 }
@@ -30,6 +31,8 @@ internal fun SettingsScreen(
     onConfigDraftChange: (String) -> Unit,
     onModifyConfig: () -> Unit,
     onResetConfigDraft: () -> Unit,
+    onRequestExportBackup: () -> Unit,
+    onRequestImportBackup: () -> Unit,
     onSelectThemeMode: (ThemeMode) -> Unit,
     onSelectThemeColor: (ThemeColor) -> Unit,
     onApplyTheme: () -> Unit,
@@ -51,6 +54,7 @@ internal fun SettingsScreen(
                     onClick = { selectedSubview = subview },
                     testTag = when (subview) {
                         SettingsSubview.TOML -> "settings_toml_button"
+                        SettingsSubview.BACKUP -> "settings_backup_button"
                         SettingsSubview.THEME -> "settings_theme_button"
                         SettingsSubview.ABOUT -> "settings_about_button"
                     },
@@ -66,6 +70,13 @@ internal fun SettingsScreen(
                     onConfigDraftChange = onConfigDraftChange,
                     onModifyConfig = onModifyConfig,
                     onResetConfigDraft = onResetConfigDraft,
+                )
+            }
+            SettingsSubview.BACKUP -> {
+                BackupSettingsBlock(
+                    state = state,
+                    onRequestExportBackup = onRequestExportBackup,
+                    onRequestImportBackup = onRequestImportBackup,
                 )
             }
             SettingsSubview.THEME -> {

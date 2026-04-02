@@ -3,7 +3,6 @@ package com.billstracer.android.app.navigation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.billstracer.android.BuildConfig
 import com.billstracer.android.data.services.SettingsService
 import com.billstracer.android.data.services.WorkspaceService
 import com.billstracer.android.model.AppEnvironment
@@ -58,11 +57,7 @@ class AppSessionViewModel(
                 current.copy(
                     isInitializing = true,
                     globalErrorMessage = null,
-                    globalStatusMessage = if (BuildConfig.DEBUG) {
-                        "Preparing bundled samples and private workspace..."
-                    } else {
-                        "Preparing private workspace..."
-                    },
+                    globalStatusMessage = "Preparing private workspace...",
                 )
             }
             runCatching {
@@ -73,11 +68,7 @@ class AppSessionViewModel(
             }.onSuccess { (versions, themePreferences) ->
                 val (environment, coreVersion, androidVersion) = versions
                 sessionBus.updateThemePreferences(themePreferences)
-                val readyMessage = if (environment.bundledSampleLabel != null) {
-                    "Ready to import ${environment.bundledSampleLabel} into ${environment.dbFile.name}."
-                } else {
-                    "Private workspace ready: ${environment.dbFile.name}."
-                }
+                val readyMessage = "Private workspace ready: ${environment.dbFile.name}."
                 sessionBus.publishStatus(
                     readyMessage,
                 )

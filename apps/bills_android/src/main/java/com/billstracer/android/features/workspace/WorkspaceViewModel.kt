@@ -11,7 +11,6 @@ import com.billstracer.android.data.services.WorkspaceService
 import com.billstracer.android.model.AppEnvironment
 import com.billstracer.android.model.ExportedParseBundleResult
 import com.billstracer.android.model.ImportedParseBundleResult
-import com.billstracer.android.model.ImportResult
 import com.billstracer.android.model.RecordDirectoryImportResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +24,6 @@ data class WorkspaceUiState(
     val statusMessage: String = "",
     val errorMessage: String? = null,
     val environment: AppEnvironment? = null,
-    val bundledSampleImportResult: ImportResult? = null,
     val recordDirectoryImportResult: RecordDirectoryImportResult? = null,
     val lastExportResult: ExportedParseBundleResult? = null,
     val lastImportedBundleResult: ImportedParseBundleResult? = null,
@@ -47,14 +45,7 @@ class WorkspaceViewModel(
         viewModelScope.launch {
             runCatching { workspaceService.initializeEnvironment() }
                 .onSuccess { environment ->
-                    val readyMessage = if (
-                        BuildConfig.DEBUG &&
-                        !environment.bundledSampleLabel.isNullOrBlank()
-                    ) {
-                        "Workspace ready for ${environment.bundledSampleLabel}."
-                    } else {
-                        "Workspace ready."
-                    }
+                    val readyMessage = "Workspace ready."
                     mutableState.update { current ->
                         current.copy(
                             isInitializing = false,
@@ -122,60 +113,7 @@ class WorkspaceViewModel(
         }
     }
 
-    fun importBundledSample() {
-        if (!BuildConfig.DEBUG) {
-            return
-        }
-        val label = state.value.environment?.bundledSampleLabel.orEmpty()
-        viewModelScope.launch {
-            mutableState.update { current ->
-                current.copy(
-                    isWorking = true,
-                    errorMessage = null,
-                    statusMessage = "Importing $label into SQLite...",
-                )
-            }
-            sessionBus.publishStatus("Importing $label into SQLite...")
-            runCatching { workspaceService.importBundledSample() }
-                .onSuccess { result ->
-                    val message = if (result.ok) {
-                        "Imported ${result.imported} bundled bill file(s)."
-                    } else {
-                        result.message
-                    }
-                    if (result.ok) {
-                        sessionBus.publishStatus(message)
-                    } else {
-                        sessionBus.publishError(result.message, message)
-                    }
-                    mutableState.update { current ->
-                        current.copy(
-                            isWorking = false,
-                            bundledSampleImportResult = result,
-                            errorMessage = if (result.ok) null else result.message,
-                            statusMessage = message,
-                        )
-                    }
-                    notifyWorkspaceDataChangedIf(result.imported > 0)
-                }
-                .onFailure { error ->
-                    val message = error.message ?: "Import failed."
-                    sessionBus.publishError(message, "Import failed.")
-                    mutableState.update { current ->
-                        current.copy(
-                            isWorking = false,
-                            errorMessage = message,
-                            statusMessage = "Import failed.",
-                        )
-                    }
-                }
-        }
-    }
-
     fun exportParseBundle(targetDocumentUri: Uri) {
-        if (!BuildConfig.DEBUG) {
-            return
-        }
         viewModelScope.launch {
             val pendingMessage =
                 "Exporting a parse bundle ZIP from saved TXT record files and configs..."
@@ -296,7 +234,6 @@ class WorkspaceViewModel(
                     isWorking = true,
                     errorMessage = null,
                     statusMessage = "Clearing the private SQLite database...",
-                    bundledSampleImportResult = null,
                 )
             }
             sessionBus.publishStatus("Clearing the private SQLite database...")

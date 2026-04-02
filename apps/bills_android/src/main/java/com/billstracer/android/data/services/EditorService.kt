@@ -1,7 +1,6 @@
 package com.billstracer.android.data.services
 
 import com.billstracer.android.model.RecordEditorDocument
-import com.billstracer.android.model.RecordPreviewResult
 import com.billstracer.android.model.RecordSaveResult
 
 interface EditorService {
@@ -10,6 +9,4 @@ interface EditorService {
     suspend fun openPersistedRecordPeriod(period: String): RecordEditorDocument
 
     suspend fun commitRecordDocument(period: String, rawText: String): RecordSaveResult
-
-    suspend fun previewRecordDocument(period: String, rawText: String): RecordPreviewResult
 }

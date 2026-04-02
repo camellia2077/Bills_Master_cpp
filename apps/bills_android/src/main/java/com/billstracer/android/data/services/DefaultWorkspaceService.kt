@@ -7,7 +7,6 @@ import com.billstracer.android.data.runtime.AndroidWorkspaceRuntime
 import com.billstracer.android.model.AppEnvironment
 import com.billstracer.android.model.ExportedParseBundleResult
 import com.billstracer.android.model.ImportedParseBundleResult
-import com.billstracer.android.model.ImportResult
 import com.billstracer.android.model.RecordDirectoryImportResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,10 +22,6 @@ internal class DefaultWorkspaceService(
     override suspend fun initializeEnvironment(): AppEnvironment {
         val workspace = runtime.initializeWorkspace()
         return AppEnvironment(
-            bundledSampleInputPath = workspace.bundledSampleInputPath,
-            bundledSampleLabel = workspace.bundledSampleSpec?.label,
-            bundledSampleYear = workspace.bundledSampleSpec?.year,
-            bundledSampleMonth = workspace.bundledSampleSpec?.month,
             configRoot = workspace.configRoot,
             recordsRoot = workspace.recordsRoot,
             dbFile = workspace.dbFile,
@@ -63,13 +58,6 @@ internal class DefaultWorkspaceService(
         } finally {
             tempRoot.deleteRecursively()
         }
-    }
-
-    override suspend fun importBundledSample(): ImportResult = withContext(Dispatchers.IO) {
-        val environment = initializeEnvironment()
-        WorkspaceNativeResultParser.parseImportResult(
-            BundledSampleImportSupport.importBundledSample(environment),
-        )
     }
 
     override suspend fun exportParseBundle(

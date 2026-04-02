@@ -4,13 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.billstracer.android.app.navigation.AppSessionBus
+import com.billstracer.android.app.navigation.WorkspaceDataChangeBus
+import com.billstracer.android.data.services.BackupService
 import com.billstracer.android.data.services.SettingsService
 import com.billstracer.android.model.BundledConfigFile
 import com.billstracer.android.model.BundledNotices
+import com.billstracer.android.model.ExportedBackupBundleResult
+import com.billstracer.android.model.ImportedBackupBundleResult
 import com.billstracer.android.model.ThemeColor
 import com.billstracer.android.model.ThemeMode
 import com.billstracer.android.model.ThemePreferences
 import com.billstracer.android.model.VersionInfo
+import android.net.Uri
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,12 +35,22 @@ data class SettingsUiState(
     val bundledNotices: BundledNotices? = null,
     val coreVersion: VersionInfo? = null,
     val androidVersion: VersionInfo? = null,
+    val lastExportedBackupResult: ExportedBackupBundleResult? = null,
+    val lastImportedBackupResult: ImportedBackupBundleResult? = null,
 )
 
 class SettingsViewModel(
     private val settingsService: SettingsService,
+    private val backupService: BackupService,
     private val sessionBus: AppSessionBus,
+    private val workspaceDataChangeBus: WorkspaceDataChangeBus,
 ) : ViewModel() {
+    private companion object {
+        const val validatorConfigFileName = "validator_config.toml"
+        const val modifierConfigFileName = "modifier_config.toml"
+        const val exportFormatsConfigFileName = "export_formats.toml"
+    }
+
     private val mutableState = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = mutableState.asStateFlow()
 
@@ -128,13 +143,18 @@ class SettingsViewModel(
     }
 
     fun saveSelectedConfig() {
-        val fileName = state.value.selectedConfigFileName
-        val rawText = state.value.configDrafts[fileName]
+        val currentState = state.value
+        val fileName = currentState.selectedConfigFileName
+        val rawText = currentState.configDrafts[fileName]
         if (fileName.isBlank() || rawText == null) {
             return
         }
+        val validatorText = resolveConfigDraftText(currentState, validatorConfigFileName) ?: return
+        val modifierText = resolveConfigDraftText(currentState, modifierConfigFileName) ?: return
+        val exportFormatsText =
+            resolveConfigDraftText(currentState, exportFormatsConfigFileName) ?: return
         viewModelScope.launch {
-            val pendingMessage = "Persisting $fileName into runtime_config..."
+            val pendingMessage = "Validating and persisting $fileName into runtime_config..."
             mutableState.update { current ->
                 current.copy(
                     isWorking = true,
@@ -143,6 +163,40 @@ class SettingsViewModel(
                 )
             }
             sessionBus.publishStatus(pendingMessage)
+            val validation = runCatching {
+                settingsService.validateBundledConfigs(
+                    validatorText = validatorText,
+                    modifierText = modifierText,
+                    exportFormatsText = exportFormatsText,
+                )
+            }
+            if (validation.isFailure) {
+                val message = validation.exceptionOrNull()?.message
+                    ?: "Failed to validate runtime_config TOML."
+                sessionBus.publishError(message, "Failed to validate runtime_config TOML.")
+                mutableState.update { current ->
+                    current.copy(
+                        isWorking = false,
+                        errorMessage = message,
+                        statusMessage = "Failed to validate runtime_config TOML.",
+                    )
+                }
+                return@launch
+            }
+
+            val validationResult = validation.getOrThrow()
+            if (!validationResult.ok) {
+                sessionBus.publishError(validationResult.message, "Config validation failed.")
+                mutableState.update { current ->
+                    current.copy(
+                        isWorking = false,
+                        errorMessage = validationResult.message,
+                        statusMessage = validationResult.message,
+                    )
+                }
+                return@launch
+            }
+
             runCatching { settingsService.updateBundledConfig(fileName, rawText) }
                 .onSuccess { updatedConfigs ->
                     val message = "Modified and persisted $fileName."
@@ -174,6 +228,10 @@ class SettingsViewModel(
                 }
         }
     }
+
+    private fun resolveConfigDraftText(state: SettingsUiState, fileName: String): String? =
+        state.configDrafts[fileName]
+            ?: state.bundledConfigs.firstOrNull { config -> config.fileName == fileName }?.rawText
 
     fun updateThemeModeDraft(mode: ThemeMode) {
         mutableState.update { current ->
@@ -234,6 +292,149 @@ class SettingsViewModel(
                             statusMessage = "Failed to persist theme settings.",
                         )
                     }
+            }
+        }
+    }
+
+    fun exportBackupBundle(targetDocumentUri: Uri) {
+        viewModelScope.launch {
+            val pendingMessage =
+                "Exporting a backup bundle from saved TXT records and migration configs..."
+            mutableState.update { current ->
+                current.copy(
+                    isWorking = true,
+                    errorMessage = null,
+                    statusMessage = pendingMessage,
+                )
+            }
+            sessionBus.publishStatus(pendingMessage)
+            runCatching { backupService.exportBackupBundle(targetDocumentUri) }
+                .onSuccess { result ->
+                    val message = when {
+                        result.exportedRecordFiles > 0 && result.exportedConfigFiles > 0 ->
+                            "Exported a backup bundle with ${result.exportedRecordFiles} TXT record file(s) and ${result.exportedConfigFiles} config file(s) to ${result.destinationDisplayPath}."
+                        result.exportedRecordFiles > 0 ->
+                            "Exported a backup bundle with ${result.exportedRecordFiles} TXT record file(s) to ${result.destinationDisplayPath}."
+                        result.exportedConfigFiles > 0 ->
+                            "Exported a backup bundle with ${result.exportedConfigFiles} config file(s) to ${result.destinationDisplayPath}."
+                        else ->
+                            "No TXT record files or config files were found for backup export."
+                    }
+                    sessionBus.publishStatus(message)
+                    mutableState.update { current ->
+                        current.copy(
+                            isWorking = false,
+                            lastExportedBackupResult = result,
+                            statusMessage = message,
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    val message = error.message ?: "Failed to export the backup bundle ZIP."
+                    sessionBus.publishError(message, "Failed to export the backup bundle ZIP.")
+                    mutableState.update { current ->
+                        current.copy(
+                            isWorking = false,
+                            errorMessage = message,
+                            statusMessage = "Failed to export the backup bundle ZIP.",
+                        )
+                    }
+                }
+        }
+    }
+
+    fun importBackupBundle(sourceDocumentUri: Uri) {
+        viewModelScope.launch {
+            val pendingMessage =
+                "Restoring a backup bundle into the private workspace and SQLite..."
+            mutableState.update { current ->
+                current.copy(
+                    isWorking = true,
+                    errorMessage = null,
+                    statusMessage = pendingMessage,
+                )
+            }
+            sessionBus.publishStatus(pendingMessage)
+            runCatching { backupService.importBackupBundle(sourceDocumentUri) }
+                .onSuccess { result ->
+                    val message = if (result.ok) {
+                        when {
+                            result.restoredRecordFiles > 0 && result.restoredConfigFiles > 0 ->
+                                "Restored ${result.restoredRecordFiles} TXT record file(s) and ${result.restoredConfigFiles} config file(s) from ${result.sourceDisplayPath}, and rebuilt SQLite."
+                            result.restoredRecordFiles > 0 ->
+                                "Restored ${result.restoredRecordFiles} TXT record file(s) from ${result.sourceDisplayPath}, and rebuilt SQLite."
+                            result.restoredConfigFiles > 0 ->
+                                "Restored ${result.restoredConfigFiles} config file(s) from ${result.sourceDisplayPath}, and rebuilt SQLite."
+                            else ->
+                                "Restored backup bundle from ${result.sourceDisplayPath}, and rebuilt SQLite."
+                        }
+                    } else {
+                        result.message
+                    }
+
+                    val updatedConfigs = if (result.ok) {
+                        val loadedConfigs = runCatching { settingsService.loadBundledConfigs() }
+                        if (loadedConfigs.isFailure) {
+                            val refreshError = loadedConfigs.exceptionOrNull()
+                            val refreshMessage =
+                                "Restored the backup bundle, but failed to refresh runtime_config."
+                            sessionBus.publishError(
+                                refreshError?.message ?: refreshMessage,
+                                refreshMessage,
+                            )
+                            mutableState.update { current ->
+                                current.copy(
+                                    isWorking = false,
+                                    lastImportedBackupResult = result,
+                                    errorMessage = refreshError?.message ?: refreshMessage,
+                                    statusMessage = refreshMessage,
+                                )
+                            }
+                            workspaceDataChangeBus.notifyChanged()
+                            return@onSuccess
+                        }
+                        loadedConfigs.getOrNull()
+                    } else {
+                        null
+                    }
+                    if (result.ok) {
+                        sessionBus.publishStatus(message)
+                    } else {
+                        sessionBus.publishError(result.message, message)
+                    }
+                    mutableState.update { current ->
+                        val selectedFileName = current.selectedConfigFileName
+                        val nextConfigs = updatedConfigs ?: current.bundledConfigs
+                        current.copy(
+                            isWorking = false,
+                            bundledConfigs = nextConfigs,
+                            selectedConfigFileName = selectedFileName
+                                .takeIf { fileName -> nextConfigs.any { it.fileName == fileName } }
+                                ?: nextConfigs.firstOrNull()?.fileName.orEmpty(),
+                            configDrafts = if (updatedConfigs != null) {
+                                updatedConfigs.associate { config -> config.fileName to config.rawText }
+                            } else {
+                                current.configDrafts
+                            },
+                            lastImportedBackupResult = result,
+                            errorMessage = if (result.ok) null else result.message,
+                            statusMessage = message,
+                        )
+                    }
+                    if (result.ok) {
+                        workspaceDataChangeBus.notifyChanged()
+                    }
+                }
+                .onFailure { error ->
+                    val message = error.message ?: "Failed to import the backup bundle ZIP."
+                    sessionBus.publishError(message, "Failed to import the backup bundle ZIP.")
+                    mutableState.update { current ->
+                        current.copy(
+                            isWorking = false,
+                            errorMessage = message,
+                            statusMessage = "Failed to import the backup bundle ZIP.",
+                        )
+                    }
                 }
         }
     }
@@ -241,11 +442,18 @@ class SettingsViewModel(
 
 class SettingsViewModelFactory(
     private val settingsService: SettingsService,
+    private val backupService: BackupService,
     private val sessionBus: AppSessionBus,
+    private val workspaceDataChangeBus: WorkspaceDataChangeBus,
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return SettingsViewModel(settingsService, sessionBus) as T
+        return SettingsViewModel(
+            settingsService = settingsService,
+            backupService = backupService,
+            sessionBus = sessionBus,
+            workspaceDataChangeBus = workspaceDataChangeBus,
+        ) as T
     }
 }
 

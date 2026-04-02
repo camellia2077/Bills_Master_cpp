@@ -24,7 +24,20 @@ internal object WorkspaceNativeBindings {
         outputZipPath: String,
     ): String
 
+    external fun exportBackupBundleNative(
+        configDir: String,
+        recordsDir: String,
+        outputZipPath: String,
+    ): String
+
     external fun importParseBundleNative(
+        bundleZipPath: String,
+        configDir: String,
+        recordsDir: String,
+        dbPath: String,
+    ): String
+
+    external fun importBackupBundleNative(
         bundleZipPath: String,
         configDir: String,
         recordsDir: String,

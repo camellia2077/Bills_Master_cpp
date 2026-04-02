@@ -40,12 +40,6 @@ add_library(bills_android_native SHARED
     settings_bridge.cpp
 )
 
-if(BILLS_ANDROID_ENABLE_BUNDLED_SAMPLE)
-    target_sources(bills_android_native PRIVATE
-        "${CMAKE_CURRENT_LIST_DIR}/../../debug/cpp/workspace_sample_bridge.cpp"
-    )
-endif()
-
 find_library(ANDROID_LIB android)
 find_library(LOG_LIB log)
 

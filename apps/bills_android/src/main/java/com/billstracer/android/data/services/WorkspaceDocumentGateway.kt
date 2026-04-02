@@ -35,6 +35,14 @@ internal class WorkspaceDocumentGateway(
         destinationFile: File,
         failureMessage: String,
     ) {
+        if (sourceUri.scheme == "file") {
+            val sourceFile = requireNotNull(sourceUri.path).let(::File)
+            require(sourceFile.isFile) { failureMessage }
+            sourceFile.inputStream().use { input ->
+                destinationFile.outputStream().use { output -> input.copyTo(output) }
+            }
+            return
+        }
         applicationContext.contentResolver.openInputStream(sourceUri)?.use { input ->
             destinationFile.outputStream().use { output -> input.copyTo(output) }
         } ?: error(failureMessage)
@@ -45,20 +53,36 @@ internal class WorkspaceDocumentGateway(
         targetUri: Uri,
         failureMessage: String,
     ) {
-        applicationContext.contentResolver.openOutputStream(targetUri, "wt")?.use { output ->
+        if (targetUri.scheme == "file") {
+            val targetFile = requireNotNull(targetUri.path).let(::File)
+            targetFile.parentFile?.mkdirs()
+            sourceFile.inputStream().use { input ->
+                targetFile.outputStream().use { output -> input.copyTo(output) }
+            }
+            return
+        }
+        applicationContext.contentResolver.openOutputStream(targetUri, "w")?.use { output ->
             sourceFile.inputStream().use { input -> input.copyTo(output) }
         } ?: error(failureMessage)
     }
 
     fun deleteSingleDocument(uri: Uri) {
+        if (uri.scheme == "file") {
+            uri.path?.let(::File)?.delete()
+            return
+        }
         DocumentFile.fromSingleUri(applicationContext, uri)?.delete()
     }
 
     fun displayPathForUri(uri: Uri, fallback: String): String =
-        DocumentFile.fromSingleUri(applicationContext, uri)
-            ?.name
-            ?.takeIf { it.isNotBlank() }
-            ?: fallback
+        if (uri.scheme == "file") {
+            uri.path?.let(::File)?.name?.takeIf { it.isNotBlank() } ?: fallback
+        } else {
+            DocumentFile.fromSingleUri(applicationContext, uri)
+                ?.name
+                ?.takeIf { it.isNotBlank() }
+                ?: fallback
+        }
 
     private fun loadFileSchemeTxtDocuments(sourceDirectoryUri: Uri): List<SourceTxtDocument> {
         val directoryPath = requireNotNull(sourceDirectoryUri.path) {

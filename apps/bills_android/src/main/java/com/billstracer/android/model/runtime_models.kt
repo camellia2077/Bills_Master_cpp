@@ -3,10 +3,6 @@ package com.billstracer.android.model
 import java.io.File
 
 data class AppEnvironment(
-    val bundledSampleInputPath: File? = null,
-    val bundledSampleLabel: String? = null,
-    val bundledSampleYear: String? = null,
-    val bundledSampleMonth: String? = null,
     val configRoot: File,
     val recordsRoot: File,
     val dbFile: File,
@@ -20,6 +16,46 @@ data class AppEnvironment(
 data class BundledConfigFile(
     val fileName: String,
     val rawText: String,
+)
+
+data class ConfigValidationIssue(
+    val sourceKind: String,
+    val stage: String,
+    val code: String,
+    val message: String,
+    val path: String,
+    val line: Int,
+    val column: Int,
+    val fieldPath: String,
+    val severity: String,
+)
+
+data class ConfigFileValidationResult(
+    val sourceKind: String,
+    val fileName: String,
+    val path: String,
+    val ok: Boolean,
+    val issues: List<ConfigValidationIssue>,
+)
+
+data class ConfigValidationReport(
+    val processed: Int,
+    val success: Int,
+    val failure: Int,
+    val allValid: Boolean,
+    val files: List<ConfigFileValidationResult>,
+    val enabledExportFormats: List<String>,
+    val availableExportFormats: List<String>,
+)
+
+data class ConfigTextsValidationResult(
+    val ok: Boolean,
+    val code: String,
+    val message: String,
+    val configValidation: ConfigValidationReport,
+    val enabledExportFormats: List<String>,
+    val availableExportFormats: List<String>,
+    val rawJson: String,
 )
 
 data class BundledNotices(

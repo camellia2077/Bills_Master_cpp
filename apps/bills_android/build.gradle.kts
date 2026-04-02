@@ -20,10 +20,6 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val bundledSampleRelativePath = "2025"
-val bundledSampleLabel = "2025 full-year sample"
-val bundledSampleYear = "2025"
-val bundledSampleMonth = "2025-01"
 val androidPresentationVersionCode = 3
 val androidPresentationVersionName = "0.1.3"
 
@@ -36,8 +32,6 @@ private object AndroidUiDependencyVersions {
 
 val generatedCommonAssetsDir = layout.buildDirectory.dir("generated/assets/common")
 val generatedCommonAssetsPath = generatedCommonAssetsDir.get().asFile
-val generatedDebugSampleAssetsDir = layout.buildDirectory.dir("generated/assets/debugSample")
-val generatedDebugSampleAssetsPath = generatedDebugSampleAssetsDir.get().asFile
 val distributedAndroidConfigDir = rootProject.layout.projectDirectory.dir("dist/config/android")
 val distributedAndroidNoticesDir = rootProject.layout.projectDirectory.dir("dist/notices/android")
 val noticesMetadataDir = layout.buildDirectory.dir("generated/noticesMetadata")
@@ -217,7 +211,6 @@ android {
                     "-DANDROID_STL=c++_shared",
                     "-DBILLS_ENABLE_MODULES=OFF",
                     "-DBILLS_CORE_BUILD_SHARED=OFF",
-                    "-DBILLS_ANDROID_ENABLE_BUNDLED_SAMPLE=ON",
                 )
                 cmakePathOrNull(localNlohmannJsonSourceDir)?.let { sourceDir ->
                     arguments += "-DFETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON=$sourceDir"
@@ -264,11 +257,6 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
-            externalNativeBuild {
-                cmake {
-                    arguments += "-DBILLS_ANDROID_ENABLE_BUNDLED_SAMPLE=OFF"
-                }
-            }
         }
     }
 
@@ -298,9 +286,6 @@ android {
 
     @Suppress("DEPRECATION")
     sourceSets["main"].assets.srcDir(generatedCommonAssetsPath)
-    @Suppress("DEPRECATION")
-    sourceSets["debug"].assets.srcDir(generatedDebugSampleAssetsPath)
-
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
@@ -393,21 +378,8 @@ val syncBundledCommonAssets by tasks.registering(Sync::class) {
     into(generatedCommonAssetsPath)
 }
 
-val syncBundledDebugSampleAssets by tasks.registering(Sync::class) {
-    from(rootProject.layout.projectDirectory.dir("testdata/bills/$bundledSampleRelativePath")) {
-        into("testdata/bills/$bundledSampleRelativePath")
-    }
-    into(generatedDebugSampleAssetsPath)
-}
-
 tasks.named("preBuild").configure {
     dependsOn(syncBundledCommonAssets)
-}
-
-tasks.configureEach {
-    if (name == "preDebugBuild") {
-        dependsOn(syncBundledDebugSampleAssets)
-    }
 }
 
 afterEvaluate {
