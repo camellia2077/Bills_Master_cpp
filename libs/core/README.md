@@ -17,5 +17,5 @@
 
 ## Quick Verify
 
-- `python tools/verify/verify.py core-dist`
-- `python tools/verify/verify.py module-mode-check`
+- `python tools/run.py verify core-dist`
+- `python tools/run.py verify module-mode-check`

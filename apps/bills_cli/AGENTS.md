@@ -24,5 +24,5 @@
 
 ## Verify
 
-- `python tools/verify/verify.py bills`
+- `python tools/run.py verify bills`
 - 如果只改文档，可跳过代码验证

@@ -22,5 +22,5 @@
 
 ## Verify
 
-- `python tools/verify/verify.py`
+- `python tools/run.py verify`
 - 纯文档改动可跳过代码验证

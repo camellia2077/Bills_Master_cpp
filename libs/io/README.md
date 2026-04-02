@@ -17,4 +17,4 @@
 
 ## Quick Verify
 
-- `python tools/verify/verify.py boundary-layer-check --stats`
+- `python tools/run.py verify boundary-layer-check --stats`

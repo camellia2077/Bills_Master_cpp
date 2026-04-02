@@ -22,7 +22,7 @@
 
 ## Verify
 
-- `python tools/verify/verify.py import-layer-check --stats`
-- `python tools/verify/verify.py report-consistency-gate`
-- `python tools/verify/verify.py core-dist`
-- `python tools/verify/verify.py module-mode-check`
+- `python tools/run.py verify import-layer-check --stats`
+- `python tools/run.py verify report-consistency-gate`
+- `python tools/run.py verify core-dist`
+- `python tools/run.py verify module-mode-check`

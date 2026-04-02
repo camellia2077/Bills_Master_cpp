@@ -17,4 +17,4 @@
 
 ## Quick Verify
 
-- `python tools/verify/verify.py bills`
+- `python tools/run.py verify bills`

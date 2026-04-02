@@ -23,5 +23,5 @@
 
 ## Verify
 
-- `python tools/verify/verify.py import-layer-check --stats`
-- `python tools/verify/verify.py boundary-layer-check --stats`
+- `python tools/run.py verify import-layer-check --stats`
+- `python tools/run.py verify boundary-layer-check --stats`
