@@ -1,13 +1,25 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
+
+
+def normalize_windows_path(path: Path | str) -> str:
+    value = str(path)
+    if not sys.platform.startswith("win"):
+        return value
+    if value.startswith("\\\\?\\UNC\\"):
+        return "\\\\" + value[len("\\\\?\\UNC\\") :]
+    if value.startswith("\\\\?\\"):
+        return value[len("\\\\?\\") :]
+    return value
 
 
 def display_path(path: Path | str, *, resolve: bool = False) -> str:
     candidate = Path(path)
     if resolve:
         candidate = candidate.resolve()
-    return str(candidate).replace("/", "\\")
+    return normalize_windows_path(candidate).replace("/", "\\")
 
 
 def display_path_from_repo(repo_root: Path, path: Path | str) -> str:

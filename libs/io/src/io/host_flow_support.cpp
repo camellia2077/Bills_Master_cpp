@@ -38,10 +38,17 @@ constexpr std::string_view kManifestPath = "manifest.json";
 constexpr std::string_view kConfigPrefix = "config/";
 constexpr std::string_view kRecordsPrefix = "records/";
 constexpr int kParseBundleVersion = 1;
+constexpr int kBackupBundleVersion = 1;
+constexpr std::string_view kParseBundleKind = "parse_bundle";
+constexpr std::string_view kBackupBundleKind = "backup_bundle";
 constexpr std::array<std::string_view, 3U> kConfigFileNames = {
     "validator_config.toml",
     "modifier_config.toml",
     "export_formats.toml",
+};
+constexpr std::array<std::string_view, 2U> kBackupConfigFileNames = {
+    "validator_config.toml",
+    "modifier_config.toml",
 };
 
 struct ConfigTexts {
@@ -59,6 +66,13 @@ struct ValidatedConfigTextContext {
 struct BundleArchiveContents {
   std::string manifest_text;
   ConfigTexts config_texts;
+  SourceDocumentBatch records;
+};
+
+struct BackupBundleArchiveContents {
+  std::string manifest_text;
+  std::string validator_text;
+  std::string modifier_text;
   SourceDocumentBatch records;
 };
 
@@ -173,12 +187,12 @@ auto BuildValidationError(const BillWorkflowBatchResult& result,
 }
 
 auto ValidateRecordDocuments(const SourceDocumentBatch& documents,
-                             const RuntimeConfigBundle& runtime_config)
+                             const RuntimeConfigBundle& runtime_config,
+                             std::string_view failure_prefix)
     -> Result<void> {
   const auto result = BillWorkflowService::Validate(documents, runtime_config);
   if (result.failure > 0U) {
-    return std::unexpected(BuildValidationError(
-        result, "TXT validation failed for parse bundle"));
+    return std::unexpected(BuildValidationError(result, failure_prefix));
   }
   return {};
 }
@@ -222,6 +236,13 @@ auto ValidateManifest(const std::string& manifest_text,
       return std::unexpected(
           MakeError("manifest.json must contain a JSON object.", kContext));
     }
+    if (manifest.contains("bundle_kind") &&
+        (!manifest["bundle_kind"].is_string() ||
+         manifest["bundle_kind"].get<std::string>() != kParseBundleKind)) {
+      return std::unexpected(MakeError(
+          "manifest.json bundle_kind must be parse_bundle when present.",
+          kContext));
+    }
     if (!manifest.contains("bundle_version") ||
         !manifest["bundle_version"].is_number_integer() ||
         manifest["bundle_version"].get<int>() != kParseBundleVersion) {
@@ -257,6 +278,78 @@ auto ValidateManifest(const std::string& manifest_text,
     if (config_files != expected) {
       return std::unexpected(MakeError(
           "manifest.json config_files must list the canonical TOML files.",
+          kContext));
+    }
+  } catch (const nlohmann::json::exception& error) {
+    return std::unexpected(MakeError(
+        "Failed to parse manifest.json: " + std::string(error.what()),
+        kContext));
+  }
+  return {};
+}
+
+auto BuildBackupManifestText(std::size_t record_count) -> std::string {
+  nlohmann::json manifest = {
+      {"bundle_kind", kBackupBundleKind},
+      {"bundle_version", kBackupBundleVersion},
+      {"exported_at", FormatLocalTimestamp("%Y-%m-%dT%H:%M:%S")},
+      {"record_count", record_count},
+      {"config_files",
+       {std::string(kBackupConfigFileNames[0]),
+        std::string(kBackupConfigFileNames[1])}},
+  };
+  return manifest.dump(2) + "\n";
+}
+
+auto ValidateBackupManifest(const std::string& manifest_text,
+                            std::size_t extracted_record_count) -> Result<void> {
+  try {
+    const nlohmann::json manifest = nlohmann::json::parse(manifest_text);
+    if (!manifest.is_object()) {
+      return std::unexpected(
+          MakeError("manifest.json must contain a JSON object.", kContext));
+    }
+    if (!manifest.contains("bundle_kind") || !manifest["bundle_kind"].is_string() ||
+        manifest["bundle_kind"].get<std::string>() != kBackupBundleKind) {
+      return std::unexpected(MakeError(
+          "manifest.json must contain bundle_kind=backup_bundle.", kContext));
+    }
+    if (!manifest.contains("bundle_version") ||
+        !manifest["bundle_version"].is_number_integer() ||
+        manifest["bundle_version"].get<int>() != kBackupBundleVersion) {
+      return std::unexpected(MakeError(
+          "manifest.json must contain bundle_version=1.", kContext));
+    }
+    if (!manifest.contains("record_count") ||
+        !manifest["record_count"].is_number_unsigned()) {
+      return std::unexpected(MakeError(
+          "manifest.json must contain an unsigned record_count.", kContext));
+    }
+    if (manifest["record_count"].get<std::size_t>() != extracted_record_count) {
+      return std::unexpected(MakeError(
+          "manifest.json record_count does not match archive contents.",
+          kContext));
+    }
+    if (!manifest.contains("config_files") || !manifest["config_files"].is_array()) {
+      return std::unexpected(MakeError(
+          "manifest.json must contain a config_files array.", kContext));
+    }
+    std::set<std::string> config_files;
+    for (const auto& item : manifest["config_files"]) {
+      if (!item.is_string()) {
+        return std::unexpected(MakeError(
+            "manifest.json config_files must contain strings.", kContext));
+      }
+      config_files.insert(item.get<std::string>());
+    }
+    const std::set<std::string> expected = {
+        std::string(kBackupConfigFileNames[0]),
+        std::string(kBackupConfigFileNames[1]),
+    };
+    if (config_files != expected) {
+      return std::unexpected(MakeError(
+          "manifest.json config_files must list validator_config.toml and "
+          "modifier_config.toml.",
           kContext));
     }
   } catch (const nlohmann::json::exception& error) {
@@ -364,6 +457,90 @@ auto LoadBundleArchiveContents(const std::filesystem::path& bundle_zip)
   return contents;
 }
 
+auto LoadBackupArchiveContents(const std::filesystem::path& bundle_zip)
+    -> Result<BackupBundleArchiveContents> {
+  const auto entries = ZipArchiveIo::ReadTextEntries(bundle_zip);
+  if (!entries) {
+    return std::unexpected(entries.error());
+  }
+
+  BackupBundleArchiveContents contents;
+  bool has_manifest = false;
+  bool has_validator = false;
+  bool has_modifier = false;
+
+  for (const auto& entry : *entries) {
+    if (entry.archive_path == kManifestPath) {
+      has_manifest = true;
+      contents.manifest_text = entry.text;
+      continue;
+    }
+
+    if (entry.archive_path.starts_with(kConfigPrefix)) {
+      const std::string relative_path =
+          entry.archive_path.substr(kConfigPrefix.size());
+      if (relative_path == kBackupConfigFileNames[0]) {
+        has_validator = true;
+        contents.validator_text = entry.text;
+        continue;
+      }
+      if (relative_path == kBackupConfigFileNames[1]) {
+        has_modifier = true;
+        contents.modifier_text = entry.text;
+        continue;
+      }
+      return std::unexpected(MakeError(
+          "Backup ZIP archive contains unsupported config entry: " +
+              entry.archive_path,
+          kContext));
+    }
+
+    if (entry.archive_path.starts_with(kRecordsPrefix)) {
+      const std::string relative_path =
+          entry.archive_path.substr(kRecordsPrefix.size());
+      if (relative_path.empty()) {
+        return std::unexpected(MakeError(
+            "Backup ZIP archive record path must not be empty.", kContext));
+      }
+      const std::filesystem::path record_path(relative_path);
+      if (!HasTxtExtension(record_path)) {
+        return std::unexpected(MakeError(
+            "Backup ZIP archive record entries must use the .txt extension: " +
+                entry.archive_path,
+            kContext));
+      }
+      contents.records.push_back(SourceDocument{
+          .display_path = std::filesystem::path(relative_path).generic_string(),
+          .text = entry.text,
+      });
+      continue;
+    }
+
+    return std::unexpected(MakeError(
+        "Backup ZIP archive contains unsupported top-level entry: " +
+            entry.archive_path,
+        kContext));
+  }
+
+  if (!has_manifest) {
+    return std::unexpected(
+        MakeError("Backup ZIP archive is missing manifest.json.", kContext));
+  }
+  if (!has_validator || !has_modifier) {
+    return std::unexpected(MakeError(
+        "Backup ZIP archive must contain validator_config.toml and "
+        "modifier_config.toml under config/.",
+        kContext));
+  }
+
+  const auto manifest_validation =
+      ValidateBackupManifest(contents.manifest_text, contents.records.size());
+  if (!manifest_validation) {
+    return std::unexpected(manifest_validation.error());
+  }
+  return contents;
+}
+
 auto BuildConfigDocumentsForWrite(const ConfigTexts& texts) -> SourceDocumentBatch {
   return SourceDocumentBatch{
       SourceDocument{.display_path = std::string(kConfigFileNames[0]),
@@ -372,6 +549,17 @@ auto BuildConfigDocumentsForWrite(const ConfigTexts& texts) -> SourceDocumentBat
                      .text = texts.modifier_text},
       SourceDocument{.display_path = std::string(kConfigFileNames[2]),
                      .text = texts.export_formats_text},
+  };
+}
+
+auto BuildBackupConfigDocumentsForWrite(std::string validator_text,
+                                        std::string modifier_text)
+    -> SourceDocumentBatch {
+  return SourceDocumentBatch{
+      SourceDocument{.display_path = std::string(kBackupConfigFileNames[0]),
+                     .text = std::move(validator_text)},
+      SourceDocument{.display_path = std::string(kBackupConfigFileNames[1]),
+                     .text = std::move(modifier_text)},
   };
 }
 
@@ -454,6 +642,66 @@ auto RestoreSnapshots(const std::filesystem::path& root_path,
   return {};
 }
 
+auto LoadWorkspaceRecordDocuments(const std::filesystem::path& records_root)
+    -> Result<SourceDocumentBatch> {
+  if (!std::filesystem::exists(records_root)) {
+    return SourceDocumentBatch{};
+  }
+  if (!std::filesystem::is_directory(records_root)) {
+    return std::unexpected(MakeError(
+        "Workspace records root must be a directory: " + records_root.string(),
+        kContext));
+  }
+  return SourceDocumentIo::LoadByExtensionRelative(records_root, ".txt");
+}
+
+auto MergeDocumentsByDisplayPath(const SourceDocumentBatch& first,
+                                 const SourceDocumentBatch& second)
+    -> SourceDocumentBatch {
+  SourceDocumentBatch merged;
+  std::set<std::string> seen_paths;
+  auto append_unique = [&](const SourceDocumentBatch& documents) {
+    for (const auto& document : documents) {
+      if (!seen_paths.insert(document.display_path).second) {
+        continue;
+      }
+      merged.push_back(document);
+    }
+  };
+  append_unique(first);
+  append_unique(second);
+  return merged;
+}
+
+auto RemoveTxtFilesRecursively(const std::filesystem::path& records_root) -> Result<void> {
+  if (!std::filesystem::exists(records_root)) {
+    return {};
+  }
+
+  std::vector<std::filesystem::path> files_to_remove;
+  for (const auto& entry : std::filesystem::recursive_directory_iterator(records_root)) {
+    if (!entry.is_regular_file()) {
+      continue;
+    }
+    if (!HasTxtExtension(entry.path())) {
+      continue;
+    }
+    files_to_remove.push_back(entry.path());
+  }
+
+  std::error_code error;
+  for (const auto& file_path : files_to_remove) {
+    std::filesystem::remove(file_path, error);
+    if (error) {
+      return std::unexpected(MakeError(
+          "Failed to remove TXT file during restore: " + file_path.string(),
+          kContext));
+    }
+    PruneEmptyDirectories(file_path, records_root);
+  }
+  return {};
+}
+
 auto ComposeImportError(std::string message, const Error& cause,
                         const std::optional<Error>& rollback_error = std::nullopt)
     -> Error {
@@ -504,6 +752,15 @@ auto WriteArchiveAtomically(const std::filesystem::path& output_zip,
 auto MakeImportParseBundleFailure(std::string phase, std::string message)
     -> ParseBundleImportResult {
   ParseBundleImportResult result;
+  result.ok = false;
+  result.message = std::move(message);
+  result.failed_phase = std::move(phase);
+  return result;
+}
+
+auto MakeImportBackupBundleFailure(std::string phase, std::string message)
+    -> BackupBundleImportResult {
+  BackupBundleImportResult result;
   result.ok = false;
   result.message = std::move(message);
   result.failed_phase = std::move(phase);
@@ -570,6 +827,69 @@ auto RemoveDatabaseFamily(const std::filesystem::path& db_path) -> void {
   std::filesystem::remove(db_path, error);
   std::filesystem::remove(db_path.string() + "-wal", error);
   std::filesystem::remove(db_path.string() + "-shm", error);
+}
+
+auto DatabaseFamilyPaths(const std::filesystem::path& db_path)
+    -> std::array<std::filesystem::path, 3U> {
+  return {db_path, db_path.string() + "-wal", db_path.string() + "-shm"};
+}
+
+auto MoveDatabaseFamily(const std::filesystem::path& from_path,
+                        const std::filesystem::path& to_path) -> Result<void> {
+  const auto from_family = DatabaseFamilyPaths(from_path);
+  const auto to_family = DatabaseFamilyPaths(to_path);
+  for (std::size_t index = 0U; index < from_family.size(); ++index) {
+    if (!std::filesystem::exists(from_family[index])) {
+      continue;
+    }
+    std::error_code rename_error;
+    std::filesystem::rename(from_family[index], to_family[index], rename_error);
+    if (rename_error) {
+      return std::unexpected(MakeError(
+          "Failed to move database artifact into place: " +
+              from_family[index].string() + " -> " + to_family[index].string(),
+          kContext));
+    }
+  }
+  return {};
+}
+
+auto PromoteStagedDatabaseFamily(const std::filesystem::path& staged_db_path,
+                                 const std::filesystem::path& target_db_path)
+    -> Result<void> {
+  const std::filesystem::path backup_db_path =
+      target_db_path.parent_path() /
+      (target_db_path.filename().string() + ".backup_prev");
+
+  RemoveDatabaseFamily(backup_db_path);
+  bool moved_existing_to_backup = false;
+  if (std::filesystem::exists(target_db_path) ||
+      std::filesystem::exists(target_db_path.string() + "-wal") ||
+      std::filesystem::exists(target_db_path.string() + "-shm")) {
+    const auto move_existing = MoveDatabaseFamily(target_db_path, backup_db_path);
+    if (!move_existing) {
+      RemoveDatabaseFamily(staged_db_path);
+      return std::unexpected(move_existing.error());
+    }
+    moved_existing_to_backup = true;
+  }
+
+  const auto promote_result = MoveDatabaseFamily(staged_db_path, target_db_path);
+  if (!promote_result) {
+    if (moved_existing_to_backup) {
+      const auto rollback_result = MoveDatabaseFamily(backup_db_path, target_db_path);
+      if (!rollback_result) {
+        return std::unexpected(MakeError(
+            FormatError(promote_result.error()) +
+                " | rollback_failed: " + FormatError(rollback_result.error()),
+            kContext));
+      }
+    }
+    return std::unexpected(promote_result.error());
+  }
+
+  RemoveDatabaseFamily(backup_db_path);
+  return {};
 }
 
 auto ResetLegacyDatabaseIfNeeded(const std::filesystem::path& db_path) -> bool {
@@ -1170,6 +1490,37 @@ auto InspectConfig(const std::filesystem::path& config_dir)
       .inspect = *inspect_result,
       .enabled_export_formats = validated_context->validated.report.enabled_export_formats,
       .available_export_formats = ReportExportService::ListAvailableFormats(),
+  };
+}
+
+auto ValidateConfigTexts(std::string_view validator_text,
+                         std::string_view modifier_text,
+                         std::string_view export_formats_text)
+    -> Result<HostConfigTextsValidationResult> {
+  const ConfigDocumentBundle documents = ConfigDocumentParser::ParseTexts(
+      std::string(validator_text), std::string(modifier_text),
+      std::string(export_formats_text),
+      std::string(kConfigPrefix) + std::string(kConfigFileNames[0]),
+      std::string(kConfigPrefix) + std::string(kConfigFileNames[1]),
+      std::string(kConfigPrefix) + std::string(kConfigFileNames[2]));
+  const auto validated = ConfigBundleService::Validate(documents);
+  if (!validated) {
+    const Error validation_error = MakeConfigValidationError(validated.error());
+    return HostConfigTextsValidationResult{
+        .ok = false,
+        .message = validation_error.message_,
+        .config_validation = validated.error(),
+        .enabled_export_formats = validated.error().enabled_export_formats,
+        .available_export_formats = validated.error().available_export_formats,
+    };
+  }
+
+  return HostConfigTextsValidationResult{
+      .ok = true,
+      .message = "Config texts are valid.",
+      .config_validation = validated->report,
+      .enabled_export_formats = validated->enabled_export_formats,
+      .available_export_formats = validated->available_export_formats,
   };
 }
 
@@ -1878,7 +2229,8 @@ auto ExportParseBundle(const std::filesystem::path& records_root,
     return std::unexpected(record_documents.error());
   }
   const auto validation_result = ValidateRecordDocuments(
-      *record_documents, config_context->validated.runtime_config);
+      *record_documents, config_context->validated.runtime_config,
+      "TXT validation failed for parse bundle");
   if (!validation_result) {
     return std::unexpected(validation_result.error());
   }
@@ -2043,6 +2395,269 @@ auto ImportParseBundle(const std::filesystem::path& bundle_zip,
       return result;
     }
     result.message = "Parse bundle import and SQLite ingest finished successfully.";
+  }
+
+  return result;
+}
+
+auto ExportBackupBundle(const std::filesystem::path& records_root,
+                        const std::filesystem::path& config_dir,
+                        const std::filesystem::path& output_zip)
+    -> Result<BackupBundleExportResult> {
+  if (!std::filesystem::exists(records_root) ||
+      !std::filesystem::is_directory(records_root)) {
+    return std::unexpected(MakeError(
+        "Export bundle records path must be an existing directory: " +
+            records_root.string(),
+        kContext));
+  }
+
+  const auto config_context = LoadValidatedConfigTextContext(config_dir);
+  if (!config_context) {
+    return std::unexpected(config_context.error());
+  }
+
+  const auto record_documents =
+      SourceDocumentIo::LoadByExtensionRelative(records_root, ".txt");
+  if (!record_documents) {
+    return std::unexpected(record_documents.error());
+  }
+  const auto validation_result = ValidateRecordDocuments(
+      *record_documents, config_context->validated.runtime_config,
+      "TXT validation failed for backup bundle");
+  if (!validation_result) {
+    return std::unexpected(validation_result.error());
+  }
+
+  std::vector<ZipArchiveTextEntry> archive_entries;
+  archive_entries.reserve(1U + kBackupConfigFileNames.size() +
+                          record_documents->size());
+  archive_entries.push_back(ZipArchiveTextEntry{
+      .archive_path = std::string(kManifestPath),
+      .text = BuildBackupManifestText(record_documents->size()),
+  });
+  archive_entries.push_back(ZipArchiveTextEntry{
+      .archive_path =
+          std::string(kConfigPrefix) + std::string(kBackupConfigFileNames[0]),
+      .text = config_context->texts.validator_text,
+  });
+  archive_entries.push_back(ZipArchiveTextEntry{
+      .archive_path =
+          std::string(kConfigPrefix) + std::string(kBackupConfigFileNames[1]),
+      .text = config_context->texts.modifier_text,
+  });
+  for (const auto& document : *record_documents) {
+    archive_entries.push_back(ZipArchiveTextEntry{
+        .archive_path = std::string(kRecordsPrefix) +
+                        std::filesystem::path(document.display_path).generic_string(),
+        .text = document.text,
+    });
+  }
+
+  const auto write_result = WriteArchiveAtomically(output_zip, archive_entries);
+  if (!write_result) {
+    return std::unexpected(write_result.error());
+  }
+
+  return BackupBundleExportResult{
+      .exported_record_files = record_documents->size(),
+      .exported_config_files = kBackupConfigFileNames.size(),
+  };
+}
+
+auto ImportBackupBundle(const std::filesystem::path& bundle_zip,
+                        const std::filesystem::path& config_dir,
+                        const std::filesystem::path& records_root,
+                        std::optional<std::filesystem::path> db_path)
+    -> Result<BackupBundleImportResult> {
+  BackupBundleImportResult result;
+  result.message = "Backup bundle restore finished.";
+
+  const auto archive_contents = LoadBackupArchiveContents(bundle_zip);
+  if (!archive_contents) {
+    return MakeImportBackupBundleFailure("load_bundle",
+                                         FormatError(archive_contents.error()));
+  }
+
+  const auto current_config_texts = ReadConfigTextsFromDirectory(config_dir);
+  if (!current_config_texts) {
+    return MakeImportBackupBundleFailure(
+        "load_current_config", FormatError(current_config_texts.error()));
+  }
+
+  ConfigTexts merged_config_texts = *current_config_texts;
+  merged_config_texts.validator_text = archive_contents->validator_text;
+  merged_config_texts.modifier_text = archive_contents->modifier_text;
+  const auto imported_config_context = ParseAndValidateConfigTexts(
+      std::move(merged_config_texts),
+      std::string(kConfigPrefix) + std::string(kBackupConfigFileNames[0]),
+      std::string(kConfigPrefix) + std::string(kBackupConfigFileNames[1]),
+      (config_dir / kConfigFileNames[2]).string());
+  if (!imported_config_context) {
+    result = MakeImportBackupBundleFailure(
+        "validate_config", FormatError(imported_config_context.error()));
+    return result;
+  }
+  result.config_validation = imported_config_context->validated.report;
+
+  result.record_validation = BillWorkflowService::Validate(
+      archive_contents->records, imported_config_context->validated.runtime_config);
+  if (result.record_validation.failure > 0U) {
+    const auto validation_result = result.record_validation;
+    result = MakeImportBackupBundleFailure(
+        "validate_records",
+        BuildValidationError(validation_result,
+                             "TXT validation failed for backup bundle")
+            .message_);
+    result.config_validation = imported_config_context->validated.report;
+    result.record_validation = validation_result;
+    return result;
+  }
+
+  const SourceDocumentBatch config_documents = BuildBackupConfigDocumentsForWrite(
+      archive_contents->validator_text, archive_contents->modifier_text);
+  const auto existing_record_documents = LoadWorkspaceRecordDocuments(records_root);
+  if (!existing_record_documents) {
+    return std::unexpected(existing_record_documents.error());
+  }
+  const auto record_snapshot_targets =
+      MergeDocumentsByDisplayPath(*existing_record_documents, archive_contents->records);
+  const auto config_snapshots = CaptureSnapshots(config_dir, config_documents);
+  if (!config_snapshots) {
+    return std::unexpected(config_snapshots.error());
+  }
+  const auto record_snapshots = CaptureSnapshots(records_root, record_snapshot_targets);
+  if (!record_snapshots) {
+    return std::unexpected(record_snapshots.error());
+  }
+
+  for (const auto& document : config_documents) {
+    const auto write_result = SourceDocumentIo::WriteText(
+        config_dir / std::filesystem::path(document.display_path), document.text);
+    if (!write_result) {
+      const auto rollback_result = RestoreSnapshots(config_dir, *config_snapshots);
+      const auto failure = ComposeImportError(
+          "Failed to apply restored config files", write_result.error(),
+          rollback_result ? std::nullopt
+                          : std::optional<Error>(rollback_result.error()));
+      result = MakeImportBackupBundleFailure("write_config", FormatError(failure));
+      result.config_validation = imported_config_context->validated.report;
+      result.record_validation = result.record_validation;
+      return result;
+    }
+  }
+
+  const auto remove_existing_records = RemoveTxtFilesRecursively(records_root);
+  if (!remove_existing_records) {
+    const auto records_rollback = RestoreSnapshots(records_root, *record_snapshots);
+    const auto config_rollback = RestoreSnapshots(config_dir, *config_snapshots);
+    std::optional<Error> rollback_error;
+    if (!records_rollback) {
+      rollback_error = records_rollback.error();
+    } else if (!config_rollback) {
+      rollback_error = config_rollback.error();
+    }
+    const auto failure = ComposeImportError(
+        "Failed to clear existing TXT files before restore",
+        remove_existing_records.error(),
+        rollback_error);
+    result = MakeImportBackupBundleFailure("clear_records", FormatError(failure));
+    result.config_validation = imported_config_context->validated.report;
+    return result;
+  }
+
+  for (const auto& document : archive_contents->records) {
+    const auto write_result = SourceDocumentIo::WriteText(
+        records_root / std::filesystem::path(document.display_path), document.text);
+    if (!write_result) {
+      const auto records_rollback = RestoreSnapshots(records_root, *record_snapshots);
+      const auto config_rollback = RestoreSnapshots(config_dir, *config_snapshots);
+      std::optional<Error> rollback_error;
+      if (!records_rollback) {
+        rollback_error = records_rollback.error();
+      } else if (!config_rollback) {
+        rollback_error = config_rollback.error();
+      }
+      const auto failure = ComposeImportError(
+          "Failed to apply restored TXT files", write_result.error(),
+          rollback_error);
+      result = MakeImportBackupBundleFailure("write_records", FormatError(failure));
+      result.config_validation = imported_config_context->validated.report;
+      return result;
+    }
+  }
+
+  result.restored_record_files = archive_contents->records.size();
+  result.restored_config_files = kBackupConfigFileNames.size();
+
+  if (db_path.has_value()) {
+    const std::filesystem::path staged_db_path =
+        db_path->parent_path() / (db_path->filename().string() + ".backup_restore");
+    RemoveDatabaseFamily(staged_db_path);
+
+    const auto staged_db_import_result = IngestDocuments(records_root, config_dir,
+                                                         staged_db_path, false);
+    if (!staged_db_import_result) {
+      const auto records_rollback = RestoreSnapshots(records_root, *record_snapshots);
+      const auto config_rollback = RestoreSnapshots(config_dir, *config_snapshots);
+      std::optional<Error> rollback_error;
+      if (!records_rollback) {
+        rollback_error = records_rollback.error();
+      } else if (!config_rollback) {
+        rollback_error = config_rollback.error();
+      }
+      const auto failure = ComposeImportError(
+          "Failed to rebuild SQLite from restored TXT files",
+          staged_db_import_result.error(), rollback_error);
+      RemoveDatabaseFamily(staged_db_path);
+      result = MakeImportBackupBundleFailure("rebuild_database", FormatError(failure));
+      result.config_validation = imported_config_context->validated.report;
+      return result;
+    }
+    result.db_ingest = *staged_db_import_result;
+    result.restored_bills = staged_db_import_result->success;
+    if (staged_db_import_result->failure > 0U) {
+      const auto records_rollback = RestoreSnapshots(records_root, *record_snapshots);
+      const auto config_rollback = RestoreSnapshots(config_dir, *config_snapshots);
+      std::optional<Error> rollback_error;
+      if (!records_rollback) {
+        rollback_error = records_rollback.error();
+      } else if (!config_rollback) {
+        rollback_error = config_rollback.error();
+      }
+      const auto failure = ComposeImportError(
+          "Database rebuild failed after backup restore",
+          BuildValidationError(*staged_db_import_result,
+                               "Database rebuild failed after backup restore"),
+          rollback_error);
+      RemoveDatabaseFamily(staged_db_path);
+      result = MakeImportBackupBundleFailure("rebuild_database", FormatError(failure));
+      result.config_validation = imported_config_context->validated.report;
+      result.record_validation = result.record_validation;
+      result.db_ingest = *staged_db_import_result;
+      return result;
+    }
+
+    const auto promote_result = PromoteStagedDatabaseFamily(staged_db_path, *db_path);
+    if (!promote_result) {
+      const auto records_rollback = RestoreSnapshots(records_root, *record_snapshots);
+      const auto config_rollback = RestoreSnapshots(config_dir, *config_snapshots);
+      std::optional<Error> rollback_error;
+      if (!records_rollback) {
+        rollback_error = records_rollback.error();
+      } else if (!config_rollback) {
+        rollback_error = config_rollback.error();
+      }
+      const auto failure = ComposeImportError(
+          "Failed to promote rebuilt SQLite into place", promote_result.error(),
+          rollback_error);
+      RemoveDatabaseFamily(staged_db_path);
+      result = MakeImportBackupBundleFailure("promote_database", FormatError(failure));
+      result.config_validation = imported_config_context->validated.report;
+      result.db_ingest = *staged_db_import_result;
+      return result;
+    }
+    result.message = "Backup bundle restore and SQLite rebuild finished successfully.";
   }
 
   return result;

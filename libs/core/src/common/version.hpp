@@ -5,8 +5,8 @@
 #include <string_view>
 
 namespace bills::core::version {
-inline constexpr std::string_view kVersion = "0.4.2";
-inline constexpr std::string_view kLastUpdated = "2026-03-21";
+inline constexpr std::string_view kVersion = "0.4.4";
+inline constexpr std::string_view kLastUpdated = "2026-04-01";
 }  // namespace bills::core::version
 
 #endif  // COMMON_VERSION_H_

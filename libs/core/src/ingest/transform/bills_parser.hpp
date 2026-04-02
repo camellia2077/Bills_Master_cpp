@@ -31,10 +31,14 @@ class BillParser {
   static bool _is_parent_title(const std::string& line);
   static bool _is_title(const std::string& line);
   static std::string& _trim(std::string& text);
-  static void _parse_content_line(const std::string& line, double& amount,
+  static double _evaluate_amount_expression(const std::string& parent_category,
+                                            const std::string& math_expr);
+  static void _parse_content_line(const std::string& parent_category,
+                                  const std::string& line, double& amount,
                                   std::string& description,
                                   std::string& comment);
   static double _get_numeric_value_from_content(
+      const std::string& parent_category,
       const std::string& content_line);
 };
 

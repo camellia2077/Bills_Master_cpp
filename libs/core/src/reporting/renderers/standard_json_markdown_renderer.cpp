@@ -34,6 +34,16 @@ auto SortedMonthlyCategories(const StandardReport& report)
   return categories;
 }
 
+auto RenderMonthlyRemark(const std::string& remark) -> std::string {
+  const auto lines = render_support::SplitRemarkLinesOrDash(remark);
+  std::ostringstream output;
+  output << "- 备注: " << lines.front();
+  for (std::size_t index = 1U; index < lines.size(); ++index) {
+    output << "\n  " << lines[index];
+  }
+  return output.str();
+}
+
 auto RenderMonthly(const StandardReport& report) -> std::string {
   const std::string kPeriodLabel =
       render_support::FormatMonthlyPeriodLabel(report.period_start);
@@ -51,8 +61,7 @@ auto RenderMonthly(const StandardReport& report) -> std::string {
   output << "- 收入: CNY" << report.total_income << "\n";
   output << "- 支出: CNY" << report.total_expense << "\n";
   output << "- 结余: CNY" << report.balance << "\n";
-  output << "- 备注: "
-         << render_support::MonthlyRemarkOrDash(report.remark) << "\n";
+  output << RenderMonthlyRemark(report.remark) << "\n";
 
   for (const auto& category : categories) {
     const double kParentPct =

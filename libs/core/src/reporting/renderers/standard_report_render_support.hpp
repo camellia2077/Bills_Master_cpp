@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cctype>
 #include <string>
+#include <vector>
 
 namespace bills::core::reporting::render_support {
 
@@ -45,7 +47,33 @@ inline auto ParsePeriodMonth(const std::string& period_start, int& year, int& mo
 }
 
 inline auto MonthlyRemarkOrDash(const std::string& remark) -> std::string {
-  return remark.empty() ? "-" : remark;
+  for (const char ch : remark) {
+    if (!std::isspace(static_cast<unsigned char>(ch))) {
+      return remark;
+    }
+  }
+  return "-";
+}
+
+inline auto SplitRemarkLinesOrDash(const std::string& remark)
+    -> std::vector<std::string> {
+  const std::string normalized_remark = MonthlyRemarkOrDash(remark);
+  std::vector<std::string> lines;
+  std::string current_line;
+
+  for (const char ch : normalized_remark) {
+    if (ch == '\n') {
+      lines.push_back(current_line);
+      current_line.clear();
+      continue;
+    }
+    if (ch != '\r') {
+      current_line.push_back(ch);
+    }
+  }
+
+  lines.push_back(current_line);
+  return lines;
 }
 
 inline auto MonthlyTitleText(const std::string& period_start) -> std::string {

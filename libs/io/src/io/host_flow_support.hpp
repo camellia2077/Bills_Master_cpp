@@ -40,6 +40,23 @@ struct ParseBundleImportResult {
   BillWorkflowBatchResult db_ingest;
 };
 
+struct BackupBundleExportResult {
+  std::size_t exported_record_files = 0U;
+  std::size_t exported_config_files = 0U;
+};
+
+struct BackupBundleImportResult {
+  bool ok = true;
+  std::string message;
+  std::string failed_phase;
+  std::size_t restored_record_files = 0U;
+  std::size_t restored_config_files = 0U;
+  std::size_t restored_bills = 0U;
+  ConfigBundleValidationReport config_validation;
+  BillWorkflowBatchResult record_validation;
+  BillWorkflowBatchResult db_ingest;
+};
+
 struct HostDatabaseIngestResult {
   bool database_reset = false;
   BillWorkflowBatchResult ingest;
@@ -72,6 +89,14 @@ struct HostRecordDatabaseSyncResult {
 
 struct HostConfigInspectionResult {
   ConfigInspectResult inspect;
+  std::vector<std::string> enabled_export_formats;
+  std::vector<std::string> available_export_formats;
+};
+
+struct HostConfigTextsValidationResult {
+  bool ok = false;
+  std::string message;
+  ConfigBundleValidationReport config_validation;
   std::vector<std::string> enabled_export_formats;
   std::vector<std::string> available_export_formats;
 };
@@ -132,6 +157,11 @@ struct HostReportExportResult {
 
 [[nodiscard]] auto InspectConfig(const std::filesystem::path& config_dir)
     -> Result<HostConfigInspectionResult>;
+
+[[nodiscard]] auto ValidateConfigTexts(
+    std::string_view validator_text, std::string_view modifier_text,
+    std::string_view export_formats_text)
+    -> Result<HostConfigTextsValidationResult>;
 
 [[nodiscard]] auto GenerateTemplatesFromConfig(
     const std::filesystem::path& config_dir,
@@ -233,6 +263,17 @@ struct HostReportExportResult {
                                      const std::filesystem::path& records_root,
                                      std::optional<std::filesystem::path> db_path = std::nullopt)
     -> Result<ParseBundleImportResult>;
+
+[[nodiscard]] auto ExportBackupBundle(const std::filesystem::path& records_root,
+                                      const std::filesystem::path& config_dir,
+                                      const std::filesystem::path& output_zip)
+    -> Result<BackupBundleExportResult>;
+
+[[nodiscard]] auto ImportBackupBundle(const std::filesystem::path& bundle_zip,
+                                      const std::filesystem::path& config_dir,
+                                      const std::filesystem::path& records_root,
+                                      std::optional<std::filesystem::path> db_path = std::nullopt)
+    -> Result<BackupBundleImportResult>;
 
 [[nodiscard]] auto WriteTemplateFiles(
     const std::filesystem::path& output_dir,
