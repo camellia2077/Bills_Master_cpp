@@ -31,13 +31,32 @@ internal fun EditorScreen(
     onScreenShown: () -> Unit,
     onSelectExistingRecordYear: (String) -> Unit,
     onSelectExistingRecordMonth: (String) -> Unit,
-    onSaveRecord: () -> Unit,
+    onSaveStructuredRecord: () -> Unit,
     onSaveRawRecordText: (String) -> Unit,
     onRecordDraftChange: (String) -> Unit,
+    onStructuredRemarkChange: (String) -> Unit,
+    onAddStructuredEntry: (String, String) -> Unit,
+    onRemoveStructuredEntry: (String, String, String) -> Unit,
+    onStructuredEntryAmountChange: (String, String, String, String) -> Unit,
+    onStructuredEntryDescriptionChange: (String, String, String, String) -> Unit,
+    onStructuredEntryCommentChange: (String, String, String, String) -> Unit,
+    onEnterRawExpertMode: () -> Unit,
+    onReturnToStructuredMode: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val activeRecord = state.activeRecordDocument
-    val hasUnsavedChanges = activeRecord != null && state.recordDraftText != activeRecord.rawText
+    val structuredBaseline = activeRecord?.structuredDocument?.toEditorStructuredDraft()
+    val hasStructuredChanges = state.structuredDraft != null &&
+        structuredBaseline != null &&
+        state.structuredDraft != structuredBaseline
+    val hasRawChanges = activeRecord != null && state.recordDraftText != activeRecord.rawText
+    val hasUnsavedChanges = when (state.editorMode) {
+        EditorMode.Structured -> hasStructuredChanges
+        EditorMode.RawExpert -> hasRawChanges
+    }
+    val saveEnabled = !state.isWorking && hasUnsavedChanges &&
+        (state.editorMode == EditorMode.RawExpert || !state.hasIncompleteEntries)
+
     val existingYears = state.persistedRecordPeriods
         .mapNotNull { period -> period.substringBefore('-').takeIf { it.length == 4 } }
         .distinct()
@@ -178,52 +197,86 @@ internal fun EditorScreen(
                 )
             }
         }
+
         if (activeRecord == null) {
             Text(
                 text = "Current month will open automatically once the available periods finish loading.",
                 style = MaterialTheme.typography.bodyMedium,
                 fontFamily = FontFamily.Monospace,
             )
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = "Editing persisted TXT source: ${activeRecord.relativePath}",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontFamily = FontFamily.Monospace,
-                    modifier = Modifier.weight(1f),
-                )
-                Button(
-                    onClick = onSaveRecord,
-                    enabled = !state.isWorking && hasUnsavedChanges,
-                    modifier = Modifier
-                        .padding(start = 12.dp)
-                        .testTag("editor_save_button"),
-                ) {
-                    Text(
-                        text = "✓",
-                        fontFamily = FontFamily.Monospace,
-                    )
-                }
-            }
+            return@PaneContent
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
             Text(
-                text = if (hasUnsavedChanges) {
-                    "Draft changes are local until you press Save Record."
-                } else {
-                    "Editor is synced with the currently opened TXT source."
-                },
+                text = "Editing persisted TXT source: ${activeRecord.relativePath}",
                 style = MaterialTheme.typography.bodySmall,
                 fontFamily = FontFamily.Monospace,
+                modifier = Modifier.weight(1f),
             )
+            Button(
+                onClick = {
+                    if (state.editorMode == EditorMode.Structured) {
+                        onSaveStructuredRecord()
+                    } else {
+                        onSaveRawRecordText(state.recordDraftText)
+                    }
+                },
+                enabled = saveEnabled,
+                modifier = Modifier
+                    .padding(start = 12.dp)
+                    .testTag("editor_save_button"),
+            ) {
+                Text(
+                    text = "✓",
+                    fontFamily = FontFamily.Monospace,
+                )
+            }
+        }
+
+        val syncMessage = when {
+            state.editorMode == EditorMode.Structured && state.hasIncompleteEntries ->
+                "Complete or delete unfinished entries before saving."
+            hasUnsavedChanges && state.editorMode == EditorMode.Structured ->
+                "Structured draft changes are local until you press Save Record."
+            hasUnsavedChanges && state.editorMode == EditorMode.RawExpert ->
+                "Raw TXT edits are local until you press Save Record."
+            state.editorMode == EditorMode.RawExpert ->
+                "Expert Raw TXT mode is active."
+            else ->
+                "Editor is synced with the currently opened TXT source."
+        }
+        Text(
+            text = syncMessage,
+            style = MaterialTheme.typography.bodySmall,
+            fontFamily = FontFamily.Monospace,
+        )
+
+        if (state.editorMode == EditorMode.Structured && state.structuredDraft != null) {
             EditorStructuredSectionContent(
                 documentKey = activeRecord.relativePath,
-                rawText = state.recordDraftText,
-                persistedRawText = activeRecord.rawText,
+                draft = state.structuredDraft,
+                hasIncompleteEntries = state.hasIncompleteEntries,
                 isWorking = state.isWorking,
+                onRemarkChange = onStructuredRemarkChange,
+                onAddEntry = onAddStructuredEntry,
+                onRemoveEntry = onRemoveStructuredEntry,
+                onEntryAmountChange = onStructuredEntryAmountChange,
+                onEntryDescriptionChange = onStructuredEntryDescriptionChange,
+                onEntryCommentChange = onStructuredEntryCommentChange,
+                onEnterRawExpertMode = onEnterRawExpertMode,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        } else {
+            EditorRawExpertContent(
+                rawText = state.recordDraftText,
+                fallbackReason = activeRecord.rawFallbackReason,
+                canReturnToStructured = activeRecord.structuredDocument != null,
                 onRawTextChange = onRecordDraftChange,
-                onCommitRawText = onSaveRawRecordText,
+                onReturnToStructured = onReturnToStructuredMode,
                 modifier = Modifier.fillMaxWidth(),
             )
         }

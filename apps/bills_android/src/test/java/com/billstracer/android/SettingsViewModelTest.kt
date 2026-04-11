@@ -172,7 +172,7 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            "Exported a backup bundle with 1 TXT record file(s) and 2 config file(s) to bills_backup.zip.",
+            "Exported a backup bundle with 1 TXT record file(s) and 3 config file(s) to bills_backup.zip.",
             viewModel.state.value.statusMessage,
         )
         assertEquals("bills_backup.zip", viewModel.state.value.lastExportedBackupResult?.destinationDisplayPath)
@@ -185,7 +185,7 @@ class SettingsViewModelTest {
         val backupService = FakeBackupService().apply {
             importedResult = importedResult.copy(
                 restoredRecordFiles = 2,
-                restoredConfigFiles = 2,
+                restoredConfigFiles = 3,
                 sourceDisplayPath = "phone_backup.zip",
             )
         }
@@ -202,10 +202,29 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            "Restored 2 TXT record file(s) and 2 config file(s) from phone_backup.zip, and rebuilt SQLite.",
+            "Restored 2 TXT record file(s) and 3 config file(s) from phone_backup.zip, and rebuilt SQLite.",
             viewModel.state.value.statusMessage,
         )
         assertEquals("validator = true\n", viewModel.state.value.configDrafts["validator_config.toml"])
         assertEquals(1, workspaceDataChangeBus.version.value)
+    }
+
+    @Test
+    fun workspaceDataChangeRefreshesConfigDraftsWhenConfigsChangedExternally() = runTest {
+        val settingsService = FakeSettingsService()
+        val workspaceDataChangeBus = WorkspaceDataChangeBus()
+        val viewModel = SettingsViewModel(
+            settingsService = settingsService,
+            backupService = FakeBackupService(),
+            sessionBus = AppSessionBus(),
+            workspaceDataChangeBus = workspaceDataChangeBus,
+        )
+        advanceUntilIdle()
+
+        settingsService.savedConfigs["validator_config.toml"] = "validator = replaced\n"
+        workspaceDataChangeBus.notifyChanged()
+        advanceUntilIdle()
+
+        assertEquals("validator = replaced\n", viewModel.state.value.configDrafts["validator_config.toml"])
     }
 }

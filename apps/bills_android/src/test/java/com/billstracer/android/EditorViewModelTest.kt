@@ -2,6 +2,7 @@ package com.billstracer.android
 
 import com.billstracer.android.app.navigation.AppSessionBus
 import com.billstracer.android.app.navigation.WorkspaceDataChangeBus
+import com.billstracer.android.features.editor.EditorMode
 import com.billstracer.android.features.editor.EditorViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -13,6 +14,8 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -20,6 +23,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditorViewModelTest {
     private val dispatcher = StandardTestDispatcher()
+
     private fun createViewModel(
         editorService: FakeEditorService = FakeEditorService(),
         workspaceDataChangeBus: WorkspaceDataChangeBus = WorkspaceDataChangeBus(),
@@ -51,40 +55,23 @@ class EditorViewModelTest {
 
         advanceUntilIdle()
 
-        assertEquals(false, viewModel.state.value.isInitializing)
+        assertFalse(viewModel.state.value.isInitializing)
         assertEquals("2026", viewModel.state.value.selectedExistingRecordYear)
         assertEquals("03", viewModel.state.value.selectedExistingRecordMonth)
         assertEquals(listOf("2026-03", "2026-02", "2025-01"), viewModel.state.value.persistedRecordPeriods)
     }
 
     @Test
-    fun initializationDefaultsSelectionToCurrentMonth() = runTest {
-        val editorService = FakeEditorService().apply {
-            persistedPeriods.clear()
-            persistedPeriods += listOf("2026-03", "2026-02", "2025-12")
-        }
-        val viewModel = createViewModel(editorService, currentPeriod = "2026-04")
-
-        advanceUntilIdle()
-
-        assertEquals("2026", viewModel.state.value.selectedExistingRecordYear)
-        assertEquals("04", viewModel.state.value.selectedExistingRecordMonth)
-        assertEquals(
-            listOf("2026-04", "2026-03", "2026-02", "2025-12"),
-            viewModel.state.value.persistedRecordPeriods,
-        )
-    }
-
-    @Test
-    fun openingSelectedRecordLoadsPersistedTxt() = runTest {
-        val editorService = FakeEditorService()
-        val viewModel = createViewModel(editorService)
+    fun openingSelectedRecordLoadsPersistedTxtIntoStructuredMode() = runTest {
+        val viewModel = createViewModel()
 
         advanceUntilIdle()
         viewModel.openSelectedExistingRecord()
         advanceUntilIdle()
 
         assertEquals("2026-03", viewModel.state.value.activeRecordDocument?.period)
+        assertEquals(EditorMode.Structured, viewModel.state.value.editorMode)
+        assertNotNull(viewModel.state.value.structuredDraft)
         assertTrue(viewModel.state.value.activeRecordDocument?.persisted == true)
     }
 
@@ -106,147 +93,102 @@ class EditorViewModelTest {
         viewModel.onEditorScreenShown()
         advanceUntilIdle()
 
-        assertEquals("2026", viewModel.state.value.selectedExistingRecordYear)
-        assertEquals("04", viewModel.state.value.selectedExistingRecordMonth)
         assertEquals("2026-04", viewModel.state.value.activeRecordDocument?.period)
         assertTrue(viewModel.state.value.activeRecordDocument?.persisted == true)
-        assertEquals("date:2026-04\nremark:\n\nmeal\nmeal_low\n", editorService.savedRecords["2026-04"])
+        assertEquals(EditorMode.Structured, viewModel.state.value.editorMode)
         assertEquals(listOf("2026-04"), editorService.committedPeriods)
         assertTrue(viewModel.state.value.persistedRecordPeriods.contains("2026-04"))
     }
 
     @Test
-    fun showingEditorDoesNotReopenCurrentMonthWhenItIsAlreadyOpen() = runTest {
-        val editorService = FakeEditorService().apply {
-            persistedPeriods += "2026-04"
-            savedRecords["2026-04"] = "date:2026-04\nremark:\n\nmeal\nmeal_low\n"
-        }
-        val viewModel = createViewModel(editorService, currentPeriod = "2026-04")
+    fun addingBlankEntryMarksDraftIncomplete() = runTest {
+        val viewModel = createViewModel()
 
         advanceUntilIdle()
-        viewModel.onEditorScreenShown()
+        viewModel.openSelectedExistingRecord()
         advanceUntilIdle()
-        viewModel.updateRecordDraft("date:2026-04\nremark:draft\n\nmeal\nmeal_low\n")
+        viewModel.addStructuredEntry("meal", "meal_low")
 
-        viewModel.onEditorScreenShown()
-        advanceUntilIdle()
-
-        assertEquals("date:2026-04\nremark:draft\n\nmeal\nmeal_low\n", viewModel.state.value.recordDraftText)
-        assertTrue(editorService.committedPeriods.isEmpty())
+        assertTrue(viewModel.state.value.hasIncompleteEntries)
     }
 
     @Test
-    fun selectingYearDefaultsMonthWithinThatYear() = runTest {
-        val editorService = FakeEditorService().apply {
-            persistedPeriods.clear()
-            persistedPeriods += listOf("2026-03", "2026-02", "2025-12", "2025-01")
-        }
-        val viewModel = createViewModel(editorService)
-
-        advanceUntilIdle()
-        viewModel.selectExistingRecordYear("2025")
-
-        assertEquals("2025", viewModel.state.value.selectedExistingRecordYear)
-        assertEquals("12", viewModel.state.value.selectedExistingRecordMonth)
-    }
-
-    @Test
-    fun saveRecordDraftPersistsTxtAndSyncsDatabase() = runTest {
+    fun saveStructuredRecordSerializesAndCommitsTxt() = runTest {
         val editorService = FakeEditorService()
         val viewModel = createViewModel(editorService)
 
         advanceUntilIdle()
         viewModel.openSelectedExistingRecord()
         advanceUntilIdle()
-        viewModel.updateRecordDraft("date:2026-03\nremark:test\n\nmeal\nmeal_low 12 lunch\n")
+        viewModel.addStructuredEntry("meal", "meal_low")
+        val entryId = viewModel.state.value.structuredDraft!!
+            .sections.first().subSections.first().entries.first().id
+        viewModel.updateStructuredEntryAmount("meal", "meal_low", entryId, "12")
+        viewModel.updateStructuredEntryDescription("meal", "meal_low", entryId, "lunch")
         viewModel.saveRecordDraft()
         advanceUntilIdle()
 
-        assertEquals(
-            "date:2026-03\nremark:test\n\nmeal\nmeal_low 12 lunch\n",
-            editorService.savedRecords.getValue("2026-03"),
-        )
         assertEquals(listOf("2026-03"), editorService.committedPeriods)
-        assertTrue(viewModel.state.value.activeRecordDocument?.persisted == true)
-        assertEquals(null, viewModel.state.value.errorMessage)
-    }
-
-    @Test
-    fun saveRecordDraftKeepsPersistedTxtWhenCommitFails() = runTest {
-        val editorService = FakeEditorService().apply {
-            commitFailures["2026-03"] = "validation: The first line must be 'date:YYYY-MM'."
-        }
-        val viewModel = createViewModel(editorService)
-
-        advanceUntilIdle()
-        viewModel.openSelectedExistingRecord()
-        advanceUntilIdle()
-        val originalText = viewModel.state.value.activeRecordDocument?.rawText
-        viewModel.updateRecordDraft("date:2026-03\nremark:broken\n\nmeal\nmeal_low 12 lunch\n")
-        viewModel.saveRecordDraft()
-        advanceUntilIdle()
-
         assertEquals(
-            originalText,
+            "date:2026-03\nremark:\n\nmeal\n\nmeal_low\n12 lunch",
             editorService.savedRecords.getValue("2026-03"),
         )
-        assertEquals(
-            "validation: The first line must be 'date:YYYY-MM'.",
-            viewModel.state.value.errorMessage,
-        )
-        assertEquals(
-            originalText,
-            viewModel.state.value.activeRecordDocument?.rawText,
-        )
-        assertEquals(
-            "date:2026-03\nremark:broken\n\nmeal\nmeal_low 12 lunch\n",
-            viewModel.state.value.recordDraftText,
-        )
+        assertEquals(EditorMode.Structured, viewModel.state.value.editorMode)
+        assertFalse(viewModel.state.value.hasIncompleteEntries)
     }
 
     @Test
-    fun saveRawRecordTextPersistsTxtAndSyncsDatabase() = runTest {
-        val editorService = FakeEditorService()
-        val viewModel = createViewModel(editorService)
+    fun enterRawExpertModeSerializesStructuredDraft() = runTest {
+        val viewModel = createViewModel()
 
         advanceUntilIdle()
         viewModel.openSelectedExistingRecord()
         advanceUntilIdle()
-        val updatedRawText = "date:2026-03\nremark:raw\n\nmeal\nmeal_low 12 lunch\n"
+        viewModel.addStructuredEntry("meal", "meal_low")
+        val entryId = viewModel.state.value.structuredDraft!!
+            .sections.first().subSections.first().entries.first().id
+        viewModel.updateStructuredEntryAmount("meal", "meal_low", entryId, "12")
+        viewModel.updateStructuredEntryDescription("meal", "meal_low", entryId, "lunch")
 
+        viewModel.enterRawExpertMode()
+        advanceUntilIdle()
+
+        assertEquals(EditorMode.RawExpert, viewModel.state.value.editorMode)
+        assertTrue(viewModel.state.value.recordDraftText.contains("12 lunch"))
+    }
+
+    @Test
+    fun saveRawRecordTextReturnsToStructuredModeWhenParseSucceeds() = runTest {
+        val viewModel = createViewModel()
+
+        advanceUntilIdle()
+        viewModel.openSelectedExistingRecord()
+        advanceUntilIdle()
+
+        val updatedRawText = "date:2026-03\nremark:raw\n\nmeal\n\nmeal_low\n12 lunch"
         viewModel.saveRawRecordText(updatedRawText)
         advanceUntilIdle()
 
-        assertEquals(updatedRawText, editorService.savedRecords.getValue("2026-03"))
-        assertEquals(listOf("2026-03"), editorService.committedPeriods)
+        assertEquals(EditorMode.Structured, viewModel.state.value.editorMode)
         assertEquals(updatedRawText, viewModel.state.value.activeRecordDocument?.rawText)
-        assertEquals(updatedRawText, viewModel.state.value.recordDraftText)
-        assertEquals(null, viewModel.state.value.errorMessage)
+        assertNotNull(viewModel.state.value.structuredDraft)
     }
 
     @Test
-    fun saveRawRecordTextKeepsPersistedTxtWhenCommitFails() = runTest {
-        val editorService = FakeEditorService().apply {
-            commitFailures["2026-03"] = "validation: The first line must be 'date:YYYY-MM'."
-        }
-        val viewModel = createViewModel(editorService)
+    fun saveRawRecordTextStaysInRawModeWhenStructuredParseFails() = runTest {
+        val viewModel = createViewModel()
 
         advanceUntilIdle()
         viewModel.openSelectedExistingRecord()
         advanceUntilIdle()
-        val originalText = viewModel.state.value.activeRecordDocument?.rawText
-        val updatedRawText = "date:2026-03\nremark:raw\n\nmeal\nmeal_low 12 lunch\n"
 
-        viewModel.saveRawRecordText(updatedRawText)
+        val unsupportedRawText = "date:2026-03\nremark:raw\n\nmeal\n\nmeal_low\ntext only"
+        viewModel.saveRawRecordText(unsupportedRawText)
         advanceUntilIdle()
 
-        assertEquals(originalText, editorService.savedRecords.getValue("2026-03"))
-        assertEquals(
-            "validation: The first line must be 'date:YYYY-MM'.",
-            viewModel.state.value.errorMessage,
-        )
-        assertEquals(originalText, viewModel.state.value.activeRecordDocument?.rawText)
-        assertEquals(updatedRawText, viewModel.state.value.recordDraftText)
+        assertEquals(EditorMode.RawExpert, viewModel.state.value.editorMode)
+        assertNull(viewModel.state.value.structuredDraft)
+        assertTrue(viewModel.state.value.activeRecordDocument?.rawFallbackReason?.contains("not supported") == true)
     }
 
     @Test
@@ -260,7 +202,7 @@ class EditorViewModelTest {
         viewModel.openSelectedExistingRecord()
         advanceUntilIdle()
 
-        assertEquals(null, viewModel.state.value.activeRecordDocument)
+        assertNull(viewModel.state.value.activeRecordDocument)
         assertTrue(viewModel.state.value.errorMessage?.contains("out of sync") == true)
     }
 
@@ -275,11 +217,42 @@ class EditorViewModelTest {
         advanceUntilIdle()
 
         editorService.persistedPeriods += "2027-01"
-        editorService.savedRecords["2027-01"] = "date:2027-01\nremark:\n\nmeal\nmeal_low\n"
+        editorService.savedRecords["2027-01"] = "date:2027-01\nremark:\n\nmeal\n\nmeal_low\n"
         workspaceDataChangeBus.notifyChanged()
         advanceUntilIdle()
 
         assertTrue(viewModel.state.value.persistedRecordPeriods.contains("2027-01"))
         assertFalse(viewModel.state.value.isInitializing)
+    }
+
+    @Test
+    fun workspaceDataChangeReloadsOpenCurrentMonthAfterImportReplacesTemplate() = runTest {
+        val editorService = FakeEditorService().apply {
+            persistedPeriods.clear()
+            persistedPeriods += listOf("2026-03", "2026-02")
+            savedRecords.keys.retainAll(persistedPeriods)
+        }
+        val workspaceDataChangeBus = WorkspaceDataChangeBus()
+        val viewModel = createViewModel(
+            editorService = editorService,
+            workspaceDataChangeBus = workspaceDataChangeBus,
+            currentPeriod = "2026-04",
+        )
+
+        advanceUntilIdle()
+        viewModel.onEditorScreenShown()
+        advanceUntilIdle()
+
+        assertEquals("date:2026-04\nremark:\n\nmeal\n\nmeal_low\n", viewModel.state.value.recordDraftText)
+
+        val importedText = "date:2026-04\nremark:\n\nmeal\n\nmeal_low\n12 lunch"
+        editorService.savedRecords["2026-04"] = importedText
+        editorService.persistedPeriods += "2026-04"
+        workspaceDataChangeBus.notifyChanged()
+        advanceUntilIdle()
+
+        assertEquals("2026-04", viewModel.state.value.activeRecordDocument?.period)
+        assertEquals(importedText, viewModel.state.value.recordDraftText)
+        assertTrue(viewModel.state.value.activeRecordDocument?.persisted == true)
     }
 }

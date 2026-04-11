@@ -41,7 +41,7 @@ class AppSessionViewModelTest {
 
         assertEquals(false, viewModel.state.value.isInitializing)
         assertEquals("0.4.2", viewModel.state.value.coreVersion?.versionName)
-        assertEquals("0.1.3", viewModel.state.value.androidVersion?.versionName)
+        assertEquals("0.2.0", viewModel.state.value.androidVersion?.versionName)
         assertEquals("db.sqlite3", viewModel.state.value.environment?.dbFile?.name)
         assertTrue(viewModel.state.value.globalStatusMessage.isNotBlank())
     }

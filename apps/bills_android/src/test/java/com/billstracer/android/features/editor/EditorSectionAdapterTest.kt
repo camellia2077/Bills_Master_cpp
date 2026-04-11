@@ -1,5 +1,9 @@
 package com.billstracer.android.features.editor
 
+import com.billstracer.android.model.StructuredRecordEditorDocument
+import com.billstracer.android.model.StructuredRecordEditorEntry
+import com.billstracer.android.model.StructuredRecordEditorParentSection
+import com.billstracer.android.model.StructuredRecordEditorSubSection
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -7,182 +11,118 @@ import org.junit.Test
 
 class EditorSectionAdapterTest {
     @Test
-    fun parseEditorSectionDocumentReadsTemplateStyleSections() {
-        val document = parseEditorSectionDocument(
-            """
-            date:2026-03
-            remark:test
-
-            meal
-
-            meal_low
-            12 lunch
-
-            meal_high
-            25 dinner
-            """.trimIndent(),
-        )
-
-        assertFalse(document.fallbackToRawEditor)
-        assertEquals("date:2026-03", document.dateLine)
-        assertEquals(listOf("test"), document.remarkLines)
-        assertEquals(listOf("meal"), document.sections.map { it.title })
-        assertEquals(listOf("meal_low", "meal_high"), document.sections.first().subSections.map { it.title })
-        assertEquals(listOf("12 lunch"), document.sections.first().subSections.first().contentLines)
-    }
-
-    @Test
-    fun parseEditorSectionDocumentSupportsInlineSubTitleContent() {
-        val document = parseEditorSectionDocument(
-            """
-            date:2026-03
-            remark:test
-
-            meal
-            meal_low 12 lunch
-            meal_high 25 dinner
-            """.trimIndent(),
-        )
-
-        assertFalse(document.fallbackToRawEditor)
-        assertEquals(listOf("12 lunch"), document.sections.first().subSections.first().contentLines)
-        assertEquals(listOf("25 dinner"), document.sections.first().subSections.last().contentLines)
-    }
-
-    @Test
-    fun parseEditorSectionDocumentCollectsRepeatedRemarkLines() {
-        val document = parseEditorSectionDocument(
-            """
-            date:2026-03
-            remark:first line
-            remark:second line
-
-            meal
-
-            meal_low
-            12 lunch
-            """.trimIndent(),
-        )
-
-        assertEquals("date:2026-03", document.dateLine)
-        assertEquals(listOf("first line", "second line"), document.remarkLines)
-    }
-
-    @Test
-    fun serializeEditorSectionDocumentRebuildsNormalizedTxt() {
-        val document = EditorSectionDocumentUiModel(
+    fun toEditorStructuredDraftBuildsStableDraftShape() {
+        val document = StructuredRecordEditorDocument(
             dateLine = "date:2026-03",
-            remarkLines = listOf("test"),
+            remarkLines = listOf("first", "second"),
             sections = listOf(
-                EditorParentSectionUiModel(
+                StructuredRecordEditorParentSection(
                     title = "meal",
                     subSections = listOf(
-                        EditorSubSectionUiModel(
+                        StructuredRecordEditorSubSection(
                             title = "meal_low",
-                            contentLines = listOf("12 lunch", "18 noodles"),
+                            entries = listOf(
+                                StructuredRecordEditorEntry(
+                                    amountExpression = "12",
+                                    description = "lunch",
+                                    comment = "cheap",
+                                ),
+                            ),
                         ),
                     ),
                 ),
             ),
-            fallbackToRawEditor = false,
         )
 
-        assertEquals(
-            """
-            date:2026-03
-            remark:test
+        val draft = document.toEditorStructuredDraft()
 
-            meal
-
-            meal_low
-            12 lunch
-            18 noodles
-            """.trimIndent(),
-            serializeEditorSectionDocument(document),
-        )
+        assertEquals("date:2026-03", draft.dateLine)
+        assertEquals("first\nsecond", draft.remarkText)
+        assertEquals("meal", draft.sections.first().title)
+        assertEquals("meal_low", draft.sections.first().subSections.first().title)
+        assertEquals("12", draft.sections.first().subSections.first().entries.first().amountExpression)
     }
 
     @Test
-    fun updateEditorSubSectionContentKeepsEmptySubTitle() {
-        val original = parseEditorSectionDocument(
-            """
-            date:2026-03
-            remark:test
-
-            meal
-
-            meal_low
-            12 lunch
-            """.trimIndent(),
+    fun toStructuredRecordEditorDocumentRebuildsSharedModel() {
+        val draft = EditorStructuredDraftUiModel(
+            dateLine = "date:2026-03",
+            remarkText = "first\nsecond",
+            sections = listOf(
+                EditorParentSectionDraftUiModel(
+                    title = "meal",
+                    subSections = listOf(
+                        EditorSubSectionDraftUiModel(
+                            title = "meal_low",
+                            entries = listOf(
+                                EditorEntryDraftUiModel(
+                                    id = "1",
+                                    amountExpression = "12",
+                                    description = "lunch",
+                                    comment = "cheap",
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
         )
 
-        val updated = updateEditorSubSectionContent(
-            document = original,
-            parentTitle = "meal",
-            subSectionTitle = "meal_low",
-            rawContent = "\n\n",
-        )
+        val structured = draft.toStructuredRecordEditorDocument()
 
-        assertEquals(
-            """
-            date:2026-03
-            remark:test
-
-            meal
-
-            meal_low
-            """.trimIndent(),
-            serializeEditorSectionDocument(updated),
-        )
+        assertEquals("date:2026-03", structured.dateLine)
+        assertEquals(listOf("first", "second"), structured.remarkLines)
+        assertEquals("cheap", structured.sections.first().subSections.first().entries.first().comment)
     }
 
     @Test
-    fun updateEditorRemarkContentSupportsMultilineRemark() {
-        val original = parseEditorSectionDocument(
-            """
-            date:2026-03
-            remark:test
+    fun addedBlankEntryIsReportedAsIncomplete() {
+        val draft = StructuredRecordEditorDocument(
+            dateLine = "date:2026-03",
+            remarkLines = emptyList(),
+            sections = listOf(
+                StructuredRecordEditorParentSection(
+                    title = "meal",
+                    subSections = listOf(
+                        StructuredRecordEditorSubSection(
+                            title = "meal_low",
+                            entries = emptyList(),
+                        ),
+                    ),
+                ),
+            ),
+        ).toEditorStructuredDraft()
 
-            meal
+        val updated = draft.withAddedEntry("meal", "meal_low")
 
-            meal_low
-            12 lunch
-            """.trimIndent(),
-        )
-
-        val updated = updateEditorRemarkContent(
-            document = original,
-            rawRemark = "first line\nsecond line",
-        )
-
-        assertEquals(
-            """
-            date:2026-03
-            remark:first line
-            remark:second line
-
-            meal
-
-            meal_low
-            12 lunch
-            """.trimIndent(),
-            serializeEditorSectionDocument(updated),
-        )
+        assertTrue(updated.hasIncompleteEntries())
     }
 
     @Test
-    fun parseEditorSectionDocumentFallsBackWhenContentAppearsBeforeSubTitle() {
-        val document = parseEditorSectionDocument(
-            """
-            date:2026-03
-            remark:test
-
-            meal
-            12 lunch
-            """.trimIndent(),
+    fun completedEntryIsNotReportedAsIncomplete() {
+        val draft = EditorStructuredDraftUiModel(
+            dateLine = "date:2026-03",
+            remarkText = "",
+            sections = listOf(
+                EditorParentSectionDraftUiModel(
+                    title = "meal",
+                    subSections = listOf(
+                        EditorSubSectionDraftUiModel(
+                            title = "meal_low",
+                            entries = listOf(
+                                EditorEntryDraftUiModel(
+                                    id = "1",
+                                    amountExpression = "12",
+                                    description = "lunch",
+                                    comment = "",
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
         )
 
-        assertTrue(document.fallbackToRawEditor)
-        assertTrue(document.fallbackReason?.contains("Content appeared") == true)
+        assertFalse(draft.hasIncompleteEntries())
     }
 }

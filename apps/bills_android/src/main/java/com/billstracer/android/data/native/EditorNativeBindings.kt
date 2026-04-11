@@ -10,6 +10,13 @@ internal object EditorNativeBindings {
         isoMonth: String,
     ): String
 
+    external fun parseRecordEditorDocumentJsonNative(
+        rawText: String,
+    ): String
+
+    external fun serializeRecordEditorDocumentJsonNative(
+        documentJson: String,
+    ): String
 
     external fun commitRecordDocumentJsonNative(
         expectedPeriod: String,

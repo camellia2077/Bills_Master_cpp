@@ -32,7 +32,6 @@ internal fun SettingsScreen(
     onModifyConfig: () -> Unit,
     onResetConfigDraft: () -> Unit,
     onRequestExportBackup: () -> Unit,
-    onRequestImportBackup: () -> Unit,
     onSelectThemeMode: (ThemeMode) -> Unit,
     onSelectThemeColor: (ThemeColor) -> Unit,
     onApplyTheme: () -> Unit,
@@ -76,7 +75,6 @@ internal fun SettingsScreen(
                 BackupSettingsBlock(
                     state = state,
                     onRequestExportBackup = onRequestExportBackup,
-                    onRequestImportBackup = onRequestImportBackup,
                 )
             }
             SettingsSubview.THEME -> {

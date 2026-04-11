@@ -4,18 +4,23 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -24,51 +29,30 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 
 @Composable
 internal fun EditorStructuredSectionContent(
     documentKey: String,
-    rawText: String,
-    persistedRawText: String,
+    draft: EditorStructuredDraftUiModel,
+    hasIncompleteEntries: Boolean,
     isWorking: Boolean,
-    onRawTextChange: (String) -> Unit,
-    onCommitRawText: (String) -> Unit,
+    onRemarkChange: (String) -> Unit,
+    onAddEntry: (String, String) -> Unit,
+    onRemoveEntry: (String, String, String) -> Unit,
+    onEntryAmountChange: (String, String, String, String) -> Unit,
+    onEntryDescriptionChange: (String, String, String, String) -> Unit,
+    onEntryCommentChange: (String, String, String, String) -> Unit,
+    onEnterRawExpertMode: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val document = remember(rawText) { parseEditorSectionDocument(rawText) }
-    var showRawTextDialog by rememberSaveable(documentKey) { mutableStateOf(false) }
-    if (document.fallbackToRawEditor) {
-        EditorRawFallbackContent(
-            documentKey = documentKey,
-            rawText = rawText,
-            fallbackReason = document.fallbackReason,
-            onRawTextChange = onRawTextChange,
-            onShowRawText = { showRawTextDialog = true },
-            modifier = modifier,
-        )
-        if (showRawTextDialog) {
-            EditorRawTextDialog(
-                documentKey = documentKey,
-                rawText = rawText,
-                persistedRawText = persistedRawText,
-                isWorking = isWorking,
-                onCommitRawText = onCommitRawText,
-                onDismiss = { showRawTextDialog = false },
-            )
-        }
-        return
-    }
-
     var searchQuery by rememberSaveable(documentKey) { mutableStateOf("") }
-    val expandedStates = remember(documentKey) { mutableStateMapOf<String, Boolean>() }
-    val visibleSections = remember(document, searchQuery) {
-        filterEditorSections(document.sections, searchQuery)
+    val parentExpandedStates = remember(documentKey) { mutableStateMapOf<String, Boolean>() }
+    val subSectionExpandedStates = remember(documentKey) { mutableStateMapOf<String, Boolean>() }
+    val visibleSections = remember(draft.sections, searchQuery) {
+        filterEditorSections(draft.sections, searchQuery)
     }
 
     Column(
@@ -77,19 +61,33 @@ internal fun EditorStructuredSectionContent(
     ) {
         EditorHeaderCard(
             documentKey = documentKey,
-            document = document,
-            onRemarkChange = { updatedRemark ->
-                val updatedDocument = updateEditorRemarkContent(document, updatedRemark)
-                onRawTextChange(serializeEditorSectionDocument(updatedDocument))
-            },
+            draft = draft,
+            onRemarkChange = onRemarkChange,
         )
         OutlinedButton(
-            onClick = { showRawTextDialog = true },
+            onClick = onEnterRawExpertMode,
+            enabled = !isWorking && !hasIncompleteEntries,
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("editor_view_raw_button"),
         ) {
-            Text("View Raw TXT")
+            Text("Expert Raw TXT")
+        }
+        if (hasIncompleteEntries) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f),
+            ) {
+                Text(
+                    text = "Complete or delete unfinished entries before saving or opening Raw TXT.",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp)
+                        .testTag("editor_incomplete_entries_message"),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace,
+                )
+            }
         }
         OutlinedTextField(
             value = searchQuery,
@@ -107,7 +105,7 @@ internal fun EditorStructuredSectionContent(
             val parentExpanded = if (searchQuery.isNotBlank()) {
                 true
             } else {
-                expandedStates[parentSection.title] ?: false
+                parentExpandedStates[parentSection.title] ?: false
             }
             Surface(
                 modifier = Modifier
@@ -123,9 +121,7 @@ internal fun EditorStructuredSectionContent(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                expandedStates[parentSection.title] = !parentExpanded
-                            }
+                            .clickable { parentExpandedStates[parentSection.title] = !parentExpanded }
                             .padding(vertical = 4.dp)
                             .testTag("editor_parent_toggle_${editorSectionTagSuffix(parentSection.title)}"),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -144,18 +140,21 @@ internal fun EditorStructuredSectionContent(
 
                     if (parentExpanded) {
                         parentSection.subSections.forEach { subSection ->
-                            EditorSubSectionField(
+                            EditorSubSectionEntriesCard(
                                 parentTitle = parentSection.title,
                                 subSection = subSection,
-                                onContentChange = { updatedContent ->
-                                    val updatedDocument = updateEditorSubSectionContent(
-                                        document = document,
-                                        parentTitle = parentSection.title,
-                                        subSectionTitle = subSection.title,
-                                        rawContent = updatedContent,
-                                    )
-                                    onRawTextChange(serializeEditorSectionDocument(updatedDocument))
+                                isExpanded = if (searchQuery.isNotBlank()) {
+                                    true
+                                } else {
+                                    subSectionExpandedStates[subSectionKey(parentSection.title, subSection.title)] ?: true
                                 },
+                                onToggleExpanded = { nextExpanded ->
+                                    subSectionExpandedStates[subSectionKey(parentSection.title, subSection.title)] = nextExpanded
+                                },
+                                onAddEntry = onAddEntry,
+                                onRemoveEntry = onRemoveEntry,
+                                onEntryAmountChange = onEntryAmountChange,
+                                onEntryDescriptionChange = onEntryDescriptionChange,
                             )
                         }
                     }
@@ -163,49 +162,18 @@ internal fun EditorStructuredSectionContent(
             }
         }
     }
-    if (showRawTextDialog) {
-        EditorRawTextDialog(
-            documentKey = documentKey,
-            rawText = rawText,
-            persistedRawText = persistedRawText,
-            isWorking = isWorking,
-            onCommitRawText = onCommitRawText,
-            onDismiss = { showRawTextDialog = false },
-        )
-    }
 }
 
 @Composable
 private fun EditorHeaderCard(
     documentKey: String,
-    document: EditorSectionDocumentUiModel,
+    draft: EditorStructuredDraftUiModel,
     onRemarkChange: (String) -> Unit,
 ) {
     var headerExpanded by rememberSaveable(documentKey) { mutableStateOf(false) }
-    val externalRemarkText = remember(document.remarkLines) {
-        document.remarkLines.joinToString("\n")
-    }
-    var remarkFieldValue by rememberSaveable(
-        document.dateLine,
-        stateSaver = TextFieldValue.Saver,
-    ) {
-        mutableStateOf(TextFieldValue(externalRemarkText))
-    }
-
-    LaunchedEffect(externalRemarkText) {
-        if (remarkFieldValue.text != externalRemarkText) {
-            val selectionEnd = minOf(remarkFieldValue.selection.end, externalRemarkText.length)
-            val selectionStart = minOf(remarkFieldValue.selection.start, selectionEnd)
-            remarkFieldValue = TextFieldValue(
-                text = externalRemarkText,
-                selection = TextRange(selectionStart, selectionEnd),
-            )
-        }
-    }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.65f),
     ) {
         Column(
@@ -233,26 +201,14 @@ private fun EditorHeaderCard(
             }
 
             if (headerExpanded) {
-                if (document.dateLine.isNullOrBlank()) {
-                    Text(
-                        text = "No date header was found in this TXT.",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontFamily = FontFamily.Monospace,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                } else {
-                    Text(
-                        text = document.dateLine,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontFamily = FontFamily.Monospace,
-                    )
-                }
+                Text(
+                    text = draft.dateLine,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontFamily = FontFamily.Monospace,
+                )
                 OutlinedTextField(
-                    value = remarkFieldValue,
-                    onValueChange = { nextValue ->
-                        remarkFieldValue = nextValue
-                        onRemarkChange(nextValue.text)
-                    },
+                    value = draft.remarkText,
+                    onValueChange = onRemarkChange,
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 88.dp, max = 160.dp)
@@ -267,90 +223,156 @@ private fun EditorHeaderCard(
 }
 
 @Composable
-private fun EditorSubSectionField(
+private fun EditorSubSectionEntriesCard(
     parentTitle: String,
-    subSection: EditorSubSectionUiModel,
-    onContentChange: (String) -> Unit,
+    subSection: EditorSubSectionDraftUiModel,
+    isExpanded: Boolean,
+    onToggleExpanded: (Boolean) -> Unit,
+    onAddEntry: (String, String) -> Unit,
+    onRemoveEntry: (String, String, String) -> Unit,
+    onEntryAmountChange: (String, String, String, String) -> Unit,
+    onEntryDescriptionChange: (String, String, String, String) -> Unit,
 ) {
-    val externalText = remember(subSection.contentLines) {
-        subSection.contentLines.joinToString("\n")
-    }
-    var fieldValue by rememberSaveable(
-        parentTitle,
-        subSection.title,
-        stateSaver = TextFieldValue.Saver,
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
     ) {
-        mutableStateOf(TextFieldValue(externalText))
-    }
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(
+                modifier = Modifier.testTag(
+                    "editor_subsection_toggle_${editorSectionTagSuffix(parentTitle)}_${editorSectionTagSuffix(subSection.title)}",
+                )
+                    .fillMaxWidth()
+                    .clickable { onToggleExpanded(!isExpanded) }
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = subSection.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontFamily = FontFamily.Monospace,
+                    modifier = Modifier.testTag(
+                        "editor_subsection_title_${editorSectionTagSuffix(subSection.title)}",
+                    ),
+                )
+                Text(
+                    text = if (isExpanded) "▼" else "▶",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontFamily = FontFamily.Monospace,
+                )
+            }
 
-    LaunchedEffect(externalText) {
-        if (fieldValue.text != externalText) {
-            val selectionEnd = minOf(fieldValue.selection.end, externalText.length)
-            val selectionStart = minOf(fieldValue.selection.start, selectionEnd)
-            fieldValue = TextFieldValue(
-                text = externalText,
-                selection = TextRange(selectionStart, selectionEnd),
+            if (isExpanded) {
+                subSection.entries.forEachIndexed { index, entry ->
+                    EditorEntryRow(
+                        parentTitle = parentTitle,
+                        subSectionTitle = subSection.title,
+                        entry = entry,
+                        onRemoveEntry = onRemoveEntry,
+                        onEntryAmountChange = onEntryAmountChange,
+                        onEntryDescriptionChange = onEntryDescriptionChange,
+                    )
+                    if (index < subSection.entries.lastIndex) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    }
+                }
+                OutlinedButton(
+                    onClick = { onAddEntry(parentTitle, subSection.title) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("editor_add_entry_${editorSectionTagSuffix(subSection.title)}"),
+                ) {
+                    Text("Add Item")
+                }
+            }
+        }
+    }
+}
+
+private fun subSectionKey(parentTitle: String, subSectionTitle: String): String =
+    "$parentTitle::$subSectionTitle"
+
+@Composable
+private fun EditorEntryRow(
+    parentTitle: String,
+    subSectionTitle: String,
+    entry: EditorEntryDraftUiModel,
+    onRemoveEntry: (String, String, String) -> Unit,
+    onEntryAmountChange: (String, String, String, String) -> Unit,
+    onEntryDescriptionChange: (String, String, String, String) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+                OutlinedTextField(
+                    value = entry.description,
+                    onValueChange = { nextValue ->
+                        onEntryDescriptionChange(parentTitle, subSectionTitle, entry.id, nextValue)
+                    },
+            modifier = Modifier
+                .weight(1f)
+                .testTag("editor_entry_description_${entry.id}"),
+                    label = { Text("Item", fontFamily = FontFamily.Monospace) },
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                    singleLine = true,
+                    shape = RoundedCornerShape(20.dp),
+                )
+                OutlinedTextField(
+                    value = entry.amountExpression,
+                    onValueChange = { nextValue ->
+                        onEntryAmountChange(parentTitle, subSectionTitle, entry.id, nextValue)
+            },
+            modifier = Modifier
+                .width(132.dp)
+                .testTag("editor_entry_amount_${entry.id}"),
+            label = { Text("Amount", fontFamily = FontFamily.Monospace) },
+            singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(
+                        fontFamily = FontFamily.Monospace,
+                        textAlign = TextAlign.End,
+                    ),
+                    shape = RoundedCornerShape(20.dp),
+                )
+        IconButton(
+            onClick = { onRemoveEntry(parentTitle, subSectionTitle, entry.id) },
+            modifier = Modifier
+                .size(48.dp)
+                .testTag("editor_remove_entry_${entry.id}"),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Delete,
+                contentDescription = "Delete item",
+                tint = MaterialTheme.colorScheme.error,
             )
         }
     }
-
-    OutlinedTextField(
-        value = fieldValue,
-        onValueChange = { nextValue ->
-            fieldValue = nextValue
-            onContentChange(nextValue.text)
-        },
-        enabled = true,
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 96.dp, max = 180.dp)
-            .testTag("editor_subsection_field_${editorSectionTagSuffix(subSection.title)}"),
-        label = { Text(subSection.title, fontFamily = FontFamily.Monospace) },
-        minLines = 3,
-        textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-    )
 }
 
 @Composable
-private fun EditorRawFallbackContent(
-    documentKey: String,
+internal fun EditorRawExpertContent(
     rawText: String,
     fallbackReason: String?,
+    canReturnToStructured: Boolean,
     onRawTextChange: (String) -> Unit,
-    onShowRawText: () -> Unit,
+    onReturnToStructured: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var fieldValue by rememberSaveable(
-        documentKey,
-        stateSaver = TextFieldValue.Saver,
-    ) {
-        mutableStateOf(TextFieldValue(rawText))
-    }
-
-    LaunchedEffect(rawText) {
-        if (fieldValue.text != rawText) {
-            val selectionEnd = minOf(fieldValue.selection.end, rawText.length)
-            val selectionStart = minOf(fieldValue.selection.start, selectionEnd)
-            fieldValue = TextFieldValue(
-                text = rawText,
-                selection = TextRange(selectionStart, selectionEnd),
-            )
-        }
-    }
-
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f),
         ) {
             Text(
-                text = fallbackReason?.let {
-                    "This TXT shape is not supported by the section editor yet. $it"
-                } ?: "This TXT shape is not supported by the section editor yet.",
+                text = fallbackReason ?: "Expert Raw TXT mode is active.",
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(12.dp)
@@ -359,26 +381,23 @@ private fun EditorRawFallbackContent(
                 fontFamily = FontFamily.Monospace,
             )
         }
-        OutlinedButton(
-            onClick = onShowRawText,
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag("editor_view_raw_button"),
-        ) {
-            Text("View Raw TXT")
+        if (canReturnToStructured) {
+            OutlinedButton(
+                onClick = onReturnToStructured,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("editor_return_structured_button"),
+            ) {
+                Text("Back To Structured Editor")
+            }
         }
         OutlinedTextField(
-            value = fieldValue,
-            onValueChange = { nextValue ->
-                fieldValue = nextValue
-                if (nextValue.text != rawText) {
-                    onRawTextChange(nextValue.text)
-                }
-            },
+            value = rawText,
+            onValueChange = onRawTextChange,
             enabled = true,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 280.dp, max = 460.dp)
+                .heightIn(min = 280.dp, max = 520.dp)
                 .testTag("editor_record_field"),
             textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
             label = { Text("Raw TXT", fontFamily = FontFamily.Monospace) },
@@ -386,139 +405,3 @@ private fun EditorRawFallbackContent(
         )
     }
 }
-
-@Composable
-private fun EditorRawTextDialog(
-    documentKey: String,
-    rawText: String,
-    persistedRawText: String,
-    isWorking: Boolean,
-    onCommitRawText: (String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var fieldValue by rememberSaveable(
-        documentKey,
-        stateSaver = TextFieldValue.Saver,
-    ) {
-        mutableStateOf(TextFieldValue(rawText))
-    }
-    var pendingCommittedText by rememberSaveable(documentKey) { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(rawText, pendingCommittedText) {
-        if (pendingCommittedText == null && fieldValue.text != rawText) {
-            val selectionEnd = minOf(fieldValue.selection.end, rawText.length)
-            val selectionStart = minOf(fieldValue.selection.start, selectionEnd)
-            fieldValue = TextFieldValue(
-                text = rawText,
-                selection = TextRange(selectionStart, selectionEnd),
-            )
-        }
-    }
-
-    LaunchedEffect(isWorking, persistedRawText, pendingCommittedText) {
-        val pendingText = pendingCommittedText ?: return@LaunchedEffect
-        if (!isWorking && persistedRawText == pendingText) {
-            pendingCommittedText = null
-            onDismiss()
-        }
-    }
-
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.96f)
-                .testTag("editor_raw_dialog"),
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surface,
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        text = "Raw TXT",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontFamily = FontFamily.Monospace,
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
-                            onClick = {
-                                if (!isWorking) {
-                                    pendingCommittedText = fieldValue.text
-                                    onCommitRawText(fieldValue.text)
-                                }
-                            },
-                            enabled = !isWorking && fieldValue.text != rawText,
-                            modifier = Modifier.testTag("editor_raw_dialog_save_button"),
-                        ) {
-                            Text("✓")
-                        }
-                        OutlinedButton(
-                            onClick = onDismiss,
-                            enabled = !isWorking,
-                        ) {
-                            Text("Close")
-                        }
-                    }
-                }
-                OutlinedTextField(
-                    value = fieldValue,
-                    onValueChange = { nextValue ->
-                        fieldValue = nextValue
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight()
-                        .testTag("editor_raw_dialog_content"),
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                    minLines = 18,
-                )
-            }
-        }
-    }
-}
-
-private fun filterEditorSections(
-    sections: List<EditorParentSectionUiModel>,
-    query: String,
-): List<EditorParentSectionUiModel> {
-    val normalizedQuery = query.trim()
-    if (normalizedQuery.isEmpty()) {
-        return sections
-    }
-
-    return sections.mapNotNull { parent ->
-        val parentMatches = parent.title.contains(normalizedQuery, ignoreCase = true)
-        val visibleSubSections = if (parentMatches) {
-            parent.subSections
-        } else {
-            parent.subSections.filter { sub ->
-                sub.title.contains(normalizedQuery, ignoreCase = true)
-            }
-        }
-        if (!parentMatches && visibleSubSections.isEmpty()) {
-            null
-        } else {
-            parent.copy(subSections = visibleSubSections)
-        }
-    }
-}
-
-private fun editorSectionTagSuffix(raw: String): String = raw
-    .lowercase()
-    .map { character ->
-        if (character.isLetterOrDigit() || character == '_') {
-            character
-        } else {
-            '_'
-        }
-    }
-    .joinToString("")

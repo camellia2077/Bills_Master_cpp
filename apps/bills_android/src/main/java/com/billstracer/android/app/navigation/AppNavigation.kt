@@ -19,6 +19,7 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -77,8 +78,10 @@ internal fun BillsAndroidApp(
     editorViewModel: EditorViewModel,
     settingsViewModel: SettingsViewModel,
 ) {
+    // Start in Editor because the app is centered on the structure-locked
+    // monthly ledger workflow rather than a general dashboard landing page.
     val sessionState = sessionViewModel.state.collectAsStateWithLifecycle()
-    var selectedTab by rememberSaveable { mutableStateOf(AppTab.WORKSPACE) }
+    var selectedTab by rememberSaveable { mutableStateOf(AppTab.EDITOR) }
     val importTxtDirectoryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree(),
     ) { sourceDirectoryUri ->
@@ -86,11 +89,11 @@ internal fun BillsAndroidApp(
             workspaceViewModel.importTxtDirectoryAndSyncDatabase(sourceDirectoryUri)
         }
     }
-    val exportParseBundleLauncher = rememberLauncherForActivityResult(
+    val exportWorkspaceLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/zip"),
     ) { targetDocumentUri ->
         if (targetDocumentUri != null) {
-            workspaceViewModel.exportParseBundle(targetDocumentUri)
+            workspaceViewModel.exportWorkspace(targetDocumentUri)
         }
     }
     val exportBackupBundleLauncher = rememberLauncherForActivityResult(
@@ -104,7 +107,9 @@ internal fun BillsAndroidApp(
         contract = ActivityResultContracts.OpenDocument(),
     ) { sourceDocumentUri ->
         if (sourceDocumentUri != null) {
-            settingsViewModel.importBackupBundle(sourceDocumentUri)
+            // Workspace owns restore so import/export/clear actions stay grouped
+            // around the private workspace lifecycle instead of Settings.
+            workspaceViewModel.importBackupBundle(sourceDocumentUri)
         }
     }
     val tabStateHolder = rememberSaveableStateHolder()
@@ -136,9 +141,14 @@ internal fun BillsAndroidApp(
                         onRequestImportTxtDirectory = {
                             importTxtDirectoryLauncher.launch(null)
                         },
-                        onRequestExportTextAndConfigZip = {
-                            exportParseBundleLauncher.launch(
-                                "records_and_config_${DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").format(LocalDateTime.now())}.zip",
+                        onRequestExportWorkspace = {
+                            exportWorkspaceLauncher.launch(
+                                "workspace_${DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").format(LocalDateTime.now())}.zip",
+                            )
+                        },
+                        onRequestRestoreWorkspace = {
+                            importBackupBundleLauncher.launch(
+                                arrayOf("application/zip", "application/octet-stream"),
                             )
                         },
                         onClearRecordFiles = workspaceViewModel::clearRecordFiles,
@@ -166,9 +176,17 @@ internal fun BillsAndroidApp(
                         onScreenShown = editorViewModel::onEditorScreenShown,
                         onSelectExistingRecordYear = editorViewModel::selectExistingRecordYear,
                         onSelectExistingRecordMonth = editorViewModel::selectExistingRecordMonth,
-                        onSaveRecord = editorViewModel::saveRecordDraft,
+                        onSaveStructuredRecord = editorViewModel::saveRecordDraft,
                         onSaveRawRecordText = editorViewModel::saveRawRecordText,
                         onRecordDraftChange = editorViewModel::updateRecordDraft,
+                        onStructuredRemarkChange = editorViewModel::updateStructuredRemark,
+                        onAddStructuredEntry = editorViewModel::addStructuredEntry,
+                        onRemoveStructuredEntry = editorViewModel::removeStructuredEntry,
+                        onStructuredEntryAmountChange = editorViewModel::updateStructuredEntryAmount,
+                        onStructuredEntryDescriptionChange = editorViewModel::updateStructuredEntryDescription,
+                        onStructuredEntryCommentChange = editorViewModel::updateStructuredEntryComment,
+                        onEnterRawExpertMode = editorViewModel::enterRawExpertMode,
+                        onReturnToStructuredMode = editorViewModel::returnToStructuredMode,
                         modifier = contentModifier,
                     )
                 }
@@ -183,11 +201,6 @@ internal fun BillsAndroidApp(
                         onRequestExportBackup = {
                             exportBackupBundleLauncher.launch(
                                 "bills_backup_${DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").format(LocalDateTime.now())}.zip",
-                            )
-                        },
-                        onRequestImportBackup = {
-                            importBackupBundleLauncher.launch(
-                                arrayOf("application/zip", "application/octet-stream"),
                             )
                         },
                         onSelectThemeMode = settingsViewModel::updateThemeModeDraft,
@@ -229,9 +242,11 @@ private fun AppBottomBar(
                 },
                 label = { Text(tab.label) },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = androidx.compose.material3.MaterialTheme.colorScheme.onSecondaryContainer,
+                    selectedIconColor = Color.White,
+                    unselectedIconColor = Color.Black,
                     selectedTextColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                    indicatorColor = androidx.compose.material3.MaterialTheme.colorScheme.secondaryContainer,
+                    unselectedTextColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
+                    indicatorColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                 ),
             )
         }

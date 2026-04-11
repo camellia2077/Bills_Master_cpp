@@ -7,6 +7,7 @@ import com.billstracer.android.data.nativebridge.string
 import com.billstracer.android.model.ExportedBackupBundleResult
 import com.billstracer.android.model.ImportedBackupBundleResult
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -40,8 +41,52 @@ internal object BackupNativeResultParser {
             restoredConfigFiles = data.int("restored_config_files"),
             restoredBills = data.int("restored_bills"),
             failedPhase = data["failed_phase"]?.jsonPrimitive?.contentOrNull,
+            firstErrorMessage = parseFirstErrorMessage(data),
             sourceDisplayPath = sourceDisplayPath,
             rawJson = rawJson,
         )
     }
+
+    private fun parseFirstErrorMessage(data: JsonObject): String? {
+        // Prefer the earliest failing stage so the UI shows the first actionable
+        // restore error instead of a later downstream symptom.
+        val configValidation = data["config_validation"]?.jsonObject
+        val configIssueMessage = firstConfigIssueMessage(configValidation)
+        if (!configIssueMessage.isNullOrBlank()) {
+            return configIssueMessage
+        }
+
+        val recordValidation = data["record_validation"]?.jsonObject
+        val recordErrorMessage = firstRecordErrorMessage(recordValidation)
+        if (!recordErrorMessage.isNullOrBlank()) {
+            return recordErrorMessage
+        }
+
+        val dbIngest = data["db_ingest"]?.jsonObject
+        return firstRecordErrorMessage(dbIngest)
+    }
+
+    private fun firstConfigIssueMessage(data: JsonObject?): String? =
+        data?.objectList("files")
+            ?.firstOrNull { !it.boolean("ok") }
+            ?.objectList("issues")
+            ?.firstOrNull()
+            ?.string("message")
+            ?.takeIf { it.isNotBlank() }
+
+    private fun firstRecordErrorMessage(data: JsonObject?): String? {
+        val failedFile = data?.objectList("files")
+            ?.firstOrNull { !it.boolean("ok") }
+            ?: return null
+        return failedFile.string("error").takeIf { it.isNotBlank() }
+            ?: failedFile.objectList("issues")
+                .firstOrNull()
+                ?.string("message")
+                ?.takeIf { it.isNotBlank() }
+    }
+
+    private fun JsonObject.objectList(key: String): List<JsonObject> =
+        (this[key] as? JsonArray)?.mapNotNull { element ->
+            runCatching { element.jsonObject }.getOrNull()
+        }.orEmpty()
 }

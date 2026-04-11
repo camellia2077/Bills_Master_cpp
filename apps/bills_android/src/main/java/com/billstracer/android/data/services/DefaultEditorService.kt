@@ -7,9 +7,16 @@ import com.billstracer.android.data.nativebridge.string
 import com.billstracer.android.data.runtime.AndroidWorkspaceRuntime
 import com.billstracer.android.model.RecordEditorDocument
 import com.billstracer.android.model.RecordSaveResult
+import com.billstracer.android.model.StructuredRecordEditorDocument
+import com.billstracer.android.model.StructuredRecordEditorEntry
+import com.billstracer.android.model.StructuredRecordEditorParentSection
+import com.billstracer.android.model.StructuredRecordEditorSubSection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -49,22 +56,39 @@ internal class DefaultEditorService(
                     period,
                 )
                 val generatedText = parseRecordTemplateResult(rawJson)
+                val parsed = parseStructuredDocumentOrFallback(generatedText)
                 return@withContext RecordEditorDocument(
                     period = period,
                     relativePath = defaultRecordFileForPeriod(workspace.recordsRoot, period)
                         .relativeTo(workspace.recordsRoot).invariantSeparatorsPath,
                     rawText = generatedText,
                     persisted = false,
+                    structuredDocument = parsed.first,
+                    rawFallbackReason = parsed.second,
                 )
             }
+            val rawText = persistedRecordFile.readText(Charsets.UTF_8)
+            val parsed = parseStructuredDocumentOrFallback(rawText)
             RecordEditorDocument(
                 period = period,
                 relativePath = persistedRecordFile.relativeTo(workspace.recordsRoot)
                     .invariantSeparatorsPath,
-                rawText = persistedRecordFile.readText(Charsets.UTF_8),
+                rawText = rawText,
                 persisted = true,
+                structuredDocument = parsed.first,
+                rawFallbackReason = parsed.second,
             )
         }
+
+    override suspend fun serializeStructuredRecordDocument(
+        document: StructuredRecordEditorDocument,
+    ): String = withContext(Dispatchers.IO) {
+        parseStructuredDocumentSerializationResult(
+            EditorNativeBindings.serializeRecordEditorDocumentJsonNative(
+                structuredDocumentToJson(document).toString(),
+            ),
+        )
+    }
 
     override suspend fun commitRecordDocument(
         period: String,
@@ -97,11 +121,15 @@ internal class DefaultEditorService(
         val errorMessage = data["error_message"]?.jsonPrimitive?.contentOrNull
             ?: root.string("message").takeIf { !root.boolean("ok") }
         val document = if (root.boolean("ok")) {
+            val rawText = data.string("text")
+            val parsed = parseStructuredDocumentOrFallback(rawText)
             RecordEditorDocument(
                 period = data.string("period"),
                 relativePath = data.string("relative_path"),
-                rawText = data.string("text"),
+                rawText = rawText,
                 persisted = data.boolean("persisted"),
+                structuredDocument = parsed.first,
+                rawFallbackReason = parsed.second,
             )
         } else {
             null
@@ -114,4 +142,120 @@ internal class DefaultEditorService(
             rawJson = rawJson,
         )
     }
+
+    private fun parseStructuredDocumentOrFallback(rawText: String): Pair<StructuredRecordEditorDocument?, String?> {
+        val root = parseRoot(EditorNativeBindings.parseRecordEditorDocumentJsonNative(rawText))
+        if (!root.boolean("ok")) {
+            val data = root["data"]?.jsonObject ?: JsonObject(emptyMap())
+            val fallbackReason = buildString {
+                append(root.string("message"))
+                val line = data["line"]?.jsonPrimitive?.contentOrNull
+                if (!line.isNullOrBlank()) {
+                    append(" (line ")
+                    append(line)
+                    append(')')
+                }
+            }.ifBlank { "This TXT shape is not supported by the structured editor yet." }
+            return null to fallbackReason
+        }
+        val data = root["data"]?.jsonObject ?: JsonObject(emptyMap())
+        return parseStructuredDocument(data) to null
+    }
+
+    private fun parseStructuredDocumentSerializationResult(rawJson: String): String {
+        val root = parseRoot(rawJson)
+        if (!root.boolean("ok")) {
+            error(root.string("message"))
+        }
+        val data = root["data"]?.jsonObject ?: JsonObject(emptyMap())
+        return data.string("text")
+    }
+
+    private fun parseStructuredDocument(data: JsonObject): StructuredRecordEditorDocument =
+        StructuredRecordEditorDocument(
+            dateLine = data.string("date_line"),
+            remarkLines = data["remark_lines"]?.jsonArray?.map { remark ->
+                remark.jsonPrimitive.contentOrNull.orEmpty()
+            }.orEmpty(),
+            sections = data["sections"]?.jsonArray?.map { parentElement ->
+                val parentObject = parentElement.jsonObject
+                StructuredRecordEditorParentSection(
+                    title = parentObject.string("title"),
+                    subSections = parentObject["sub_sections"]?.jsonArray?.map { subSectionElement ->
+                        val subSectionObject = subSectionElement.jsonObject
+                        StructuredRecordEditorSubSection(
+                            title = subSectionObject.string("title"),
+                            entries = subSectionObject["entries"]?.jsonArray?.map { entryElement ->
+                                val entryObject = entryElement.jsonObject
+                                StructuredRecordEditorEntry(
+                                    amountExpression = entryObject.string("amount_expression"),
+                                    description = entryObject.string("description"),
+                                    comment = entryObject.string("comment"),
+                                )
+                            }.orEmpty(),
+                        )
+                    }.orEmpty(),
+                )
+            }.orEmpty(),
+        )
+
+    private fun structuredDocumentToJson(document: StructuredRecordEditorDocument): JsonObject =
+        buildJsonObject {
+            put("date_line", JsonPrimitive(document.dateLine))
+            put(
+                "remark_lines",
+                buildJsonArray {
+                    document.remarkLines.forEach { line ->
+                        add(JsonPrimitive(line))
+                    }
+                },
+            )
+            put(
+                "sections",
+                buildJsonArray {
+                    document.sections.forEach { parent ->
+                        add(
+                            buildJsonObject {
+                                put("title", JsonPrimitive(parent.title))
+                                put(
+                                    "sub_sections",
+                                    buildJsonArray {
+                                        parent.subSections.forEach { subSection ->
+                                            add(
+                                                buildJsonObject {
+                                                    put("title", JsonPrimitive(subSection.title))
+                                                    put(
+                                                        "entries",
+                                                        buildJsonArray {
+                                                            subSection.entries.forEach { entry ->
+                                                                add(
+                                                                    buildJsonObject {
+                                                                        put(
+                                                                            "amount_expression",
+                                                                            JsonPrimitive(entry.amountExpression),
+                                                                        )
+                                                                        put(
+                                                                            "description",
+                                                                            JsonPrimitive(entry.description),
+                                                                        )
+                                                                        put(
+                                                                            "comment",
+                                                                            JsonPrimitive(entry.comment),
+                                                                        )
+                                                                    },
+                                                                )
+                                                            }
+                                                        },
+                                                    )
+                                                },
+                                            )
+                                        }
+                                    },
+                                )
+                            },
+                        )
+                    }
+                },
+            )
+        }
 }

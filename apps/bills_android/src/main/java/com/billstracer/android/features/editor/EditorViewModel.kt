@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class EditorUiState(
+internal data class EditorUiState(
     val isInitializing: Boolean = true,
     val isWorking: Boolean = false,
     val statusMessage: String = "Loading imported periods from SQLite...",
@@ -28,6 +28,9 @@ data class EditorUiState(
     val selectedExistingRecordMonth: String = "",
     val activeRecordDocument: RecordEditorDocument? = null,
     val recordDraftText: String = "",
+    val structuredDraft: EditorStructuredDraftUiModel? = null,
+    val editorMode: EditorMode = EditorMode.Structured,
+    val hasIncompleteEntries: Boolean = false,
 )
 
 class EditorViewModel(
@@ -37,7 +40,7 @@ class EditorViewModel(
     private val currentPeriodProvider: () -> String = { YearMonth.now().toString() },
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(EditorUiState())
-    val state: StateFlow<EditorUiState> = mutableState.asStateFlow()
+    internal val state: StateFlow<EditorUiState> = mutableState.asStateFlow()
     private var observedWorkspaceDataVersion = workspaceDataChangeBus.version.value
 
     init {
@@ -114,20 +117,185 @@ class EditorViewModel(
         }
     }
 
+    fun updateStructuredRemark(rawRemark: String) {
+        mutableState.update { current ->
+            val draft = current.structuredDraft ?: return@update current
+            val updated = draft.withRemarkText(rawRemark)
+            current.copy(
+                structuredDraft = updated,
+                hasIncompleteEntries = updated.hasIncompleteEntries(),
+            )
+        }
+    }
+
+    fun addStructuredEntry(parentTitle: String, subSectionTitle: String) {
+        mutableState.update { current ->
+            val draft = current.structuredDraft ?: return@update current
+            val updated = draft.withAddedEntry(parentTitle, subSectionTitle)
+            current.copy(
+                structuredDraft = updated,
+                hasIncompleteEntries = updated.hasIncompleteEntries(),
+            )
+        }
+    }
+
+    fun removeStructuredEntry(parentTitle: String, subSectionTitle: String, entryId: String) {
+        mutableState.update { current ->
+            val draft = current.structuredDraft ?: return@update current
+            val updated = draft.withRemovedEntry(parentTitle, subSectionTitle, entryId)
+            current.copy(
+                structuredDraft = updated,
+                hasIncompleteEntries = updated.hasIncompleteEntries(),
+            )
+        }
+    }
+
+    fun updateStructuredEntryAmount(
+        parentTitle: String,
+        subSectionTitle: String,
+        entryId: String,
+        amountExpression: String,
+    ) = updateStructuredEntry(parentTitle, subSectionTitle, entryId) { entry ->
+        entry.copy(amountExpression = amountExpression)
+    }
+
+    fun updateStructuredEntryDescription(
+        parentTitle: String,
+        subSectionTitle: String,
+        entryId: String,
+        description: String,
+    ) = updateStructuredEntry(parentTitle, subSectionTitle, entryId) { entry ->
+        entry.copy(description = description)
+    }
+
+    fun updateStructuredEntryComment(
+        parentTitle: String,
+        subSectionTitle: String,
+        entryId: String,
+        comment: String,
+    ) = updateStructuredEntry(parentTitle, subSectionTitle, entryId) { entry ->
+        entry.copy(comment = comment)
+    }
+
+    fun enterRawExpertMode() {
+        val activeRecord = state.value.activeRecordDocument ?: return
+        val draft = state.value.structuredDraft
+        if (draft == null) {
+            mutableState.update { current -> current.copy(editorMode = EditorMode.RawExpert) }
+            return
+        }
+        if (draft.hasIncompleteEntries()) {
+            mutableState.update { current ->
+                current.copy(errorMessage = "Complete or delete unfinished entries before opening Raw TXT.")
+            }
+            return
+        }
+        viewModelScope.launch {
+            val pendingMessage = "Preparing Raw TXT expert mode..."
+            mutableState.update { current ->
+                current.copy(
+                    isWorking = true,
+                    errorMessage = null,
+                    statusMessage = pendingMessage,
+                )
+            }
+            runCatching {
+                editorService.serializeStructuredRecordDocument(draft.toStructuredRecordEditorDocument())
+            }.onSuccess { serialized ->
+                mutableState.update { current ->
+                    current.copy(
+                        isWorking = false,
+                        editorMode = EditorMode.RawExpert,
+                        recordDraftText = serialized,
+                        statusMessage = "Raw TXT expert mode is ready for ${activeRecord.period}.",
+                    )
+                }
+            }.onFailure { error ->
+                val message = error.message ?: "Failed to prepare Raw TXT expert mode."
+                sessionBus.publishError(message, "Failed to prepare Raw TXT expert mode.")
+                mutableState.update { current ->
+                    current.copy(
+                        isWorking = false,
+                        errorMessage = message,
+                        statusMessage = "Failed to prepare Raw TXT expert mode.",
+                    )
+                }
+            }
+        }
+    }
+
+    fun returnToStructuredMode() {
+        val activeRecord = state.value.activeRecordDocument ?: return
+        if (activeRecord.structuredDocument == null) {
+            return
+        }
+        mutableState.update { current ->
+            current.copy(
+                editorMode = EditorMode.Structured,
+                recordDraftText = activeRecord.rawText,
+                errorMessage = null,
+            )
+        }
+    }
+
     fun saveRecordDraft() {
         val activeRecord = state.value.activeRecordDocument ?: return
-        val draft = state.value.recordDraftText
-        commitRecordDraft(activeRecord, draft)
+        val draft = state.value.structuredDraft ?: return
+        if (draft.hasIncompleteEntries()) {
+            mutableState.update { current ->
+                current.copy(errorMessage = "Complete or delete unfinished entries before saving.")
+            }
+            return
+        }
+        viewModelScope.launch {
+            val pendingMessage = "Serializing ${activeRecord.period} for save..."
+            mutableState.update { current ->
+                current.copy(
+                    isWorking = true,
+                    errorMessage = null,
+                    statusMessage = pendingMessage,
+                )
+            }
+            runCatching {
+                editorService.serializeStructuredRecordDocument(draft.toStructuredRecordEditorDocument())
+            }.onSuccess { rawText ->
+                commitRecordDraft(activeRecord, rawText)
+            }.onFailure { error ->
+                val message = error.message ?: "Failed to serialize structured draft."
+                sessionBus.publishError(message, "Failed to save record draft.")
+                mutableState.update { current ->
+                    current.copy(
+                        isWorking = false,
+                        errorMessage = message,
+                        statusMessage = "Failed to save record draft.",
+                    )
+                }
+            }
+        }
     }
 
     fun saveRawRecordText(rawText: String) {
         val activeRecord = state.value.activeRecordDocument ?: return
         mutableState.update { current ->
-            current.copy(
-                recordDraftText = rawText,
-            )
+            current.copy(recordDraftText = rawText)
         }
         commitRecordDraft(activeRecord, rawText)
+    }
+
+    private fun updateStructuredEntry(
+        parentTitle: String,
+        subSectionTitle: String,
+        entryId: String,
+        transform: (EditorEntryDraftUiModel) -> EditorEntryDraftUiModel,
+    ) {
+        mutableState.update { current ->
+            val draft = current.structuredDraft ?: return@update current
+            val updated = draft.withUpdatedEntry(parentTitle, subSectionTitle, entryId, transform)
+            current.copy(
+                structuredDraft = updated,
+                hasIncompleteEntries = updated.hasIncompleteEntries(),
+            )
+        }
     }
 
     private fun commitRecordDraft(
@@ -175,7 +343,10 @@ class EditorViewModel(
                     return@collect
                 }
                 observedWorkspaceDataVersion = version
-                refreshPersistedRecordPeriods(initialLoad = false)
+                refreshPersistedRecordPeriods(
+                    initialLoad = false,
+                    reopenActivePeriodAfterRefresh = state.value.activeRecordDocument?.period,
+                )
             }
         }
     }
@@ -183,6 +354,7 @@ class EditorViewModel(
     private fun refreshPersistedRecordPeriods(
         initialLoad: Boolean,
         preferredPeriod: String? = state.value.activeRecordDocument?.period,
+        reopenActivePeriodAfterRefresh: String? = null,
     ) {
         viewModelScope.launch {
             if (!initialLoad) {
@@ -218,6 +390,14 @@ class EditorViewModel(
                             preferredPeriod = preferredPeriod ?: currentPeriodProvider().takeIf { initialLoad },
                         )
                     }
+                    // Workspace imports/restores can replace an auto-generated current-month template
+                    // with real TXT content on disk, so reload the active period immediately after
+                    // the period list refresh instead of waiting for the user to switch months.
+                    reopenActivePeriodAfterRefresh
+                        ?.takeIf { normalizedPeriods.contains(it) }
+                        ?.let { activePeriod ->
+                            openRecordPeriod(period = activePeriod, persistIfMissing = false)
+                        }
                 }
                 .onFailure { error ->
                     val message = error.message ?: "Failed to load imported periods from SQLite."
@@ -261,12 +441,7 @@ class EditorViewModel(
                     }
                     sessionBus.publishStatus(message)
                     mutableState.update { current ->
-                        current.copy(
-                            isWorking = false,
-                            activeRecordDocument = document,
-                            recordDraftText = document.rawText,
-                            statusMessage = message,
-                        )
+                        current.withOpenedDocument(document, message)
                     }
                 }
                 .onFailure { error ->
@@ -352,12 +527,10 @@ class EditorViewModel(
                 sessionBus.publishStatus(message)
                 mutableState.update { current ->
                     applyExistingRecordSelection(
-                        current.copy(
-                            isWorking = false,
-                            activeRecordDocument = savedDocument,
-                            recordDraftText = savedDocument.rawText,
-                            errorMessage = null,
-                            statusMessage = message,
+                        current.withOpenedDocument(
+                            document = savedDocument,
+                            message = message,
+                        ).copy(
                             persistedRecordPeriods = normalizedPeriods,
                         ),
                         periods = normalizedPeriods,
@@ -369,10 +542,11 @@ class EditorViewModel(
                 val errorMessage = error.message ?: "Failed to refresh imported periods."
                 sessionBus.publishError(errorMessage, refreshFailureMessage)
                 mutableState.update { current ->
-                    current.copy(
+                    current.withOpenedDocument(
+                        document = savedDocument,
+                        message = refreshFailureMessage,
+                    ).copy(
                         isWorking = false,
-                        activeRecordDocument = savedDocument,
-                        recordDraftText = savedDocument.rawText,
                         errorMessage = errorMessage,
                         statusMessage = refreshFailureMessage,
                     )
@@ -390,6 +564,23 @@ class EditorViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return EditorViewModel(editorService, sessionBus, workspaceDataChangeBus) as T
     }
+}
+
+private fun EditorUiState.withOpenedDocument(
+    document: RecordEditorDocument,
+    message: String,
+): EditorUiState {
+    val structuredDraft = document.structuredDocument?.toEditorStructuredDraft()
+    return copy(
+        isWorking = false,
+        activeRecordDocument = document,
+        recordDraftText = document.rawText,
+        structuredDraft = structuredDraft,
+        editorMode = if (structuredDraft != null) EditorMode.Structured else EditorMode.RawExpert,
+        hasIncompleteEntries = structuredDraft?.hasIncompleteEntries() == true,
+        errorMessage = null,
+        statusMessage = message,
+    )
 }
 
 private fun applyExistingRecordSelection(

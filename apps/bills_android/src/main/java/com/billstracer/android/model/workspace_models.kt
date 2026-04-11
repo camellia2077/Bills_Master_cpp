@@ -43,6 +43,7 @@ data class ImportedBackupBundleResult(
     val restoredConfigFiles: Int,
     val restoredBills: Int = 0,
     val failedPhase: String? = null,
+    val firstErrorMessage: String? = null,
     val sourceDisplayPath: String? = null,
     val rawJson: String,
 ) {

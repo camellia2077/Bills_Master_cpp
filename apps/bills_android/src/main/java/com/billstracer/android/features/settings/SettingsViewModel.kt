@@ -53,9 +53,11 @@ class SettingsViewModel(
 
     private val mutableState = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = mutableState.asStateFlow()
+    private var observedWorkspaceDataVersion = workspaceDataChangeBus.version.value
 
     init {
         initialize()
+        observeWorkspaceDataChanges()
     }
 
     private fun initialize() {
@@ -232,6 +234,38 @@ class SettingsViewModel(
     private fun resolveConfigDraftText(state: SettingsUiState, fileName: String): String? =
         state.configDrafts[fileName]
             ?: state.bundledConfigs.firstOrNull { config -> config.fileName == fileName }?.rawText
+
+    private fun observeWorkspaceDataChanges() {
+        viewModelScope.launch {
+            workspaceDataChangeBus.version.collect { version ->
+                if (version == observedWorkspaceDataVersion) {
+                    return@collect
+                }
+                observedWorkspaceDataVersion = version
+                refreshBundledConfigsFromWorkspaceChange()
+            }
+        }
+    }
+
+    private suspend fun refreshBundledConfigsFromWorkspaceChange() {
+        val loadedConfigs = runCatching { settingsService.loadBundledConfigs() }.getOrNull() ?: return
+        mutableState.update { current ->
+            if (current.bundledConfigs == loadedConfigs) {
+                current
+            } else {
+                // Workspace restore can replace config files underneath Settings,
+                // so reset the drafts to the restored on-disk source of truth.
+                val selectedFileName = current.selectedConfigFileName
+                current.copy(
+                    bundledConfigs = loadedConfigs,
+                    selectedConfigFileName = selectedFileName
+                        .takeIf { fileName -> loadedConfigs.any { it.fileName == fileName } }
+                        ?: loadedConfigs.firstOrNull()?.fileName.orEmpty(),
+                    configDrafts = loadedConfigs.associate { config -> config.fileName to config.rawText },
+                )
+            }
+        }
+    }
 
     fun updateThemeModeDraft(mode: ThemeMode) {
         mutableState.update { current ->

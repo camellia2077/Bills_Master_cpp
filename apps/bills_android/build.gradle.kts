@@ -21,7 +21,7 @@ plugins {
 }
 
 val androidPresentationVersionCode = 3
-val androidPresentationVersionName = "0.1.3"
+val androidPresentationVersionName = "0.2.0"
 
 private object AndroidUiDependencyVersions {
     const val composeBom = "2025.08.01"
@@ -308,6 +308,7 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.2.0")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.foundation:foundation-layout")
+    implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.runtime:runtime")
     implementation("androidx.compose.ui:ui")

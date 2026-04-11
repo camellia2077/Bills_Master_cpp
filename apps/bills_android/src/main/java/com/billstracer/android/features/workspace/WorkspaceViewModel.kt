@@ -7,9 +7,11 @@ import androidx.lifecycle.viewModelScope
 import com.billstracer.android.BuildConfig
 import com.billstracer.android.app.navigation.AppSessionBus
 import com.billstracer.android.app.navigation.WorkspaceDataChangeBus
+import com.billstracer.android.data.services.BackupService
 import com.billstracer.android.data.services.WorkspaceService
 import com.billstracer.android.model.AppEnvironment
-import com.billstracer.android.model.ExportedParseBundleResult
+import com.billstracer.android.model.ExportedBackupBundleResult
+import com.billstracer.android.model.ImportedBackupBundleResult
 import com.billstracer.android.model.ImportedParseBundleResult
 import com.billstracer.android.model.RecordDirectoryImportResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,12 +27,16 @@ data class WorkspaceUiState(
     val errorMessage: String? = null,
     val environment: AppEnvironment? = null,
     val recordDirectoryImportResult: RecordDirectoryImportResult? = null,
-    val lastExportResult: ExportedParseBundleResult? = null,
+    val lastExportedWorkspaceResult: ExportedBackupBundleResult? = null,
     val lastImportedBundleResult: ImportedParseBundleResult? = null,
+    val lastImportedBackupResult: ImportedBackupBundleResult? = null,
+    val backupRestoreFailedPhase: String? = null,
+    val backupRestoreFirstErrorMessage: String? = null,
 )
 
 class WorkspaceViewModel(
     private val workspaceService: WorkspaceService,
+    private val backupService: BackupService,
     private val sessionBus: AppSessionBus,
     private val workspaceDataChangeBus: WorkspaceDataChangeBus,
 ) : ViewModel() {
@@ -113,10 +119,10 @@ class WorkspaceViewModel(
         }
     }
 
-    fun exportParseBundle(targetDocumentUri: Uri) {
+    fun exportWorkspace(targetDocumentUri: Uri) {
         viewModelScope.launch {
             val pendingMessage =
-                "Exporting a parse bundle ZIP from saved TXT record files and configs..."
+                "Exporting a workspace ZIP from saved TXT record files and configs..."
             mutableState.update { current ->
                 current.copy(
                     isWorking = true,
@@ -125,36 +131,38 @@ class WorkspaceViewModel(
                 )
             }
             sessionBus.publishStatus(pendingMessage)
-            runCatching { workspaceService.exportParseBundle(targetDocumentUri) }
+            // Workspace export intentionally reuses the backup bundle format so the
+            // exported ZIP can be restored directly from the Workspace page later.
+            runCatching { backupService.exportBackupBundle(targetDocumentUri) }
                 .onSuccess { result ->
                     val message = when {
                         result.exportedRecordFiles > 0 && result.exportedConfigFiles > 0 ->
-                            "Exported a parse bundle with ${result.exportedRecordFiles} TXT record file(s) and ${result.exportedConfigFiles} TOML config file(s) to ${result.destinationDisplayPath}."
+                            "Exported a workspace bundle with ${result.exportedRecordFiles} TXT record file(s) and ${result.exportedConfigFiles} config file(s) to ${result.destinationDisplayPath}."
                         result.exportedRecordFiles > 0 ->
-                            "Exported a parse bundle with ${result.exportedRecordFiles} TXT record file(s) to ${result.destinationDisplayPath}."
+                            "Exported a workspace bundle with ${result.exportedRecordFiles} TXT record file(s) to ${result.destinationDisplayPath}."
                         result.exportedConfigFiles > 0 ->
-                            "Exported a parse bundle with ${result.exportedConfigFiles} TOML config file(s) to ${result.destinationDisplayPath}."
+                            "Exported a workspace bundle with ${result.exportedConfigFiles} config file(s) to ${result.destinationDisplayPath}."
                         else ->
-                            "No TXT record files or config files were found for parse bundle export."
+                            "No TXT record files or config files were found for workspace export."
                     }
                     sessionBus.publishStatus(message)
                     mutableState.update { current ->
                         current.copy(
                             isWorking = false,
-                            lastExportResult = result,
+                            lastExportedWorkspaceResult = result,
                             statusMessage = message,
                         )
                     }
                 }
                 .onFailure { error ->
                     val message =
-                        error.message ?: "Failed to export the parse bundle ZIP."
-                    sessionBus.publishError(message, "Failed to export the parse bundle ZIP.")
+                        error.message ?: "Failed to export the workspace ZIP."
+                    sessionBus.publishError(message, "Failed to export the workspace ZIP.")
                     mutableState.update { current ->
                         current.copy(
                             isWorking = false,
                             errorMessage = message,
-                            statusMessage = "Failed to export the parse bundle ZIP.",
+                            statusMessage = "Failed to export the workspace ZIP.",
                         )
                     }
                 }
@@ -221,6 +229,69 @@ class WorkspaceViewModel(
                             isWorking = false,
                             errorMessage = message,
                             statusMessage = "Failed to import the parse bundle ZIP.",
+                        )
+                    }
+                }
+        }
+    }
+
+    fun importBackupBundle(sourceDocumentUri: Uri) {
+        viewModelScope.launch {
+            val pendingMessage =
+                "Restoring the whole private workspace from the selected backup ZIP..."
+            mutableState.update { current ->
+                current.copy(
+                    isWorking = true,
+                    errorMessage = null,
+                    statusMessage = pendingMessage,
+                    backupRestoreFailedPhase = null,
+                    backupRestoreFirstErrorMessage = null,
+                )
+            }
+            sessionBus.publishStatus(pendingMessage)
+            runCatching { backupService.importBackupBundle(sourceDocumentUri) }
+                .onSuccess { result ->
+                    val message = if (result.ok) {
+                        when {
+                            result.restoredRecordFiles > 0 && result.restoredConfigFiles > 0 ->
+                                "Restored ${result.restoredRecordFiles} TXT record file(s) and ${result.restoredConfigFiles} config file(s) from ${result.sourceDisplayPath}, and rebuilt SQLite."
+                            result.restoredRecordFiles > 0 ->
+                                "Restored ${result.restoredRecordFiles} TXT record file(s) from ${result.sourceDisplayPath}, and rebuilt SQLite."
+                            result.restoredConfigFiles > 0 ->
+                                "Restored ${result.restoredConfigFiles} config file(s) from ${result.sourceDisplayPath}, and rebuilt SQLite."
+                            else ->
+                                "Restored backup bundle from ${result.sourceDisplayPath}, and rebuilt SQLite."
+                        }
+                    } else {
+                        result.message
+                    }
+                    if (result.ok) {
+                        sessionBus.publishStatus(message)
+                    } else {
+                        sessionBus.publishError(result.message, message)
+                    }
+                    mutableState.update { current ->
+                        current.copy(
+                            isWorking = false,
+                            lastImportedBackupResult = result,
+                            errorMessage = if (result.ok) null else result.message,
+                            statusMessage = message,
+                            backupRestoreFailedPhase = result.failedPhase,
+                            backupRestoreFirstErrorMessage = result.firstErrorMessage,
+                        )
+                    }
+                    notifyWorkspaceDataChangedIf(result.ok)
+                }
+                .onFailure { error ->
+                    val message = error.message ?: "Failed to import the backup bundle ZIP."
+                    sessionBus.publishError(message, "Failed to import the backup bundle ZIP.")
+                    mutableState.update { current ->
+                        current.copy(
+                            isWorking = false,
+                            errorMessage = message,
+                            statusMessage = "Failed to import the backup bundle ZIP.",
+                            backupRestoreFailedPhase = null,
+                            backupRestoreFirstErrorMessage = message,
                         )
                     }
                 }
@@ -338,11 +409,12 @@ class WorkspaceViewModel(
 
 class WorkspaceViewModelFactory(
     private val workspaceService: WorkspaceService,
+    private val backupService: BackupService,
     private val sessionBus: AppSessionBus,
     private val workspaceDataChangeBus: WorkspaceDataChangeBus,
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return WorkspaceViewModel(workspaceService, sessionBus, workspaceDataChangeBus) as T
+        return WorkspaceViewModel(workspaceService, backupService, sessionBus, workspaceDataChangeBus) as T
     }
 }

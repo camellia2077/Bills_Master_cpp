@@ -66,6 +66,7 @@ class MainActivity : ComponentActivity() {
     private val workspaceViewModel: WorkspaceViewModel by viewModels {
         WorkspaceViewModelFactory(
             workspaceService = workspaceService,
+            backupService = backupService,
             sessionBus = sessionBus,
             workspaceDataChangeBus = workspaceDataChangeBus,
         )

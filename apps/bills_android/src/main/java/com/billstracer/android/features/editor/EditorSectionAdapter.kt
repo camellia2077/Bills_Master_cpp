@@ -1,165 +1,104 @@
 package com.billstracer.android.features.editor
 
-internal data class EditorSectionDocumentUiModel(
-    val dateLine: String?,
-    val remarkLines: List<String>,
-    val sections: List<EditorParentSectionUiModel>,
-    val fallbackToRawEditor: Boolean,
-    val fallbackReason: String? = null,
+import com.billstracer.android.model.StructuredRecordEditorDocument
+import com.billstracer.android.model.StructuredRecordEditorEntry
+import com.billstracer.android.model.StructuredRecordEditorParentSection
+import com.billstracer.android.model.StructuredRecordEditorSubSection
+import java.util.UUID
+
+internal enum class EditorMode {
+    Structured,
+    RawExpert,
+}
+
+internal data class EditorEntryDraftUiModel(
+    val id: String,
+    val amountExpression: String,
+    val description: String,
+    val comment: String,
 )
 
-internal data class EditorParentSectionUiModel(
+internal data class EditorSubSectionDraftUiModel(
     val title: String,
-    val subSections: List<EditorSubSectionUiModel>,
+    val entries: List<EditorEntryDraftUiModel>,
 )
 
-internal data class EditorSubSectionUiModel(
+internal data class EditorParentSectionDraftUiModel(
     val title: String,
-    val contentLines: List<String>,
+    val subSections: List<EditorSubSectionDraftUiModel>,
 )
 
-internal fun parseEditorSectionDocument(rawText: String): EditorSectionDocumentUiModel {
-    var dateLine: String? = null
-    val remarkLines = mutableListOf<String>()
-    val sections = mutableListOf<MutableEditorParentSection>()
-    var currentParent: MutableEditorParentSection? = null
-    var currentSubSection: MutableEditorSubSection? = null
+internal data class EditorStructuredDraftUiModel(
+    val dateLine: String,
+    val remarkText: String,
+    val sections: List<EditorParentSectionDraftUiModel>,
+)
 
-    rawText.split('\n').forEach { rawLine ->
-        val normalizedLine = rawLine.trimEnd('\r')
-        val trimmedLine = normalizedLine.trim()
-
-        if (trimmedLine.startsWith("date:")) {
-            dateLine = trimmedLine
-            return@forEach
-        }
-        if (trimmedLine.startsWith("remark:")) {
-            remarkLines += trimmedLine.removePrefix("remark:")
-            return@forEach
-        }
-        if (trimmedLine.isBlank()) {
-            return@forEach
-        }
-
-        val firstWhitespaceIndex = trimmedLine.indexOfFirst { it.isWhitespace() }
-        val firstToken = if (firstWhitespaceIndex >= 0) {
-            trimmedLine.substring(0, firstWhitespaceIndex)
-        } else {
-            trimmedLine
-        }
-        val remainder = trimmedLine.removePrefix(firstToken).trimStart()
-        val startsWithLetter = trimmedLine.firstOrNull()?.isLetter() == true
-        val isPureParentTitle = startsWithLetter && remainder.isEmpty() && !firstToken.contains('_')
-        val isPureSubTitle = startsWithLetter && remainder.isEmpty() && firstToken.contains('_')
-        val isInlineSubTitle = startsWithLetter && firstToken.contains('_') && remainder.isNotEmpty()
-
-        when {
-            isPureParentTitle -> {
-                currentParent = MutableEditorParentSection(title = firstToken)
-                sections += currentParent!!
-                currentSubSection = null
-            }
-
-            isPureSubTitle -> {
-                val parent = currentParent ?: return fallbackSectionDocument(
-                    dateLine = dateLine,
-                    remarkLines = remarkLines,
-                    reason = "A sub-title appeared before any parent title.",
-                )
-                currentSubSection = MutableEditorSubSection(title = firstToken)
-                parent.subSections += currentSubSection!!
-            }
-
-            isInlineSubTitle -> {
-                val parent = currentParent ?: return fallbackSectionDocument(
-                    dateLine = dateLine,
-                    remarkLines = remarkLines,
-                    reason = "A sub-title with inline content appeared before any parent title.",
-                )
-                currentSubSection = MutableEditorSubSection(
-                    title = firstToken,
-                    contentLines = mutableListOf(remainder),
-                )
-                parent.subSections += currentSubSection!!
-            }
-
-            currentSubSection != null -> {
-                currentSubSection!!.contentLines += trimmedLine
-            }
-
-            else -> {
-                return fallbackSectionDocument(
-                    dateLine = dateLine,
-                    remarkLines = remarkLines,
-                    reason = "Content appeared before a recognized sub-title.",
-                )
-            }
-        }
-    }
-
-    val finalizedSections = sections.map { parent ->
-        EditorParentSectionUiModel(
-            title = parent.title,
-            subSections = parent.subSections.map { sub ->
-                EditorSubSectionUiModel(
-                    title = sub.title,
-                    contentLines = sub.contentLines.toList(),
-                )
-            },
-        )
-    }
-    return EditorSectionDocumentUiModel(
+internal fun StructuredRecordEditorDocument.toEditorStructuredDraft(): EditorStructuredDraftUiModel =
+    EditorStructuredDraftUiModel(
         dateLine = dateLine,
-        remarkLines = remarkLines,
-        sections = finalizedSections,
-        fallbackToRawEditor = false,
-        fallbackReason = null,
+        remarkText = remarkLines.joinToString("\n"),
+        sections = sections.map { parent ->
+            EditorParentSectionDraftUiModel(
+                title = parent.title,
+                subSections = parent.subSections.map { subSection ->
+                    EditorSubSectionDraftUiModel(
+                        title = subSection.title,
+                        entries = subSection.entries.mapIndexed { index, entry ->
+                            EditorEntryDraftUiModel(
+                                id = "${parent.title}:${subSection.title}:$index",
+                                amountExpression = entry.amountExpression,
+                                description = entry.description,
+                                comment = entry.comment,
+                            )
+                        },
+                    )
+                },
+            )
+        },
     )
-}
 
-internal fun serializeEditorSectionDocument(document: EditorSectionDocumentUiModel): String {
-    val lines = mutableListOf<String>()
-    document.dateLine?.trim()?.takeIf { it.isNotEmpty() }?.let { lines += it }
-    val serializedRemarkLines = if (document.remarkLines.isEmpty()) {
-        listOf("remark:")
-    } else {
-        document.remarkLines.map { remarkLine -> "remark:${remarkLine.trimEnd()}" }
-    }
-    lines += serializedRemarkLines
-    if ((document.dateLine != null || serializedRemarkLines.isNotEmpty()) && document.sections.isNotEmpty()) {
-        lines += ""
-    }
+internal fun EditorStructuredDraftUiModel.toStructuredRecordEditorDocument(): StructuredRecordEditorDocument =
+    StructuredRecordEditorDocument(
+        dateLine = dateLine.trim(),
+        remarkLines = remarkText.split('\n')
+            .map { line -> line.trimEnd('\r') },
+        sections = sections.map { parent ->
+            StructuredRecordEditorParentSection(
+                title = parent.title,
+                subSections = parent.subSections.map { subSection ->
+                    StructuredRecordEditorSubSection(
+                        title = subSection.title,
+                        entries = subSection.entries.map { entry ->
+                            StructuredRecordEditorEntry(
+                                amountExpression = entry.amountExpression.trim(),
+                                description = entry.description.trim(),
+                                comment = entry.comment.trim(),
+                            )
+                        },
+                    )
+                },
+            )
+        },
+    )
 
-    document.sections.forEachIndexed { parentIndex, parent ->
-        lines += parent.title.trim()
-        lines += ""
-
-        parent.subSections.forEachIndexed { subIndex, subSection ->
-            lines += subSection.title.trim()
-            val normalizedContentLines = subSection.contentLines.mapNotNull { line ->
-                line.trim().takeIf { it.isNotEmpty() }
-            }
-            lines += normalizedContentLines
-            if (subIndex < parent.subSections.lastIndex) {
-                lines += ""
+internal fun EditorStructuredDraftUiModel.hasIncompleteEntries(): Boolean =
+    sections.any { parent ->
+        parent.subSections.any { subSection ->
+            subSection.entries.any { entry ->
+                entry.amountExpression.trim().isEmpty()
             }
         }
-
-        if (parentIndex < document.sections.lastIndex) {
-            lines += ""
-        }
     }
 
-    return lines.joinToString("\n")
-}
+internal fun EditorStructuredDraftUiModel.withRemarkText(remarkText: String): EditorStructuredDraftUiModel =
+    copy(remarkText = remarkText)
 
-internal fun updateEditorSubSectionContent(
-    document: EditorSectionDocumentUiModel,
+internal fun EditorStructuredDraftUiModel.withAddedEntry(
     parentTitle: String,
     subSectionTitle: String,
-    rawContent: String,
-): EditorSectionDocumentUiModel = document.copy(
-    sections = document.sections.map { parent ->
+): EditorStructuredDraftUiModel = copy(
+    sections = sections.map { parent ->
         if (parent.title != parentTitle) {
             parent
         } else {
@@ -169,9 +108,12 @@ internal fun updateEditorSubSectionContent(
                         subSection
                     } else {
                         subSection.copy(
-                            contentLines = rawContent.split('\n')
-                                .map { it.trimEnd('\r') }
-                                .mapNotNull { line -> line.trim().takeIf { it.isNotEmpty() } },
+                            entries = subSection.entries + EditorEntryDraftUiModel(
+                                id = UUID.randomUUID().toString(),
+                                amountExpression = "",
+                                description = "",
+                                comment = "",
+                            ),
                         )
                     }
                 },
@@ -180,32 +122,94 @@ internal fun updateEditorSubSectionContent(
     },
 )
 
-internal fun updateEditorRemarkContent(
-    document: EditorSectionDocumentUiModel,
-    rawRemark: String,
-): EditorSectionDocumentUiModel = document.copy(
-    remarkLines = rawRemark.split('\n')
-        .map { it.trimEnd('\r') },
+internal fun EditorStructuredDraftUiModel.withRemovedEntry(
+    parentTitle: String,
+    subSectionTitle: String,
+    entryId: String,
+): EditorStructuredDraftUiModel = copy(
+    sections = sections.map { parent ->
+        if (parent.title != parentTitle) {
+            parent
+        } else {
+            parent.copy(
+                subSections = parent.subSections.map { subSection ->
+                    if (subSection.title != subSectionTitle) {
+                        subSection
+                    } else {
+                        subSection.copy(
+                            entries = subSection.entries.filterNot { entry -> entry.id == entryId },
+                        )
+                    }
+                },
+            )
+        }
+    },
 )
 
-private data class MutableEditorParentSection(
-    val title: String,
-    val subSections: MutableList<MutableEditorSubSection> = mutableListOf(),
+internal fun EditorStructuredDraftUiModel.withUpdatedEntry(
+    parentTitle: String,
+    subSectionTitle: String,
+    entryId: String,
+    transform: (EditorEntryDraftUiModel) -> EditorEntryDraftUiModel,
+): EditorStructuredDraftUiModel = copy(
+    sections = sections.map { parent ->
+        if (parent.title != parentTitle) {
+            parent
+        } else {
+            parent.copy(
+                subSections = parent.subSections.map { subSection ->
+                    if (subSection.title != subSectionTitle) {
+                        subSection
+                    } else {
+                        subSection.copy(
+                            entries = subSection.entries.map { entry ->
+                                if (entry.id != entryId) {
+                                    entry
+                                } else {
+                                    transform(entry)
+                                }
+                            },
+                        )
+                    }
+                },
+            )
+        }
+    },
 )
 
-private data class MutableEditorSubSection(
-    val title: String,
-    val contentLines: MutableList<String> = mutableListOf(),
-)
+internal fun filterEditorSections(
+    sections: List<EditorParentSectionDraftUiModel>,
+    query: String,
+): List<EditorParentSectionDraftUiModel> {
+    val normalizedQuery = query.trim()
+    if (normalizedQuery.isEmpty()) {
+        return sections
+    }
 
-private fun fallbackSectionDocument(
-    dateLine: String?,
-    remarkLines: List<String>,
-    reason: String,
-): EditorSectionDocumentUiModel = EditorSectionDocumentUiModel(
-    dateLine = dateLine,
-    remarkLines = remarkLines,
-    sections = emptyList(),
-    fallbackToRawEditor = true,
-    fallbackReason = reason,
-)
+    return sections.mapNotNull { parent ->
+        val parentMatches = parent.title.contains(normalizedQuery, ignoreCase = true)
+        val visibleSubSections = if (parentMatches) {
+            parent.subSections
+        } else {
+            parent.subSections.filter { sub ->
+                sub.title.contains(normalizedQuery, ignoreCase = true)
+            }
+        }
+        if (!parentMatches && visibleSubSections.isEmpty()) {
+            null
+        } else {
+            parent.copy(subSections = visibleSubSections)
+        }
+    }
+}
+
+internal fun editorSectionTagSuffix(raw: String): String = raw
+    .lowercase()
+    .map { character ->
+        if (character.isLetterOrDigit() || character == '_') {
+            character
+        } else {
+            '_'
+        }
+    }
+    .joinToString("")

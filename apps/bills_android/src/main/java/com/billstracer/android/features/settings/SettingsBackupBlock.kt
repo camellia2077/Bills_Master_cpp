@@ -2,12 +2,10 @@ package com.billstracer.android.features.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,41 +19,26 @@ import com.billstracer.android.platform.SectionGroupCard
 internal fun BackupSettingsBlock(
     state: SettingsUiState,
     onRequestExportBackup: () -> Unit,
-    onRequestImportBackup: () -> Unit,
 ) {
     SectionGroupCard(title = "Backup Bundle") {
         Text(
-            text = "Backup bundles are meant for device migration. They include records/*.txt plus validator_config.toml and modifier_config.toml.",
+            text = "Backup bundles are meant for device migration. They include records/*.txt plus validator_config.toml, modifier_config.toml, and export_formats.toml.",
             style = MaterialTheme.typography.bodySmall,
             fontFamily = FontFamily.Monospace,
         )
         Text(
-            text = "Restore replaces the current TXT workspace with the bundle contents and rebuilds SQLite. export_formats.toml stays on the target device.",
+            text = "Restore now lives on the Workspace page, and backup export is meant to pair with that full workspace restore flow.",
             style = MaterialTheme.typography.bodySmall,
             fontFamily = FontFamily.Monospace,
         )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        Button(
+            onClick = onRequestExportBackup,
+            enabled = !state.isInitializing && !state.isWorking,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("settings_export_backup_button"),
         ) {
-            Button(
-                onClick = onRequestExportBackup,
-                enabled = !state.isInitializing && !state.isWorking,
-                modifier = Modifier
-                    .weight(1f)
-                    .testTag("settings_export_backup_button"),
-            ) {
-                Text("Export Backup")
-            }
-            OutlinedButton(
-                onClick = onRequestImportBackup,
-                enabled = !state.isInitializing && !state.isWorking,
-                modifier = Modifier
-                    .weight(1f)
-                    .testTag("settings_import_backup_button"),
-            ) {
-                Text("Import Backup")
-            }
+            Text("Export Backup")
         }
         if (state.statusMessage.isNotBlank()) {
             Text(
@@ -88,29 +71,6 @@ internal fun BackupSettingsBlock(
                 style = MaterialTheme.typography.bodySmall,
                 fontFamily = FontFamily.Monospace,
                 modifier = Modifier.testTag("settings_backup_last_export"),
-            )
-        }
-        state.lastImportedBackupResult?.let { result ->
-            val details = buildString {
-                append("Last restore: ")
-                append(result.restoredRecordFiles)
-                append(" TXT file(s), ")
-                append(result.restoredConfigFiles)
-                append(" config file(s) from ")
-                append(result.sourceDisplayPath)
-                if (result.ok) {
-                    append(", SQLite rebuilt.")
-                } else if (!result.failedPhase.isNullOrBlank()) {
-                    append(", failed at ")
-                    append(result.failedPhase)
-                    append('.')
-                }
-            }
-            Text(
-                text = details,
-                style = MaterialTheme.typography.bodySmall,
-                fontFamily = FontFamily.Monospace,
-                modifier = Modifier.testTag("settings_backup_last_import"),
             )
         }
     }
