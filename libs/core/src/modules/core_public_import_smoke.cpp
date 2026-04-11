@@ -7,6 +7,7 @@ import bill.core.config.document_types;
 import bill.core.config.bundle_service;
 import bill.core.ports.bills_repository;
 import bill.core.ports.report_data_gateway;
+import bill.core.record_editor.types;
 import bill.core.record_template.types;
 
 namespace {
@@ -19,6 +20,7 @@ using bills::core::modules::config::RuntimeConfigBundle;
 using bills::core::modules::domain_bill_record::ParsedBill;
 using bills::core::modules::ports::BillRepository;
 using bills::core::modules::ports::ReportDataGateway;
+using bills::core::modules::record_editor::RecordEditorDocument;
 using bills::core::modules::record_template::TemplateGenerationRequest;
 
 [[maybe_unused]] ProcessStats kProcessStats{};
@@ -26,6 +28,7 @@ using bills::core::modules::record_template::TemplateGenerationRequest;
 [[maybe_unused]] ConfigDocumentBundle kDocuments{};
 [[maybe_unused]] RuntimeConfigBundle kConfigBundle{};
 [[maybe_unused]] ParsedBill kParsedBill{};
+[[maybe_unused]] RecordEditorDocument kRecordEditorDocument{};
 [[maybe_unused]] TemplateGenerationRequest kTemplateRequest{};
 [[maybe_unused]] auto* kConfigServiceEntry = &ConfigBundleService::Validate;
 [[maybe_unused]] auto kRepositoryEntry = &BillRepository::InsertBill;

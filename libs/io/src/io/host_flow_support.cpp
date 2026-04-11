@@ -46,9 +46,13 @@ constexpr std::array<std::string_view, 3U> kConfigFileNames = {
     "modifier_config.toml",
     "export_formats.toml",
 };
-constexpr std::array<std::string_view, 2U> kBackupConfigFileNames = {
+// Backup bundles are the canonical "workspace snapshot" format.
+// They intentionally carry the same config trio needed to restore the
+// workspace into a self-consistent state on another device.
+constexpr std::array<std::string_view, 3U> kBackupConfigFileNames = {
     "validator_config.toml",
     "modifier_config.toml",
+    "export_formats.toml",
 };
 
 struct ConfigTexts {
@@ -73,6 +77,7 @@ struct BackupBundleArchiveContents {
   std::string manifest_text;
   std::string validator_text;
   std::string modifier_text;
+  std::string export_formats_text;
   SourceDocumentBatch records;
 };
 
@@ -294,9 +299,10 @@ auto BuildBackupManifestText(std::size_t record_count) -> std::string {
       {"bundle_version", kBackupBundleVersion},
       {"exported_at", FormatLocalTimestamp("%Y-%m-%dT%H:%M:%S")},
       {"record_count", record_count},
-      {"config_files",
-       {std::string(kBackupConfigFileNames[0]),
-        std::string(kBackupConfigFileNames[1])}},
+       {"config_files",
+        {std::string(kBackupConfigFileNames[0]),
+         std::string(kBackupConfigFileNames[1]),
+         std::string(kBackupConfigFileNames[2])}},
   };
   return manifest.dump(2) + "\n";
 }
@@ -345,11 +351,12 @@ auto ValidateBackupManifest(const std::string& manifest_text,
     const std::set<std::string> expected = {
         std::string(kBackupConfigFileNames[0]),
         std::string(kBackupConfigFileNames[1]),
+        std::string(kBackupConfigFileNames[2]),
     };
     if (config_files != expected) {
       return std::unexpected(MakeError(
-          "manifest.json config_files must list validator_config.toml and "
-          "modifier_config.toml.",
+          "manifest.json config_files must list validator_config.toml, "
+          "modifier_config.toml, and export_formats.toml.",
           kContext));
     }
   } catch (const nlohmann::json::exception& error) {
@@ -468,6 +475,7 @@ auto LoadBackupArchiveContents(const std::filesystem::path& bundle_zip)
   bool has_manifest = false;
   bool has_validator = false;
   bool has_modifier = false;
+  bool has_export_formats = false;
 
   for (const auto& entry : *entries) {
     if (entry.archive_path == kManifestPath) {
@@ -487,6 +495,11 @@ auto LoadBackupArchiveContents(const std::filesystem::path& bundle_zip)
       if (relative_path == kBackupConfigFileNames[1]) {
         has_modifier = true;
         contents.modifier_text = entry.text;
+        continue;
+      }
+      if (relative_path == kBackupConfigFileNames[2]) {
+        has_export_formats = true;
+        contents.export_formats_text = entry.text;
         continue;
       }
       return std::unexpected(MakeError(
@@ -526,10 +539,10 @@ auto LoadBackupArchiveContents(const std::filesystem::path& bundle_zip)
     return std::unexpected(
         MakeError("Backup ZIP archive is missing manifest.json.", kContext));
   }
-  if (!has_validator || !has_modifier) {
+  if (!has_validator || !has_modifier || !has_export_formats) {
     return std::unexpected(MakeError(
-        "Backup ZIP archive must contain validator_config.toml and "
-        "modifier_config.toml under config/.",
+        "Backup ZIP archive must contain validator_config.toml, "
+        "modifier_config.toml, and export_formats.toml under config/.",
         kContext));
   }
 
@@ -553,13 +566,16 @@ auto BuildConfigDocumentsForWrite(const ConfigTexts& texts) -> SourceDocumentBat
 }
 
 auto BuildBackupConfigDocumentsForWrite(std::string validator_text,
-                                        std::string modifier_text)
+                                        std::string modifier_text,
+                                        std::string export_formats_text)
     -> SourceDocumentBatch {
   return SourceDocumentBatch{
       SourceDocument{.display_path = std::string(kBackupConfigFileNames[0]),
                      .text = std::move(validator_text)},
       SourceDocument{.display_path = std::string(kBackupConfigFileNames[1]),
                      .text = std::move(modifier_text)},
+      SourceDocument{.display_path = std::string(kBackupConfigFileNames[2]),
+                     .text = std::move(export_formats_text)},
   };
 }
 
@@ -2446,6 +2462,11 @@ auto ExportBackupBundle(const std::filesystem::path& records_root,
           std::string(kConfigPrefix) + std::string(kBackupConfigFileNames[1]),
       .text = config_context->texts.modifier_text,
   });
+  archive_entries.push_back(ZipArchiveTextEntry{
+      .archive_path =
+          std::string(kConfigPrefix) + std::string(kBackupConfigFileNames[2]),
+      .text = config_context->texts.export_formats_text,
+  });
   for (const auto& document : *record_documents) {
     archive_entries.push_back(ZipArchiveTextEntry{
         .archive_path = std::string(kRecordsPrefix) +
@@ -2488,11 +2509,12 @@ auto ImportBackupBundle(const std::filesystem::path& bundle_zip,
   ConfigTexts merged_config_texts = *current_config_texts;
   merged_config_texts.validator_text = archive_contents->validator_text;
   merged_config_texts.modifier_text = archive_contents->modifier_text;
+  merged_config_texts.export_formats_text = archive_contents->export_formats_text;
   const auto imported_config_context = ParseAndValidateConfigTexts(
       std::move(merged_config_texts),
       std::string(kConfigPrefix) + std::string(kBackupConfigFileNames[0]),
       std::string(kConfigPrefix) + std::string(kBackupConfigFileNames[1]),
-      (config_dir / kConfigFileNames[2]).string());
+      std::string(kConfigPrefix) + std::string(kBackupConfigFileNames[2]));
   if (!imported_config_context) {
     result = MakeImportBackupBundleFailure(
         "validate_config", FormatError(imported_config_context.error()));
@@ -2515,7 +2537,8 @@ auto ImportBackupBundle(const std::filesystem::path& bundle_zip,
   }
 
   const SourceDocumentBatch config_documents = BuildBackupConfigDocumentsForWrite(
-      archive_contents->validator_text, archive_contents->modifier_text);
+      archive_contents->validator_text, archive_contents->modifier_text,
+      archive_contents->export_formats_text);
   const auto existing_record_documents = LoadWorkspaceRecordDocuments(records_root);
   if (!existing_record_documents) {
     return std::unexpected(existing_record_documents.error());
