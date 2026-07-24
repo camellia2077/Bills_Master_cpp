@@ -179,7 +179,7 @@ auto render_yearly(const StandardReport& report) -> std::string {
   auto months = report.monthly_summary;
   std::ranges::sort(months, [](const StandardMonthlySummaryItem& left,
                                const StandardMonthlySummaryItem& right) -> bool {
-    return left.month < right.month;
+    return left.period < right.period;
   });
 
   std::ostringstream output;
@@ -212,8 +212,7 @@ auto render_yearly(const StandardReport& report) -> std::string {
             "\\textbf{结余} \\\\\n";
   output << "\\hline\n";
   for (const auto& item : months) {
-    output << year_text << "-" << std::setw(2) << std::setfill('0') << item.month
-           << " & CNY " << item.income << " & CNY " << item.expense
+    output << item.period << " & CNY " << item.income << " & CNY " << item.expense
            << " & CNY " << (item.income + item.expense) << " \\\\\n";
     output << "\\hline\n";
   }
@@ -221,6 +220,60 @@ auto render_yearly(const StandardReport& report) -> std::string {
   output << "\\end{table}\n";
   output << "\\end{document}\n";
 
+  return output.str();
+}
+
+auto render_range(const StandardReport& report) -> std::string {
+  const std::string range_label =
+      render_support::FormatRangePeriodLabel(report.period_start, report.period_end);
+
+  if (!report.data_found) {
+    return "未找到 " + range_label + " 的任何数据。\n";
+  }
+
+  auto months = report.monthly_summary;
+  std::ranges::sort(months, [](const StandardMonthlySummaryItem& left,
+                               const StandardMonthlySummaryItem& right) -> bool {
+    return left.period < right.period;
+  });
+
+  std::ostringstream output;
+  output << std::fixed << std::setprecision(2);
+  output << "\\documentclass[12pt]{article}\n";
+  output << "\\usepackage{fontspec}\n";
+  output << "\\usepackage[nofonts]{ctex}\n";
+  output << "\\usepackage[a4paper, margin=1in]{geometry}\n\n";
+  output << "\\setmainfont{Noto Serif SC}\n";
+  output << "\\setCJKmainfont{Noto Serif SC}\n\n";
+  output << "\\title{" << escape_latex(render_support::RangeTitleText(report.period_start,
+                                                                      report.period_end))
+         << "}\n";
+  output << "\\author{BillsMaster}\n";
+  output << "\\date{\\today}\n\n";
+  output << "\\begin{document}\n";
+  output << "\\maketitle\n\n";
+  output << "\\section*{区间总览}\n";
+  output << "\\begin{itemize}\n";
+  output << "    \\item \\textbf{区间总收入:} CNY" << report.total_income << "\n";
+  output << "    \\item \\textbf{区间总支出:} CNY" << report.total_expense << "\n";
+  output << "    \\item \\textbf{区间结余:} CNY" << report.balance << "\n";
+  output << "\\end{itemize}\n\n";
+  output << "\\section*{每月汇总}\n";
+  output << "\\begin{table}[h]\n";
+  output << "\\centering\n";
+  output << "\\begin{tabular}{|c|c|c|c|}\n";
+  output << "\\hline\n";
+  output << "\\textbf{月份} & \\textbf{收入} & \\textbf{支出} & "
+            "\\textbf{结余} \\\\\n";
+  output << "\\hline\n";
+  for (const auto& item : months) {
+    output << item.period << " & CNY " << item.income << " & CNY " << item.expense
+           << " & CNY " << (item.income + item.expense) << " \\\\\n";
+    output << "\\hline\n";
+  }
+  output << "\\end{tabular}\n";
+  output << "\\end{table}\n";
+  output << "\\end{document}\n";
   return output.str();
 }
 
@@ -233,6 +286,9 @@ auto StandardJsonLatexRenderer::render(const StandardReport& standard_report)
   }
   if (standard_report.report_type == "yearly") {
     return render_yearly(standard_report);
+  }
+  if (standard_report.report_type == "range") {
+    return render_range(standard_report);
   }
 
   throw std::runtime_error("Unsupported report_type in standard report JSON.");

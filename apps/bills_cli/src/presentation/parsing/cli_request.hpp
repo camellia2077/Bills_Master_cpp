@@ -29,6 +29,7 @@ struct WorkspaceRequest {
 enum class ReportAction {
   kShowYear,
   kShowMonth,
+  kShowRange,
   kExportYear,
   kExportMonth,
   kExportRange,

@@ -14,10 +14,9 @@ class SqliteReportDataGateway final : public ReportDataGateway {
  public:
   explicit SqliteReportDataGateway(sqlite3* db_connection);
 
-  [[nodiscard]] auto ReadMonthlyData(std::string_view iso_month)
-      -> MonthlyReportData override;
-  [[nodiscard]] auto ReadYearlyData(std::string_view iso_year)
-      -> YearlyReportData override;
+  [[nodiscard]] auto ReadRangeData(std::string_view start_iso_month,
+                                   std::string_view end_iso_month)
+      -> RangeReportData override;
   [[nodiscard]] auto ListAvailableMonths() -> std::vector<std::string> override;
 
  private:

@@ -1,0 +1,12 @@
+// common/version.hpp
+#ifndef COMMON_VERSION_H_
+#define COMMON_VERSION_H_
+
+#include <string_view>
+
+namespace bills::core::version {
+inline constexpr std::string_view kVersion = "@BILLS_CORE_VERSION@";
+inline constexpr std::string_view kLastUpdated = "@BILLS_CORE_LAST_UPDATED@";
+}  // namespace bills::core::version
+
+#endif  // COMMON_VERSION_H_

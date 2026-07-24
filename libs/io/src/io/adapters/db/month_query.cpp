@@ -80,7 +80,8 @@ auto MonthQuery::read_monthly_data(std::string_view iso_month)
   }
 
   const char* sql =
-      "SELECT t.parent_category, t.sub_category, t.amount, t.description "
+      "SELECT t.parent_category, t.sub_category, t.amount, t.description, "
+      "t.comment "
       "FROM transactions AS t "
       "JOIN bills AS b ON t.bill_id = b.id "
       "WHERE b.bill_date = ?;";
@@ -101,6 +102,7 @@ auto MonthQuery::read_monthly_data(std::string_view iso_month)
         reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
     double amount = sqlite3_column_double(stmt, 2);
     const unsigned char* desc_raw = sqlite3_column_text(stmt, 3);
+    const unsigned char* comment_raw = sqlite3_column_text(stmt, 4);
 
     Transaction transaction;
     transaction.parent_category = parent_cat;
@@ -108,6 +110,9 @@ auto MonthQuery::read_monthly_data(std::string_view iso_month)
     transaction.amount = amount;
     transaction.description =
         (desc_raw != nullptr) ? reinterpret_cast<const char*>(desc_raw) : "";
+    transaction.comment = (comment_raw != nullptr)
+                              ? reinterpret_cast<const char*>(comment_raw)
+                              : "";
 
     data.aggregated_data[parent_cat].parent_total += amount;
     data.aggregated_data[parent_cat].sub_categories[sub_cat].sub_total +=

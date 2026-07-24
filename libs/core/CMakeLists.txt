@@ -2,7 +2,16 @@ cmake_minimum_required(VERSION 3.28)
 
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/modules/compiler_select.cmake")
 
-project(BillsCore LANGUAGES CXX)
+project(BillsCore VERSION 0.4.6 LANGUAGES CXX)
+
+set(BILLS_CORE_VERSION "${BillsCore_VERSION}")
+set(BILLS_CORE_LAST_UPDATED "2026-07-24")
+
+configure_file(
+    "${CMAKE_CURRENT_LIST_DIR}/src/common/version.hpp.in"
+    "${CMAKE_CURRENT_LIST_DIR}/src/common/version.hpp"
+    @ONLY
+)
 
 option(BILLS_ENABLE_LTO_RELEASE "Enable LTO for Release builds" ON)
 option(BILLS_ENABLE_MODULES "Enable C++ modules pilot for bills_core" OFF)
@@ -162,3 +171,22 @@ target_compile_options(bills_core PRIVATE
     -Wall
     -fdiagnostics-color=always
 )
+
+add_executable(bills_core_content_line_contract_tests
+    "${CMAKE_CURRENT_LIST_DIR}/tests/content_line_support_contract_tests.cpp"
+)
+target_include_directories(bills_core_content_line_contract_tests PRIVATE
+    "${CORE_SOURCE_ROOT}"
+)
+target_link_libraries(bills_core_content_line_contract_tests PRIVATE
+    bills_core
+)
+target_compile_options(bills_core_content_line_contract_tests PRIVATE
+    -Wall
+    -fdiagnostics-color=always
+)
+if(BILLS_STDCXXEXP_LIBRARY AND NOT ANDROID)
+    target_link_libraries(bills_core_content_line_contract_tests PRIVATE
+        ${BILLS_STDCXXEXP_LIBRARY}
+    )
+endif()

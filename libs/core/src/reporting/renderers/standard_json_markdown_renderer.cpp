@@ -99,7 +99,7 @@ auto RenderYearly(const StandardReport& report) -> std::string {
   auto months = report.monthly_summary;
   std::ranges::sort(months, [](const StandardMonthlySummaryItem& left,
                                const StandardMonthlySummaryItem& right) -> bool {
-    return left.month < right.month;
+    return left.period < right.period;
   });
 
   std::ostringstream output;
@@ -112,12 +112,43 @@ auto RenderYearly(const StandardReport& report) -> std::string {
   output << "| 月份 | 收入 (CNY) | 支出 (CNY) | 结余 (CNY) |\n";
   output << "| :--- | :--- | :--- | :--- |\n";
   for (const auto& month_item : months) {
-    output << "| " << kYearStr << "-" << std::setw(2) << std::setfill('0')
-           << month_item.month << " | " << month_item.income << " | "
+    output << "| " << month_item.period << " | " << month_item.income << " | "
            << month_item.expense << " | "
            << (month_item.income + month_item.expense) << " |\n";
   }
 
+  return output.str();
+}
+
+auto RenderRange(const StandardReport& report) -> std::string {
+  const std::string kRangeLabel = render_support::FormatRangePeriodLabel(
+      report.period_start, report.period_end);
+
+  if (!report.data_found) {
+    return "未找到 " + kRangeLabel + " 的账单记录。";
+  }
+
+  auto months = report.monthly_summary;
+  std::ranges::sort(months, [](const StandardMonthlySummaryItem& left,
+                               const StandardMonthlySummaryItem& right) -> bool {
+    return left.period < right.period;
+  });
+
+  std::ostringstream output;
+  output << std::fixed << std::setprecision(2);
+  output << "\n## " << render_support::RangeTitleText(report.period_start, report.period_end)
+         << "\n";
+  output << "- **区间总收入:** " << report.total_income << " CNY\n";
+  output << "- **区间总支出:** " << report.total_expense << " CNY\n";
+  output << "- **区间结余:** " << report.balance << " CNY\n";
+  output << "\n## 每月汇总\n\n";
+  output << "| 月份 | 收入 (CNY) | 支出 (CNY) | 结余 (CNY) |\n";
+  output << "| :--- | :--- | :--- | :--- |\n";
+  for (const auto& month_item : months) {
+    output << "| " << month_item.period << " | " << month_item.income << " | "
+           << month_item.expense << " | "
+           << (month_item.income + month_item.expense) << " |\n";
+  }
   return output.str();
 }
 
@@ -130,6 +161,9 @@ auto StandardJsonMarkdownRenderer::render(const StandardReport& standard_report)
   }
   if (standard_report.report_type == "yearly") {
     return RenderYearly(standard_report);
+  }
+  if (standard_report.report_type == "range") {
+    return RenderRange(standard_report);
   }
 
   throw std::runtime_error("Unsupported report_type in standard report JSON.");

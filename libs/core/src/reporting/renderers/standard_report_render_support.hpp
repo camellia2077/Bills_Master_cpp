@@ -80,4 +80,20 @@ inline auto MonthlyTitleText(const std::string& period_start) -> std::string {
   return FormatMonthlyPeriodLabel(period_start) + " 月报";
 }
 
+inline auto FormatRangePeriodLabel(const std::string& period_start,
+                                   const std::string& period_end)
+    -> std::string {
+  const std::string normalized_start = FormatMonthlyPeriodLabel(period_start);
+  const std::string normalized_end = FormatMonthlyPeriodLabel(period_end);
+  if (normalized_start == normalized_end) {
+    return normalized_start;
+  }
+  return normalized_start + " 至 " + normalized_end;
+}
+
+inline auto RangeTitleText(const std::string& period_start,
+                           const std::string& period_end) -> std::string {
+  return FormatRangePeriodLabel(period_start, period_end) + " 区间报表";
+}
+
 }  // namespace bills::core::reporting::render_support

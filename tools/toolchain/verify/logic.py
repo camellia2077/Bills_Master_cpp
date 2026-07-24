@@ -1,11 +1,40 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 
+from ..services.build_layout import resolve_build_directory
 from ..services.dist.core import run_core_dist
 
 from .common import parse_forwarded_args, run
+
+
+def _run_core_contract_tests(repo_root: Path, *, preset: str = "debug") -> int:
+    spec = resolve_build_directory(
+        repo_root,
+        target="bills-tracer-core",
+        preset=preset,
+        scope="shared",
+    )
+    build_code = run(
+        [
+            "cmake",
+            "--build",
+            str(spec.build_dir),
+            "--target",
+            "bills_core_content_line_contract_tests",
+        ]
+    )
+    if build_code != 0:
+        return build_code
+
+    executable_name = (
+        "bills_core_content_line_contract_tests.exe"
+        if os.name == "nt"
+        else "bills_core_content_line_contract_tests"
+    )
+    return run([str(spec.build_dir / "bin" / executable_name)])
 
 
 def run_logic_tests(
@@ -36,7 +65,7 @@ def run_logic_tests(
     if passthrough:
         print("[ERROR] logic-tests no longer forwards additional commands.")
         return 2
-    return 0
+    return _run_core_contract_tests(repo_root)
 
 
 def run_module_mode_check(

@@ -1,26 +1,13 @@
 #include "query/query_service.hpp"
 
-#include <string>
-
-auto QueryService::QueryYear(ReportDataGateway& gateway, std::string_view iso_year)
+auto QueryService::QueryRange(ReportDataGateway& gateway,
+                              std::string_view start_iso_month,
+                              std::string_view end_iso_month)
     -> QueryExecutionResult {
   QueryExecutionResult result;
-  result.query_type = "year";
-  result.query_value = std::string(iso_year);
-  result.yearly_data = gateway.ReadYearlyData(iso_year);
-  result.year = result.yearly_data.year;
-  result.data_found = result.yearly_data.data_found;
-  return result;
-}
-
-auto QueryService::QueryMonth(ReportDataGateway& gateway, std::string_view iso_month)
-    -> QueryExecutionResult {
-  QueryExecutionResult result;
-  result.query_type = "month";
-  result.query_value = std::string(iso_month);
-  result.monthly_data = gateway.ReadMonthlyData(iso_month);
-  result.year = result.monthly_data.year;
-  result.month = result.monthly_data.month;
-  result.data_found = result.monthly_data.data_found;
+  result.period_start = std::string(start_iso_month);
+  result.period_end = std::string(end_iso_month);
+  result.range_data = gateway.ReadRangeData(start_iso_month, end_iso_month);
+  result.data_found = result.range_data.data_found;
   return result;
 }

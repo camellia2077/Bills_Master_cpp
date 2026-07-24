@@ -5,7 +5,7 @@ This directory stores frozen golden files for report regression checks.
 Covered scenarios:
 - Monthly report: `2025-01`
 - Yearly report: `2025`
-- Date range reports: `2025-03`, `2025-04`
+- Date range report: `2025-03_2025-04`
 
 Covered formats:
 - Markdown output (`Markdown_bills/...`)

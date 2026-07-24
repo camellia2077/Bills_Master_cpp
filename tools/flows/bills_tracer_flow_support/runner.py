@@ -77,7 +77,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--generator", default="Ninja")
     parser.add_argument("--target", default="bills_tracer_cli")
-    parser.add_argument("--bills-dir", default="testdata/bills")
+    parser.add_argument("--bills-dir", default="tests/data")
     parser.add_argument("--formats", default="md")
     parser.add_argument("--ingest-mode", default="stepwise", choices=["stepwise", "ingest"])
     parser.add_argument("--ingest-write-json", action="store_true")

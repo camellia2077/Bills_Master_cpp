@@ -20,6 +20,7 @@ set(BILLS_IO_SOURCES
     "${BILLS_IO_SOURCE_ROOT}/io/adapters/db/bill_inserter.cpp"
     "${BILLS_IO_SOURCE_ROOT}/io/adapters/db/database_manager.cpp"
     "${BILLS_IO_SOURCE_ROOT}/io/adapters/db/month_query.cpp"
+    "${BILLS_IO_SOURCE_ROOT}/io/adapters/db/range_query.cpp"
     "${BILLS_IO_SOURCE_ROOT}/io/adapters/db/year_query.cpp"
     "${BILLS_IO_SOURCE_ROOT}/io/adapters/db/sqlite_report_db_session.cpp"
     "${BILLS_IO_SOURCE_ROOT}/io/adapters/db/sqlite_report_data_gateway.cpp"

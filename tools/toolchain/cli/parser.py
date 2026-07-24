@@ -42,8 +42,9 @@ def build_parser() -> argparse.ArgumentParser:
             "bills-tracer-core",
             "bills-tracer-log-generator",
             "bills-tracer-android",
+            "android",
         ],
-        help="Target to emit into dist/.",
+        help="Target to emit into dist/. 'android' is an alias for 'bills-tracer-android'.",
     )
     dist_parser.add_argument(
         "--preset",
@@ -138,7 +139,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     log_generator_promote_parser = log_generator_subparsers.add_parser(
         "promote-testdata",
-        help="Promote generated artifact data into testdata/bills.",
+        help="Promote generated artifact data into tests/data.",
     )
     log_generator_promote_parser.add_argument("--output-project", default="log_generator")
     log_generator_promote_parser.add_argument("--run-id", default="")

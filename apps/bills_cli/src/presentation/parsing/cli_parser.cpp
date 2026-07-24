@@ -330,6 +330,37 @@ auto ParseCliRequest(std::string_view program_name,
     parsed_request = CliRequest{request};
   });
 
+  std::string report_show_range_start;
+  std::string report_show_range_end;
+  std::string report_show_range_format = "md";
+  auto* report_show_range = report_show->add_subcommand(
+      "range", "Render a range report for an inclusive period range.");
+  ConfigureCommand(*report_show_range);
+  report_show_range
+      ->add_option("start_month", report_show_range_start,
+                   "Start month to query, such as 2025-03.")
+      ->required();
+  report_show_range
+      ->add_option("end_month", report_show_range_end,
+                   "End month to query, such as 2025-04.")
+      ->required();
+  report_show_range->add_option("--format", report_show_range_format,
+                                std::string(kFormatDescription));
+  SetExamples(
+      *report_show_range,
+      {"bills_tracer_cli report show range <YYYY-MM> <YYYY-MM>",
+       "bills_tracer_cli report show range <YYYY-MM> <YYYY-MM> --format json"});
+  report_show_range->callback(
+      [&parsed_request, &report_show_range_start, &report_show_range_end,
+       &report_show_range_format]() {
+        ReportRequest request;
+        request.action = ReportAction::kShowRange;
+        request.primary_value = report_show_range_start;
+        request.secondary_value = report_show_range_end;
+        request.format = report_show_range_format;
+        parsed_request = CliRequest{request};
+      });
+
   auto* report_export =
       report->add_subcommand("export", "Export reports into the runtime workspace.");
   ConfigureCommand(*report_export);
@@ -388,7 +419,7 @@ auto ParseCliRequest(std::string_view program_name,
   std::string report_export_range_end;
   std::string report_export_range_format;
   auto* report_export_range = report_export->add_subcommand(
-      "range", "Export monthly reports for an inclusive period range.");
+      "range", "Export a single range report for an inclusive period range.");
   ConfigureCommand(*report_export_range);
   report_export_range
       ->add_option("start_month", report_export_range_start,

@@ -12,6 +12,15 @@
 
 - 本项目的 Python 构建、编译、测试入口统一在 `python tools/run.py ...`
 - agent 不需要手工拼接零散编译命令，优先通过 Python 入口触发构建与测试
+- 任何会触发依赖下载、配置、编译、验证的命令，在当前 `pwsh` 会话中先设置代理，确保网络正常：
+  - `$env:HTTP_PROXY='http://127.0.0.1:9910'`
+  - `$env:HTTPS_PROXY='http://127.0.0.1:9910'`
+  - `$env:ALL_PROXY='socks5://127.0.0.1:9909'`
+- 至少对以下入口默认先设置上述代理环境变量再执行：
+  - `python tools/run.py dist ...`
+  - `python tools/run.py verify ...`
+  - `python tools/run.py import-gate ...`
+  - `python tools/run.py log-generator ...`
 - Windows 原生静态构建必须使用 MSYS2 `mingw64` 工具链环境
 - Windows 导入表门禁通过 `python tools/run.py import-gate ...` 显式执行，拒绝第三方 DLL、MinGW runtime DLL 和 `api-ms-win-crt-*`
 - 常用入口：

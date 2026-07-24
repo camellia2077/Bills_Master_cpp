@@ -265,6 +265,18 @@ class QueryTasks:
             "5_query_month.log",
         ):
             return False
+        if not self.executor.run(
+            "Query Range",
+            [
+                "report",
+                "show",
+                "range",
+                config.TEST_DATES["range_start"],
+                config.TEST_DATES["range_end"],
+            ],
+            "5_query_range.log",
+        ):
+            return False
         return True
 
 
@@ -340,8 +352,21 @@ class DateExportTasks:
             ]
             if not self.executor.run(step_name, cmd_args, log_filename):
                 return False
+            if not self._assert_log_contains(log_filename, "Exported 1 report(s)"):
+                return False
 
         return True
+
+    def _assert_log_contains(self, log_filename, expected_text):
+        log_text = self.executor.read_log_text(log_filename)
+        if expected_text in log_text:
+            return True
+        print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+        print(
+            f"      {constants.RED}错误: 日志 '{log_filename}' 未包含期望内容: "
+            f"'{expected_text}'{constants.RESET}"
+        )
+        return False
 
 
 class MetadataTasks:
@@ -417,7 +442,168 @@ class RecordTasks:
         ):
             return False
 
+        expression_case_root = self.run_output_root / "record_expression_case"
+        if expression_case_root.exists():
+            shutil.rmtree(expression_case_root)
+        expression_record = expression_case_root / "2026" / "2026-06.txt"
+        expression_record.parent.mkdir(parents=True, exist_ok=True)
+        expression_record.write_text(
+            "\n".join(
+                [
+                    "date:2026-06",
+                    "remark:expression regression",
+                    "",
+                    "meal",
+                    "",
+                    "meal_low",
+                    "103.60*5+6.03 饭 // 有优惠买的",
+                    "10/(2+3) 半价 # 团购",
+                    "2×3+4 文具 ; 备用",
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        if not self.executor.run(
+            "Record Preview (Expressions)",
+            ["template", "preview", str(expression_record)],
+            "27_record_preview_expressions.log",
+        ):
+            return False
+        if not self._assert_log_contains(
+            "27_record_preview_expressions.log", "expense=-536.03"
+        ):
+            return False
+
+        if not self.executor.run(
+            "Ingest Expression Bills",
+            ["workspace", "ingest", str(expression_case_root)],
+            "28_ingest_expression_bills.log",
+        ):
+            return False
+
+        if not self.executor.run(
+            "Query Expression Month",
+            ["report", "show", "month", "2026-06", "--format", "json"],
+            "29_query_expression_month_json.log",
+        ):
+            return False
+        if not self._assert_report_json_transaction(
+            "29_query_expression_month_json.log",
+            description="饭",
+            amount=-524.03,
+            comment="有优惠买的",
+        ):
+            return False
+        if not self._assert_report_json_transaction(
+            "29_query_expression_month_json.log",
+            description="半价",
+            amount=-2.0,
+            comment="团购",
+        ):
+            return False
+        if not self._assert_report_json_transaction(
+            "29_query_expression_month_json.log",
+            description="文具",
+            amount=-10.0,
+            comment="备用",
+        ):
+            return False
+
+        invalid_expression_record = expression_case_root / "2026" / "2026-07.txt"
+        invalid_expression_record.write_text(
+            "\n".join(
+                [
+                    "date:2026-07",
+                    "remark:expression invalid regression",
+                    "",
+                    "meal",
+                    "",
+                    "meal_low",
+                    "10/(2+3 饭 // 括号不闭合",
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        if not self.executor.run_expected_failure(
+            "Record Preview (Invalid Expression)",
+            ["template", "preview", str(invalid_expression_record)],
+            "30_record_preview_invalid_expression.log",
+        ):
+            return False
+        if not self._assert_log_contains(
+            "30_record_preview_invalid_expression.log",
+            "Unsupported content line: invalid amount expression or comment syntax.",
+        ):
+            return False
+
         return True
+
+    def _assert_log_contains(self, log_filename, expected_text):
+        log_text = self.executor.read_log_text(log_filename)
+        if expected_text in log_text:
+            return True
+        print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+        print(
+            f"      {constants.RED}错误: 日志 '{log_filename}' 未包含期望内容: "
+            f"'{expected_text}'{constants.RESET}"
+        )
+        return False
+
+    def _extract_stdout(self, log_filename: str) -> str:
+        log_text = self.executor.read_log_text(log_filename)
+        marker = "--- STDOUT ---\n"
+        if marker not in log_text:
+            return ""
+        stdout_text = log_text.split(marker, maxsplit=1)[1]
+        stderr_marker = "\n--- STDERR ---\n"
+        if stderr_marker in stdout_text:
+            stdout_text = stdout_text.split(stderr_marker, maxsplit=1)[0]
+        return stdout_text.strip()
+
+    def _assert_report_json_transaction(
+        self,
+        log_filename: str,
+        *,
+        description: str,
+        amount: float,
+        comment: str,
+    ) -> bool:
+        stdout_text = self._extract_stdout(log_filename)
+        if not stdout_text:
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 无法从日志 '{log_filename}' 提取 STDOUT JSON。{constants.RESET}"
+            )
+            return False
+        try:
+            payload = json.loads(stdout_text)
+        except json.JSONDecodeError as error:
+            print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+            print(
+                f"      {constants.RED}错误: 日志 '{log_filename}' 的 STDOUT 不是有效 JSON: {error}{constants.RESET}"
+            )
+            return False
+
+        categories = payload.get("items", {}).get("categories", [])
+        for category in categories:
+            for sub_category in category.get("sub_categories", []):
+                for item in sub_category.get("transactions", []):
+                    if (
+                        item.get("description") == description
+                        and float(item.get("amount", 0.0)) == amount
+                        and item.get("comment", "") == comment
+                    ):
+                        return True
+
+        print(f" ... {constants.RED}CRITICAL FAILURE{constants.RESET}")
+        print(
+            f"      {constants.RED}错误: JSON 报表未找到交易 description={description!r}, "
+            f"amount={amount}, comment={comment!r}.{constants.RESET}"
+        )
+        return False
 
 
 class BundleTasks:

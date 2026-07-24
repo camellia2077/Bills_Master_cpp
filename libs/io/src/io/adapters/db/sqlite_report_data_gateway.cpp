@@ -4,8 +4,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "io/adapters/db/month_query.hpp"
-#include "io/adapters/db/year_query.hpp"
+#include "io/adapters/db/range_query.hpp"
 
 namespace {
 constexpr int kBillDateColumn = 0;
@@ -18,16 +17,11 @@ SqliteReportDataGateway::SqliteReportDataGateway(sqlite3* db_connection)
   }
 }
 
-auto SqliteReportDataGateway::ReadMonthlyData(std::string_view iso_month)
-    -> MonthlyReportData {
-  MonthQuery month_query(db_connection_);
-  return month_query.read_monthly_data(iso_month);
-}
-
-auto SqliteReportDataGateway::ReadYearlyData(std::string_view iso_year)
-    -> YearlyReportData {
-  YearQuery year_query(db_connection_);
-  return year_query.read_yearly_data(iso_year);
+auto SqliteReportDataGateway::ReadRangeData(std::string_view start_iso_month,
+                                            std::string_view end_iso_month)
+    -> RangeReportData {
+  RangeQuery range_query(db_connection_);
+  return range_query.read_range_data(start_iso_month, end_iso_month);
 }
 
 auto SqliteReportDataGateway::ListAvailableMonths() -> std::vector<std::string> {

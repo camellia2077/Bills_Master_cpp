@@ -1,6 +1,6 @@
 [paths]
 workspace_dir = "../../dist/tests/runtime/bills_tracer/workspace"
-bills_dir = "../../testdata/bills"
+bills_dir = "../../tests/data"
 import_dir = "../../dist/tests/runtime/bills_tracer/runs/manual/cache/txt2json"
 
 [runtime]

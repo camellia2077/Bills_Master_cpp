@@ -103,75 +103,39 @@ SNAPSHOT_MATRIX: dict[str, dict[str, str]] = {
         "scope": COMPARE_SCOPE_STANDARD_REPORT,
         "compare_mode": JSON_CONTENT_COMPARE_MODE,
     },
-    "range_md_2025_03": {
-        "source": "Markdown_bills/months/2025/2025-03.md",
-        "baseline": "range/2025-03.md",
+    "range_md_2025_03_2025_04": {
+        "source": "Markdown_bills/ranges/2025-03_2025-04.md",
+        "baseline": "range/2025-03_2025-04.md",
         "scope": "md",
         "compare_mode": MARKDOWN_CONTENT_COMPARE_MODE,
     },
-    "range_md_2025_04": {
-        "source": "Markdown_bills/months/2025/2025-04.md",
-        "baseline": "range/2025-04.md",
-        "scope": "md",
-        "compare_mode": MARKDOWN_CONTENT_COMPARE_MODE,
-    },
-    "range_json_2025_03": {
-        "source": "standard_json/months/2025/2025-03.json",
-        "baseline": "range/2025-03.json",
+    "range_json_2025_03_2025_04": {
+        "source": "standard_json/ranges/2025-03_2025-04.json",
+        "baseline": "range/2025-03_2025-04.json",
         "scope": "json",
         "compare_mode": JSON_CONTENT_COMPARE_MODE,
     },
-    "range_json_2025_04": {
-        "source": "standard_json/months/2025/2025-04.json",
-        "baseline": "range/2025-04.json",
-        "scope": "json",
-        "compare_mode": JSON_CONTENT_COMPARE_MODE,
-    },
-    "range_tex_2025_03": {
-        "source": "LaTeX_bills/months/2025/2025-03.tex",
-        "baseline": "range/2025-03.tex",
+    "range_tex_2025_03_2025_04": {
+        "source": "LaTeX_bills/ranges/2025-03_2025-04.tex",
+        "baseline": "range/2025-03_2025-04.tex",
         "scope": "tex",
         "compare_mode": BYTE_COMPARE_MODE,
     },
-    "range_tex_2025_04": {
-        "source": "LaTeX_bills/months/2025/2025-04.tex",
-        "baseline": "range/2025-04.tex",
-        "scope": "tex",
-        "compare_mode": BYTE_COMPARE_MODE,
-    },
-    "range_rst_2025_03": {
-        "source": "reST_bills/months/2025/2025-03.rst",
-        "baseline": "range/2025-03.rst",
+    "range_rst_2025_03_2025_04": {
+        "source": "reST_bills/ranges/2025-03_2025-04.rst",
+        "baseline": "range/2025-03_2025-04.rst",
         "scope": "rst",
         "compare_mode": BYTE_COMPARE_MODE,
     },
-    "range_rst_2025_04": {
-        "source": "reST_bills/months/2025/2025-04.rst",
-        "baseline": "range/2025-04.rst",
-        "scope": "rst",
-        "compare_mode": BYTE_COMPARE_MODE,
-    },
-    "range_typ_2025_03": {
-        "source": "Typst_bills/months/2025/2025-03.typ",
-        "baseline": "range/2025-03.typ",
+    "range_typ_2025_03_2025_04": {
+        "source": "Typst_bills/ranges/2025-03_2025-04.typ",
+        "baseline": "range/2025-03_2025-04.typ",
         "scope": "typ",
         "compare_mode": BYTE_COMPARE_MODE,
     },
-    "range_typ_2025_04": {
-        "source": "Typst_bills/months/2025/2025-04.typ",
-        "baseline": "range/2025-04.typ",
-        "scope": "typ",
-        "compare_mode": BYTE_COMPARE_MODE,
-    },
-    "range_standard_report_2025_03": {
-        "source": "standard_json/months/2025/2025-03.json",
-        "baseline": "standard_report/range/2025-03.json",
-        "scope": COMPARE_SCOPE_STANDARD_REPORT,
-        "compare_mode": JSON_CONTENT_COMPARE_MODE,
-    },
-    "range_standard_report_2025_04": {
-        "source": "standard_json/months/2025/2025-04.json",
-        "baseline": "standard_report/range/2025-04.json",
+    "range_standard_report_2025_03_2025_04": {
+        "source": "standard_json/ranges/2025-03_2025-04.json",
+        "baseline": "standard_report/range/2025-03_2025-04.json",
         "scope": COMPARE_SCOPE_STANDARD_REPORT,
         "compare_mode": JSON_CONTENT_COMPARE_MODE,
     },

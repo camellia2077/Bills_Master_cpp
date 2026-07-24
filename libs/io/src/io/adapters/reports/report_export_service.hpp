@@ -8,6 +8,9 @@
 #include <string_view>
 #include <vector>
 
+#include "reporting/report_render_service.hpp"
+#include "reporting/standard_report/standard_report_dto.hpp"
+
 class ReportDataGateway;
 
 struct ReportExportYear {
@@ -29,6 +32,12 @@ struct ReportExportRange {
 struct ReportExportRunResult {
   bool ok = true;
   std::size_t exported_count = 0U;
+};
+
+enum class ReportExportOutputScope {
+  kMonths,
+  kYears,
+  kRanges,
 };
 
 [[nodiscard]] auto TryBuildReportExportYear(std::string_view raw)
@@ -54,14 +63,10 @@ class ReportExportService {
       const std::string& export_base_dir = "exports",
       const std::map<std::string, std::string>& format_folder_names = {});
 
-  [[nodiscard]] auto export_yearly_report(const ReportExportYear& year,
-                                          const std::string& format_name)
-      -> ReportExportRunResult;
-  [[nodiscard]] auto export_monthly_report(const ReportExportMonth& month,
-                                           const std::string& format_name)
-      -> ReportExportRunResult;
-  [[nodiscard]] auto export_monthly_range(const ReportExportRange& range,
-                                          const std::string& format_name)
+  [[nodiscard]] auto export_range_report(const ReportExportRange& range,
+                                         const std::string& format_name,
+                                         ReportPresentationKind presentation_kind,
+                                         ReportExportOutputScope output_scope)
       -> ReportExportRunResult;
   [[nodiscard]] auto export_all_reports(const std::string& format_name)
       -> ReportExportRunResult;
@@ -79,6 +84,10 @@ class ReportExportService {
 
   [[nodiscard]] auto list_normalized_available_months() const
       -> NormalizedAvailableMonths;
+  [[nodiscard]] auto write_rendered_report(
+      const StandardReport& standard_report,
+      std::string_view normalized_format, const std::string& group_name,
+      const std::string& stem) const -> bool;
   bool write_report(const std::string& folder_name, const std::string& group_name,
                     const std::string& stem, const std::string& extension,
                     const std::string& content) const;

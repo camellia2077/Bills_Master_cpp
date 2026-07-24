@@ -29,6 +29,7 @@ using ::bills::io::ParseBundleImportResult;
 using ::bills::io::PreflightImportDocuments;
 using ::bills::io::PreviewRecordDocuments;
 using ::bills::io::QueryMonthReport;
+using ::bills::io::QueryRangeReport;
 using ::bills::io::QueryYearReport;
 using ::bills::io::RenderQueryReport;
 using ::bills::io::ValidateDocuments;

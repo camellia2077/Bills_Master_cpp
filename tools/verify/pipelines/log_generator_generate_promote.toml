@@ -57,7 +57,7 @@ timeout_seconds = 300
 retries = 0
 depends_on = ["generate"]
 artifacts = [
-  "testdata/bills",
+  "tests/data",
   "dist/tests/artifact/log_generator/last_promote.json",
 ]
 

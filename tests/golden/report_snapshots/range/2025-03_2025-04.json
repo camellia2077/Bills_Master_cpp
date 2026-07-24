@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "report_type": "range",
+    "generated_at_utc": "2026-04-18T13:00:45Z",
+    "source": "bills_core"
+  },
+  "scope": {
+    "period_start": "2025-03",
+    "period_end": "2025-04",
+    "remark": "",
+    "data_found": true
+  },
+  "summary": {
+    "total_income": 27726.93,
+    "total_expense": -2840.63,
+    "balance": 24886.3
+  },
+  "items": {
+    "categories": [],
+    "monthly_summary": [
+      {
+        "period": "2025-03",
+        "income": 14470.9,
+        "expense": -1451.34,
+        "balance": 13019.56
+      },
+      {
+        "period": "2025-04",
+        "income": 13256.03,
+        "expense": -1389.29,
+        "balance": 11866.74
+      }
+    ]
+  },
+  "extensions": {}
+}

@@ -2,7 +2,7 @@
   "meta": {
     "schema_version": "1.0.0",
     "report_type": "yearly",
-    "generated_at_utc": "2026-04-02T10:31:49Z",
+    "generated_at_utc": "2026-04-18T13:00:44Z",
     "source": "bills_core"
   },
   "scope": {
@@ -12,84 +12,84 @@
     "data_found": true
   },
   "summary": {
-    "total_income": 158544.69,
-    "total_expense": -16234.57,
-    "balance": 142310.12
+    "total_income": 158547.83,
+    "total_expense": -15933.609999999999,
+    "balance": 142614.22
   },
   "items": {
     "categories": [],
     "monthly_summary": [
       {
-        "month": 1,
+        "period": "2025-01",
         "income": 9586.81,
-        "expense": -1151.39,
-        "balance": 10738.199999999999
+        "expense": -1117.07,
+        "balance": 8469.74
       },
       {
-        "month": 2,
+        "period": "2025-02",
         "income": 11201.1,
-        "expense": -1233.05,
-        "balance": 12434.15
+        "expense": -1273.11,
+        "balance": 9927.99
       },
       {
-        "month": 3,
-        "income": 14467.97,
-        "expense": -1497.21,
-        "balance": 15965.18
+        "period": "2025-03",
+        "income": 14470.9,
+        "expense": -1451.34,
+        "balance": 13019.56
       },
       {
-        "month": 4,
+        "period": "2025-04",
         "income": 13256.03,
-        "expense": -1419.03,
-        "balance": 14675.060000000001
+        "expense": -1389.29,
+        "balance": 11866.74
       },
       {
-        "month": 5,
+        "period": "2025-05",
         "income": 14441.97,
-        "expense": -1307.38,
-        "balance": 15749.349999999999
+        "expense": -1294.24,
+        "balance": 13147.73
       },
       {
-        "month": 6,
+        "period": "2025-06",
         "income": 14379.31,
-        "expense": -1267.63,
-        "balance": 15646.939999999999
+        "expense": -1249.39,
+        "balance": 13129.92
       },
       {
-        "month": 7,
-        "income": 13252.53,
-        "expense": -1458.01,
-        "balance": 14710.54
+        "period": "2025-07",
+        "income": 13252.67,
+        "expense": -1453.73,
+        "balance": 11798.94
       },
       {
-        "month": 8,
+        "period": "2025-08",
         "income": 14473.53,
-        "expense": -1346.47,
-        "balance": 15820.0
+        "expense": -1281.53,
+        "balance": 13192.0
       },
       {
-        "month": 9,
+        "period": "2025-09",
         "income": 14756.9,
-        "expense": -1471.4,
-        "balance": 16228.3
+        "expense": -1435.84,
+        "balance": 13321.06
       },
       {
-        "month": 10,
-        "income": 12946.87,
-        "expense": -1358.44,
-        "balance": 14305.310000000001
+        "period": "2025-10",
+        "income": 12946.94,
+        "expense": -1271.39,
+        "balance": 11675.55
       },
       {
-        "month": 11,
+        "period": "2025-11",
         "income": 13466.69,
-        "expense": -1342.23,
-        "balance": 14808.92
+        "expense": -1316.71,
+        "balance": 12149.98
       },
       {
-        "month": 12,
+        "period": "2025-12",
         "income": 12314.98,
-        "expense": -1382.33,
-        "balance": 13697.31
+        "expense": -1399.97,
+        "balance": 10915.01
       }
     ]
   },

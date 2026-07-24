@@ -8,7 +8,11 @@ VALID_TARGETS = (
     "bills-tracer-cli",
     "bills-tracer-core",
     "bills-tracer-log-generator",
+    "bills-tracer-android",
 )
+TARGET_ALIASES = {
+    "android": "bills-tracer-android",
+}
 VALID_PRESETS = ("debug", "release", "tidy")
 VALID_SCOPES = ("shared", "isolated")
 
@@ -95,6 +99,7 @@ def normalize_scope(value: str) -> str:
 
 def normalize_target(value: str) -> str:
     target = str(value).strip().lower()
+    target = TARGET_ALIASES.get(target, target)
     if target not in VALID_TARGETS:
         raise ValueError(
             f"Unsupported target '{value}'. Expected one of: {', '.join(VALID_TARGETS)}."

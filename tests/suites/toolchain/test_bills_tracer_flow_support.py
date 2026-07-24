@@ -70,7 +70,7 @@ class BillsTracerFlowSupportTests(unittest.TestCase):
             write_temp_test_config(
                 config_path=config_path,
                 workspace_dir=root / "workspace",
-                bills_dir=root / "testdata" / "bills",
+                bills_dir=root / "tests" / "data",
                 import_dir=root / "runtime" / "cache" / "txt2json",
                 runtime_base_dir=root / "runtime",
                 runtime_run_id="run_123",

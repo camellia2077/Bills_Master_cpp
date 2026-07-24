@@ -243,6 +243,11 @@ struct HostReportExportResult {
                                     std::string_view iso_month)
     -> Result<HostQueryResult>;
 
+[[nodiscard]] auto QueryRangeReport(const std::filesystem::path& db_path,
+                                    std::string_view start_iso_month,
+                                    std::string_view end_iso_month)
+    -> Result<HostQueryResult>;
+
 [[nodiscard]] auto ListAvailableMonths(const std::filesystem::path& db_path)
     -> Result<std::vector<std::string>>;
 

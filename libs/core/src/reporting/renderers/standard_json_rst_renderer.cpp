@@ -96,8 +96,39 @@ auto render_yearly(const StandardReport& report) -> std::string {
   output << "     - 支出\n";
   output << "     - 结余\n";
   for (const auto& month_item : report.monthly_summary) {
-    output << "   * - " << year_text << "-" << std::setw(2)
-           << std::setfill('0') << month_item.month << "\n";
+    output << "   * - " << month_item.period << "\n";
+    output << "     - CNY " << month_item.income << "\n";
+    output << "     - CNY " << month_item.expense << "\n";
+    output << "     - CNY " << (month_item.income + month_item.expense) << "\n";
+  }
+  return output.str();
+}
+
+auto render_range(const StandardReport& report) -> std::string {
+  const std::string range_label =
+      render_support::FormatRangePeriodLabel(report.period_start, report.period_end);
+  if (!report.data_found) {
+    return "未找到 " + range_label + " 的任何数据。\n";
+  }
+
+  const std::string title =
+      render_support::RangeTitleText(report.period_start, report.period_end);
+  std::ostringstream output;
+  output << std::fixed << std::setprecision(2);
+  output << title << "\n";
+  output << std::string(title.length() * 2, '=') << "\n\n";
+  output << "**区间总收入:** CNY" << report.total_income << "\n";
+  output << "**区间总支出:** CNY" << report.total_expense << "\n";
+  output << "**区间结余:** CNY" << report.balance << "\n\n";
+  output << ".. list-table:: 每月汇总\n";
+  output << "   :widths: 15 25 25 25\n";
+  output << "   :header-rows: 1\n\n";
+  output << "   * - 月份\n";
+  output << "     - 收入\n";
+  output << "     - 支出\n";
+  output << "     - 结余\n";
+  for (const auto& month_item : report.monthly_summary) {
+    output << "   * - " << month_item.period << "\n";
     output << "     - CNY " << month_item.income << "\n";
     output << "     - CNY " << month_item.expense << "\n";
     output << "     - CNY " << (month_item.income + month_item.expense) << "\n";
@@ -114,6 +145,9 @@ auto StandardJsonRstRenderer::render(const StandardReport& standard_report)
   }
   if (standard_report.report_type == "yearly") {
     return render_yearly(standard_report);
+  }
+  if (standard_report.report_type == "range") {
+    return render_range(standard_report);
   }
   throw std::runtime_error("Unsupported report_type in standard report JSON.");
 }

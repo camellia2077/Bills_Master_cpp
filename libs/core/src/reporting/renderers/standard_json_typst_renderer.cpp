@@ -116,8 +116,36 @@ auto render_yearly(const StandardReport& report) -> std::string {
   output << "  columns: 4,\n";
   output << "  [月份], [收入], [支出], [结余],\n";
   for (const auto& month_item : report.monthly_summary) {
-    output << "  [" << year_text << "-" << std::setw(2) << std::setfill('0')
-           << month_item.month << "], ";
+    output << "  [" << month_item.period << "], ";
+    output << "[CNY " << month_item.income << "], ";
+    output << "[CNY " << month_item.expense << "], ";
+    output << "[CNY " << (month_item.income + month_item.expense) << "],\n";
+  }
+  output << ")\n";
+  return output.str();
+}
+
+auto render_range(const StandardReport& report) -> std::string {
+  const std::string range_label =
+      render_support::FormatRangePeriodLabel(report.period_start, report.period_end);
+  std::ostringstream output;
+  output << std::fixed << std::setprecision(2);
+  output << "#set text(font: \"Noto Serif SC\")\n";
+  output << "= " << render_support::RangeTitleText(report.period_start, report.period_end)
+         << "\n\n";
+  if (!report.data_found) {
+    output << "未找到 " << range_label << " 的任何数据。\n";
+    return output.str();
+  }
+
+  output << "*区间总收入:* CNY" << report.total_income << "  \\\n";
+  output << "*区间总支出:* CNY" << report.total_expense << "  \\\n";
+  output << "*区间结余:* CNY" << report.balance << "\n\n";
+  output << "#table(\n";
+  output << "  columns: 4,\n";
+  output << "  [月份], [收入], [支出], [结余],\n";
+  for (const auto& month_item : report.monthly_summary) {
+    output << "  [" << month_item.period << "], ";
     output << "[CNY " << month_item.income << "], ";
     output << "[CNY " << month_item.expense << "], ";
     output << "[CNY " << (month_item.income + month_item.expense) << "],\n";
@@ -135,6 +163,9 @@ auto StandardJsonTypstRenderer::render(const StandardReport& standard_report)
   }
   if (standard_report.report_type == "yearly") {
     return render_yearly(standard_report);
+  }
+  if (standard_report.report_type == "range") {
+    return render_range(standard_report);
   }
   throw std::runtime_error("Unsupported report_type in standard report JSON.");
 }

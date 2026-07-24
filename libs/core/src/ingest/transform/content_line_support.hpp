@@ -9,7 +9,7 @@ namespace bills::core::ingest::content_line {
 
 struct ParsedContentLine {
   std::string amount_expression;
-  double amount = 0.0;
+  double evaluated_amount = 0.0;
   std::string description;
   std::string comment;
 };

@@ -7,9 +7,9 @@
 统一使用 `python tools/run.py`：
 
 - debug APK：
-  - `python tools/run.py dist bills-tracer-android --preset debug`
+python tools/run.py dist bills-tracer-android --preset debug
 - release APK：
-  - `python tools/run.py dist bills-tracer-android --preset release`
+python tools/run.py dist bills-tracer-android --preset release
 
 常用附加参数：
 

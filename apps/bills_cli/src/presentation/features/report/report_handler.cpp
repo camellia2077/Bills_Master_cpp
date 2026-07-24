@@ -33,7 +33,10 @@ auto ReportHandler::Handle(const ReportRequest& request) const -> bool {
   try {
     switch (request.action) {
       case ReportAction::kShowYear:
-      case ReportAction::kShowMonth: {
+      case ReportAction::kShowMonth:
+      case ReportAction::kShowRange: {
+        // CLI keeps month/year/range as user-facing commands, but all of them
+        // are thin wrappers over the shared range-query reporting pipeline.
         const auto format = ResolveSingleReportFormat(context_, request.format);
         if (!format) {
           std::cerr << terminal::kRed << "Error: " << terminal::kReset
@@ -45,6 +48,10 @@ auto ReportHandler::Handle(const ReportRequest& request) const -> bool {
         if (request.action == ReportAction::kShowYear) {
           query_result = bills::io::QueryYearReport(
               context_.default_db_path, request.primary_value);
+        } else if (request.action == ReportAction::kShowRange) {
+          query_result = bills::io::QueryRangeReport(
+              context_.default_db_path, request.primary_value,
+              request.secondary_value);
         } else {
           query_result = bills::io::QueryMonthReport(
               context_.default_db_path, request.primary_value);
@@ -55,8 +62,12 @@ auto ReportHandler::Handle(const ReportRequest& request) const -> bool {
           return false;
         }
         if (!query_result->execution.data_found) {
+          const std::string query_label =
+              request.action == ReportAction::kShowRange
+                  ? (request.primary_value + " to " + request.secondary_value)
+                  : request.primary_value;
           std::cerr << terminal::kRed << "Error: " << terminal::kReset
-                    << "No report data found for '" << request.primary_value
+                    << "No report data found for '" << query_label
                     << "'." << '\n';
           return false;
         }
@@ -112,6 +123,7 @@ auto ReportHandler::Handle(const ReportRequest& request) const -> bool {
             break;
           case ReportAction::kShowYear:
           case ReportAction::kShowMonth:
+          case ReportAction::kShowRange:
             break;
         }
         const auto export_result = bills::io::ExportReports(export_request);

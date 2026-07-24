@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from ..core.context import Context
-from ..services.build_layout import assert_no_legacy_flags
+from ..services.build_layout import assert_no_legacy_flags, normalize_target
 from ..services.dist import run_android_dist, run_cli_dist, run_core_dist, run_log_generator_dist
 from .common import normalize_forwarded_args
 
 
 def run(args, ctx: Context) -> int:
-    target = str(args.target).strip()
+    target = normalize_target(args.target)
     preset = str(args.preset).strip().lower()
     scope = str(args.scope).strip().lower()
     forwarded = normalize_forwarded_args(list(args.forwarded))

@@ -32,7 +32,7 @@ using bills::core::modules::record_template::TemplateGenerationRequest;
 [[maybe_unused]] TemplateGenerationRequest kTemplateRequest{};
 [[maybe_unused]] auto* kConfigServiceEntry = &ConfigBundleService::Validate;
 [[maybe_unused]] auto kRepositoryEntry = &BillRepository::InsertBill;
-[[maybe_unused]] auto kGatewayMonthEntry = &ReportDataGateway::ReadMonthlyData;
+[[maybe_unused]] auto kGatewayRangeEntry = &ReportDataGateway::ReadRangeData;
 [[maybe_unused]] constexpr auto kVersion =
     bills::core::modules::common_version::kVersion;
 }  // namespace

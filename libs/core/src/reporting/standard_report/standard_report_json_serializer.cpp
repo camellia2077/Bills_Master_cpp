@@ -59,7 +59,7 @@ auto StandardReportJsonSerializer::ToJson(const StandardReport& report)
   nlohmann::ordered_json monthly_summary_json = nlohmann::ordered_json::array();
   for (const auto& month_item : report.monthly_summary) {
     monthly_summary_json.push_back({
-        {"month", month_item.month},
+        {"period", month_item.period},
         {"income", month_item.income},
         {"expense", month_item.expense},
         {"balance", month_item.balance},
@@ -179,7 +179,7 @@ auto StandardReportJsonSerializer::FromJson(
         }
 
         StandardMonthlySummaryItem month_item;
-        month_item.month = month_json.value("month", 0);
+        month_item.period = month_json.value("period", "");
         month_item.income = month_json.value("income", 0.0);
         month_item.expense = month_json.value("expense", 0.0);
         month_item.balance = month_json.value("balance", 0.0);

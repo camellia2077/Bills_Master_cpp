@@ -21,6 +21,28 @@ class DistAndroidTests(unittest.TestCase):
         self.assertEqual(args.scope, "shared")
         self.assertEqual(args.forwarded, ["--clean"])
 
+    def test_dist_parser_accepts_android_alias(self) -> None:
+        _, args = parse_cli_args(["dist", "android", "--preset", "debug"])
+
+        self.assertEqual(args.target, "android")
+
+    def test_run_build_normalizes_android_alias(self) -> None:
+        ctx = SimpleNamespace(
+            repo_root=Path("C:/repo"),
+        )
+        args = SimpleNamespace(
+            target="android",
+            preset="debug",
+            scope="shared",
+            forwarded=[],
+        )
+
+        with patch("tools.toolchain.commands.build.run_android_dist", return_value=0) as mock_run:
+            exit_code = run_build(args, ctx)
+
+        self.assertEqual(exit_code, 0)
+        mock_run.assert_called_once_with(Path("C:/repo"), ["--preset", "debug"])
+
     def test_run_build_routes_android_to_android_dist_service(self) -> None:
         ctx = SimpleNamespace(
             repo_root=Path("C:/repo"),

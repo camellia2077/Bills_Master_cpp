@@ -28,7 +28,7 @@ struct StandardCategoryItem {
 };
 
 struct StandardMonthlySummaryItem {
-  int month = 0;
+  std::string period;
   double income = 0.0;
   double expense = 0.0;
   double balance = 0.0;

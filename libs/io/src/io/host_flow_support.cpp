@@ -1160,16 +1160,19 @@ auto LoadSourceDocumentViews(const std::filesystem::path& input_path)
   return views;
 }
 
-auto CountMatchingYearBills(sqlite3* db_connection, std::string_view iso_year)
-    -> int {
-  const char* sql = "SELECT COUNT(*) FROM bills WHERE substr(bill_date, 1, 4) = ?;";
+auto CountMatchingRangeBills(sqlite3* db_connection, std::string_view start_iso_month,
+                             std::string_view end_iso_month) -> int {
+  const char* sql =
+      "SELECT COUNT(*) FROM bills WHERE bill_date >= ? AND bill_date <= ?;";
   sqlite3_stmt* statement = nullptr;
   if (sqlite3_prepare_v2(db_connection, sql, -1, &statement, nullptr) != SQLITE_OK) {
-    throw std::runtime_error("Failed to prepare year bill count query.");
+    throw std::runtime_error("Failed to prepare range bill count query.");
   }
 
-  sqlite3_bind_text(statement, 1, iso_year.data(),
-                    static_cast<int>(iso_year.size()), SQLITE_TRANSIENT);
+  sqlite3_bind_text(statement, 1, start_iso_month.data(),
+                    static_cast<int>(start_iso_month.size()), SQLITE_TRANSIENT);
+  sqlite3_bind_text(statement, 2, end_iso_month.data(),
+                    static_cast<int>(end_iso_month.size()), SQLITE_TRANSIENT);
 
   int result = 0;
   if (sqlite3_step(statement) == SQLITE_ROW) {
@@ -1179,30 +1182,13 @@ auto CountMatchingYearBills(sqlite3* db_connection, std::string_view iso_year)
   return result;
 }
 
-auto CountMatchingMonthBills(sqlite3* db_connection, std::string_view iso_month)
-    -> int {
-  const char* sql = "SELECT COUNT(*) FROM bills WHERE bill_date = ?;";
-  sqlite3_stmt* statement = nullptr;
-  if (sqlite3_prepare_v2(db_connection, sql, -1, &statement, nullptr) != SQLITE_OK) {
-    throw std::runtime_error("Failed to prepare month bill count query.");
-  }
-
-  sqlite3_bind_text(statement, 1, iso_month.data(),
-                    static_cast<int>(iso_month.size()), SQLITE_TRANSIENT);
-
-  int result = 0;
-  if (sqlite3_step(statement) == SQLITE_ROW) {
-    result = sqlite3_column_int(statement, 0);
-  }
-  sqlite3_finalize(statement);
-  return result;
-}
-
-auto CountTransactions(const MonthlyReportData& report) -> std::size_t {
+auto CountTransactions(const RangeReportData& report) -> std::size_t {
   std::size_t count = 0;
-  for (const auto& [_, parent] : report.aggregated_data) {
-    for (const auto& [__, sub] : parent.sub_categories) {
-      count += sub.transactions.size();
+  for (const auto& month : report.months) {
+    for (const auto& [_, parent] : month.aggregated_data) {
+      for (const auto& [__, sub] : parent.sub_categories) {
+        count += sub.transactions.size();
+      }
     }
   }
   return count;
@@ -1253,42 +1239,26 @@ auto ResolveGroupedBarSeriesColorHex(std::string_view series_id) -> std::string 
   return "#7C3AED";
 }
 
-auto BuildYearlyMonthlyOverviewChart(const YearlyReportData& report)
+auto BuildRangeMonthlyOverviewChart(const RangeReportData& report)
     -> std::optional<nlohmann::json> {
-  if (!report.data_found || report.monthly_summary.empty()) {
+  if (!report.data_found || report.months.empty()) {
     return std::nullopt;
   }
 
-  std::array<double, 12U> income_values{};
-  std::array<double, 12U> expense_values{};
-  std::array<double, 12U> balance_values{};
-  for (const auto& [month, summary] : report.monthly_summary) {
-    if (month < 1 || month > 12) {
-      continue;
-    }
-    const std::size_t index = static_cast<std::size_t>(month - 1);
-    income_values[index] = summary.income;
-    expense_values[index] = std::abs(summary.expense);
-    balance_values[index] = summary.income + summary.expense;
-  }
-
   nlohmann::json x_labels = nlohmann::json::array();
-  for (int month = 1; month <= 12; ++month) {
-    std::ostringstream stream;
-    stream << std::setw(2) << std::setfill('0') << month;
-    x_labels.push_back(stream.str());
+  nlohmann::json income_values = nlohmann::json::array();
+  nlohmann::json expense_values = nlohmann::json::array();
+  nlohmann::json balance_values = nlohmann::json::array();
+  for (const auto& month : report.months) {
+    x_labels.push_back(bills::core::common::iso_period::format_year_month(
+        month.year, month.month));
+    income_values.push_back(month.total_income);
+    expense_values.push_back(std::abs(month.total_expense));
+    balance_values.push_back(month.balance);
   }
-
-  const auto to_json_array = [](const auto& values) -> nlohmann::json {
-    nlohmann::json result = nlohmann::json::array();
-    for (const double value : values) {
-      result.push_back(value);
-    }
-    return result;
-  };
 
   return nlohmann::json{
-      {"id", "yearly_monthly_overview"},
+      {"id", "range_monthly_overview"},
       {"title", "Monthly Income, Expense, and Balance"},
       {"chart_type", "grouped_bar"},
       {"x_labels", std::move(x_labels)},
@@ -1298,17 +1268,17 @@ auto BuildYearlyMonthlyOverviewChart(const YearlyReportData& report)
                            {"label", "Income"},
                            {"unit", "CNY"},
                            {"color", ResolveGroupedBarSeriesColorHex("income")},
-                           {"values", to_json_array(income_values)}},
+                           {"values", std::move(income_values)}},
             nlohmann::json{{"id", "expense"},
                            {"label", "Expense"},
                            {"unit", "CNY"},
                            {"color", ResolveGroupedBarSeriesColorHex("expense")},
-                           {"values", to_json_array(expense_values)}},
+                           {"values", std::move(expense_values)}},
             nlohmann::json{{"id", "balance"},
                            {"label", "Balance"},
                            {"unit", "CNY"},
                            {"color", ResolveGroupedBarSeriesColorHex("balance")},
-                           {"values", to_json_array(balance_values)}}})},
+                           {"values", std::move(balance_values)}}})},
   };
 }
 
@@ -1374,31 +1344,36 @@ auto BuildMonthlyExpenseByCategoryChart(const MonthlyReportData& report)
   };
 }
 
-auto BuildChartData(const QueryExecutionResult& query_result) -> nlohmann::json {
+auto BuildChartData(const QueryExecutionResult& query_result,
+                    const ReportPresentationKind presentation_kind)
+    -> nlohmann::json {
   nlohmann::json chart_data = BuildEmptyChartData();
   auto& views = chart_data["views"];
-  if (query_result.query_type == "year") {
-    const auto yearly_chart =
-        BuildYearlyMonthlyOverviewChart(query_result.yearly_data);
-    if (yearly_chart.has_value()) {
-      views.push_back(*yearly_chart);
+  // Chart selection follows presentation semantics, not query semantics:
+  // monthly views render a single-month breakdown, while yearly/range views
+  // render a month-over-month overview from the same range query result.
+  if (presentation_kind == ReportPresentationKind::kMonthly) {
+    if (!query_result.range_data.months.empty()) {
+      const auto monthly_chart =
+          BuildMonthlyExpenseByCategoryChart(query_result.range_data.months.front());
+      if (monthly_chart.has_value()) {
+        views.push_back(*monthly_chart);
+      }
     }
     return chart_data;
   }
 
-  if (query_result.query_type == "month") {
-    const auto monthly_chart =
-        BuildMonthlyExpenseByCategoryChart(query_result.monthly_data);
-    if (monthly_chart.has_value()) {
-      views.push_back(*monthly_chart);
-    }
+  const auto overview_chart = BuildRangeMonthlyOverviewChart(query_result.range_data);
+  if (overview_chart.has_value()) {
+    views.push_back(*overview_chart);
   }
   return chart_data;
 }
 
 auto InjectChartDataIntoStandardReportJson(
     std::string_view standard_report_json,
-    const QueryExecutionResult& query_result) -> std::string {
+    const QueryExecutionResult& query_result,
+    const ReportPresentationKind presentation_kind) -> std::string {
   if (standard_report_json.empty()) {
     return std::string(standard_report_json);
   }
@@ -1412,7 +1387,7 @@ auto InjectChartDataIntoStandardReportJson(
     if (!extensions.is_object()) {
       extensions = nlohmann::json::object();
     }
-    extensions["chart_data"] = BuildChartData(query_result);
+    extensions["chart_data"] = BuildChartData(query_result, presentation_kind);
     return root.dump(2) + "\n";
   } catch (const nlohmann::json::exception&) {
     return std::string(standard_report_json);
@@ -1420,29 +1395,28 @@ auto InjectChartDataIntoStandardReportJson(
 }
 
 auto BuildHostQueryResult(const QueryExecutionResult& query_result,
-                          std::string_view query_value,
+                          const ReportPresentationKind presentation_kind,
                           sqlite3* db_connection) -> HostQueryResult {
+  // Host-facing month/year/range queries all arrive here after being
+  // translated to QueryRange(...). This layer only applies presentation and
+  // host metadata policies on top of the shared range query result.
   HostQueryResult result;
   result.execution = query_result;
-  result.standard_report = ReportRenderService::BuildStandardReport(query_result);
+  result.standard_report =
+      ReportRenderService::BuildStandardReport(query_result, presentation_kind);
   if (StandardReportRendererRegistry::IsFormatAvailable("json")) {
     result.standard_report_json =
         ReportRenderService::Render(result.standard_report, "json");
     result.standard_report_json = InjectChartDataIntoStandardReportJson(
-        result.standard_report_json, query_result);
+        result.standard_report_json, query_result, presentation_kind);
   }
   if (StandardReportRendererRegistry::IsFormatAvailable("md")) {
     result.report_markdown =
         ReportRenderService::Render(result.standard_report, "md");
   }
-  if (query_result.query_type == "year") {
-    result.matched_bills =
-        static_cast<std::size_t>(CountMatchingYearBills(db_connection, query_value));
-  } else {
-    result.matched_bills =
-        static_cast<std::size_t>(CountMatchingMonthBills(db_connection, query_value));
-    result.transaction_count = CountTransactions(query_result.monthly_data);
-  }
+  result.matched_bills = static_cast<std::size_t>(CountMatchingRangeBills(
+      db_connection, query_result.period_start, query_result.period_end));
+  result.transaction_count = CountTransactions(query_result.range_data);
   return result;
 }
 
@@ -2028,20 +2002,30 @@ auto PreflightImportDocuments(
 
 auto QueryYearReport(const std::filesystem::path& db_path,
                      std::string_view iso_year) -> Result<HostQueryResult> {
+  const auto parsed_year = bills::core::common::iso_period::parse_year(iso_year);
+  if (!parsed_year.has_value()) {
+    return std::unexpected(MakeError("Year query requires YYYY.", kContext));
+  }
+  const std::string start = std::to_string(*parsed_year) + "-01";
+  const std::string end = std::to_string(*parsed_year) + "-12";
   try {
     auto db_session = bills::io::CreateReportDbSession(db_path.string());
     auto report_data_gateway =
         bills::io::CreateReportDataGateway(db_session->GetConnectionHandle());
-    const auto query_result = QueryService::QueryYear(*report_data_gateway, iso_year);
+    const auto query_result =
+        QueryService::QueryRange(*report_data_gateway, start, end);
     if (!query_result.data_found) {
       return HostQueryResult{.execution = query_result};
     }
-    return BuildHostQueryResult(query_result, iso_year, db_session->GetConnectionHandle());
+    return BuildHostQueryResult(query_result, ReportPresentationKind::kYearly,
+                                db_session->GetConnectionHandle());
   } catch (const std::exception& error) {
     if (IsMissingBillsTableError(error.what())) {
       QueryExecutionResult query_result;
-      query_result.query_type = "year";
-      query_result.query_value = std::string(iso_year);
+      query_result.period_start = start;
+      query_result.period_end = end;
+      query_result.range_data.period_start = start;
+      query_result.range_data.period_end = end;
       return HostQueryResult{.execution = query_result};
     }
     return std::unexpected(MakeError(error.what(), kContext));
@@ -2050,20 +2034,77 @@ auto QueryYearReport(const std::filesystem::path& db_path,
 
 auto QueryMonthReport(const std::filesystem::path& db_path,
                       std::string_view iso_month) -> Result<HostQueryResult> {
+  const auto parsed_month =
+      bills::core::common::iso_period::parse_year_month(iso_month);
+  if (!parsed_month.has_value()) {
+    return std::unexpected(MakeError("Month query requires YYYY-MM.", kContext));
+  }
+  const std::string normalized_month =
+      bills::core::common::iso_period::format_year_month(parsed_month->year,
+                                                         parsed_month->month);
   try {
     auto db_session = bills::io::CreateReportDbSession(db_path.string());
     auto report_data_gateway =
         bills::io::CreateReportDataGateway(db_session->GetConnectionHandle());
-    const auto query_result = QueryService::QueryMonth(*report_data_gateway, iso_month);
+    const auto query_result = QueryService::QueryRange(
+        *report_data_gateway, normalized_month, normalized_month);
     if (!query_result.data_found) {
       return HostQueryResult{.execution = query_result};
     }
-    return BuildHostQueryResult(query_result, iso_month, db_session->GetConnectionHandle());
+    return BuildHostQueryResult(query_result, ReportPresentationKind::kMonthly,
+                                db_session->GetConnectionHandle());
   } catch (const std::exception& error) {
     if (IsMissingBillsTableError(error.what())) {
       QueryExecutionResult query_result;
-      query_result.query_type = "month";
-      query_result.query_value = std::string(iso_month);
+      query_result.period_start = normalized_month;
+      query_result.period_end = normalized_month;
+      query_result.range_data.period_start = normalized_month;
+      query_result.range_data.period_end = normalized_month;
+      return HostQueryResult{.execution = query_result};
+    }
+    return std::unexpected(MakeError(error.what(), kContext));
+  }
+}
+
+auto QueryRangeReport(const std::filesystem::path& db_path,
+                      std::string_view start_iso_month,
+                      std::string_view end_iso_month) -> Result<HostQueryResult> {
+  const auto start =
+      bills::core::common::iso_period::parse_year_month(start_iso_month);
+  const auto end =
+      bills::core::common::iso_period::parse_year_month(end_iso_month);
+  if (!start.has_value() || !end.has_value()) {
+    return std::unexpected(
+        MakeError("Range query requires YYYY-MM YYYY-MM.", kContext));
+  }
+  const std::string normalized_start =
+      bills::core::common::iso_period::format_year_month(start->year,
+                                                         start->month);
+  const std::string normalized_end =
+      bills::core::common::iso_period::format_year_month(end->year, end->month);
+  if (normalized_start > normalized_end) {
+    return std::unexpected(
+        MakeError("Range query requires start <= end.", kContext));
+  }
+
+  try {
+    auto db_session = bills::io::CreateReportDbSession(db_path.string());
+    auto report_data_gateway =
+        bills::io::CreateReportDataGateway(db_session->GetConnectionHandle());
+    const auto query_result = QueryService::QueryRange(
+        *report_data_gateway, normalized_start, normalized_end);
+    if (!query_result.data_found) {
+      return HostQueryResult{.execution = query_result};
+    }
+    return BuildHostQueryResult(query_result, ReportPresentationKind::kRange,
+                                db_session->GetConnectionHandle());
+  } catch (const std::exception& error) {
+    if (IsMissingBillsTableError(error.what())) {
+      QueryExecutionResult query_result;
+      query_result.period_start = normalized_start;
+      query_result.period_end = normalized_end;
+      query_result.range_data.period_start = normalized_start;
+      query_result.range_data.period_end = normalized_end;
       return HostQueryResult{.execution = query_result};
     }
     return std::unexpected(MakeError(error.what(), kContext));
@@ -2193,15 +2234,35 @@ auto ExportReports(const HostReportExportRequest& request)
     ReportExportRunResult current_result;
     switch (request.scope) {
       case HostReportExportScope::kYear:
-        current_result = export_service.export_yearly_report(*normalized_year, format);
+        current_result = export_service.export_range_report(
+            ReportExportRange{
+                .start = ReportExportMonth{
+                    .iso_month = normalized_year->iso_year + "-01",
+                    .year = normalized_year->year,
+                    .month = 1,
+                },
+                .end = ReportExportMonth{
+                    .iso_month = normalized_year->iso_year + "-12",
+                    .year = normalized_year->year,
+                    .month = 12,
+                },
+            },
+            format, ReportPresentationKind::kYearly,
+            ReportExportOutputScope::kYears);
         break;
       case HostReportExportScope::kMonth:
-        current_result =
-            export_service.export_monthly_report(*normalized_month, format);
+        current_result = export_service.export_range_report(
+            ReportExportRange{
+                .start = *normalized_month,
+                .end = *normalized_month,
+            },
+            format, ReportPresentationKind::kMonthly,
+            ReportExportOutputScope::kMonths);
         break;
       case HostReportExportScope::kRange:
-        current_result =
-            export_service.export_monthly_range(*normalized_range, format);
+        current_result = export_service.export_range_report(
+            *normalized_range, format, ReportPresentationKind::kRange,
+            ReportExportOutputScope::kRanges);
         break;
       case HostReportExportScope::kAllMonths:
         current_result = export_service.export_all_monthly_reports(format);

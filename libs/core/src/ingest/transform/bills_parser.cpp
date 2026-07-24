@@ -206,12 +206,10 @@ void BillParser::_parse_content_line(const std::string& parent_category,
   const auto parsed = bills::core::ingest::content_line::ParseStructuredEntryLine(
       parent_category, line);
   if (!parsed) {
-    amount = 0.0;
-    description = line;
-    comment.clear();
-    return;
+    throw std::runtime_error(
+        "Unsupported content line: invalid amount expression or comment syntax.");
   }
-  amount = parsed->amount;
+  amount = parsed->evaluated_amount;
   description = parsed->description;
   comment = parsed->comment;
 }
@@ -222,7 +220,7 @@ auto BillParser::_get_numeric_value_from_content(
   const auto parsed = bills::core::ingest::content_line::ParseStructuredEntryLine(
       parent_category, content_line);
   if (parsed) {
-    return parsed->amount;
+    return parsed->evaluated_amount;
   }
   return 0.0;
 }

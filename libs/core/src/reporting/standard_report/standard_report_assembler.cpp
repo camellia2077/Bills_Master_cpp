@@ -7,8 +7,6 @@
 #include <sstream>
 
 namespace {
-constexpr int kLastMonthOfYear = 12;
-
 auto NowUtcIso8601() -> std::string {
   const auto kNow = std::chrono::system_clock::now();
   const std::time_t kNowTime = std::chrono::system_clock::to_time_t(kNow);
@@ -27,6 +25,18 @@ auto MonthToText(const int kYear, const int kMonth) -> std::string {
   std::ostringstream output;
   output << kYear << "-" << std::setw(2) << std::setfill('0') << kMonth;
   return output.str();
+}
+
+auto AppendMonthlySummary(StandardReport& report,
+                          const RangeReportData& data) -> void {
+  for (const auto& month : data.months) {
+    StandardMonthlySummaryItem month_item;
+    month_item.period = MonthToText(month.year, month.month);
+    month_item.income = month.total_income;
+    month_item.expense = month.total_expense;
+    month_item.balance = month.balance;
+    report.monthly_summary.push_back(std::move(month_item));
+  }
 }
 
 }  // namespace
@@ -75,26 +85,32 @@ auto StandardReportAssembler::FromMonthly(const MonthlyReportData& data)
   return report;
 }
 
-auto StandardReportAssembler::FromYearly(const YearlyReportData& data)
+auto StandardReportAssembler::FromYearly(const RangeReportData& data)
     -> StandardReport {
   StandardReport report;
   report.report_type = "yearly";
   report.generated_at_utc = NowUtcIso8601();
-  report.period_start = MonthToText(data.year, 1);
-  report.period_end = MonthToText(data.year, kLastMonthOfYear);
+  report.period_start = data.period_start;
+  report.period_end = data.period_end;
   report.data_found = data.data_found;
   report.total_income = data.total_income;
   report.total_expense = data.total_expense;
   report.balance = data.balance;
+  AppendMonthlySummary(report, data);
+  return report;
+}
 
-  for (const auto& [month, summary] : data.monthly_summary) {
-    StandardMonthlySummaryItem month_item;
-    month_item.month = month;
-    month_item.income = summary.income;
-    month_item.expense = summary.expense;
-    month_item.balance = summary.income - summary.expense;
-    report.monthly_summary.push_back(std::move(month_item));
-  }
-
+auto StandardReportAssembler::FromRange(const RangeReportData& data)
+    -> StandardReport {
+  StandardReport report;
+  report.report_type = "range";
+  report.generated_at_utc = NowUtcIso8601();
+  report.period_start = data.period_start;
+  report.period_end = data.period_end;
+  report.data_found = data.data_found;
+  report.total_income = data.total_income;
+  report.total_expense = data.total_expense;
+  report.balance = data.balance;
+  AppendMonthlySummary(report, data);
   return report;
 }

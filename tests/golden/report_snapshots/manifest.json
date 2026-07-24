@@ -4,167 +4,125 @@
     "baseline": "monthly/2025-01.md",
     "scope": "md",
     "compare_mode": "markdown-content",
-    "sha256": "27e649a90cd7f1b664430311751d28e488c22eb291a94ce2452755a0909efeaf"
+    "sha256": "b292dc7a7bd0fcf444a29098afc1e42b5554c5087f4f40b7121edcaa1f3d0e49"
   },
   "monthly_json_2025_01": {
     "source": "standard_json/months/2025/2025-01.json",
     "baseline": "monthly/2025-01.json",
     "scope": "json",
     "compare_mode": "json-content",
-    "sha256": "47f0616dd96aa271e486c050752d56eaa1f97ecfa6e8a4f8a6a8ed4b805576eb"
+    "sha256": "f9310a8f23dd82282a36996167829a0b8d893dfdc01ffce9a531496756c08a46"
   },
   "monthly_tex_2025_01": {
     "source": "LaTeX_bills/months/2025/2025-01.tex",
     "baseline": "monthly/2025-01.tex",
     "scope": "tex",
     "compare_mode": "bytes",
-    "sha256": "9892ad41ddc6e5ce37004c67dbd7efd7eabcdad6c9ff56093ea2b7cc8db4f2ba"
+    "sha256": "cce187383b2d58dc0b3b50cff605c12cc214d83f6b11bd63dd07838f3e3348cb"
   },
   "monthly_rst_2025_01": {
     "source": "reST_bills/months/2025/2025-01.rst",
     "baseline": "monthly/2025-01.rst",
     "scope": "rst",
     "compare_mode": "bytes",
-    "sha256": "5180513bd65e22ce6c09429dbb42a054602b9328d52901baf25ac22dfba9161d"
+    "sha256": "92fa4f7e1dd346ebf844ea7378f2780716eeaae02e06e37905e23bde13eb22e7"
   },
   "monthly_typ_2025_01": {
     "source": "Typst_bills/months/2025/2025-01.typ",
     "baseline": "monthly/2025-01.typ",
     "scope": "typ",
     "compare_mode": "bytes",
-    "sha256": "705f96070d63fae215889bfa7b205b31d89bced0c994b3cc9091bd4a4a966490"
+    "sha256": "31ef312a9de934297ccd1e4d54bdb5ac92d1ac38b88d9e8b7863d91d591a5330"
   },
   "monthly_standard_report_2025_01": {
     "source": "standard_json/months/2025/2025-01.json",
     "baseline": "standard_report/monthly/2025-01.json",
     "scope": "standard-report",
     "compare_mode": "json-content",
-    "sha256": "47f0616dd96aa271e486c050752d56eaa1f97ecfa6e8a4f8a6a8ed4b805576eb"
+    "sha256": "f9310a8f23dd82282a36996167829a0b8d893dfdc01ffce9a531496756c08a46"
   },
   "yearly_md_2025": {
     "source": "Markdown_bills/years/2025.md",
     "baseline": "yearly/2025.md",
     "scope": "md",
     "compare_mode": "markdown-content",
-    "sha256": "67442743963028f02fdd279b7a81bc4e61d5c1a3ef1c370d55b841f7d606fbdf"
+    "sha256": "964c77ae1109a5b1ff035da55db61be226522cdca3ce5b35d403f47915e56c68"
   },
   "yearly_json_2025": {
     "source": "standard_json/years/2025.json",
     "baseline": "yearly/2025.json",
     "scope": "json",
     "compare_mode": "json-content",
-    "sha256": "890eaf87a9671550b078b4af22802b4166fb69531cad300a0402f9e41751448e"
+    "sha256": "065fd44d5dfe953434fefc3b4f7da6b131d582bb4e28f401ef9acc5dd5c40dfc"
   },
   "yearly_tex_2025": {
     "source": "LaTeX_bills/years/2025.tex",
     "baseline": "yearly/2025.tex",
     "scope": "tex",
     "compare_mode": "bytes",
-    "sha256": "ff868a76432e3d57b2c3ce309de83baf0384b5a70481f4ad6eed262b3ce1b02e"
+    "sha256": "436429b21fcdef059c7a85e188736ff9ba31b8a0f89ced69431549c24023bb59"
   },
   "yearly_rst_2025": {
     "source": "reST_bills/years/2025.rst",
     "baseline": "yearly/2025.rst",
     "scope": "rst",
     "compare_mode": "bytes",
-    "sha256": "6e22e0b94cb2b038d1eb1a93027b07c21175696bb5fa37a485e49226f776e4df"
+    "sha256": "27e63182f0ca8e53fbcdf4a6791e732bef7839881c4dbf11ffe62e375b123b99"
   },
   "yearly_typ_2025": {
     "source": "Typst_bills/years/2025.typ",
     "baseline": "yearly/2025.typ",
     "scope": "typ",
     "compare_mode": "bytes",
-    "sha256": "2a2c9a57d1c0d23458c6af8b1b12be0b1083b864efa155592d4c3fd0b363b5e7"
+    "sha256": "34987815c92ea731bd3b31c06d4332864a39d06915f848ffccc7053e74f25219"
   },
   "yearly_standard_report_2025": {
     "source": "standard_json/years/2025.json",
     "baseline": "standard_report/yearly/2025.json",
     "scope": "standard-report",
     "compare_mode": "json-content",
-    "sha256": "890eaf87a9671550b078b4af22802b4166fb69531cad300a0402f9e41751448e"
+    "sha256": "065fd44d5dfe953434fefc3b4f7da6b131d582bb4e28f401ef9acc5dd5c40dfc"
   },
-  "range_md_2025_03": {
-    "source": "Markdown_bills/months/2025/2025-03.md",
-    "baseline": "range/2025-03.md",
+  "range_md_2025_03_2025_04": {
+    "source": "Markdown_bills/ranges/2025-03_2025-04.md",
+    "baseline": "range/2025-03_2025-04.md",
     "scope": "md",
     "compare_mode": "markdown-content",
-    "sha256": "476b0baef08173dd620824278b12846972f5da06267a3f18e454a635a61a0ed1"
+    "sha256": "3c08c46f9910fd844e5c84f40729f57903fee6cd5219b32f5b1348e7a09678c3"
   },
-  "range_md_2025_04": {
-    "source": "Markdown_bills/months/2025/2025-04.md",
-    "baseline": "range/2025-04.md",
-    "scope": "md",
-    "compare_mode": "markdown-content",
-    "sha256": "0aa5112c7323c42b853af68b6c7789a454d62928994818d535f4044cf02937b8"
-  },
-  "range_json_2025_03": {
-    "source": "standard_json/months/2025/2025-03.json",
-    "baseline": "range/2025-03.json",
+  "range_json_2025_03_2025_04": {
+    "source": "standard_json/ranges/2025-03_2025-04.json",
+    "baseline": "range/2025-03_2025-04.json",
     "scope": "json",
     "compare_mode": "json-content",
-    "sha256": "9c65292b34de2b3a57f5bb5cd6d0da4fdd08f1d0aa0bd07669143c13e1893cef"
+    "sha256": "92a0cfcc5fc7e4ff64cf8f43d8e3ea93842c49dd9c139d8481cb7bc92870683c"
   },
-  "range_json_2025_04": {
-    "source": "standard_json/months/2025/2025-04.json",
-    "baseline": "range/2025-04.json",
-    "scope": "json",
-    "compare_mode": "json-content",
-    "sha256": "45aabb1b017105e9446d4f85612b167d9625a4c2d6e91a1b637a37ea43594936"
-  },
-  "range_tex_2025_03": {
-    "source": "LaTeX_bills/months/2025/2025-03.tex",
-    "baseline": "range/2025-03.tex",
+  "range_tex_2025_03_2025_04": {
+    "source": "LaTeX_bills/ranges/2025-03_2025-04.tex",
+    "baseline": "range/2025-03_2025-04.tex",
     "scope": "tex",
     "compare_mode": "bytes",
-    "sha256": "1b955f232a593e350d45669f6a21708f5d855e7693e37cb4a315e53c4244b238"
+    "sha256": "fe8835f895997da985db42ca16e431c43ba44a598aa813513a15b6199257cf82"
   },
-  "range_tex_2025_04": {
-    "source": "LaTeX_bills/months/2025/2025-04.tex",
-    "baseline": "range/2025-04.tex",
-    "scope": "tex",
-    "compare_mode": "bytes",
-    "sha256": "654b407e3659ce8318f876dd7d5d860ee1bba5944649ad36879c212bf3565f34"
-  },
-  "range_rst_2025_03": {
-    "source": "reST_bills/months/2025/2025-03.rst",
-    "baseline": "range/2025-03.rst",
+  "range_rst_2025_03_2025_04": {
+    "source": "reST_bills/ranges/2025-03_2025-04.rst",
+    "baseline": "range/2025-03_2025-04.rst",
     "scope": "rst",
     "compare_mode": "bytes",
-    "sha256": "c02ea49f6c61d3f60717800e0948b0d406ffd8778d2639011d70845cebe34f7d"
+    "sha256": "6b78f1b01d1cd2ca71681d7df1f4f4bffde8ed22dd4e70aefc4d3166a50368c3"
   },
-  "range_rst_2025_04": {
-    "source": "reST_bills/months/2025/2025-04.rst",
-    "baseline": "range/2025-04.rst",
-    "scope": "rst",
-    "compare_mode": "bytes",
-    "sha256": "5b9a4f98f08cac0a9a3a1c4a883ae4f05a4f60dfb8734ecb9b15690fa5963bfa"
-  },
-  "range_typ_2025_03": {
-    "source": "Typst_bills/months/2025/2025-03.typ",
-    "baseline": "range/2025-03.typ",
+  "range_typ_2025_03_2025_04": {
+    "source": "Typst_bills/ranges/2025-03_2025-04.typ",
+    "baseline": "range/2025-03_2025-04.typ",
     "scope": "typ",
     "compare_mode": "bytes",
-    "sha256": "4ab000967d92bf880cf3b220ccb4a8c24a82d1823a9ae19b72573863d2e30164"
+    "sha256": "411c20e277dfd13b63619b3213481a7dcbcbd2ad604033fdc0c9bf2c9e8f76e4"
   },
-  "range_typ_2025_04": {
-    "source": "Typst_bills/months/2025/2025-04.typ",
-    "baseline": "range/2025-04.typ",
-    "scope": "typ",
-    "compare_mode": "bytes",
-    "sha256": "f33607c34666753ebba815784ff96045d4e550134e22df0af865689d759d4d89"
-  },
-  "range_standard_report_2025_03": {
-    "source": "standard_json/months/2025/2025-03.json",
-    "baseline": "standard_report/range/2025-03.json",
+  "range_standard_report_2025_03_2025_04": {
+    "source": "standard_json/ranges/2025-03_2025-04.json",
+    "baseline": "standard_report/range/2025-03_2025-04.json",
     "scope": "standard-report",
     "compare_mode": "json-content",
-    "sha256": "9c65292b34de2b3a57f5bb5cd6d0da4fdd08f1d0aa0bd07669143c13e1893cef"
-  },
-  "range_standard_report_2025_04": {
-    "source": "standard_json/months/2025/2025-04.json",
-    "baseline": "standard_report/range/2025-04.json",
-    "scope": "standard-report",
-    "compare_mode": "json-content",
-    "sha256": "45aabb1b017105e9446d4f85612b167d9625a4c2d6e91a1b637a37ea43594936"
+    "sha256": "92a0cfcc5fc7e4ff64cf8f43d8e3ea93842c49dd9c139d8481cb7bc92870683c"
   }
 }

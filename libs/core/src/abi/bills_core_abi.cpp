@@ -303,18 +303,32 @@ auto build_standard_report_payload(const std::vector<ParsedBill>& bills,
                                    std::string_view query_value) -> Json {
   if (query_type == "year") {
     const auto parsed_year = bills::core::common::iso_period::parse_year(query_value);
-    YearlyReportData report;
-    report.year = parsed_year.value_or(0);
+    RangeReportData report;
+    report.period_start = std::string(query_value) + "-01";
+    report.period_end = std::string(query_value) + "-12";
     std::size_t matched_bills = 0;
     for (const auto& bill : bills) {
-      if (bill.year != report.year) {
+      if (!parsed_year.has_value() || bill.year != *parsed_year) {
         continue;
       }
       ++matched_bills;
       report.data_found = true;
-      auto& summary = report.monthly_summary[bill.month];
-      summary.income += bill.total_income;
-      summary.expense += bill.total_expense;
+      MonthlyReportData monthly;
+      monthly.year = bill.year;
+      monthly.month = bill.month;
+      monthly.remark = bill.remark;
+      monthly.data_found = true;
+      monthly.total_income = bill.total_income;
+      monthly.total_expense = bill.total_expense;
+      monthly.balance = bill.balance;
+      for (const auto& transaction : bill.transactions) {
+        auto& parent = monthly.aggregated_data[transaction.parent_category];
+        parent.parent_total += transaction.amount;
+        auto& sub = parent.sub_categories[transaction.sub_category];
+        sub.sub_total += transaction.amount;
+        sub.transactions.push_back(transaction);
+      }
+      report.months.push_back(std::move(monthly));
       report.total_income += bill.total_income;
       report.total_expense += bill.total_expense;
     }
@@ -322,7 +336,7 @@ auto build_standard_report_payload(const std::vector<ParsedBill>& bills,
     const auto standard_report = StandardReportAssembler::FromYearly(report);
     Json data{{"query_type", "year"},
               {"query_value", std::string(query_value)},
-              {"year", report.year},
+              {"year", parsed_year.value_or(0)},
               {"matched_bills", matched_bills},
               {"total_income", report.total_income},
               {"total_expense", report.total_expense},
@@ -330,11 +344,14 @@ auto build_standard_report_payload(const std::vector<ParsedBill>& bills,
               {"standard_report", Json::parse(ReportRenderService::Render(standard_report, "json"))},
               {"report_markdown", ReportRenderService::Render(standard_report, "md")}};
     Json monthly = Json::array();
-    for (const auto& [month, summary] : report.monthly_summary) {
-      monthly.push_back(Json{{"month", month},
-                             {"income", summary.income},
-                             {"expense", summary.expense},
-                             {"balance", summary.income + summary.expense}});
+    for (const auto& month : report.months) {
+      monthly.push_back(Json{
+          {"period", bills::core::common::iso_period::format_year_month(month.year,
+                                                                         month.month)},
+          {"income", month.total_income},
+          {"expense", month.total_expense},
+          {"balance", month.balance},
+      });
     }
     data["monthly_summary"] = std::move(monthly);
     return data;
