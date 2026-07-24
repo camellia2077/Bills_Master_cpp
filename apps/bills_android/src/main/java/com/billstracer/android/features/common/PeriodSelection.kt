@@ -5,6 +5,11 @@ internal data class YearMonthSelection(
     val month: String = "",
 )
 
+internal data class RangePeriodSelection(
+    val start: String = "",
+    val end: String = "",
+)
+
 internal fun resolveYearSelection(
     currentYear: String,
     periods: List<String>,
@@ -64,3 +69,31 @@ internal fun monthsForYear(
     .filter { period -> period.startsWith("$year-") && period.length == 7 }
     .map { period -> period.substringAfter('-') }
     .distinct()
+
+internal fun resolveRangePeriodSelection(
+    currentStart: String,
+    currentEnd: String,
+    periods: List<String>,
+    preferredStart: String? = null,
+    preferredEnd: String? = null,
+): RangePeriodSelection {
+    if (periods.isEmpty()) {
+        return RangePeriodSelection()
+    }
+
+    val selectedEnd = when {
+        !preferredEnd.isNullOrBlank() && periods.contains(preferredEnd) -> preferredEnd
+        currentEnd.isNotBlank() && periods.contains(currentEnd) -> currentEnd
+        else -> periods.first()
+    }
+    val selectedStart = when {
+        !preferredStart.isNullOrBlank() &&
+            periods.contains(preferredStart) &&
+            preferredStart <= selectedEnd -> preferredStart
+        currentStart.isNotBlank() &&
+            periods.contains(currentStart) &&
+            currentStart <= selectedEnd -> currentStart
+        else -> selectedEnd
+    }
+    return RangePeriodSelection(start = selectedStart, end = selectedEnd)
+}

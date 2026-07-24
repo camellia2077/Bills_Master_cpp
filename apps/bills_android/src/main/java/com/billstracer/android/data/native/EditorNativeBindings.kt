@@ -18,6 +18,11 @@ internal object EditorNativeBindings {
         documentJson: String,
     ): String
 
+    external fun previewRecordPathNative(
+        inputPath: String,
+        configDir: String,
+    ): String
+
     external fun commitRecordDocumentJsonNative(
         expectedPeriod: String,
         rawText: String,

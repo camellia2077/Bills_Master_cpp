@@ -18,4 +18,10 @@ internal object QueryNativeBindings {
         dbPath: String,
         isoMonth: String,
     ): String
+
+    external fun queryRangeNative(
+        dbPath: String,
+        startIsoMonth: String,
+        endIsoMonth: String,
+    ): String
 }

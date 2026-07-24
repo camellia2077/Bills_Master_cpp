@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -310,35 +311,36 @@ private fun EditorEntryRow(
             .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-                OutlinedTextField(
-                    value = entry.description,
-                    onValueChange = { nextValue ->
-                        onEntryDescriptionChange(parentTitle, subSectionTitle, entry.id, nextValue)
-                    },
-            modifier = Modifier
-                .weight(1f)
-                .testTag("editor_entry_description_${entry.id}"),
-                    label = { Text("Item", fontFamily = FontFamily.Monospace) },
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                    singleLine = true,
-                    shape = RoundedCornerShape(20.dp),
-                )
-                OutlinedTextField(
-                    value = entry.amountExpression,
-                    onValueChange = { nextValue ->
-                        onEntryAmountChange(parentTitle, subSectionTitle, entry.id, nextValue)
+        // Input order is intentional and must not change: Amount stays on the left, Item on the right.
+        OutlinedTextField(
+            value = entry.amountExpression,
+            onValueChange = { nextValue ->
+                onEntryAmountChange(parentTitle, subSectionTitle, entry.id, nextValue)
             },
             modifier = Modifier
                 .width(132.dp)
                 .testTag("editor_entry_amount_${entry.id}"),
             label = { Text("Amount", fontFamily = FontFamily.Monospace) },
             singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(
-                        fontFamily = FontFamily.Monospace,
-                        textAlign = TextAlign.End,
-                    ),
-                    shape = RoundedCornerShape(20.dp),
-                )
+            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                fontFamily = FontFamily.Monospace,
+                textAlign = TextAlign.End,
+            ),
+            shape = RoundedCornerShape(20.dp),
+        )
+        OutlinedTextField(
+            value = entry.description,
+            onValueChange = { nextValue ->
+                onEntryDescriptionChange(parentTitle, subSectionTitle, entry.id, nextValue)
+            },
+            modifier = Modifier
+                .weight(1f)
+                .testTag("editor_entry_description_${entry.id}"),
+            label = { Text("Item", fontFamily = FontFamily.Monospace) },
+            textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+            singleLine = true,
+            shape = RoundedCornerShape(20.dp),
+        )
         IconButton(
             onClick = { onRemoveEntry(parentTitle, subSectionTitle, entry.id) },
             modifier = Modifier
@@ -364,7 +366,7 @@ internal fun EditorRawExpertContent(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier.fillMaxHeight(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Surface(
@@ -391,17 +393,18 @@ internal fun EditorRawExpertContent(
                 Text("Back To Structured Editor")
             }
         }
-        OutlinedTextField(
+        Text(
+            text = "Raw TXT",
+            style = MaterialTheme.typography.labelMedium,
+            fontFamily = FontFamily.Monospace,
+        )
+        RawTextEditText(
             value = rawText,
             onValueChange = onRawTextChange,
-            enabled = true,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 280.dp, max = 520.dp)
-                .testTag("editor_record_field"),
-            textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-            label = { Text("Raw TXT", fontFamily = FontFamily.Monospace) },
-            minLines = 14,
+                .weight(1f)
+                .testTag("editor_raw_fullscreen_field"),
         )
     }
 }

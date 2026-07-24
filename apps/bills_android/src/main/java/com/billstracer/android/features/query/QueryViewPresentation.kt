@@ -29,6 +29,7 @@ internal fun resolveQueryModeAvailability(result: QueryResult?): QueryModeAvaila
     val hasStructuredView = when (result.type) {
         QueryType.YEAR -> parseYearlyStandardReport(result.standardReportJson) != null
         QueryType.MONTH -> parseMonthlyStandardReport(result.standardReportJson) != null
+        QueryType.RANGE -> parseRangeStandardReport(result.standardReportJson) != null
     }
     val hasChartView = parseQueryChartData(result.standardReportJson)?.views?.isNotEmpty() == true
     return QueryModeAvailability(

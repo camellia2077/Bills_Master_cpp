@@ -38,3 +38,8 @@ data class RecordSaveResult(
     val errorMessage: String? = null,
     val rawJson: String,
 )
+
+data class EditorRecordSummary(
+    val income: Double,
+    val expense: Double,
+)

@@ -8,21 +8,148 @@ import com.billstracer.android.model.StructuredRecordEditorEntry
 import com.billstracer.android.model.StructuredRecordEditorParentSection
 import com.billstracer.android.model.StructuredRecordEditorSubSection
 
-private val fakeStructuredEntryRegex =
-    Regex("""^([+-]?\s*\d+(?:\.\d+)?(?:\s*[+-]\s*\d+(?:\.\d+)?)*)\s*(.*)$""")
+private fun fakeFindCommentStart(text: String): Pair<Int, Int>? {
+    text.forEachIndexed { index, character ->
+        if (text.startsWith("//", startIndex = index)) {
+            return index to 2
+        }
+        if ((character == '#' || character == ';') && index > 0 && text[index - 1].isWhitespace()) {
+            return index to 1
+        }
+    }
+    return null
+}
+
+private fun fakeParseAmountExpressionPrefix(line: String): String? {
+    class FakeExpressionPrefixParser(private val source: String) {
+        var index: Int = 0
+            private set
+
+        fun parse(): Boolean {
+            index = 0
+            if (!parseExpression()) {
+                return false
+            }
+            skipWhitespace()
+            return index > 0
+        }
+
+        private fun skipWhitespace() {
+            while (index < source.length && source[index].isWhitespace()) {
+                index += 1
+            }
+        }
+
+        private fun parseExpression(): Boolean {
+            if (!parseTerm()) {
+                return false
+            }
+            while (true) {
+                skipWhitespace()
+                if (index >= source.length) {
+                    return true
+                }
+                val current = source[index]
+                if (current != '+' && current != '-') {
+                    return true
+                }
+                index += 1
+                if (!parseTerm()) {
+                    return false
+                }
+            }
+        }
+
+        private fun parseTerm(): Boolean {
+            if (!parseFactor()) {
+                return false
+            }
+            while (true) {
+                skipWhitespace()
+                if (index >= source.length) {
+                    return true
+                }
+                val current = source[index]
+                if (current != '*' && current != '/' && current != '×') {
+                    return true
+                }
+                index += 1
+                if (!parseFactor()) {
+                    return false
+                }
+            }
+        }
+
+        private fun parseFactor(): Boolean {
+            skipWhitespace()
+            while (index < source.length && (source[index] == '+' || source[index] == '-')) {
+                index += 1
+                skipWhitespace()
+            }
+            if (index >= source.length) {
+                return false
+            }
+            if (source[index] == '(') {
+                index += 1
+                if (!parseExpression()) {
+                    return false
+                }
+                skipWhitespace()
+                if (index >= source.length || source[index] != ')') {
+                    return false
+                }
+                index += 1
+                return true
+            }
+            return parseNumber()
+        }
+
+        private fun parseNumber(): Boolean {
+            skipWhitespace()
+            val start = index
+            var sawDigit = false
+            var sawDot = false
+            while (index < source.length) {
+                val current = source[index]
+                when {
+                    current.isDigit() -> {
+                        sawDigit = true
+                        index += 1
+                    }
+                    current == '.' && !sawDot -> {
+                        sawDot = true
+                        index += 1
+                    }
+                    else -> break
+                }
+            }
+            return sawDigit && index > start
+        }
+    }
+
+    val parser = FakeExpressionPrefixParser(line)
+    if (!parser.parse()) {
+        return null
+    }
+    var endIndex = parser.index
+    while (endIndex > 0 && line[endIndex - 1].isWhitespace()) {
+        endIndex -= 1
+    }
+    return line.substring(0, endIndex).trim().takeIf { it.isNotEmpty() }
+}
 
 private fun fakeParseStructuredEntryLine(line: String): StructuredRecordEditorEntry? {
-    val match = fakeStructuredEntryRegex.matchEntire(line.trim()) ?: return null
-    val amountExpression = match.groupValues[1].trim()
-    val trailingText = match.groupValues[2]
-    val commentIndex = trailingText.indexOf("//")
-    val description = if (commentIndex >= 0) {
-        trailingText.substring(0, commentIndex).trim()
+    val normalized = line.trim()
+    val amountExpression = fakeParseAmountExpressionPrefix(normalized) ?: return null
+    val trailingText = normalized.removePrefix(amountExpression)
+    val commentStart = fakeFindCommentStart(trailingText)
+    val description = if (commentStart != null) {
+        trailingText.substring(0, commentStart.first).trim()
     } else {
         trailingText.trim()
     }
-    val comment = if (commentIndex >= 0) {
-        trailingText.substring(commentIndex + 2).trim()
+    val comment = if (commentStart != null) {
+        trailingText.substring(commentStart.first + commentStart.second).trim()
     } else {
         ""
     }

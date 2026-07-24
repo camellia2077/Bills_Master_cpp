@@ -17,4 +17,4 @@
 
 ## Quick Verify
 
-- `python tools/run.py dist android --preset debug`
+- `python tools/run.py dist bills-tracer-android --preset debug`

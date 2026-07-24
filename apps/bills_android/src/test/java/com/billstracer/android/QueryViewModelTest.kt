@@ -49,6 +49,8 @@ class QueryViewModelTest {
         assertEquals("2026", viewModel.state.value.queryYearInput)
         assertEquals("2026", viewModel.state.value.queryPeriodYearInput)
         assertEquals("03", viewModel.state.value.queryPeriodMonthInput)
+        assertEquals("2026-03", viewModel.state.value.queryRangeStartInput)
+        assertEquals("2026-03", viewModel.state.value.queryRangeEndInput)
     }
 
     @Test
@@ -119,6 +121,10 @@ class QueryViewModelTest {
                 ok = true,
                 message = "2026",
                 type = QueryType.YEAR,
+                periodStart = "2026-01",
+                periodEnd = "2026-12",
+                transactionCount = 1,
+                remark = "",
                 year = 2026,
                 month = null,
                 matchedBills = 1,
@@ -174,6 +180,10 @@ class QueryViewModelTest {
             ok = true,
             message = "2026",
             type = QueryType.YEAR,
+            periodStart = "2026-01",
+            periodEnd = "2026-12",
+            transactionCount = 1,
+            remark = "",
             year = 2026,
             month = null,
             matchedBills = 1,
@@ -212,5 +222,22 @@ class QueryViewModelTest {
         advanceUntilIdle()
 
         assertEquals(listOf("2027-01", "2026-03", "2026-02", "2025-12"), viewModel.state.value.availablePeriods)
+    }
+
+    @Test
+    fun runRangeQueryUsesSelectedDatabaseRange() = runTest {
+        val queryService = FakeQueryService()
+        val viewModel = createViewModel(queryService = queryService)
+        advanceUntilIdle()
+
+        viewModel.selectQueryRangeStart("2025-12")
+        viewModel.selectQueryRangeEnd("2026-03")
+        viewModel.runRangeQuery()
+        advanceUntilIdle()
+
+        assertEquals("2025-12", queryService.lastQueriedRangeStart)
+        assertEquals("2026-03", queryService.lastQueriedRangeEnd)
+        assertEquals(QueryType.RANGE, viewModel.state.value.queryResult?.type)
+        assertEquals(QueryViewMode.STRUCTURED, viewModel.state.value.selectedQueryViewMode)
     }
 }

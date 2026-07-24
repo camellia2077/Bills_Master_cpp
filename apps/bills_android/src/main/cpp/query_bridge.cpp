@@ -58,15 +58,16 @@ auto parse_iso_month(const std::string& value) -> std::optional<QueryMonth> {
   return parsed;
 }
 
-auto json_for_monthly_summary(const std::map<int, MonthlySummary>& monthly_summary)
+auto json_for_monthly_summary(
+    const std::vector<StandardMonthlySummaryItem>& monthly_summary)
     -> Json {
   Json summary = Json::array();
-  for (const auto& [month, value] : monthly_summary) {
+  for (const auto& value : monthly_summary) {
     Json entry;
-    entry["month"] = month;
+    entry["period"] = value.period;
     entry["income"] = value.income;
     entry["expense"] = value.expense;
-    entry["balance"] = value.income + value.expense;
+    entry["balance"] = value.balance;
     summary.push_back(std::move(entry));
   }
   return summary;
@@ -155,13 +156,20 @@ auto query_year(const std::string& db_path, const std::string& iso_year)
   Json data;
   data["query_type"] = "year";
   data["query_value"] = iso_year;
-  data["year"] = query_result->execution.year;
+  data["period_start"] = query_result->execution.period_start;
+  data["period_end"] = query_result->execution.period_end;
+  const auto parsed_period = parse_iso_month(query_result->execution.period_start);
+  if (parsed_period.has_value()) {
+    data["year"] = parsed_period->year;
+  }
   data["matched_bills"] = query_result->matched_bills;
-  data["total_income"] = query_result->execution.yearly_data.total_income;
-  data["total_expense"] = query_result->execution.yearly_data.total_expense;
-  data["balance"] = query_result->execution.yearly_data.balance;
+  data["transaction_count"] = query_result->transaction_count;
+  data["total_income"] = query_result->execution.range_data.total_income;
+  data["total_expense"] = query_result->execution.range_data.total_expense;
+  data["balance"] = query_result->execution.range_data.balance;
+  data["remark"] = query_result->standard_report.remark;
   data["monthly_summary"] =
-      json_for_monthly_summary(query_result->execution.yearly_data.monthly_summary);
+      json_for_monthly_summary(query_result->standard_report.monthly_summary);
   attach_rendered_report_payload(data, *query_result);
   return bills::android::jni::MakeResponse(
       true, "ok", "Year query completed successfully.", std::move(data));
@@ -199,17 +207,79 @@ auto query_month(const std::string& db_path, const std::string& iso_month)
   Json data;
   data["query_type"] = "month";
   data["query_value"] = iso_month;
-  data["year"] = query_result->execution.year;
-  data["month"] = *query_result->execution.month;
+  data["period_start"] = query_result->execution.period_start;
+  data["period_end"] = query_result->execution.period_end;
+  const auto parsed_period = parse_iso_month(query_result->execution.period_start);
+  if (parsed_period.has_value()) {
+    data["year"] = parsed_period->year;
+    data["month"] = parsed_period->month;
+  }
   data["matched_bills"] = query_result->matched_bills;
   data["transaction_count"] = query_result->transaction_count;
-  data["total_income"] = query_result->execution.monthly_data.total_income;
-  data["total_expense"] = query_result->execution.monthly_data.total_expense;
-  data["balance"] = query_result->execution.monthly_data.balance;
-  data["remark"] = query_result->execution.monthly_data.remark;
+  data["total_income"] = query_result->execution.range_data.total_income;
+  data["total_expense"] = query_result->execution.range_data.total_expense;
+  data["balance"] = query_result->execution.range_data.balance;
+  data["remark"] = query_result->standard_report.remark;
+  data["monthly_summary"] =
+      json_for_monthly_summary(query_result->standard_report.monthly_summary);
   attach_rendered_report_payload(data, *query_result);
   return bills::android::jni::MakeResponse(
       true, "ok", "Month query completed successfully.", std::move(data));
+}
+
+auto query_range(const std::string& db_path, const std::string& start_iso_month,
+                 const std::string& end_iso_month) -> std::string {
+  if (db_path.empty()) {
+    return bills::android::jni::MakeResponse(false, "param.invalid_argument",
+                                             "dbPath must be non-empty.");
+  }
+  if (!parse_iso_month(start_iso_month).has_value() ||
+      !parse_iso_month(end_iso_month).has_value()) {
+    return bills::android::jni::MakeResponse(false, "param.invalid_argument",
+                                             "start/end must use YYYY-MM.");
+  }
+  if (start_iso_month > end_iso_month) {
+    return bills::android::jni::MakeResponse(false, "param.invalid_argument",
+                                             "start must be <= end.");
+  }
+
+  const auto query_result =
+      bills::io::QueryRangeReport(db_path, start_iso_month, end_iso_month);
+  if (!query_result) {
+    Json data;
+    data["db_path"] = db_path;
+    data["start_iso_month"] = start_iso_month;
+    data["end_iso_month"] = end_iso_month;
+    return bills::android::jni::MakeResponse(
+        false, "system.native_failure", FormatError(query_result.error()),
+        std::move(data));
+  }
+  if (!query_result->execution.data_found) {
+    Json data;
+    data["db_path"] = db_path;
+    data["start_iso_month"] = start_iso_month;
+    data["end_iso_month"] = end_iso_month;
+    return bills::android::jni::MakeResponse(
+        false, "business.query_not_found",
+        "No data matched the requested range.", std::move(data));
+  }
+
+  Json data;
+  data["query_type"] = "range";
+  data["query_value"] = start_iso_month + " to " + end_iso_month;
+  data["period_start"] = query_result->execution.period_start;
+  data["period_end"] = query_result->execution.period_end;
+  data["matched_bills"] = query_result->matched_bills;
+  data["transaction_count"] = query_result->transaction_count;
+  data["total_income"] = query_result->execution.range_data.total_income;
+  data["total_expense"] = query_result->execution.range_data.total_expense;
+  data["balance"] = query_result->execution.range_data.balance;
+  data["remark"] = query_result->standard_report.remark;
+  data["monthly_summary"] =
+      json_for_monthly_summary(query_result->standard_report.monthly_summary);
+  attach_rendered_report_payload(data, *query_result);
+  return bills::android::jni::MakeResponse(
+      true, "ok", "Range query completed successfully.", std::move(data));
 }
 
 }  // namespace
@@ -238,5 +308,16 @@ Java_com_billstracer_android_data_nativebridge_QueryNativeBindings_queryMonthNat
   return bills::android::jni::SafeCall(env, [&]() -> std::string {
     return query_month(bills::android::jni::FromJString(env, db_path),
                        bills::android::jni::FromJString(env, iso_month));
+  });
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_billstracer_android_data_nativebridge_QueryNativeBindings_queryRangeNative(
+    JNIEnv* env, jclass, jstring db_path, jstring start_iso_month,
+    jstring end_iso_month) {
+  return bills::android::jni::SafeCall(env, [&]() -> std::string {
+    return query_range(bills::android::jni::FromJString(env, db_path),
+                       bills::android::jni::FromJString(env, start_iso_month),
+                       bills::android::jni::FromJString(env, end_iso_month));
   });
 }

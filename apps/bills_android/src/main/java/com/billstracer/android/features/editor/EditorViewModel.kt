@@ -8,10 +8,13 @@ import com.billstracer.android.app.navigation.WorkspaceDataChangeBus
 import com.billstracer.android.data.services.EditorService
 import com.billstracer.android.features.common.monthsForYear
 import com.billstracer.android.features.common.resolveYearMonthSelection
+import com.billstracer.android.model.EditorRecordSummary
 import com.billstracer.android.model.RecordEditorDocument
 import com.billstracer.android.model.RecordSaveResult
 import com.billstracer.android.platform.yearMonthOrNull
 import java.time.YearMonth
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +34,7 @@ internal data class EditorUiState(
     val structuredDraft: EditorStructuredDraftUiModel? = null,
     val editorMode: EditorMode = EditorMode.Structured,
     val hasIncompleteEntries: Boolean = false,
+    val recordSummary: EditorRecordSummary? = null,
 )
 
 class EditorViewModel(
@@ -42,6 +46,7 @@ class EditorViewModel(
     private val mutableState = MutableStateFlow(EditorUiState())
     internal val state: StateFlow<EditorUiState> = mutableState.asStateFlow()
     private var observedWorkspaceDataVersion = workspaceDataChangeBus.version.value
+    private var recordSummaryJob: Job? = null
 
     init {
         observeWorkspaceDataChanges()
@@ -115,6 +120,7 @@ class EditorViewModel(
         mutableState.update { current ->
             current.copy(recordDraftText = rawText)
         }
+        scheduleRecordSummaryRefresh()
     }
 
     fun updateStructuredRemark(rawRemark: String) {
@@ -126,6 +132,7 @@ class EditorViewModel(
                 hasIncompleteEntries = updated.hasIncompleteEntries(),
             )
         }
+        scheduleRecordSummaryRefresh()
     }
 
     fun addStructuredEntry(parentTitle: String, subSectionTitle: String) {
@@ -137,6 +144,7 @@ class EditorViewModel(
                 hasIncompleteEntries = updated.hasIncompleteEntries(),
             )
         }
+        scheduleRecordSummaryRefresh()
     }
 
     fun removeStructuredEntry(parentTitle: String, subSectionTitle: String, entryId: String) {
@@ -148,6 +156,7 @@ class EditorViewModel(
                 hasIncompleteEntries = updated.hasIncompleteEntries(),
             )
         }
+        scheduleRecordSummaryRefresh()
     }
 
     fun updateStructuredEntryAmount(
@@ -296,6 +305,38 @@ class EditorViewModel(
                 hasIncompleteEntries = updated.hasIncompleteEntries(),
             )
         }
+        scheduleRecordSummaryRefresh()
+    }
+
+    private fun scheduleRecordSummaryRefresh() {
+        recordSummaryJob?.cancel()
+        recordSummaryJob = viewModelScope.launch {
+            delay(200)
+            val snapshot = state.value
+            val draft = snapshot.structuredDraft
+            if (snapshot.editorMode == EditorMode.Structured && (draft == null || snapshot.hasIncompleteEntries)) {
+                return@launch
+            }
+            val rawText = if (snapshot.editorMode == EditorMode.Structured) {
+                editorService.serializeStructuredRecordDocument(draft!!.toStructuredRecordEditorDocument())
+            } else {
+                snapshot.recordDraftText
+            }
+            val summary = runCatching { editorService.previewRecordSummary(rawText) }.getOrNull()
+                ?: return@launch
+            mutableState.update { current ->
+                if (
+                    current.activeRecordDocument?.period == snapshot.activeRecordDocument?.period &&
+                    current.editorMode == snapshot.editorMode &&
+                    current.structuredDraft == snapshot.structuredDraft &&
+                    current.recordDraftText == snapshot.recordDraftText
+                ) {
+                    current.copy(recordSummary = summary)
+                } else {
+                    current
+                }
+            }
+        }
     }
 
     private fun commitRecordDraft(
@@ -443,6 +484,7 @@ class EditorViewModel(
                     mutableState.update { current ->
                         current.withOpenedDocument(document, message)
                     }
+                    scheduleRecordSummaryRefresh()
                 }
                 .onFailure { error ->
                     val message = error.message ?: "Failed to open record period."
@@ -491,6 +533,7 @@ class EditorViewModel(
                         statusMessage = "Failed to create record period.",
                     )
                 }
+                scheduleRecordSummaryRefresh()
             }
     }
 
@@ -537,6 +580,7 @@ class EditorViewModel(
                         preferredPeriod = savedDocument.period,
                     )
                 }
+                scheduleRecordSummaryRefresh()
             }
             .onFailure { error ->
                 val errorMessage = error.message ?: "Failed to refresh imported periods."
@@ -578,6 +622,7 @@ private fun EditorUiState.withOpenedDocument(
         structuredDraft = structuredDraft,
         editorMode = if (structuredDraft != null) EditorMode.Structured else EditorMode.RawExpert,
         hasIncompleteEntries = structuredDraft?.hasIncompleteEntries() == true,
+        recordSummary = null,
         errorMessage = null,
         statusMessage = message,
     )

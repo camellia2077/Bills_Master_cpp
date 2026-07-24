@@ -9,8 +9,11 @@ internal class FakeQueryService : QueryService {
     var availablePeriods: List<String> = listOf("2026-03", "2026-02", "2025-12")
     var lastQueriedYear: String? = null
     var lastQueriedMonth: String? = null
+    var lastQueriedRangeStart: String? = null
+    var lastQueriedRangeEnd: String? = null
     var yearQueryResultOverride: QueryResult? = null
     var monthQueryResultOverride: QueryResult? = null
+    var rangeQueryResultOverride: QueryResult? = null
 
     override suspend fun listAvailablePeriods(): List<String> = availablePeriods
 
@@ -20,6 +23,10 @@ internal class FakeQueryService : QueryService {
             ok = true,
             message = isoYear,
             type = QueryType.YEAR,
+            periodStart = "$isoYear-01",
+            periodEnd = "$isoYear-12",
+            transactionCount = 1,
+            remark = "",
             year = isoYear.toIntOrNull(),
             month = null,
             matchedBills = 1,
@@ -27,7 +34,7 @@ internal class FakeQueryService : QueryService {
             totalExpense = -5.0,
             balance = 5.0,
             monthlySummary = listOf(
-                MonthlySummaryItem(month = 1, income = 10.0, expense = -5.0, balance = 5.0),
+                MonthlySummaryItem(period = "$isoYear-01", income = 10.0, expense = -5.0, balance = 5.0),
             ),
             standardReportMarkdown = "# $isoYear",
             standardReportJson = fakeYearStandardReportJson(isoYear.toIntOrNull() ?: 2026),
@@ -41,6 +48,10 @@ internal class FakeQueryService : QueryService {
             ok = true,
             message = isoMonth,
             type = QueryType.MONTH,
+            periodStart = isoMonth,
+            periodEnd = isoMonth,
+            transactionCount = 1,
+            remark = "",
             year = isoMonth.substringBefore('-').toIntOrNull(),
             month = isoMonth.substringAfter('-').toIntOrNull(),
             matchedBills = 1,
@@ -50,6 +61,33 @@ internal class FakeQueryService : QueryService {
             monthlySummary = emptyList(),
             standardReportMarkdown = "# $isoMonth",
             standardReportJson = fakeMonthStandardReportJson(isoMonth),
+            rawJson = """{"ok":true}""",
+        )
+    }
+
+    override suspend fun queryRange(startIsoMonth: String, endIsoMonth: String): QueryResult {
+        lastQueriedRangeStart = startIsoMonth
+        lastQueriedRangeEnd = endIsoMonth
+        return rangeQueryResultOverride ?: QueryResult(
+            ok = true,
+            message = "$startIsoMonth to $endIsoMonth",
+            type = QueryType.RANGE,
+            periodStart = startIsoMonth,
+            periodEnd = endIsoMonth,
+            transactionCount = 2,
+            remark = "",
+            year = null,
+            month = null,
+            matchedBills = 2,
+            totalIncome = 20.0,
+            totalExpense = -10.0,
+            balance = 10.0,
+            monthlySummary = listOf(
+                MonthlySummaryItem(period = startIsoMonth, income = 10.0, expense = -5.0, balance = 5.0),
+                MonthlySummaryItem(period = endIsoMonth, income = 10.0, expense = -5.0, balance = 5.0),
+            ),
+            standardReportMarkdown = "# $startIsoMonth to $endIsoMonth",
+            standardReportJson = fakeRangeStandardReportJson(startIsoMonth, endIsoMonth),
             rawJson = """{"ok":true}""",
         )
     }
@@ -105,7 +143,7 @@ internal fun fakeYearStandardReportJson(
           "items": {
             "monthly_summary": [
               {
-                "month": 1,
+                "period": "$year-01",
                 "income": 10.0,
                 "expense": -5.0,
                 "balance": 5.0
@@ -187,6 +225,77 @@ internal fun fakeMonthStandardReportJson(
               }
             ],
             "monthly_summary": []
+          },
+          "extensions": {
+            $chartData
+          }
+        }
+    """.trimIndent()
+}
+
+internal fun fakeRangeStandardReportJson(
+    startIsoMonth: String = "2026-02",
+    endIsoMonth: String = "2026-03",
+    includeChartData: Boolean = true,
+): String {
+    val chartData = if (includeChartData) {
+        """
+        "chart_data": {
+          "schema_version": "1.0.0",
+          "views": [
+            {
+              "id": "range_monthly_overview",
+              "title": "Monthly Income, Expense, and Balance",
+              "chart_type": "grouped_bar",
+              "x_labels": ["$startIsoMonth", "$endIsoMonth"],
+              "series": [
+                { "id": "income", "label": "Income", "unit": "CNY", "values": [10.0, 10.0] },
+                { "id": "expense", "label": "Expense", "unit": "CNY", "values": [5.0, 5.0] },
+                { "id": "balance", "label": "Balance", "unit": "CNY", "values": [5.0, 5.0] }
+              ]
+            }
+          ]
+        }
+        """.trimIndent()
+    } else {
+        """
+        "chart_data": {
+          "schema_version": "1.0.0",
+          "views": []
+        }
+        """.trimIndent()
+    }
+    return """
+        {
+          "meta": {
+            "report_type": "range"
+          },
+          "scope": {
+            "period_start": "$startIsoMonth",
+            "period_end": "$endIsoMonth",
+            "remark": "",
+            "data_found": true
+          },
+          "summary": {
+            "total_income": 20.0,
+            "total_expense": -10.0,
+            "balance": 10.0
+          },
+          "items": {
+            "monthly_summary": [
+              {
+                "period": "$startIsoMonth",
+                "income": 10.0,
+                "expense": -5.0,
+                "balance": 5.0
+              },
+              {
+                "period": "$endIsoMonth",
+                "income": 10.0,
+                "expense": -5.0,
+                "balance": 5.0
+              }
+            ]
           },
           "extensions": {
             $chartData

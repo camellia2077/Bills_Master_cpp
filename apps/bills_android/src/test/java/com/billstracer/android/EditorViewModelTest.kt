@@ -192,6 +192,35 @@ class EditorViewModelTest {
     }
 
     @Test
+    fun saveRawRecordTextKeepsExpressionAndCommentInStructuredDraft() = runTest {
+        val viewModel = createViewModel()
+
+        advanceUntilIdle()
+        viewModel.openSelectedExistingRecord()
+        advanceUntilIdle()
+
+        val updatedRawText = """
+            date:2026-03
+            remark:raw
+
+            meal
+
+            meal_low
+            103.60*5+6.03 饭 // 有优惠买的
+        """.trimIndent()
+        viewModel.saveRawRecordText(updatedRawText)
+        advanceUntilIdle()
+
+        val entry = viewModel.state.value.structuredDraft
+            ?.sections?.first()?.subSections?.first()?.entries?.first()
+        assertEquals(EditorMode.Structured, viewModel.state.value.editorMode)
+        assertNotNull(entry)
+        assertEquals("103.60*5+6.03", entry?.amountExpression)
+        assertEquals("饭", entry?.description)
+        assertEquals("有优惠买的", entry?.comment)
+    }
+
+    @Test
     fun missingPersistedTxtFailsToOpen() = runTest {
         val editorService = FakeEditorService().apply {
             missingPersistedPeriods += "2026-03"

@@ -3,7 +3,10 @@ package com.billstracer.android.platform
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -17,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.billstracer.android.app.navigation.FloatingBottomNavigationHeight
 
 @Composable
 internal fun PaneContent(
@@ -25,14 +29,25 @@ internal fun PaneContent(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
-        modifier = modifier.verticalScroll(
-            state = rememberScrollState(),
-            enabled = scrollEnabled,
-        ),
+        // This padding is intentionally applied after verticalScroll: it becomes scrollable
+        // tail space for the final item, rather than a fixed, opaque strip under the capsule.
+        modifier = modifier
+            .verticalScroll(
+                state = rememberScrollState(),
+                enabled = scrollEnabled,
+            )
+            .padding(bottom = floatingBottomNavigationContentPadding()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         content = content,
     )
 }
+
+@Composable
+private fun floatingBottomNavigationContentPadding() =
+    FloatingBottomNavigationHeight + maxOf(
+        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
+        20.dp,
+    )
 
 @Composable
 internal fun SectionGroupCard(

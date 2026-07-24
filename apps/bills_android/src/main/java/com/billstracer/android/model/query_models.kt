@@ -3,10 +3,11 @@ package com.billstracer.android.model
 enum class QueryType {
     YEAR,
     MONTH,
+    RANGE,
 }
 
 data class MonthlySummaryItem(
-    val month: Int,
+    val period: String,
     val income: Double,
     val expense: Double,
     val balance: Double,
@@ -16,6 +17,10 @@ data class QueryResult(
     val ok: Boolean,
     val message: String,
     val type: QueryType,
+    val periodStart: String,
+    val periodEnd: String,
+    val transactionCount: Int,
+    val remark: String,
     val year: Int?,
     val month: Int?,
     val matchedBills: Int,

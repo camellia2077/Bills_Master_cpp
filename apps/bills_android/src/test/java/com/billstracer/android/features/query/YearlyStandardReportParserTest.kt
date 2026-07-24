@@ -27,13 +27,13 @@ class YearlyStandardReportParserTest {
               "items": {
                 "monthly_summary": [
                   {
-                    "month": 1,
+                    "period": "2025-01",
                     "income": 10.0,
                     "expense": -1.5,
                     "balance": 11.5
                   },
                   {
-                    "month": 2,
+                    "period": "2025-02",
                     "income": 20.0,
                     "expense": -2.5,
                     "balance": 22.5
@@ -51,7 +51,7 @@ class YearlyStandardReportParserTest {
         assertEquals(-20.5, report?.totalExpense ?: 0.0, 0.0)
         assertEquals(80.0, report?.balance ?: 0.0, 0.0)
         assertEquals(2, report?.monthlySummary?.size)
-        assertEquals(1, report?.monthlySummary?.first()?.month)
+        assertEquals("2025-01", report?.monthlySummary?.first()?.period)
     }
 
     @Test

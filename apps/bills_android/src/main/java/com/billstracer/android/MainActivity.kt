@@ -13,6 +13,7 @@ import com.billstracer.android.app.navigation.BillsAndroidApp
 import com.billstracer.android.app.navigation.WorkspaceDataChangeBus
 import com.billstracer.android.app.theme.BillsAndroidTheme
 import com.billstracer.android.data.prefs.ThemePreferenceStore
+import com.billstracer.android.data.prefs.QueryInputModePreferenceStore
 import com.billstracer.android.data.runtime.AndroidWorkspaceRuntime
 import com.billstracer.android.data.services.DefaultBackupService
 import com.billstracer.android.data.services.DefaultEditorService
@@ -34,6 +35,7 @@ class MainActivity : ComponentActivity() {
     private val workspaceDataChangeBus by lazy { WorkspaceDataChangeBus() }
     private val workspaceRuntime by lazy { AndroidWorkspaceRuntime(applicationContext) }
     private val themePreferenceStore by lazy { ThemePreferenceStore(applicationContext) }
+    private val queryInputModePreferenceStore by lazy { QueryInputModePreferenceStore(applicationContext) }
     private val settingsDataSource by lazy {
         SettingsDataSource(
             runtime = workspaceRuntime,
@@ -77,6 +79,7 @@ class MainActivity : ComponentActivity() {
             queryService = queryService,
             sessionBus = sessionBus,
             workspaceDataChangeBus = workspaceDataChangeBus,
+            queryInputModePreferenceStore = queryInputModePreferenceStore,
         )
     }
     private val editorViewModel: EditorViewModel by viewModels {

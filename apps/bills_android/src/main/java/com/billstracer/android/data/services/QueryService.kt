@@ -8,4 +8,6 @@ interface QueryService {
     suspend fun queryYear(isoYear: String): QueryResult
 
     suspend fun queryMonth(isoMonth: String): QueryResult
+
+    suspend fun queryRange(startIsoMonth: String, endIsoMonth: String): QueryResult
 }

@@ -27,7 +27,7 @@
 
 ## Verify
 
-- `python tools/run.py dist android --preset debug`
+- `python tools/run.py dist bills-tracer-android --preset debug`
 - 纯 Kotlin 逻辑可补：`./gradlew.bat :apps:bills_android:testDebugUnitTest`
 - 有设备/模拟器时可补：`./gradlew.bat :apps:bills_android:connectedDebugAndroidTest`
 - 仅文档改动可跳过代码验证

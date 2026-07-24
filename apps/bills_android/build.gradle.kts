@@ -12,6 +12,7 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.Copy
 import org.gradle.work.DisableCachingByDefault
 import java.io.File
 
@@ -21,7 +22,7 @@ plugins {
 }
 
 val androidPresentationVersionCode = 3
-val androidPresentationVersionName = "0.2.0"
+val androidPresentationVersionName = "0.2.2"
 
 private object AndroidUiDependencyVersions {
     const val composeBom = "2025.08.01"
@@ -288,6 +289,20 @@ android {
     sourceSets["main"].assets.srcDir(generatedCommonAssetsPath)
     testOptions {
         unitTests.isReturnDefaultValues = true
+    }
+}
+
+listOf("debug", "release").forEach { variant ->
+    val capitalizedVariant = variant.replaceFirstChar { character -> character.uppercase() }
+    val renamedApkTask = tasks.register<Copy>("copy${capitalizedVariant}BillsApk") {
+        from(layout.buildDirectory.file("outputs/apk/$variant/bills_android-$variant.apk"))
+        into(layout.buildDirectory.dir("outputs/bills-apk/$variant"))
+        rename { "Bills-$variant.apk" }
+    }
+    tasks.configureEach {
+        if (name == "assemble$capitalizedVariant") {
+            finalizedBy(renamedApkTask)
+        }
     }
 }
 

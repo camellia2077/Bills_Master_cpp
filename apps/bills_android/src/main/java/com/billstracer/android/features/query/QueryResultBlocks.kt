@@ -54,10 +54,18 @@ internal fun QueryResultDisplayContent(
             null
         }
     }
+    val rangeStandardReport = remember(result.type, result.standardReportJson) {
+        if (result.type == QueryType.RANGE) {
+            parseRangeStandardReport(result.standardReportJson)
+        } else {
+            null
+        }
+    }
     val chartData = remember(result.standardReportJson) {
         parseQueryChartData(result.standardReportJson)
     }
-    val hasStructuredView = monthlyStandardReport != null || yearlyStandardReport != null
+    val hasStructuredView =
+        monthlyStandardReport != null || yearlyStandardReport != null || rangeStandardReport != null
     val hasChartView = chartData?.views?.isNotEmpty() == true
     val availableModes = remember(hasStructuredView, hasChartView) {
         QueryModeAvailability(
@@ -91,6 +99,9 @@ internal fun QueryResultDisplayContent(
                     }
                     result.type == QueryType.YEAR && yearlyStandardReport != null -> {
                         YearlyStandardReportCard(report = yearlyStandardReport)
+                    }
+                    result.type == QueryType.RANGE && rangeStandardReport != null -> {
+                        RangeStandardReportCard(report = rangeStandardReport)
                     }
                     else -> QueryTextReportCard(content = markdown)
                 }

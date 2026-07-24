@@ -2,10 +2,12 @@ package com.billstracer.android.data.services
 
 import com.billstracer.android.data.nativebridge.EditorNativeBindings
 import com.billstracer.android.data.nativebridge.boolean
+import com.billstracer.android.data.nativebridge.double
 import com.billstracer.android.data.nativebridge.parseRoot
 import com.billstracer.android.data.nativebridge.string
 import com.billstracer.android.data.runtime.AndroidWorkspaceRuntime
 import com.billstracer.android.model.RecordEditorDocument
+import com.billstracer.android.model.EditorRecordSummary
 import com.billstracer.android.model.RecordSaveResult
 import com.billstracer.android.model.StructuredRecordEditorDocument
 import com.billstracer.android.model.StructuredRecordEditorEntry
@@ -21,6 +23,7 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.io.File
 
 internal class DefaultEditorService(
     private val runtime: AndroidWorkspaceRuntime,
@@ -89,6 +92,36 @@ internal class DefaultEditorService(
             ),
         )
     }
+
+    override suspend fun previewRecordSummary(rawText: String): EditorRecordSummary =
+        withContext(Dispatchers.IO) {
+            val workspace = runtime.initializeWorkspace()
+            val previewFile = File.createTempFile("bills_editor_preview_", ".txt")
+            try {
+                previewFile.writeText(rawText, Charsets.UTF_8)
+                val root = parseRoot(
+                    EditorNativeBindings.previewRecordPathNative(
+                        previewFile.absolutePath,
+                        workspace.configRoot.absolutePath,
+                    ),
+                )
+                if (!root.boolean("ok")) {
+                    error(root.string("message"))
+                }
+                val data = root["data"]?.jsonObject ?: JsonObject(emptyMap())
+                val file = data["files"]?.jsonArray?.firstOrNull()?.jsonObject
+                    ?: error("Record preview did not return a summary.")
+                if (!file.boolean("ok")) {
+                    error(file.string("error"))
+                }
+                EditorRecordSummary(
+                    income = file.double("total_income"),
+                    expense = file.double("total_expense"),
+                )
+            } finally {
+                previewFile.delete()
+            }
+        }
 
     override suspend fun commitRecordDocument(
         period: String,

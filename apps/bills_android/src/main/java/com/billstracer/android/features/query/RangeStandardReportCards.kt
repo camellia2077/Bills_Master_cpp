@@ -4,9 +4,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -25,16 +23,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 @Composable
-internal fun YearlyStandardReportCard(
-    report: YearlyStandardReportUiModel,
+internal fun RangeStandardReportCard(
+    report: RangeStandardReportUiModel,
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("query_yearly_standard_card"),
+            .testTag("query_range_standard_card"),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.50f),
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.50f),
         ),
     ) {
         Column(
@@ -46,12 +44,12 @@ internal fun YearlyStandardReportCard(
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(text = "Yearly Report", style = MaterialTheme.typography.titleMedium)
+                Text(text = "Range Report", style = MaterialTheme.typography.titleMedium)
             }
             Text(
                 text = formatPeriodLabel(report.periodStart, report.periodEnd),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
             )
             Row(
                 modifier = Modifier
@@ -78,21 +76,21 @@ internal fun YearlyStandardReportCard(
             }
             if (!report.dataFound || report.monthlySummary.isEmpty()) {
                 Text(
-                    text = yearlyStructuredEmptyMessage(),
+                    text = "No monthly summaries found for this range.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.testTag("query_yearly_empty_message"),
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    modifier = Modifier.testTag("query_range_empty_message"),
                 )
             } else {
-                YearlyMonthlySummaryTable(monthlySummary = report.monthlySummary)
+                RangeMonthlySummaryTable(monthlySummary = report.monthlySummary)
             }
         }
     }
 }
 
 @Composable
-private fun YearlyMonthlySummaryTable(
-    monthlySummary: List<YearlyMonthlySummaryUiModel>,
+private fun RangeMonthlySummaryTable(
+    monthlySummary: List<RangeMonthlySummaryUiModel>,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(text = "Monthly Summary", style = MaterialTheme.typography.labelLarge)
@@ -102,7 +100,7 @@ private fun YearlyMonthlySummaryTable(
                 .horizontalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            YearlyMonthlySummaryRow(
+            RangeMonthlySummaryRow(
                 period = "period",
                 income = "income",
                 expense = "expense",
@@ -110,7 +108,7 @@ private fun YearlyMonthlySummaryTable(
                 isHeader = true,
             )
             monthlySummary.forEach { entry ->
-                YearlyMonthlySummaryRow(
+                RangeMonthlySummaryRow(
                     period = entry.period,
                     income = formatAmount(entry.income),
                     expense = formatAmount(entry.expense),
@@ -123,7 +121,7 @@ private fun YearlyMonthlySummaryTable(
 }
 
 @Composable
-private fun YearlyMonthlySummaryRow(
+private fun RangeMonthlySummaryRow(
     period: String,
     income: String,
     expense: String,
@@ -131,15 +129,15 @@ private fun YearlyMonthlySummaryRow(
     isHeader: Boolean,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        YearlySummaryCell(text = period, isHeader = isHeader)
-        YearlySummaryCell(text = income, isHeader = isHeader)
-        YearlySummaryCell(text = expense, isHeader = isHeader)
-        YearlySummaryCell(text = balance, isHeader = isHeader)
+        RangeSummaryCell(text = period, isHeader = isHeader)
+        RangeSummaryCell(text = income, isHeader = isHeader)
+        RangeSummaryCell(text = expense, isHeader = isHeader)
+        RangeSummaryCell(text = balance, isHeader = isHeader)
     }
 }
 
 @Composable
-private fun YearlySummaryCell(
+private fun RangeSummaryCell(
     text: String,
     isHeader: Boolean,
 ) {
